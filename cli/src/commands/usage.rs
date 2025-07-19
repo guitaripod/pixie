@@ -15,7 +15,7 @@ pub async fn show(
     if !config.is_authenticated() {
         return Err(anyhow::anyhow!(
             "Not authenticated. Run {} to authenticate",
-            "oip auth github".cyan()
+            "pixie auth github".cyan()
         ));
     }
     
