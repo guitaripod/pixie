@@ -47,7 +47,7 @@ enum Commands {
     
     #[command(about = "Edit existing images with AI")]
     Edit {
-        #[arg(help = "Path to the image to edit")]
+        #[arg(help = "Path to the image to edit or gallery:<id> to use gallery image")]
         image: String,
         
         #[arg(help = "Text prompt describing the edit")]

@@ -28,12 +28,38 @@ pub async fn handle(
     
     let client = ApiClient::new(api_url)?;
     
-    if !Path::new(image_path).exists() {
-        return Err(anyhow::anyhow!("Image file not found: {}", image_path));
-    }
-    
-    let image_data = fs::read(image_path)
-        .with_context(|| format!("Failed to read image file: {}", image_path))?;
+    let (image_data, image_extension) = if image_path.starts_with("gallery:") {
+        let image_id = image_path.trim_start_matches("gallery:");
+        
+        println!("Fetching image from gallery: {}", image_id.yellow());
+        
+        let gallery_response = client.list_images(1, 100).await?;
+        
+        let gallery_image = gallery_response.images.iter()
+            .find(|img| img.id == image_id)
+            .ok_or_else(|| anyhow::anyhow!("Image not found in gallery: {}", image_id))?;
+        
+        println!("  Original prompt: {}", gallery_image.prompt.dimmed());
+        
+        let data = client.download_image(&gallery_image.url).await?;
+        let ext = if gallery_image.url.contains(".png") { ".png".to_string() } 
+                  else if gallery_image.url.contains(".jpg") || gallery_image.url.contains(".jpeg") { ".jpg".to_string() }
+                  else { ".png".to_string() };
+        (data, ext)
+    } else {
+        if !Path::new(image_path).exists() {
+            return Err(anyhow::anyhow!("Image file not found: {}", image_path));
+        }
+        
+        let data = fs::read(image_path)
+            .with_context(|| format!("Failed to read image file: {}", image_path))?;
+        let ext = Path::new(image_path)
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| format!(".{}", e))
+            .unwrap_or_else(|| ".png".to_string());
+        (data, ext)
+    };
     
     // Check file size (OpenAI limit is 50MB per image)
     if image_data.len() > 50 * 1024 * 1024 {
@@ -41,11 +67,11 @@ pub async fn handle(
             image_data.len() / (1024 * 1024)));
     }
     
-    let mime_type = if image_path.ends_with(".png") {
+    let mime_type = if image_extension == ".png" {
         "image/png"
-    } else if image_path.ends_with(".jpg") || image_path.ends_with(".jpeg") {
+    } else if image_extension == ".jpg" || image_extension == ".jpeg" {
         "image/jpeg"
-    } else if image_path.ends_with(".webp") {
+    } else if image_extension == ".webp" {
         "image/webp"
     } else {
         "image/png"
@@ -66,10 +92,10 @@ pub async fn handle(
         None
     };
     
-    println!("Editing image: {}", image_path.cyan());
-    println!("With prompt: {}", prompt.cyan());
-    if mask_path.is_some() {
-        println!("Using mask: {}", mask_path.unwrap().cyan());
+    println!("{}", format!("Editing image: {}", image_path).cyan());
+    println!("{}", format!("With prompt: {}", prompt).cyan());
+    if let Some(mask) = mask_path {
+        println!("{}", format!("Using mask: {}", mask).cyan());
     }
     
     let pb = ProgressBar::new_spinner();
