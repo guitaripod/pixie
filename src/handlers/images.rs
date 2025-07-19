@@ -1,4 +1,4 @@
-use worker::{Request, Response, RouteContext, Result, console_log};
+use worker::{Request, Response, RouteContext, Result, console_log, Error};
 use crate::models::{ImageGenerationRequest, ImageEditRequest, ImageResponse, UsageRecord};
 use crate::error::AppError;
 use crate::auth::validate_api_key;
@@ -6,6 +6,10 @@ use crate::storage::store_image_in_r2;
 use crate::deployment::{DeploymentConfig, get_openai_key};
 use uuid::Uuid;
 use chrono::Utc;
+use base64;
+use wasm_bindgen;
+use js_sys;
+use web_sys;
 
 pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let start_time = worker::Date::now().as_millis();
@@ -247,36 +251,115 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
         Err(e) => return e.to_response(),
     };
 
+    // Create multipart form data for OpenAI
     let openai_url = "https://api.openai.com/v1/images/edits";
+    
+    // Create FormData
+    let form_data = web_sys::FormData::new()?;
+    
+    // Add text fields
+    form_data.append_with_str("prompt", &edit_req.prompt)?;
+    form_data.append_with_str("model", &edit_req.model)?;
+    form_data.append_with_str("n", &edit_req.n.to_string())?;
+    form_data.append_with_str("size", &edit_req.size)?;
+    form_data.append_with_str("quality", &edit_req.quality)?;
+    form_data.append_with_str("background", &edit_req.background)?;
+    form_data.append_with_str("input_fidelity", &edit_req.input_fidelity)?;
+    form_data.append_with_str("output_format", "b64_json")?; // Force b64_json for storage
+    
+    if let Some(compression) = edit_req.output_compression {
+        form_data.append_with_str("output_compression", &compression.to_string())?;
+    }
+    
+    if edit_req.partial_images > 0 {
+        form_data.append_with_str("partial_images", &edit_req.partial_images.to_string())?;
+    }
+    
+    if let Some(user) = &edit_req.user {
+        form_data.append_with_str("user", user)?;
+    }
+    
+    // Process images - convert from data URLs to blobs
+    for (index, image_data_url) in edit_req.image.iter().enumerate() {
+        // Extract base64 data from data URL
+        let base64_data = if image_data_url.starts_with("data:") {
+            // Parse data URL: data:image/png;base64,<data>
+            image_data_url
+                .split(',')
+                .nth(1)
+                .ok_or_else(|| Error::RustError("Invalid data URL format".to_string()))?
+        } else {
+            // Assume it's already base64
+            image_data_url
+        };
+        
+        // Decode base64 to bytes
+        let image_bytes = base64::decode(base64_data)
+            .map_err(|e| Error::RustError(format!("Failed to decode base64: {}", e)))?;
+        
+        // Create a Blob from the bytes
+        let uint8_array = js_sys::Uint8Array::from(&image_bytes[..]);
+        let blob_parts = js_sys::Array::new();
+        blob_parts.push(&uint8_array.into());
+        
+        let blob_options = web_sys::BlobPropertyBag::new();
+        blob_options.set_type("image/png");
+        
+        let blob = web_sys::Blob::new_with_u8_array_sequence_and_options(
+            &blob_parts,
+            &blob_options
+        )?;
+        
+        // Append to form - OpenAI expects "image" field, not array notation
+        if index == 0 {
+            form_data.append_with_blob_and_filename("image", &blob, "image.png")?;
+        } else {
+            form_data.append_with_blob_and_filename(&format!("image[{}]", index), &blob, &format!("image_{}.png", index))?;
+        }
+    }
+    
+    // Process mask if provided
+    if let Some(mask_data_url) = &edit_req.mask {
+        let base64_data = if mask_data_url.starts_with("data:") {
+            mask_data_url
+                .split(',')
+                .nth(1)
+                .ok_or_else(|| Error::RustError("Invalid mask data URL format".to_string()))?
+        } else {
+            mask_data_url
+        };
+        
+        let mask_bytes = base64::decode(base64_data)
+            .map_err(|e| Error::RustError(format!("Failed to decode mask base64: {}", e)))?;
+        
+        let uint8_array = js_sys::Uint8Array::from(&mask_bytes[..]);
+        let blob_parts = js_sys::Array::new();
+        blob_parts.push(&uint8_array.into());
+        
+        let blob_options = web_sys::BlobPropertyBag::new();
+        blob_options.set_type("image/png");
+        
+        let blob = web_sys::Blob::new_with_u8_array_sequence_and_options(
+            &blob_parts,
+            &blob_options
+        )?;
+        
+        form_data.append_with_blob_and_filename("mask", &blob, "mask.png")?;
+    }
+    
+    // Create request with multipart/form-data
     let headers = worker::Headers::new();
     headers.set("Authorization", &format!("Bearer {}", openai_key))?;
-    headers.set("Content-Type", "application/json")?;
-
-    let request_body = serde_json::json!({
-        "model": "gpt-image-1",
-        "image": edit_req.image,
-        "prompt": edit_req.prompt,
-        "mask": edit_req.mask,
-        "n": edit_req.n,
-        "size": edit_req.size,
-        "quality": edit_req.quality,
-        "background": edit_req.background,
-        "input_fidelity": edit_req.input_fidelity,
-        "output_format": edit_req.output_format,
-        "output_compression": edit_req.output_compression,
-        "partial_images": edit_req.partial_images,
-        "stream": false,
-        "user": edit_req.user,
-    });
-
-    console_log!("Sending edit request to OpenAI: {:?}", request_body);
-
+    // Don't set Content-Type - let the browser set it with boundary
+    
+    console_log!("Sending edit request to OpenAI (multipart/form-data)");
+    
     let openai_req = worker::Request::new_with_init(
         openai_url,
         worker::RequestInit::new()
             .with_method(worker::Method::Post)
             .with_headers(headers)
-            .with_body(Some(worker::wasm_bindgen::JsValue::from_str(&request_body.to_string())))
+            .with_body(Some(wasm_bindgen::JsValue::from(form_data)))
     )?;
 
     let mut openai_resp = worker::Fetch::Request(openai_req).send().await?;
