@@ -81,7 +81,7 @@ npx wrangler deploy
 
 ## API Documentation
 
-See [API.md](API.md) for detailed endpoint documentation.
+Coming soon
 
 ### Quick Examples
 
