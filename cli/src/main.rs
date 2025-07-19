@@ -45,6 +45,30 @@ enum Commands {
         output: Option<String>,
     },
     
+    #[command(about = "Edit existing images with AI")]
+    Edit {
+        #[arg(help = "Path to the image to edit")]
+        image: String,
+        
+        #[arg(help = "Text prompt describing the edit")]
+        prompt: String,
+        
+        #[arg(short, long, help = "Path to mask image (optional)")]
+        mask: Option<String>,
+        
+        #[arg(short, long, default_value = "1", help = "Number of variations to generate")]
+        number: u8,
+        
+        #[arg(short, long, default_value = "auto", help = "Output image size")]
+        size: String,
+        
+        #[arg(short, long, default_value = "auto", help = "Output image quality")]
+        quality: String,
+        
+        #[arg(short, long, help = "Save edited images to directory")]
+        output: Option<String>,
+    },
+    
     #[command(about = "Browse image galleries")]
     Gallery {
         #[command(subcommand)]
@@ -140,6 +164,10 @@ async fn main() -> Result<()> {
         
         Commands::Generate { prompt, number, size, quality, output } => {
             commands::generate::handle(&api_url, &prompt, number, &size, &quality, output.as_deref()).await?;
+        }
+        
+        Commands::Edit { image, prompt, mask, number, size, quality, output } => {
+            commands::edit::handle(&api_url, &image, &prompt, mask.as_deref(), number, &size, &quality, output.as_deref()).await?;
         }
         
         Commands::Gallery { action } => {

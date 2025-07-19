@@ -56,6 +56,25 @@ impl ApiClient {
             .context("Failed to parse image generation response")
     }
     
+    pub async fn edit_image(&self, request: &ImageEditRequest) -> Result<ImageResponse> {
+        let url = format!("{}/v1/images/edits", self.base_url);
+        
+        let response = self.client
+            .post(&url)
+            .headers(self.headers()?)
+            .json(request)
+            .send()
+            .await?;
+        
+        if !response.status().is_success() {
+            let error = response.text().await?;
+            return Err(anyhow::anyhow!("API error: {}", error));
+        }
+        
+        response.json().await
+            .context("Failed to parse image edit response")
+    }
+    
     pub async fn list_images(&self, page: usize, per_page: usize) -> Result<GalleryResponse> {
         let url = format!("{}/v1/images?page={}&per_page={}", self.base_url, page, per_page);
         
@@ -194,6 +213,27 @@ pub struct ImageGenerationRequest {
     pub n: u8,
     pub size: String,
     pub quality: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ImageEditRequest {
+    pub image: Vec<String>,
+    pub prompt: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mask: Option<String>,
+    pub model: String,
+    pub n: u8,
+    pub size: String,
+    pub quality: String,
+    pub background: String,
+    pub input_fidelity: String,
+    pub output_format: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub output_compression: Option<u8>,
+    pub partial_images: u8,
+    pub stream: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
