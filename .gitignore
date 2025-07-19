@@ -9,6 +9,7 @@ package-lock.json
 # Wrangler/Cloudflare
 .wrangler/
 build/
+dist/
 .dev.vars
 
 # IDE
