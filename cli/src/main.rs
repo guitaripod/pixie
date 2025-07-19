@@ -22,6 +22,11 @@ QUICK START:
   3. Edit image:       pixie edit image.png \"add wings\" -o .
   4. Browse gallery:   pixie gallery list
 
+COMMON WORKFLOWS:
+  Generate variations:  pixie generate \"sunset\" -n 4 -o sunsets/
+  Edit from gallery:    pixie edit gallery:abc-123 \"new style\"
+  Check your usage:     pixie usage --start 2024-01-01
+
 For more help on any command, use: pixie <command> --help
 ")]
 struct Cli {
@@ -52,6 +57,8 @@ EXAMPLES:
   pixie generate \"a serene mountain landscape at sunset\"
   pixie generate \"cute robot\" -n 4 -o ./images
   pixie generate \"abstract art\" -s 1536x1024 -q high
+  pixie generate \"minimalist logo\" -q low -n 10 -o logos/
+  pixie generate \"portrait in oil painting style\" -s 1024x1536
 
 SIZES: 1024x1024, 1536x1024, 1024x1536, auto
 QUALITY: low, medium, high, auto")]
@@ -78,6 +85,8 @@ EXAMPLES:
   pixie edit photo.png \"add a rainbow in the sky\"
   pixie edit image.jpg \"make it cyberpunk style\" -o edited/
   pixie edit gallery:abc-123 \"add neon lights\" -o .
+  pixie edit portrait.png \"change background to beach\" -m mask.png
+  pixie edit logo.png \"make it 3D metallic\" -q high -n 3
 
 GALLERY SUPPORT:
   Use gallery:<image-id> to edit images from the public gallery.
@@ -121,7 +130,8 @@ EXAMPLES:
   pixie gallery list --limit 10
   pixie gallery mine --page 2
   pixie gallery search \"robot\"
-  pixie gallery show abc-123")]
+  pixie gallery show abc-123
+  pixie gallery delete xyz-789")]
     Gallery {
         #[command(subcommand)]
         action: GalleryAction,
@@ -133,8 +143,14 @@ EXAMPLES:
   pixie usage                           # Show today's usage
   pixie usage --start 2024-01-01       # Show usage from date
   pixie usage --start 2024-01-01 --end 2024-01-31  # Date range
+  pixie usage --detailed                # Show detailed daily breakdown
+  pixie usage --start 2024-12-01 --detailed  # Detailed view for period
 
-Shows token usage, request counts, and generation history.")]
+Shows:
+  - Total requests and tokens used
+  - Image generation count by type
+  - Daily breakdown (with --detailed)
+  - Cost estimates")]
     Usage {
         #[arg(long, help = "Start date (YYYY-MM-DD)")]
         start: Option<String>,
@@ -152,7 +168,11 @@ Shows:
   - Authentication status
   - API endpoint
   - Config file location
-  - Current user information")]
+  - Current user information
+
+EXAMPLES:
+  pixie config                          # Show all configuration
+  pixie config --api-url https://...    # Show config with custom API")]
     Config,
     
     #[command(about = "Log out and remove stored credentials", long_about = "Log out from the service and remove stored authentication tokens.
@@ -162,19 +182,43 @@ This will:
   - Clear OAuth tokens
   - Reset configuration to defaults
 
-You'll need to authenticate again with 'pixie auth' to use the service.")]
+You'll need to authenticate again with 'pixie auth' to use the service.
+
+EXAMPLES:
+  pixie logout                          # Log out and clear credentials")]
     Logout,
 }
 
 #[derive(Subcommand)]
 enum AuthProvider {
-    #[command(about = "Authenticate with GitHub OAuth")]
+    #[command(about = "Authenticate with GitHub OAuth", long_about = "Authenticate using your GitHub account.
+
+EXAMPLE:
+  pixie auth github
+
+This will:
+  1. Open your browser to GitHub OAuth page
+  2. Request permission to authenticate
+  3. Save credentials locally for future use")]
     Github,
     
-    #[command(about = "Authenticate with Google OAuth")]
+    #[command(about = "Authenticate with Google OAuth", long_about = "Authenticate using your Google account.
+
+EXAMPLE:
+  pixie auth google
+
+This will:
+  1. Show a device code to enter on Google's device page
+  2. Open your browser for authentication
+  3. Save credentials locally for future use")]
     Google,
     
-    #[command(about = "Authenticate with Apple OAuth (coming soon)")]
+    #[command(about = "Authenticate with Apple OAuth (coming soon)", long_about = "Authenticate using your Apple ID.
+
+EXAMPLE:
+  pixie auth apple
+
+Note: Apple authentication is coming soon!")]
     Apple,
 }
 
@@ -186,7 +230,13 @@ Each image shows:
   - Image ID (for editing with gallery:<id>)
   - Original prompt
   - Creation date
-  - Direct URL")]
+  - Direct URL
+
+EXAMPLES:
+  pixie gallery list                    # Show first page
+  pixie gallery list --page 2           # Show page 2
+  pixie gallery list --limit 50         # Show 50 images per page
+  pixie gallery list -p 3 -l 10         # Page 3, 10 items")]
     List {
         #[arg(short, long, default_value = "1", help = "Page number to display")]
         page: usize,
@@ -198,7 +248,12 @@ Each image shows:
     #[command(about = "List your images", long_about = "View all images you've generated.
 
 Shows the same information as the public gallery,
-but filtered to only your creations.")]
+but filtered to only your creations.
+
+EXAMPLES:
+  pixie gallery mine                    # Show your images
+  pixie gallery mine --page 2           # Show page 2
+  pixie gallery mine --limit 100        # Show up to 100 images")]
     Mine {
         #[arg(short, long, default_value = "1", help = "Page number to display")]
         page: usize,
@@ -213,7 +268,11 @@ Shows:
   - Full prompt and metadata
   - Generation parameters
   - Token usage
-  - Direct download URL")]
+  - Direct download URL
+
+EXAMPLES:
+  pixie gallery view abc-123-def        # View specific image
+  pixie gallery view 8e75dda1-4f0c      # View by ID prefix")]
     View {
         #[arg(help = "Image ID from gallery listing")]
         id: String,
