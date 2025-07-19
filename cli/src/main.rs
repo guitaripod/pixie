@@ -39,7 +39,11 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    #[command(about = "Authenticate with the service", long_about = "Authenticate with the OpenAI Image Proxy service using OAuth providers.
+    #[command(about = "Authenticate with the service
+
+Examples:
+  pixie auth github
+  pixie auth google", long_about = "Authenticate with the OpenAI Image Proxy service using OAuth providers.
 
 Supported providers:
   - GitHub: pixie auth github
@@ -51,7 +55,11 @@ Authentication tokens are stored securely in your system's config directory.")]
         provider: AuthProvider,
     },
     
-    #[command(about = "Generate images from text prompts", long_about = "Generate stunning images from text descriptions using gpt-image-1.
+    #[command(about = "Generate images from text prompts
+
+Examples:
+  pixie generate \"cute robot\" -n 4 -o ./images
+  pixie generate \"abstract art\" -s 1536x1024 -q high", long_about = "Generate stunning images from text descriptions using gpt-image-1.
 
 EXAMPLES:
   pixie generate \"a serene mountain landscape at sunset\"
@@ -79,7 +87,11 @@ QUALITY: low, medium, high, auto")]
         output: Option<String>,
     },
     
-    #[command(about = "Edit existing images with AI", long_about = "Transform existing images using AI-powered editing.
+    #[command(about = "Edit existing images with AI
+
+Examples:
+  pixie edit photo.png \"add a rainbow\"
+  pixie edit gallery:abc-123 \"add neon lights\" -o .", long_about = "Transform existing images using AI-powered editing.
 
 EXAMPLES:
   pixie edit photo.png \"add a rainbow in the sky\"
@@ -117,7 +129,11 @@ MASK SUPPORT:
         output: Option<String>,
     },
     
-    #[command(about = "Browse image galleries", long_about = "Browse and search image galleries.
+    #[command(about = "Browse image galleries
+
+Examples:
+  pixie gallery list --limit 10
+  pixie gallery view abc-123", long_about = "Browse and search image galleries.
 
 SUBCOMMANDS:
   list    - List all public images
@@ -137,7 +153,11 @@ EXAMPLES:
         action: GalleryAction,
     },
     
-    #[command(about = "View usage statistics", long_about = "View your API usage statistics and history.
+    #[command(about = "View usage statistics
+
+Examples:
+  pixie usage
+  pixie usage --start 2024-01-01 --detailed", long_about = "View your API usage statistics and history.
 
 EXAMPLES:
   pixie usage                           # Show today's usage
@@ -224,7 +244,11 @@ Note: Apple authentication is coming soon!")]
 
 #[derive(Subcommand)]
 enum GalleryAction {
-    #[command(about = "List all public images", long_about = "Browse the public gallery of generated images.
+    #[command(about = "List all public images
+
+Examples:
+  pixie gallery list
+  pixie gallery list --page 2 --limit 50", long_about = "Browse the public gallery of generated images.
 
 Each image shows:
   - Image ID (for editing with gallery:<id>)
@@ -245,7 +269,11 @@ EXAMPLES:
         limit: usize,
     },
     
-    #[command(about = "List your images", long_about = "View all images you've generated.
+    #[command(about = "List your images
+
+Examples:
+  pixie gallery mine
+  pixie gallery mine --limit 100", long_about = "View all images you've generated.
 
 Shows the same information as the public gallery,
 but filtered to only your creations.
@@ -262,7 +290,10 @@ EXAMPLES:
         limit: usize,
     },
     
-    #[command(about = "View details of a specific image", long_about = "Display detailed information about a specific image.
+    #[command(about = "View details of a specific image
+
+Example:
+  pixie gallery view abc-123-def", long_about = "Display detailed information about a specific image.
 
 Shows:
   - Full prompt and metadata
