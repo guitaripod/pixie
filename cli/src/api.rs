@@ -13,7 +13,7 @@ impl ApiClient {
     pub fn new(base_url: &str) -> Result<Self> {
         let config = Config::load()?;
         let client = Client::builder()
-            .timeout(std::time::Duration::from_secs(60))
+            .timeout(std::time::Duration::from_secs(300))
             .build()?;
         
         Ok(Self {

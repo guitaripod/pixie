@@ -28,7 +28,6 @@ pub async fn handle(
     
     let client = ApiClient::new(api_url)?;
     
-    // Validate and read the image file
     if !Path::new(image_path).exists() {
         return Err(anyhow::anyhow!("Image file not found: {}", image_path));
     }
@@ -36,7 +35,12 @@ pub async fn handle(
     let image_data = fs::read(image_path)
         .with_context(|| format!("Failed to read image file: {}", image_path))?;
     
-    // Detect image format from file extension or content
+    // Check file size (OpenAI limit is 50MB per image)
+    if image_data.len() > 50 * 1024 * 1024 {
+        return Err(anyhow::anyhow!("Image file is too large. Maximum size is 50MB, got {}MB", 
+            image_data.len() / (1024 * 1024)));
+    }
+    
     let mime_type = if image_path.ends_with(".png") {
         "image/png"
     } else if image_path.ends_with(".jpg") || image_path.ends_with(".jpeg") {
@@ -44,14 +48,12 @@ pub async fn handle(
     } else if image_path.ends_with(".webp") {
         "image/webp"
     } else {
-        // Default to PNG
         "image/png"
     };
     
     let image_base64 = STANDARD.encode(&image_data);
     let image_data_url = format!("data:{};base64,{}", mime_type, image_base64);
     
-    // Read mask if provided
     let mask_data_url = if let Some(mask) = mask_path {
         if !Path::new(mask).exists() {
             return Err(anyhow::anyhow!("Mask file not found: {}", mask));
@@ -85,8 +87,8 @@ pub async fn handle(
         size: size.to_string(),
         quality: quality.to_string(),
         background: "auto".to_string(),
-        input_fidelity: "auto".to_string(),
-        output_format: "url".to_string(),
+        input_fidelity: "low".to_string(),
+        output_format: "png".to_string(),
         output_compression: None,
         partial_images: 0,
         stream: false,
