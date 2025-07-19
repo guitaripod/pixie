@@ -1,0 +1,16 @@
+{
+  "name": "openai-image-proxy",
+  "version": "1.0.0",
+  "description": "OpenAI Image Proxy Cloudflare Worker",
+  "main": "index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:dev": "wrangler deploy --env development",
+    "tail": "wrangler tail",
+    "secret:add": "wrangler secret put"
+  },
+  "devDependencies": {
+    "wrangler": "^4.25.0"
+  }
+}
