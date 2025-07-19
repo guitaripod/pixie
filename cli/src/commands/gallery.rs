@@ -27,7 +27,7 @@ pub async fn list_all(api_url: &str, page: usize, limit: usize) -> Result<()> {
     if response.images.is_empty() {
         println!("{}", "No images found".dimmed());
     } else {
-        println!("\nUse {} to view more pages", "oip gallery list --page N".cyan());
+        println!("\nUse {} to view more pages", "pixie gallery list --page N".cyan());
     }
     
     Ok(())
@@ -38,7 +38,7 @@ pub async fn list_mine(api_url: &str, page: usize, limit: usize) -> Result<()> {
     if !config.is_authenticated() {
         return Err(anyhow::anyhow!(
             "Not authenticated. Run {} to authenticate",
-            "oip auth github".cyan()
+            "pixie auth github".cyan()
         ));
     }
     
@@ -63,9 +63,9 @@ pub async fn list_mine(api_url: &str, page: usize, limit: usize) -> Result<()> {
     
     if response.images.is_empty() {
         println!("{}", "No images found".dimmed());
-        println!("Generate some images with: {}", "oip generate \"your prompt\"".cyan());
+        println!("Generate some images with: {}", "pixie generate \"your prompt\"".cyan());
     } else {
-        println!("\nUse {} to view more pages", "oip gallery mine --page N".cyan());
+        println!("\nUse {} to view more pages", "pixie gallery mine --page N".cyan());
     }
     
     Ok(())

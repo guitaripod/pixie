@@ -70,7 +70,7 @@ pub fn show_config(config: &Config) -> Result<()> {
         }
     } else {
         println!("  Status: {}", "Not authenticated".yellow());
-        println!("  Run {} to authenticate", "oip auth github".cyan());
+        println!("  Run {} to authenticate", "pixie auth github".cyan());
     }
     
     Ok(())
