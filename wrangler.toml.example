@@ -1,0 +1,43 @@
+name = "openai-image-proxy"
+main = "build/worker/shim.mjs"
+compatibility_date = "2024-01-01"
+
+[build]
+command = "cargo install -q worker-build && ~/.cargo/bin/worker-build --release --no-opt"
+
+[vars]
+# Deployment configuration
+DEPLOYMENT_MODE = "self-hosted"  # "self-hosted" or "official"
+REQUIRE_OWN_OPENAI_KEY = "true" # For self-hosted deployments
+
+# OAuth Configuration (register your own apps)
+GITHUB_CLIENT_ID = "your-github-oauth-app-client-id"
+GOOGLE_CLIENT_ID = "your-google-web-oauth-client-id"
+GOOGLE_DEVICE_CLIENT_ID = "your-google-device-oauth-client-id"
+
+# Service URLs (update these for your deployment)
+SERVICE_URL = "https://your-worker.workers.dev"
+API_BASE_URL = "https://your-worker.workers.dev"
+
+# Environment
+ENVIRONMENT = "production"
+
+# Secrets to be set via wrangler secret put:
+# - OPENAI_API_KEY (required for official mode, optional for self-hosted)
+# - GITHUB_CLIENT_SECRET
+# - GOOGLE_CLIENT_SECRET
+# - GOOGLE_DEVICE_CLIENT_SECRET
+# - JWT_SECRET (generate a random string)
+
+[[d1_databases]]
+binding = "DB"
+database_name = "your-database-name"
+database_id = "your-database-id"
+
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "your-r2-bucket-name"
+
+# Development configuration
+[env.development]
+vars = { ENVIRONMENT = "development" }
