@@ -138,16 +138,13 @@ Examples:
 SUBCOMMANDS:
   list    - List all public images
   mine    - List your own images
-  search  - Search images by prompt
-  show    - Show details of a specific image
-  delete  - Delete your own image
+  view    - View details of a specific image
 
 EXAMPLES:
   pixie gallery list --limit 10
   pixie gallery mine --page 2
-  pixie gallery search \"robot\"
-  pixie gallery show abc-123
-  pixie gallery delete xyz-789")]
+  pixie gallery view abc-123
+")]
     Gallery {
         #[command(subcommand)]
         action: GalleryAction,
@@ -207,6 +204,35 @@ You'll need to authenticate again with 'pixie auth' to use the service.
 EXAMPLES:
   pixie logout                          # Log out and clear credentials")]
     Logout,
+    
+    #[command(about = "Manage credits and view pricing
+
+Examples:
+  pixie credits
+  pixie credits history --limit 10
+  pixie credits packs", long_about = "View your credit balance and manage credit-related operations.
+
+Shows your current credit balance with a visual indicator and provides
+access to transaction history, available credit packs, and cost estimates.
+
+EXAMPLES:
+  pixie credits                         # Show current balance
+  pixie credits history                 # Show recent transactions
+  pixie credits history --limit 50      # Show more transactions
+  pixie credits packs                   # Show available credit packs
+  pixie credits estimate                # Estimate image generation cost
+
+CREDIT COSTS:
+  Low quality:    ~4-5 credits per image
+  Medium quality: ~12-15 credits per image  
+  High quality:   ~50-80 credits per image
+  Edit operation: +3-5 credits for input processing
+
+1 credit = $0.01 USD")]
+    Credits {
+        #[command(subcommand)]
+        action: Option<CreditsAction>,
+    },
 }
 
 #[derive(Subcommand)]
@@ -310,6 +336,73 @@ EXAMPLES:
     },
 }
 
+#[derive(Subcommand)]
+enum CreditsAction {
+    #[command(about = "View transaction history
+
+Examples:
+  pixie credits history
+  pixie credits history --limit 50", long_about = "Display your recent credit transactions.
+
+Shows:
+  - Transaction type (purchase, spend, refund)
+  - Amount (positive for credits added, negative for spent)
+  - Description of what the credits were used for
+  - Date and time
+  - Balance after transaction
+
+EXAMPLES:
+  pixie credits history                 # Show last 10 transactions
+  pixie credits history --limit 50      # Show last 50 transactions
+  pixie credits history -l 100          # Show last 100 transactions")]
+    History {
+        #[arg(short, long, default_value = "10", help = "Number of transactions to show")]
+        limit: usize,
+    },
+    
+    #[command(about = "Show available credit packs
+
+Example:
+  pixie credits packs", long_about = "Display all available credit packs for purchase.
+
+Shows:
+  - Pack name and credits included
+  - Price in USD
+  - Bonus credits (if any)
+  - Value proposition
+  - Best value indicators
+
+Purchase credits through the web interface or mobile app.")]
+    Packs,
+    
+    #[command(about = "Estimate credit cost for an operation
+
+Examples:
+  pixie credits estimate --quality high --size 1024x1024
+  pixie credits estimate -q medium --edit", long_about = "Calculate estimated credit cost before generating or editing images.
+
+Helps you understand costs before committing to an operation.
+
+EXAMPLES:
+  pixie credits estimate                        # Interactive mode
+  pixie credits estimate -q high -s 1024x1024   # High quality square
+  pixie credits estimate -q medium --edit       # Medium quality edit
+  pixie credits estimate -q low -n 10           # 10 low quality images")]
+    Estimate {
+        #[arg(short, long, help = "Quality level (low, medium, high)")]
+        quality: Option<String>,
+        
+        #[arg(short, long, help = "Image size (1024x1024, 1536x1024, 1024x1536)")]
+        size: Option<String>,
+        
+        #[arg(short, long, default_value = "1", help = "Number of images")]
+        number: u8,
+        
+        #[arg(long, help = "Calculate for edit operation (adds input processing cost)")]
+        edit: bool,
+    },
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -363,6 +456,24 @@ async fn main() -> Result<()> {
         
         Commands::Usage { start, end, detailed } => {
             commands::usage::show(&api_url, start.as_deref(), end.as_deref(), detailed).await?;
+        }
+        
+        Commands::Credits { action } => {
+            match action {
+                None => {
+                    // Show balance by default
+                    commands::credits::show_balance(&api_url).await?;
+                }
+                Some(CreditsAction::History { limit }) => {
+                    commands::credits::show_history(&api_url, limit).await?;
+                }
+                Some(CreditsAction::Packs) => {
+                    commands::credits::show_packs(&api_url).await?;
+                }
+                Some(CreditsAction::Estimate { quality, size, number, edit }) => {
+                    commands::credits::estimate_cost(&api_url, quality.as_deref(), size.as_deref(), number, edit).await?;
+                }
+            }
         }
         
         Commands::Config => {

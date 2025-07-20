@@ -204,6 +204,95 @@ impl ApiClient {
         response.json().await
             .context("Failed to parse usage details response")
     }
+    
+    pub async fn get_credit_balance(&self) -> Result<CreditBalance> {
+        let url = format!("{}/v1/credits/balance", self.base_url);
+        
+        let response = self.client
+            .get(&url)
+            .headers(self.headers()?)
+            .send()
+            .await?;
+        
+        if !response.status().is_success() {
+            let status = response.status();
+            let text = response.text().await?;
+            if let Ok(error) = serde_json::from_str::<ErrorResponse>(&text) {
+                anyhow::bail!("Failed to get credit balance: {}", error.error.message);
+            } else {
+                anyhow::bail!("Failed to get credit balance: {} - {}", status, text);
+            }
+        }
+        
+        Ok(response.json().await?)
+    }
+    
+    pub async fn get_credit_transactions(&self, limit: usize) -> Result<CreditTransactionsResponse> {
+        let url = format!("{}/v1/credits/transactions?per_page={}", self.base_url, limit);
+        
+        let response = self.client
+            .get(&url)
+            .headers(self.headers()?)
+            .send()
+            .await?;
+        
+        if !response.status().is_success() {
+            let status = response.status();
+            let text = response.text().await?;
+            if let Ok(error) = serde_json::from_str::<ErrorResponse>(&text) {
+                anyhow::bail!("Failed to get credit transactions: {}", error.error.message);
+            } else {
+                anyhow::bail!("Failed to get credit transactions: {} - {}", status, text);
+            }
+        }
+        
+        Ok(response.json().await?)
+    }
+    
+    pub async fn get_credit_packs(&self) -> Result<CreditPacksResponse> {
+        let url = format!("{}/v1/credits/packs", self.base_url);
+        
+        let response = self.client
+            .get(&url)
+            .headers(self.headers()?)
+            .send()
+            .await?;
+        
+        if !response.status().is_success() {
+            let status = response.status();
+            let text = response.text().await?;
+            if let Ok(error) = serde_json::from_str::<ErrorResponse>(&text) {
+                anyhow::bail!("Failed to get credit packs: {}", error.error.message);
+            } else {
+                anyhow::bail!("Failed to get credit packs: {} - {}", status, text);
+            }
+        }
+        
+        Ok(response.json().await?)
+    }
+    
+    pub async fn estimate_credit_cost(&self, request: &CreditEstimateRequest) -> Result<CreditEstimateResponse> {
+        let url = format!("{}/v1/credits/estimate", self.base_url);
+        
+        let response = self.client
+            .post(&url)
+            .headers(self.headers()?)
+            .json(request)
+            .send()
+            .await?;
+        
+        if !response.status().is_success() {
+            let status = response.status();
+            let text = response.text().await?;
+            if let Ok(error) = serde_json::from_str::<ErrorResponse>(&text) {
+                anyhow::bail!("Failed to estimate credit cost: {}", error.error.message);
+            } else {
+                anyhow::bail!("Failed to estimate credit cost: {} - {}", status, text);
+            }
+        }
+        
+        Ok(response.json().await?)
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -307,4 +396,77 @@ pub struct DailyUsage {
     pub requests: i64,
     pub tokens: i64,
     pub images: i64,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreditBalance {
+    pub balance: i32,
+    #[allow(dead_code)]
+    pub currency: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreditTransactionsResponse {
+    pub transactions: Vec<CreditTransaction>,
+    #[allow(dead_code)]
+    pub page: usize,
+    #[allow(dead_code)]
+    pub per_page: usize,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreditTransaction {
+    #[allow(dead_code)]
+    pub id: String,
+    #[allow(dead_code)]
+    pub user_id: String,
+    #[serde(rename = "type")]
+    pub transaction_type: String,
+    pub amount: i32,
+    pub balance_after: i32,
+    pub description: String,
+    #[allow(dead_code)]
+    pub reference_id: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreditPacksResponse {
+    pub packs: Vec<CreditPack>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreditPack {
+    pub id: String,
+    pub name: String,
+    pub credits: i32,
+    pub price_usd_cents: i32,
+    pub bonus_credits: i32,
+    pub description: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CreditEstimateRequest {
+    pub prompt: Option<String>,
+    pub quality: String,
+    pub size: String,
+    pub n: Option<u8>,
+    pub is_edit: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreditEstimateResponse {
+    pub estimated_credits: u32,
+    pub estimated_usd: String,
+    pub note: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ErrorResponse {
+    pub error: ErrorDetail,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ErrorDetail {
+    pub message: String,
 }
