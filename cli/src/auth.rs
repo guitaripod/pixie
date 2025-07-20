@@ -91,8 +91,8 @@ async fn authenticate_provider(api_url: &str, provider: &str) -> Result<()> {
         }
         
         print!("\r{} Polling for authorization...", spinner_chars[spinner_idx].green());
-        use std::io::{self, Write};
-        io::stdout().flush()?;
+        use std::io::Write;
+        std::io::stdout().flush()?;
         
         spinner_idx = (spinner_idx + 1) % spinner_chars.len();
         
