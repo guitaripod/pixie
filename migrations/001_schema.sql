@@ -15,6 +15,7 @@ CREATE TABLE users (
     email TEXT,
     name TEXT,
     api_key TEXT UNIQUE NOT NULL,
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     UNIQUE(provider, provider_id)
