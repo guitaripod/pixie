@@ -4,3 +4,4 @@ pub mod gallery;
 pub mod usage;
 pub mod credits;
 pub mod utils;
+pub mod admin;
