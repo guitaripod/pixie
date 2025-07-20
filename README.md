@@ -32,9 +32,9 @@ A high-performance Rust-based Cloudflare Worker that proxies OpenAI's gpt-image-
 - **Language**: Rust with worker-rs
 
 <details>
-<summary><b>📊 Current Status</b></summary>
+<summary><b>Current Status</b></summary>
 
-✅ **Implemented:**
+**Implemented:**
 - gpt-image-1 image generation endpoint
 - Image editing endpoint
 - R2 storage with public URL access
@@ -44,14 +44,14 @@ A high-performance Rust-based Cloudflare Worker that proxies OpenAI's gpt-image-
 - OAuth authentication (~~Apple~~(soon), GitHub, Google)
 - Admin dashboard in CLI
 
-🚧 **Planned:**
+**Planned:**
 - Rate limiting
 - Streaming responses
 
 </details>
 
 <details>
-<summary><b>🚀 Deployment Modes</b></summary>
+<summary><b>Deployment Modes</b></summary>
 
 The service supports two deployment modes:
 
@@ -78,7 +78,7 @@ npx wrangler secret put REQUIRE_OWN_OPENAI_KEY # "true" for self-hosted
 ## Quick Start
 
 <details>
-<summary><b>🔧 Installation & Setup</b></summary>
+<summary><b>Installation & Setup</b></summary>
 
 1. Clone the repository:
 ```bash
@@ -135,7 +135,7 @@ For detailed setup instructions, see [docs/SETUP.md](docs/SETUP.md).
 A comprehensive command-line interface is available for managing the OpenAI Image Proxy service.
 
 <details>
-<summary><b>💻 CLI Installation & Usage</b></summary>
+<summary><b>CLI Installation & Usage</b></summary>
 
 ### Installation
 
@@ -211,7 +211,7 @@ For detailed CLI documentation, run `pixie help` after installation.
 ## API Documentation
 
 <details>
-<summary><b>🖼️ Image Generation & Editing</b></summary>
+<summary><b>Image Generation & Editing</b></summary>
 
 ### Generate Image
 ```bash
@@ -239,7 +239,7 @@ curl -X POST https://your-worker.workers.dev/v1/images/edits \
 </details>
 
 <details>
-<summary><b>🖼️ Gallery & Images</b></summary>
+<summary><b>Gallery & Images</b></summary>
 
 ### Browse Public Gallery
 ```bash
@@ -254,7 +254,7 @@ curl https://your-worker.workers.dev/v1/images/{image_id}
 </details>
 
 <details>
-<summary><b>💳 Credits Management</b></summary>
+<summary><b>Credits Management</b></summary>
 
 ### Check Balance
 ```bash
@@ -299,7 +299,7 @@ curl https://your-worker.workers.dev/v1/credits/transactions \
 </details>
 
 <details>
-<summary><b>🔐 Authentication & System</b></summary>
+<summary><b>Authentication & System</b></summary>
 
 ### Device Authentication
 
@@ -342,7 +342,7 @@ curl https://your-worker.workers.dev/
 </details>
 
 <details>
-<summary><b>👨‍💼 Admin Endpoints</b></summary>
+<summary><b>Admin Endpoints</b></summary>
 
 ### Adjust User Credits (Admin Only)
 ```bash
@@ -367,7 +367,7 @@ curl https://your-worker.workers.dev/v1/admin/credits/stats \
 ## Development
 
 <details>
-<summary><b>🛠️ Development Setup</b></summary>
+<summary><b>Development Setup</b></summary>
 
 Run locally:
 ```bash
@@ -387,7 +387,7 @@ npx wrangler tail
 </details>
 
 <details>
-<summary><b>📁 Project Structure</b></summary>
+<summary><b>Project Structure</b></summary>
 
 ```
 ├── src/
@@ -428,7 +428,7 @@ npx wrangler tail
 The service uses a credit-based pricing system where **1 credit = $0.01 USD**. Credits are deducted based on actual token usage.
 
 <details>
-<summary><b>💰 Pricing Details</b></summary>
+<summary><b>Pricing Details</b></summary>
 
 ### Typical Credit Costs
 
