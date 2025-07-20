@@ -2,6 +2,16 @@
 
 A high-performance Rust-based Cloudflare Worker that proxies OpenAI's gpt-image-1 model with enhanced features like automatic image storage, usage tracking, and public galleries.
 
+## Table of Contents
+
+- [Features](#features)
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
+- [CLI Tool](#cli-tool)
+- [API Documentation](#api-documentation)
+- [Development](#development)
+- [Credits & Billing](#credits--billing)
+
 ## Features
 
 - **OpenAI API Compatibility**: Full compatibility with OpenAI's gpt-image-1 image generation and editing APIs
@@ -21,7 +31,8 @@ A high-performance Rust-based Cloudflare Worker that proxies OpenAI's gpt-image-
 - **Storage**: Cloudflare R2 (S3-compatible)
 - **Language**: Rust with worker-rs
 
-## Current Status
+<details>
+<summary><b>📊 Current Status</b></summary>
 
 ✅ **Implemented:**
 - gpt-image-1 image generation endpoint
@@ -37,7 +48,10 @@ A high-performance Rust-based Cloudflare Worker that proxies OpenAI's gpt-image-
 - Rate limiting
 - Streaming responses
 
-## Deployment Modes
+</details>
+
+<details>
+<summary><b>🚀 Deployment Modes</b></summary>
 
 The service supports two deployment modes:
 
@@ -59,7 +73,12 @@ npx wrangler secret put DEPLOYMENT_MODE # "official" or "self-hosted"
 npx wrangler secret put REQUIRE_OWN_OPENAI_KEY # "true" for self-hosted
 ```
 
+</details>
+
 ## Quick Start
+
+<details>
+<summary><b>🔧 Installation & Setup</b></summary>
 
 1. Clone the repository:
 ```bash
@@ -109,172 +128,14 @@ npx wrangler deploy
 
 For detailed setup instructions, see [docs/SETUP.md](docs/SETUP.md).
 
-## Credits & Billing
-
-The service uses a credit-based pricing system where **1 credit = $0.01 USD**. Credits are deducted based on actual token usage.
-
-### Typical Credit Costs
-
-| Quality | Size | Credits | USD Cost |
-|---------|------|---------|----------|
-| Low | 1024×1024 | 3-5 | $0.03-0.05 |
-| Medium | 1024×1024 | 12-15 | $0.12-0.15 |
-| High | 1024×1024 | 50-55 | $0.50-0.55 |
-
-### Credit Packs
-
-| Pack | Credits | Price | Bonus |
-|------|---------|-------|-------|
-| Starter | 100 | $1.99 | - |
-| Basic | 550 | $7.99 | 50 (10%) |
-| Popular | 1,800 | $19.99 | 300 (20%) |
-| Pro | 4,500 | $39.99 | 1,000 (40%) |
-| Enterprise | 11,000 | $79.99 | 3,000 (60%) |
-
-For detailed pricing information, see [docs/pricing.md](docs/pricing.md).
-
-## API Documentation
-
-### Image Generation
-
-#### Generate Image
-```bash
-curl -X POST https://your-worker.workers.dev/v1/images/generations \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer your-api-key" \
-  -d '{
-    "model": "gpt-image-1",
-    "prompt": "A serene mountain landscape",
-    "size": "1024x1024",
-    "quality": "high"
-  }'
-```
-
-#### Edit Image
-```bash
-curl -X POST https://your-worker.workers.dev/v1/images/edits \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer your-api-key" \
-  -F image="@original.png" \
-  -F mask="@mask.png" \
-  -F prompt="Add a sunset to the background"
-```
-
-### Gallery & Images
-
-#### Browse Public Gallery
-```bash
-curl https://your-worker.workers.dev/v1/images
-```
-
-#### Get Specific Image
-```bash
-curl https://your-worker.workers.dev/v1/images/{image_id}
-```
-
-### Credits Management
-
-#### Check Balance
-```bash
-curl https://your-worker.workers.dev/v1/credits/balance \
-  -H "Authorization: Bearer your-api-key"
-```
-
-#### Estimate Cost
-```bash
-curl -X POST https://your-worker.workers.dev/v1/credits/estimate \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer your-api-key" \
-  -d '{
-    "prompt": "Your prompt here",
-    "quality": "medium",
-    "size": "1024x1024"
-  }'
-```
-
-#### View Credit Packs
-```bash
-curl https://your-worker.workers.dev/v1/credits/packs
-```
-
-#### Purchase Credits
-```bash
-curl -X POST https://your-worker.workers.dev/v1/credits/purchase \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer your-api-key" \
-  -d '{
-    "pack_id": "popular",
-    "payment_method": "stripe"
-  }'
-```
-
-#### Transaction History
-```bash
-curl https://your-worker.workers.dev/v1/credits/transactions \
-  -H "Authorization: Bearer your-api-key"
-```
-
-### Device Authentication
-
-#### Initialize Device Flow
-```bash
-curl -X POST https://your-worker.workers.dev/v1/auth/device/code \
-  -H "Content-Type: application/json" \
-  -d '{
-    "client_id": "your-client-id"
-  }'
-```
-
-#### Poll for Token
-```bash
-curl -X POST https://your-worker.workers.dev/v1/auth/device/token \
-  -H "Content-Type: application/json" \
-  -d '{
-    "device_code": "XXXX-XXXX",
-    "client_id": "your-client-id"
-  }'
-```
-
-#### Check Device Auth Status
-```bash
-# Check if a device authentication has been completed
-# Returns: {status: "pending|completed|expired", message: "..."}
-curl https://your-worker.workers.dev/v1/auth/device/{device_code}/status
-
-# Note: This endpoint is primarily for debugging and support purposes.
-# The device auth flow normally handles polling automatically.
-```
-
-### System Status
-
-#### Health Check
-```bash
-curl https://your-worker.workers.dev/
-```
-
-### Admin Endpoints
-
-#### Adjust User Credits (Admin Only)
-```bash
-curl -X POST https://your-worker.workers.dev/v1/admin/credits/adjust \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer admin-api-key" \
-  -d '{
-    "user_id": "user123",
-    "amount": 100,
-    "reason": "Manual adjustment"
-  }'
-```
-
-#### Credit Statistics (Admin Only)
-```bash
-curl https://your-worker.workers.dev/v1/admin/credits/stats \
-  -H "Authorization: Bearer admin-api-key"
-```
+</details>
 
 ## CLI Tool
 
 A comprehensive command-line interface is available for managing the OpenAI Image Proxy service.
+
+<details>
+<summary><b>💻 CLI Installation & Usage</b></summary>
 
 ### Installation
 
@@ -345,7 +206,168 @@ pixie auth device-status DEVICE-CODE-HERE
 
 For detailed CLI documentation, run `pixie help` after installation.
 
+</details>
+
+## API Documentation
+
+<details>
+<summary><b>🖼️ Image Generation & Editing</b></summary>
+
+### Generate Image
+```bash
+curl -X POST https://your-worker.workers.dev/v1/images/generations \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-api-key" \
+  -d '{
+    "model": "gpt-image-1",
+    "prompt": "A serene mountain landscape",
+    "size": "1024x1024",
+    "quality": "high"
+  }'
+```
+
+### Edit Image
+```bash
+curl -X POST https://your-worker.workers.dev/v1/images/edits \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-api-key" \
+  -F image="@original.png" \
+  -F mask="@mask.png" \
+  -F prompt="Add a sunset to the background"
+```
+
+</details>
+
+<details>
+<summary><b>🖼️ Gallery & Images</b></summary>
+
+### Browse Public Gallery
+```bash
+curl https://your-worker.workers.dev/v1/images
+```
+
+### Get Specific Image
+```bash
+curl https://your-worker.workers.dev/v1/images/{image_id}
+```
+
+</details>
+
+<details>
+<summary><b>💳 Credits Management</b></summary>
+
+### Check Balance
+```bash
+curl https://your-worker.workers.dev/v1/credits/balance \
+  -H "Authorization: Bearer your-api-key"
+```
+
+### Estimate Cost
+```bash
+curl -X POST https://your-worker.workers.dev/v1/credits/estimate \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-api-key" \
+  -d '{
+    "prompt": "Your prompt here",
+    "quality": "medium",
+    "size": "1024x1024"
+  }'
+```
+
+### View Credit Packs
+```bash
+curl https://your-worker.workers.dev/v1/credits/packs
+```
+
+### Purchase Credits
+```bash
+curl -X POST https://your-worker.workers.dev/v1/credits/purchase \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-api-key" \
+  -d '{
+    "pack_id": "popular",
+    "payment_method": "stripe"
+  }'
+```
+
+### Transaction History
+```bash
+curl https://your-worker.workers.dev/v1/credits/transactions \
+  -H "Authorization: Bearer your-api-key"
+```
+
+</details>
+
+<details>
+<summary><b>🔐 Authentication & System</b></summary>
+
+### Device Authentication
+
+#### Initialize Device Flow
+```bash
+curl -X POST https://your-worker.workers.dev/v1/auth/device/code \
+  -H "Content-Type: application/json" \
+  -d '{
+    "client_id": "your-client-id"
+  }'
+```
+
+#### Poll for Token
+```bash
+curl -X POST https://your-worker.workers.dev/v1/auth/device/token \
+  -H "Content-Type: application/json" \
+  -d '{
+    "device_code": "XXXX-XXXX",
+    "client_id": "your-client-id"
+  }'
+```
+
+#### Check Device Auth Status
+```bash
+# Check if a device authentication has been completed
+# Returns: {status: "pending|completed|expired", message: "..."}
+curl https://your-worker.workers.dev/v1/auth/device/{device_code}/status
+
+# Note: This endpoint is primarily for debugging and support purposes.
+# The device auth flow normally handles polling automatically.
+```
+
+### System Status
+
+#### Health Check
+```bash
+curl https://your-worker.workers.dev/
+```
+
+</details>
+
+<details>
+<summary><b>👨‍💼 Admin Endpoints</b></summary>
+
+### Adjust User Credits (Admin Only)
+```bash
+curl -X POST https://your-worker.workers.dev/v1/admin/credits/adjust \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer admin-api-key" \
+  -d '{
+    "user_id": "user123",
+    "amount": 100,
+    "reason": "Manual adjustment"
+  }'
+```
+
+### Credit Statistics (Admin Only)
+```bash
+curl https://your-worker.workers.dev/v1/admin/credits/stats \
+  -H "Authorization: Bearer admin-api-key"
+```
+
+</details>
+
 ## Development
+
+<details>
+<summary><b>🛠️ Development Setup</b></summary>
 
 Run locally:
 ```bash
@@ -362,20 +384,22 @@ View logs:
 npx wrangler tail
 ```
 
-## Project Structure
+</details>
+
+<details>
+<summary><b>📁 Project Structure</b></summary>
 
 ```
 ├── src/
 │   ├── lib.rs              # Main worker entry point
 │   ├── handlers/           # Request handlers
 │   │   ├── images.rs       # Image generation
-│   │   ├── images_edit.rs  # Image editing
 │   │   ├── gallery.rs      # Public gallery
 │   │   ├── usage.rs        # Usage tracking
 │   │   ├── r2.rs           # Image serving
 │   │   ├── credits.rs      # Credits management
 │   │   ├── device_auth.rs  # Device authentication flow
-│   │   └── admin.rs        # Admin endpoints
+│   │   └── oauth.rs        # OAuth handlers
 │   ├── models.rs           # Data models
 │   ├── auth.rs             # Authentication
 │   ├── credits.rs          # Credits system logic
@@ -383,7 +407,10 @@ npx wrangler tail
 │   ├── storage.rs          # R2 storage
 │   └── error.rs            # Error handling
 ├── cli/                    # CLI application
-│   ├── src/                # CLI source code
+│   ├── src/
+│   │   ├── cli/            # Command definitions
+│   │   ├── commands/       # Command handlers
+│   │   └── main.rs         # CLI entry point
 │   └── Cargo.toml          # CLI dependencies
 ├── migrations/             # D1 database migrations
 ├── docs/                   # Documentation
@@ -393,6 +420,37 @@ npx wrangler tail
 ├── examples/               # Example scripts
 └── wrangler.toml          # Worker configuration
 ```
+
+</details>
+
+## Credits & Billing
+
+The service uses a credit-based pricing system where **1 credit = $0.01 USD**. Credits are deducted based on actual token usage.
+
+<details>
+<summary><b>💰 Pricing Details</b></summary>
+
+### Typical Credit Costs
+
+| Quality | Size | Credits | USD Cost |
+|---------|------|---------|----------|
+| Low | 1024×1024 | 3-5 | $0.03-0.05 |
+| Medium | 1024×1024 | 12-15 | $0.12-0.15 |
+| High | 1024×1024 | 50-55 | $0.50-0.55 |
+
+### Credit Packs
+
+| Pack | Credits | Price | Bonus |
+|------|---------|-------|-------|
+| Starter | 100 | $1.99 | - |
+| Basic | 550 | $7.99 | 50 (10%) |
+| Popular | 1,800 | $19.99 | 300 (20%) |
+| Pro | 4,500 | $39.99 | 1,000 (40%) |
+| Enterprise | 11,000 | $79.99 | 3,000 (60%) |
+
+For detailed pricing information, see [docs/pricing.md](docs/pricing.md).
+
+</details>
 
 ## Documentation
 
