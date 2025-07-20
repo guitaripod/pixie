@@ -237,7 +237,12 @@ curl -X POST https://your-worker.workers.dev/v1/auth/device/token \
 
 #### Check Device Auth Status
 ```bash
+# Check if a device authentication has been completed
+# Returns: {status: "pending|completed|expired", message: "..."}
 curl https://your-worker.workers.dev/v1/auth/device/{device_code}/status
+
+# Note: This endpoint is primarily for debugging and support purposes.
+# The device auth flow normally handles polling automatically.
 ```
 
 ### System Status
@@ -328,6 +333,14 @@ pixie health --api-url https://custom-api.com
 ```bash
 # Check the status of a device authentication flow
 pixie auth device-status DEVICE-CODE-HERE
+
+# This is primarily for debugging/support purposes
+# Use cases:
+# - Check if a user completed device authentication
+# - Debug stuck authentication flows
+# - Verify device codes are working correctly
+# 
+# Expected statuses: pending, completed, expired, or invalid
 ```
 
 For detailed CLI documentation, run `pixie help` after installation.
