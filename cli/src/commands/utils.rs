@@ -55,3 +55,36 @@ pub async fn show_credits_used(
     }
     Ok(())
 }
+
+pub async fn health_check(api_url: &str) -> Result<()> {
+    println!("Checking API health at: {}", api_url.blue());
+    
+    let client = reqwest::Client::new();
+    let start = std::time::Instant::now();
+    
+    match client.get(api_url).send().await {
+        Ok(response) => {
+            let latency = start.elapsed();
+            let status = response.status();
+            let body = response.text().await.unwrap_or_default();
+            
+            if status.is_success() {
+                println!("\n{} API is healthy", "✓".green().bold());
+                println!("  Status:   {}", status.to_string().green());
+                println!("  Response: {}", body.trim());
+                println!("  Latency:  {:?}", latency);
+            } else {
+                println!("\n{} API returned error", "✗".red().bold());
+                println!("  Status:   {}", status.to_string().red());
+                println!("  Response: {}", body.trim());
+            }
+        }
+        Err(e) => {
+            println!("\n{} API is unreachable", "✗".red().bold());
+            println!("  Error: {}", e.to_string().red());
+            return Err(anyhow::anyhow!("Failed to reach API"));
+        }
+    }
+    
+    Ok(())
+}
