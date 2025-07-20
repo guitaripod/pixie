@@ -7,6 +7,8 @@ use crate::credits::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use uuid::Uuid;
+use chrono::Utc;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreditBalanceResponse {
@@ -227,13 +229,11 @@ pub async fn complete_purchase_webhook(mut req: Request, ctx: RouteContext<()>) 
 pub async fn admin_adjust_credits(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let env = ctx.env;
     
-    // TODO: Add proper admin authentication
-    // For now, check if the API key belongs to a specific admin user
     let admin_user_id = match validate_api_key(&req) {
         Err(e) => return e.to_response(),
         Ok(api_key) => {
             let db = env.d1("DB")?;
-            let stmt = db.prepare("SELECT id, email FROM users WHERE api_key = ?");
+            let stmt = db.prepare("SELECT id, email, is_admin FROM users WHERE api_key = ?");
             let result = stmt
                 .bind(&[api_key.clone().into()])?
                 .first::<serde_json::Value>(None)
@@ -241,9 +241,11 @@ pub async fn admin_adjust_credits(mut req: Request, ctx: RouteContext<()>) -> Re
             
             match result {
                 Some(value) => {
-                    let email = value.get("email").and_then(|v| v.as_str()).unwrap_or("");
-                    // Simple admin check - in production, use a proper admin flag
-                    if !email.contains("admin") && !email.contains("marcus") {
+                    let is_admin = value.get("is_admin")
+                        .and_then(|v| v.as_i64())
+                        .map(|v| v != 0)
+                        .unwrap_or(false);
+                    if !is_admin {
                         return AppError::Forbidden("Admin access required".to_string()).to_response();
                     }
                     value.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string()
@@ -260,17 +262,67 @@ pub async fn admin_adjust_credits(mut req: Request, ctx: RouteContext<()>) -> Re
     
     let db = env.d1("DB")?;
     
-    let transaction_type = if adjust_req.amount > 0 { "admin_adjustment" } else { "admin_adjustment" };
     let description = format!("Admin adjustment by {}: {}", admin_user_id, adjust_req.reason);
     
-    let new_balance = add_credits(
-        &adjust_req.user_id,
-        adjust_req.amount.abs() as u32,
-        transaction_type,
-        &description,
-        None,
-        &db,
-    ).await?;
+    let new_balance = if adjust_req.amount > 0 {
+        // Positive adjustment - add credits
+        add_credits(
+            &adjust_req.user_id,
+            adjust_req.amount as u32,
+            "admin_adjustment",
+            &description,
+            None,
+            &db,
+        ).await?
+    } else {
+        // Negative adjustment - deduct credits but ensure balance doesn't go below 0
+        let current_balance = get_user_balance(&adjust_req.user_id, &db).await?;
+        let amount_to_deduct = adjust_req.amount.abs() as u32;
+        
+        // Calculate new balance, but don't go below 0
+        let new_balance = if current_balance >= amount_to_deduct as i32 {
+            current_balance - amount_to_deduct as i32
+        } else {
+            0
+        };
+        
+        // Calculate actual amount deducted
+        let actual_deduction = current_balance - new_balance;
+        
+        // Update balance
+        db.prepare(
+            "UPDATE user_credits 
+             SET balance = ?, updated_at = ? 
+             WHERE user_id = ?"
+        )
+        .bind(&[
+            new_balance.into(),
+            Utc::now().to_rfc3339().into(),
+            adjust_req.user_id.clone().into(),
+        ])?
+        .run()
+        .await?;
+        
+        // Record transaction with actual amount deducted
+        let transaction_id = Uuid::new_v4().to_string();
+        db.prepare(
+            "INSERT INTO credit_transactions (id, user_id, type, amount, balance_after, description, reference_id, created_at) 
+             VALUES (?, ?, ?, ?, ?, ?, NULL, ?)"
+        )
+        .bind(&[
+            transaction_id.into(),
+            adjust_req.user_id.clone().into(),
+            "admin_adjustment".into(),
+            (-actual_deduction).into(), // Negative amount for deduction
+            new_balance.into(),
+            description.into(),
+            Utc::now().to_rfc3339().into(),
+        ])?
+        .run()
+        .await?;
+        
+        new_balance
+    };
     
     Response::from_json(&json!({
         "user_id": adjust_req.user_id,
@@ -280,10 +332,33 @@ pub async fn admin_adjust_credits(mut req: Request, ctx: RouteContext<()>) -> Re
     }))
 }
 
-pub async fn admin_system_stats(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
+pub async fn admin_system_stats(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let env = ctx.env;
     
-    // TODO: Add proper admin authentication
+    match validate_api_key(&req) {
+        Err(e) => return e.to_response(),
+        Ok(api_key) => {
+            let db = env.d1("DB")?;
+            let stmt = db.prepare("SELECT id, is_admin FROM users WHERE api_key = ?");
+            let result = stmt
+                .bind(&[api_key.clone().into()])?
+                .first::<serde_json::Value>(None)
+                .await?;
+            
+            match result {
+                Some(value) => {
+                    let is_admin = value.get("is_admin")
+                        .and_then(|v| v.as_i64())
+                        .map(|v| v != 0)
+                        .unwrap_or(false);
+                    if !is_admin {
+                        return AppError::Forbidden("Admin access required".to_string()).to_response();
+                    }
+                },
+                None => return AppError::Unauthorized("Invalid API key".to_string()).to_response(),
+            }
+        }
+    };
     
     let db = env.d1("DB")?;
     
