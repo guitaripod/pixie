@@ -1,4 +1,7 @@
 -- Drop all existing tables
+DROP TABLE IF EXISTS credit_transactions;
+DROP TABLE IF EXISTS credit_purchases;
+DROP TABLE IF EXISTS user_credits;
 DROP TABLE IF EXISTS device_auth_flows;
 DROP TABLE IF EXISTS usage_records;
 DROP TABLE IF EXISTS stored_images;
@@ -32,6 +35,8 @@ CREATE TABLE stored_images (
     created_at TIMESTAMP NOT NULL,
     expires_at TIMESTAMP NOT NULL,
     token_usage INTEGER DEFAULT 0,
+    openai_cost_cents INTEGER DEFAULT 0,
+    credits_charged INTEGER DEFAULT 0,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
@@ -79,3 +84,48 @@ CREATE TABLE device_auth_flows (
 
 CREATE INDEX idx_device_auth_flows_device_code ON device_auth_flows(device_code);
 CREATE INDEX idx_device_auth_flows_expires_at ON device_auth_flows(expires_at);
+
+-- Create user_credits table
+CREATE TABLE user_credits (
+    user_id TEXT PRIMARY KEY,
+    balance INTEGER NOT NULL DEFAULT 0,
+    lifetime_purchased INTEGER NOT NULL DEFAULT 0,
+    lifetime_spent INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Create credit_transactions table
+CREATE TABLE credit_transactions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('purchase', 'spend', 'refund', 'bonus', 'admin_adjustment')),
+    amount INTEGER NOT NULL,
+    balance_after INTEGER NOT NULL,
+    description TEXT NOT NULL,
+    reference_id TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE INDEX idx_credit_transactions_user_id ON credit_transactions(user_id);
+CREATE INDEX idx_credit_transactions_created_at ON credit_transactions(created_at);
+
+-- Create credit_purchases table
+CREATE TABLE credit_purchases (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    pack_id TEXT NOT NULL,
+    credits INTEGER NOT NULL,
+    amount_usd_cents INTEGER NOT NULL,
+    payment_provider TEXT NOT NULL,
+    payment_id TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('pending', 'completed', 'failed', 'refunded')),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE INDEX idx_credit_purchases_user_id ON credit_purchases(user_id);
+CREATE INDEX idx_credit_purchases_status ON credit_purchases(status);
