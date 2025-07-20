@@ -22,12 +22,11 @@ A high-performance Rust-based Cloudflare Worker that proxies OpenAI's gpt-image-
 
 ✅ **Implemented:**
 - gpt-image-1 image generation endpoint
-- Image editing endpoint (JSON format)
+- Image editing endpoint
 - R2 storage with public URL access
 - D1 database integration
 - Public gallery endpoints
 - Usage tracking and analytics
-- Development mode with test user
 - OAuth authentication (~~Apple~~(soon), GitHub, Google)
 - Admin dashboard in CLI
 
