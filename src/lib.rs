@@ -6,6 +6,7 @@ mod auth;
 mod handlers;
 mod storage;
 mod deployment;
+mod credits;
 
 use handlers::{images, gallery, r2, usage, oauth, device_auth};
 
@@ -35,6 +36,14 @@ async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .post_async("/v1/auth/device/code", device_auth::start_device_flow)
         .post_async("/v1/auth/device/token", device_auth::poll_device_token)
         .get_async("/v1/auth/device/:device_code/status", device_auth::device_auth_status)
+        .get_async("/v1/credits/balance", handlers::credits::get_balance)
+        .get_async("/v1/credits/transactions", handlers::credits::list_transactions)
+        .get_async("/v1/credits/packs", handlers::credits::list_packs)
+        .post_async("/v1/credits/estimate", handlers::credits::estimate_cost)
+        .post_async("/v1/credits/purchase", handlers::credits::purchase_credits)
+        .post_async("/v1/credits/webhook", handlers::credits::complete_purchase_webhook)
+        .post_async("/v1/admin/credits/adjust", handlers::credits::admin_adjust_credits)
+        .get_async("/v1/admin/credits/stats", handlers::credits::admin_system_stats)
         .run(req, env)
         .await
 }
