@@ -235,6 +235,18 @@ curl -X POST https://your-worker.workers.dev/v1/auth/device/token \
   }'
 ```
 
+#### Check Device Auth Status
+```bash
+curl https://your-worker.workers.dev/v1/auth/device/{device_code}/status
+```
+
+### System Status
+
+#### Health Check
+```bash
+curl https://your-worker.workers.dev/
+```
+
 ### Admin Endpoints
 
 #### Adjust User Credits (Admin Only)
@@ -264,6 +276,7 @@ A comprehensive command-line interface is available for managing the OpenAI Imag
 ```bash
 cd cli
 cargo install --path .
+# The CLI will be installed as 'pixie'
 ```
 
 ### Features
@@ -278,17 +291,46 @@ cargo install --path .
 ### Basic Usage
 
 ```bash
+# Authenticate with the service
+pixie auth github
+# or
+pixie auth google
+
 # Generate an image
-openai-image-proxy generate "A beautiful sunset" --quality medium
+pixie generate "A beautiful sunset" --quality medium -o ./images
+
+# Edit an image
+pixie edit photo.png "add a rainbow" -o ./edited
 
 # Check credit balance
-openai-image-proxy credits balance
+pixie credits
+
+# Check API health
+pixie health
+
+# Browse gallery
+pixie gallery list
 
 # View help
-openai-image-proxy --help
+pixie --help
 ```
 
-For detailed CLI documentation, run `openai-image-proxy help` after installation.
+### New Commands
+
+#### Health Check
+```bash
+# Check if the API is online and responding
+pixie health
+pixie health --api-url https://custom-api.com
+```
+
+#### Device Authentication Status
+```bash
+# Check the status of a device authentication flow
+pixie auth device-status DEVICE-CODE-HERE
+```
+
+For detailed CLI documentation, run `pixie help` after installation.
 
 ## Development
 
