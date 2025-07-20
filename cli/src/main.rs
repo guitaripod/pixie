@@ -442,6 +442,18 @@ EXAMPLE:
 
 Note: Apple authentication is coming soon!")]
     Apple,
+    
+    #[command(about = "Check device authentication status", long_about = "Check the status of a device authentication flow.
+
+EXAMPLE:
+  pixie auth device-status <device-code>
+
+This is useful for checking if a device authentication has completed
+when using the Google authentication flow or for debugging.")]
+    DeviceStatus {
+        #[arg(help = "Device code to check status for")]
+        device_code: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -686,6 +698,9 @@ async fn main() -> Result<()> {
                 }
                 AuthProvider::Apple => {
                     println!("{}", "Apple authentication not yet implemented".yellow());
+                }
+                AuthProvider::DeviceStatus { device_code } => {
+                    commands::utils::check_device_auth_status(&api_url, &device_code).await?;
                 }
             }
         }

@@ -293,6 +293,23 @@ impl ApiClient {
         
         Ok(response.json().await?)
     }
+    
+    pub async fn check_device_auth_status(&self, device_code: &str) -> Result<DeviceAuthStatus> {
+        let url = format!("{}/v1/auth/device/{}/status", self.base_url, device_code);
+        
+        let response = self.client
+            .get(&url)
+            .send()
+            .await?;
+        
+        if !response.status().is_success() {
+            let error = response.text().await?;
+            return Err(anyhow::anyhow!("API error: {}", error));
+        }
+        
+        response.json().await
+            .context("Failed to parse device auth status")
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -468,5 +485,11 @@ pub struct ErrorResponse {
 
 #[derive(Debug, Deserialize)]
 pub struct ErrorDetail {
+    pub message: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DeviceAuthStatus {
+    pub status: String,
     pub message: String,
 }

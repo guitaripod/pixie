@@ -88,3 +88,42 @@ pub async fn health_check(api_url: &str) -> Result<()> {
     
     Ok(())
 }
+
+pub async fn check_device_auth_status(api_url: &str, device_code: &str) -> Result<()> {
+    let client = ApiClient::new(api_url)?;
+    
+    println!("Checking device authentication status...");
+    println!("Device code: {}", device_code.yellow());
+    
+    match client.check_device_auth_status(device_code).await {
+        Ok(status) => {
+            println!("\n{}", "Device Auth Status:".bold());
+            println!("  Status:  {}", status.status.cyan());
+            println!("  Message: {}", status.message);
+            
+            match status.status.as_str() {
+                "pending" => {
+                    println!("\n{}", "⏳ Authentication is still pending".yellow());
+                    println!("Please complete the authentication in your browser.");
+                }
+                "completed" => {
+                    println!("\n{} Authentication completed successfully!", "✓".green().bold());
+                }
+                "expired" => {
+                    println!("\n{} Device code has expired", "✗".red().bold());
+                    println!("Please start a new authentication flow.");
+                }
+                _ => {
+                    println!("\n{} Unknown status", "?".blue());
+                }
+            }
+        }
+        Err(e) => {
+            println!("\n{} Failed to check device status", "✗".red().bold());
+            println!("  Error: {}", e.to_string().red());
+            return Err(e);
+        }
+    }
+    
+    Ok(())
+}
