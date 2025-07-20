@@ -5,7 +5,9 @@ use crate::models::{ErrorResponse, ErrorDetail};
 pub enum AppError {
     BadRequest(String),
     Unauthorized(String),
+    Forbidden(String),
     NotFound(String),
+    PaymentRequired(String),
     InternalError(String),
     RateLimitExceeded,
 }
@@ -15,7 +17,9 @@ impl AppError {
         let (status, error_type, message) = match self {
             AppError::BadRequest(msg) => (400, "invalid_request_error", msg.clone()),
             AppError::Unauthorized(msg) => (401, "authentication_error", msg.clone()),
+            AppError::Forbidden(msg) => (403, "permission_denied", msg.clone()),
             AppError::NotFound(msg) => (404, "not_found", msg.clone()),
+            AppError::PaymentRequired(msg) => (402, "insufficient_credits", msg.clone()),
             AppError::InternalError(msg) => (500, "internal_error", msg.clone()),
             AppError::RateLimitExceeded => (429, "rate_limit_exceeded", "Rate limit exceeded. Please try again later.".to_string()),
         };
