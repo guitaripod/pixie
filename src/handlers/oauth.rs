@@ -1,5 +1,6 @@
 use worker::{Request, Response, RouteContext, Result, console_log};
 use crate::error::AppError;
+use crate::credits::initialize_user_credits;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use uuid::Uuid;
@@ -202,6 +203,9 @@ pub async fn github_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Re
             .run()
             .await?;
         
+        // Initialize credits for new user
+        initialize_user_credits(&new_user_id, &db).await?;
+        
         (new_user_id, new_api_key)
     };
     
@@ -349,6 +353,9 @@ pub async fn google_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Re
             ])?
             .run()
             .await?;
+        
+        // Initialize credits for new user
+        initialize_user_credits(&new_user_id, &db).await?;
         
         (new_user_id, new_api_key)
     };

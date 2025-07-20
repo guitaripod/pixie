@@ -4,6 +4,7 @@ use crate::error::AppError;
 use crate::auth::validate_api_key;
 use crate::storage::store_image_in_r2;
 use crate::deployment::{DeploymentConfig, get_openai_key};
+use crate::credits::{check_and_reserve_credits, deduct_credits, calculate_openai_cost_usd, calculate_credits_from_cost, estimate_image_cost};
 use uuid::Uuid;
 use chrono::Utc;
 
@@ -39,6 +40,19 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
 
     if generation_req.stream {
         return AppError::BadRequest("Streaming is not supported yet".to_string()).to_response();
+    }
+    
+    let db = env.d1("DB")?;
+    
+    // Estimate credit cost and check balance
+    let estimated_credits = estimate_image_cost(
+        &generation_req.quality, 
+        &generation_req.size,
+        false
+    ) * generation_req.n as u32;
+    
+    if let Err(e) = check_and_reserve_credits(&user_id, estimated_credits, &db).await {
+        return AppError::from(e).to_response();
     }
 
     let deployment_config = match DeploymentConfig::from_env(&env) {
@@ -92,7 +106,19 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
         }
     };
 
+    // Calculate actual credit cost based on usage
+    let actual_cost_usd = if let Some(usage) = &image_response.usage {
+        calculate_openai_cost_usd(usage)
+    } else {
+        // Fallback estimate
+        0.05
+    };
+    let credits_to_charge = calculate_credits_from_cost(actual_cost_usd);
+    let openai_cost_cents = (actual_cost_usd * 100.0) as i32;
+    
     let mut r2_keys = Vec::new();
+    let mut images_stored = 0;
+    
     for image_data in &mut image_response.data {
         if let Some(base64_data) = &image_data.b64_json {
             match store_image_in_r2(
@@ -106,9 +132,14 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
             ).await {
                 Ok(stored_image) => {
                     let db = env.d1("DB")?;
+                    
+                    // Calculate per-image credit cost
+                    let per_image_credits = credits_to_charge / generation_req.n as u32;
+                    let per_image_cost_cents = openai_cost_cents / generation_req.n as i32;
+                    
                     let stmt = db.prepare(
-                        "INSERT INTO stored_images (id, user_id, r2_key, prompt, model, size, quality, created_at, expires_at, token_usage) 
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                        "INSERT INTO stored_images (id, user_id, r2_key, prompt, model, size, quality, created_at, expires_at, token_usage, openai_cost_cents, credits_charged) 
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                     );
                     
                     let _ = stmt
@@ -122,19 +153,40 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
                             stored_image.quality.clone().unwrap_or_default().into(),
                             stored_image.created_at.to_rfc3339().into(),
                             stored_image.expires_at.to_rfc3339().into(),
-                            0.into(),
+                            image_response.usage.as_ref().map(|u| u.total_tokens).unwrap_or(0).into(),
+                            per_image_cost_cents.into(),
+                            per_image_credits.into(),
                         ])?
                         .run()
                         .await?;
                     
                     r2_keys.push(stored_image.r2_key.clone());
-                    image_data.url = Some(stored_image.url);
+                    image_data.url = Some(stored_image.url.clone());
                     image_data.b64_json = None;
+                    images_stored += 1;
                 }
                 Err(e) => {
                     console_log!("Failed to store image in R2: {:?}", e);
                 }
             }
+        }
+    }
+    
+    // Only deduct credits for successfully stored images
+    if images_stored > 0 {
+        let actual_credits_to_charge = (credits_to_charge * images_stored) / generation_req.n as u32;
+        let description = format!("Generated {} image(s) - {}, {}", images_stored, generation_req.quality, generation_req.size);
+        
+        if let Err(e) = deduct_credits(
+            &user_id,
+            actual_credits_to_charge,
+            &description,
+            &r2_keys.join(","),
+            &db
+        ).await {
+            console_log!("Failed to deduct credits: {:?}", e);
+            // Credits couldn't be deducted but images are already stored
+            // This is logged but we don't fail the request
         }
     }
 
@@ -229,6 +281,19 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
 
     if edit_req.stream {
         return AppError::BadRequest("Streaming is not supported yet".to_string()).to_response();
+    }
+    
+    let db = env.d1("DB")?;
+    
+    // Estimate credit cost for edit operation and check balance
+    let estimated_credits = estimate_image_cost(
+        &edit_req.quality, 
+        &edit_req.size,
+        true // is_edit
+    ) * edit_req.n as u32;
+    
+    if let Err(e) = check_and_reserve_credits(&user_id, estimated_credits, &db).await {
+        return AppError::from(e).to_response();
     }
 
     let deployment_config = match DeploymentConfig::from_env(&env) {
@@ -350,7 +415,19 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
         }
     };
 
+    // Calculate actual credit cost based on usage
+    let actual_cost_usd = if let Some(usage) = &image_response.usage {
+        calculate_openai_cost_usd(usage)
+    } else {
+        // Fallback estimate for edits
+        0.08
+    };
+    let credits_to_charge = calculate_credits_from_cost(actual_cost_usd);
+    let openai_cost_cents = (actual_cost_usd * 100.0) as i32;
+    
     let mut r2_keys = Vec::new();
+    let mut images_stored = 0;
+    
     for image_data in &mut image_response.data {
         if let Some(base64_data) = &image_data.b64_json {
             match store_image_in_r2(
@@ -364,9 +441,14 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
             ).await {
                 Ok(stored_image) => {
                     let db = env.d1("DB")?;
+                    
+                    // Calculate per-image credit cost
+                    let per_image_credits = credits_to_charge / edit_req.n as u32;
+                    let per_image_cost_cents = openai_cost_cents / edit_req.n as i32;
+                    
                     let stmt = db.prepare(
-                        "INSERT INTO stored_images (id, user_id, r2_key, prompt, model, size, quality, created_at, expires_at, token_usage) 
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                        "INSERT INTO stored_images (id, user_id, r2_key, prompt, model, size, quality, created_at, expires_at, token_usage, openai_cost_cents, credits_charged) 
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                     );
                     
                     let _ = stmt
@@ -380,19 +462,40 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
                             stored_image.quality.clone().unwrap_or_default().into(),
                             stored_image.created_at.to_rfc3339().into(),
                             stored_image.expires_at.to_rfc3339().into(),
-                            0.into(),
+                            image_response.usage.as_ref().map(|u| u.total_tokens).unwrap_or(0).into(),
+                            per_image_cost_cents.into(),
+                            per_image_credits.into(),
                         ])?
                         .run()
                         .await?;
                     
                     r2_keys.push(stored_image.r2_key.clone());
-                    image_data.url = Some(stored_image.url);
+                    image_data.url = Some(stored_image.url.clone());
                     image_data.b64_json = None;
+                    images_stored += 1;
                 }
                 Err(e) => {
                     console_log!("Failed to store image in R2: {:?}", e);
                 }
             }
+        }
+    }
+    
+    // Only deduct credits for successfully stored images
+    if images_stored > 0 {
+        let actual_credits_to_charge = (credits_to_charge * images_stored) / edit_req.n as u32;
+        let description = format!("Edited {} image(s) - {}, {}", images_stored, edit_req.quality, edit_req.size);
+        
+        if let Err(e) = deduct_credits(
+            &user_id,
+            actual_credits_to_charge,
+            &description,
+            &r2_keys.join(","),
+            &db
+        ).await {
+            console_log!("Failed to deduct credits: {:?}", e);
+            // Credits couldn't be deducted but images are already stored
+            // This is logged but we don't fail the request
         }
     }
 
