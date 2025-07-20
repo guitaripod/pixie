@@ -28,19 +28,18 @@ A high-performance Rust-based Cloudflare Worker that proxies OpenAI's gpt-image-
 - Public gallery endpoints
 - Usage tracking and analytics
 - Development mode with test user
+- OAuth authentication (~~Apple~~(soon), GitHub, Google)
+- Admin dashboard in CLI
 
 🚧 **Planned:**
-- OAuth authentication (Apple, GitHub, Google)
 - Rate limiting
-- Multipart form data support
 - Streaming responses
-- Admin dashboard
 
 ## Quick Start
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/openai-image-proxy.git
+git clone https://github.com/guitaripod/openai-image-proxy.git
 cd openai-image-proxy
 ```
 
