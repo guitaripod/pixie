@@ -4,9 +4,11 @@ use indicatif::{ProgressBar, ProgressStyle};
 use std::path::Path;
 use std::fs;
 use base64::{Engine as _, engine::general_purpose::STANDARD};
+use chrono;
 
 use crate::api::{ApiClient, ImageEditRequest};
 use crate::config::Config;
+use crate::commands::utils::{check_credits_and_estimate, show_credits_used};
 
 pub async fn handle(
     api_url: &str,
@@ -27,6 +29,15 @@ pub async fn handle(
     }
     
     let client = ApiClient::new(api_url)?;
+    
+    let (initial_balance, _) = check_credits_and_estimate(
+        &client,
+        quality,
+        size,
+        number,
+        true,
+        prompt,
+    ).await?;
     
     let (image_data, image_extension) = if image_path.starts_with("gallery:") {
         let image_id = image_path.trim_start_matches("gallery:");
@@ -152,6 +163,10 @@ pub async fn handle(
             }
         }
     }
+    
+    println!("\n{}", "Image edit complete!".green().bold());
+    
+    show_credits_used(&client, initial_balance).await?;
     
     Ok(())
 }

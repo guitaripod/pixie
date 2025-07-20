@@ -2,9 +2,11 @@ use anyhow::{Result, Context};
 use colored::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use std::path::Path;
+use chrono;
 
 use crate::api::{ApiClient, ImageGenerationRequest};
 use crate::config::Config;
+use crate::commands::utils::{check_credits_and_estimate, show_credits_used};
 
 pub async fn handle(
     api_url: &str,
@@ -23,6 +25,15 @@ pub async fn handle(
     }
     
     let client = ApiClient::new(api_url)?;
+    
+    let (initial_balance, _) = check_credits_and_estimate(
+        &client,
+        quality,
+        size,
+        number,
+        false,
+        prompt,
+    ).await?;
     
     println!("Generating {} image(s) for prompt: {}", number, prompt.cyan());
     
@@ -79,6 +90,8 @@ pub async fn handle(
     }
     
     println!("\n{}", "Image generation complete!".green().bold());
+    
+    show_credits_used(&client, initial_balance).await?;
     
     Ok(())
 }
