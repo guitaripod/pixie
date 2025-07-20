@@ -364,6 +364,18 @@ CREDIT COSTS:
         action: Option<CreditsAction>,
     },
     
+    #[command(about = "Check API health status
+
+Example:
+  pixie health", long_about = "Check if the API server is online and responding.
+
+Shows the API endpoint and current status.
+
+EXAMPLES:
+  pixie health                          # Check default API
+  pixie health --api-url https://...    # Check custom API")]
+    Health,
+    
     #[command(about = "Admin commands (requires admin privileges)
     
 Examples:
@@ -742,6 +754,10 @@ async fn main() -> Result<()> {
         
         Commands::Config => {
             config::show_config(&config)?;
+        }
+        
+        Commands::Health => {
+            commands::utils::health_check(&api_url).await?;
         }
         
         Commands::Logout => {
