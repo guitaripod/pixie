@@ -403,13 +403,11 @@ pub async fn buy_credits(
     let crypto_currency = if let Some(crypto) = crypto_currency {
         match crypto.to_lowercase().as_str() {
             "btc" | "bitcoin" => "btc",
-            "eth" | "ethereum" => "eth",
-            "doge" | "dogecoin" => "doge",
             "ltc" | "litecoin" => "ltc",
             "lightning" => "btc", // Lightning uses BTC
             _ => {
                 println!("{}", "Invalid cryptocurrency!".red());
-                println!("Supported: btc, eth, doge, ltc");
+                println!("Supported: btc, ltc");
                 return Ok(());
             }
         }
@@ -419,11 +417,9 @@ pub async fn buy_credits(
         println!("{}", "═".repeat(50).cyan());
         println!();
         println!("  1) {} - Bitcoin", "BTC".yellow());
-        println!("  2) {} - Ethereum", "ETH".blue());
-        println!("  3) {} - Dogecoin", "DOGE".green());
-        println!("  4) {} - Litecoin", "LTC".cyan());
+        println!("  2) {} - Litecoin", "LTC".cyan());
         println!();
-        print!("Select cryptocurrency (1-4): ");
+        print!("Select cryptocurrency (1-2): ");
         std::io::stdout().flush()?;
         
         let mut input = String::new();
@@ -431,9 +427,7 @@ pub async fn buy_credits(
         
         match input.trim() {
             "1" => "btc",
-            "2" => "eth",
-            "3" => "doge",
-            "4" => "ltc",
+            "2" => "ltc",
             _ => {
                 println!("{}", "Invalid selection!".red());
                 return Ok(());
