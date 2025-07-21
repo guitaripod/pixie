@@ -294,6 +294,58 @@ impl ApiClient {
         Ok(response.json().await?)
     }
     
+    pub async fn purchase_credits_crypto(&self, pack_id: &str, currency: &str) -> Result<CryptoPurchaseResponse> {
+        let url = format!("{}/v1/credits/purchase", self.base_url);
+        
+        let request = PurchaseRequest {
+            pack_id: pack_id.to_string(),
+            payment_provider: "nowpayments".to_string(),
+            payment_id: "".to_string(),
+            payment_currency: Some(currency.to_string()),
+        };
+        
+        let response = self.client
+            .post(&url)
+            .headers(self.headers()?)
+            .json(&request)
+            .send()
+            .await?;
+        
+        if !response.status().is_success() {
+            let status = response.status();
+            let text = response.text().await?;
+            if let Ok(error) = serde_json::from_str::<ErrorResponse>(&text) {
+                anyhow::bail!("Failed to create crypto payment: {}", error.error.message);
+            } else {
+                anyhow::bail!("Failed to create crypto payment: {} - {}", status, text);
+            }
+        }
+        
+        Ok(response.json().await?)
+    }
+    
+    pub async fn check_purchase_status(&self, purchase_id: &str) -> Result<PurchaseStatusResponse> {
+        let url = format!("{}/v1/credits/purchase/{}/status", self.base_url, purchase_id);
+        
+        let response = self.client
+            .get(&url)
+            .headers(self.headers()?)
+            .send()
+            .await?;
+        
+        if !response.status().is_success() {
+            let status = response.status();
+            let text = response.text().await?;
+            if let Ok(error) = serde_json::from_str::<ErrorResponse>(&text) {
+                anyhow::bail!("Failed to check payment status: {}", error.error.message);
+            } else {
+                anyhow::bail!("Failed to check payment status: {} - {}", status, text);
+            }
+        }
+        
+        Ok(response.json().await?)
+    }
+
     pub async fn check_device_auth_status(&self, device_code: &str) -> Result<DeviceAuthStatus> {
         let url = format!("{}/v1/auth/device/{}/status", self.base_url, device_code);
         
@@ -492,4 +544,32 @@ pub struct ErrorDetail {
 pub struct DeviceAuthStatus {
     pub status: String,
     pub message: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct PurchaseRequest {
+    pub pack_id: String,
+    pub payment_provider: String,
+    pub payment_id: String,
+    pub payment_currency: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CryptoPurchaseResponse {
+    pub purchase_id: String,
+    pub payment_id: String,
+    pub status: String,
+    pub credits: u32,
+    pub amount_usd: String,
+    pub crypto_address: String,
+    pub crypto_amount: String,
+    pub crypto_currency: String,
+    pub expires_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PurchaseStatusResponse {
+    pub purchase_id: String,
+    pub status: String,
+    pub payment_status: Option<String>,
 }
