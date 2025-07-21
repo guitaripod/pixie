@@ -7,6 +7,7 @@ mod handlers;
 mod storage;
 mod deployment;
 mod credits;
+mod crypto_payments;
 
 use handlers::{images, gallery, r2, usage, oauth, device_auth};
 
@@ -41,7 +42,10 @@ async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .get_async("/v1/credits/packs", handlers::credits::list_packs)
         .post_async("/v1/credits/estimate", handlers::credits::estimate_cost)
         .post_async("/v1/credits/purchase", handlers::credits::purchase_credits)
+        .get_async("/v1/credits/purchase/:purchase_id/status", handlers::credits::get_purchase_status)
         .post_async("/v1/credits/webhook", handlers::credits::complete_purchase_webhook)
+        .post_async("/v1/credits/webhook/crypto", handlers::credits::crypto_payment_webhook)
+        .post_async("/v1/ipn/nowpayments", handlers::credits::crypto_payment_webhook)
         .post_async("/v1/admin/credits/adjust", handlers::credits::admin_adjust_credits)
         .get_async("/v1/admin/credits/stats", handlers::credits::admin_system_stats)
         .run(req, env)
