@@ -2,6 +2,7 @@ use anyhow::Result;
 use colored::*;
 use std::io::{self, Write};
 use crate::{api::{ApiClient, CreditEstimateRequest}, config::Config};
+use dialoguer::{Select, theme::ColorfulTheme};
 
 pub async fn show_balance(api_url: &str) -> Result<()> {
     let config = Config::load()?;
@@ -194,7 +195,8 @@ pub async fn show_packs(api_url: &str) -> Result<()> {
     println!();
     println!("{}", "═".repeat(70).magenta());
     println!();
-    println!("{} {}", "💳".cyan(), "Purchase credits through the web interface".blue());
+    println!("{} {} {}", "💳".cyan(), "Pay with card:".bold(), "pixie credits buy".blue());
+    println!("{} {} {}", "🪙".yellow(), "Pay with crypto:".bold(), "pixie credits buy --crypto btc".blue());
     println!();
     
     Ok(())
@@ -347,50 +349,32 @@ pub async fn buy_credits(
         println!("{}", "═".repeat(70).magenta());
         println!();
         
-        for (index, pack) in packs_response.packs.iter().enumerate() {
+        let mut pack_names = Vec::new();
+        for pack in &packs_response.packs {
             let total_credits = pack.credits + pack.bonus_credits;
             let price_usd = pack.price_usd_cents as f64 / 100.0;
             
-            print!("  {}) ", index + 1);
-            if pack.id == "popular" {
-                print!("{} ", "⭐".yellow());
-            }
-            println!("{:<12} - {} credits - ${:.2}",
-                pack.name.bold(),
-                total_credits.to_string().cyan(),
-                price_usd
-            );
+            let mut display = if pack.id == "popular" {
+                format!("⭐ {} - {} credits - ${:.2}", pack.name, total_credits, price_usd)
+            } else {
+                format!("{} - {} credits - ${:.2}", pack.name, total_credits, price_usd)
+            };
             
             if pack.bonus_credits > 0 {
                 let bonus_percent = (pack.bonus_credits as f64 / pack.credits as f64 * 100.0) as i32;
-                println!("     {} {}",
-                    format!("+{} bonus", pack.bonus_credits).green(),
-                    format!("({}% extra)", bonus_percent).green().dimmed()
-                );
+                display.push_str(&format!(" (+{}% bonus)", bonus_percent));
             }
-            println!("     {}", pack.description.dimmed());
             
-            if index < packs_response.packs.len() - 1 {
-                println!();
-            }
+            pack_names.push(display);
         }
         
-        println!();
-        print!("Select pack (1-{}): ", packs_response.packs.len());
-        std::io::stdout().flush()?;
+        let selection = Select::with_theme(&ColorfulTheme::default())
+            .with_prompt("Select a credit pack")
+            .items(&pack_names)
+            .default(2) // Default to popular pack
+            .interact()?;
         
-        let mut input = String::new();
-        io::stdin().read_line(&mut input)?;
-        
-        let selection: usize = input.trim().parse()
-            .map_err(|_| anyhow::anyhow!("Invalid selection"))?;
-        
-        if selection < 1 || selection > packs_response.packs.len() {
-            println!("{}", "Invalid selection!".red());
-            return Ok(());
-        }
-        
-        packs_response.packs[selection - 1].id.clone()
+        packs_response.packs[selection].id.clone()
     };
     
     // Get selected pack details
@@ -399,209 +383,324 @@ pub async fn buy_credits(
         .find(|p| p.id == pack_id)
         .unwrap();
     
-    // Check if crypto payments are supported for this pack
-    if pack_id == "starter" {
-        println!();
-        println!("{}", "❌ Crypto payments not available for Starter pack".red().bold());
-        println!("{}", "Due to minimum transaction requirements, crypto payments are only available for Basic pack and above.".yellow());
-        println!("{}", "The Starter pack ($1.99) can be purchased with credit/debit cards (coming soon).".dimmed());
-        return Ok(());
-    }
-    
-    // Interactive crypto selection if not provided
-    let crypto_currency = if let Some(crypto) = crypto_currency {
-        match crypto.to_lowercase().as_str() {
-            "btc" | "bitcoin" => "btc",
-            "eth" | "ethereum" => "eth",
-            "doge" | "dogecoin" => "doge",
-            "ltc" | "litecoin" => "ltc",
-            "lightning" => "btc", // Lightning uses BTC
-            _ => {
-                println!("{}", "Invalid cryptocurrency!".red());
-                println!("Supported: btc, eth, doge, ltc");
-                return Ok(());
-            }
-        }
+    // Payment method selection
+    let payment_method = if crypto_currency.is_some() {
+        "crypto"
     } else {
         println!();
-        println!("{}", "💰 Select Cryptocurrency".bold().cyan());
+        println!("{}", "💳 Select Payment Method".bold().cyan());
         println!("{}", "═".repeat(50).cyan());
-        println!();
-        println!("  1) {} - Bitcoin", "BTC".yellow());
-        println!("  2) {} - Ethereum", "ETH".blue());
-        println!("  3) {} - Dogecoin", "DOGE".bright_yellow());
-        println!("  4) {} - Litecoin", "LTC".bright_blue());
-        println!();
-        print!("Select cryptocurrency (1-4): ");
-        std::io::stdout().flush()?;
         
-        let mut input = String::new();
-        io::stdin().read_line(&mut input)?;
+        let payment_options = vec![
+            "💳 Credit/Debit Card (Stripe)",
+            "🪙 Cryptocurrency (Bitcoin, Ethereum, etc.)"
+        ];
         
-        match input.trim() {
-            "1" => "btc",
-            "2" => "eth",
-            "3" => "doge",
-            "4" => "ltc",
-            _ => {
-                println!("{}", "Invalid selection!".red());
-                return Ok(());
-            }
+        let selection = Select::with_theme(&ColorfulTheme::default())
+            .with_prompt("How would you like to pay?")
+            .items(&payment_options)
+            .default(0)
+            .interact()?;
+        
+        match selection {
+            0 => "card",
+            1 => "crypto",
+            _ => "card"
         }
     };
     
-    // Create crypto payment
-    println!();
-    println!("{}", "Creating payment request...".dimmed());
-    
-    let payment = client.purchase_credits_crypto(&pack_id, crypto_currency).await?;
-    
-    // Display payment details
-    println!();
-    println!("{}", "━".repeat(50).bright_white());
-    println!("{} {}", 
-        crypto_currency.to_uppercase().bold().yellow(),
-        "PAYMENT DETAILS".bold()
-    );
-    println!();
-    println!("Amount: {} {} ({})",
-        payment.crypto_amount.bold().green(),
-        payment.crypto_currency,
-        payment.amount_usd.dimmed()
-    );
-    println!("Send to: {}", payment.crypto_address.bold().cyan());
-    println!();
-    
-    // Generate and display QR code
-    use qrcode::{QrCode, render::unicode};
-    
-    if let Ok(code) = QrCode::new(&payment.crypto_address) {
-        let image = code.render::<unicode::Dense1x2>()
-            .dark_color(unicode::Dense1x2::Light)
-            .light_color(unicode::Dense1x2::Dark)
-            .build();
-        println!("{}", image);
-    }
-    
-    println!("Payment ID: {}", payment.purchase_id.dimmed());
-    println!("Expires: {}", payment.expires_at.yellow());
-    println!("{}", "━".repeat(50).bright_white());
-    println!();
-    
-    // Poll for payment confirmation
-    use indicatif::{ProgressBar, ProgressStyle};
-    
-    // Payment progress steps
-    println!();
-    println!("{}", "Payment Progress:".bold());
-    
-    let mut waiting_shown = false;
-    let mut confirming_shown = false;
-    let mut processing_shown = false;
-    
-    // Current status spinner
-    let pb = ProgressBar::new_spinner();
-    pb.set_style(
-        ProgressStyle::default_spinner()
-            .tick_chars("⣾⣽⣻⢿⡿⣟⣯⣷")
-            .template("{spinner:.cyan} {msg}")?
-    );
-    
-    let mut confirmed = false;
-    let start_time = std::time::Instant::now();
-    let timeout = std::time::Duration::from_secs(30 * 60); // 30 minutes
-    let mut last_status = String::new();
-    
-    while !confirmed && start_time.elapsed() < timeout {
-        pb.tick();
-        tokio::time::sleep(std::time::Duration::from_secs(10)).await;
-        
-        match client.check_purchase_status(&payment.purchase_id).await {
-            Ok(status) => {
-                if status.status == "completed" {
-                    confirmed = true;
-                    if !processing_shown {
-                        pb.finish_and_clear();
-                        println!("  {} Payment completed", "✓".green().bold());
-                    }
-                } else if let Some(payment_status) = status.payment_status {
-                    // Show progress steps as they happen
-                    match payment_status.as_str() {
-                        "waiting" => {
-                            if !waiting_shown {
-                                waiting_shown = true;
-                                pb.set_message("Waiting for payment to be sent...");
-                            }
-                        },
-                        "confirming" => {
-                            if !waiting_shown {
-                                waiting_shown = true;
-                                pb.finish_and_clear();
-                                println!("  {} Payment detected", "✓".green().bold());
-                            }
-                            if !confirming_shown {
-                                confirming_shown = true;
-                                pb.set_message("Confirming on blockchain...");
-                            }
-                        },
-                        "confirmed" | "sending" => {
-                            if !waiting_shown {
-                                waiting_shown = true;
-                                pb.finish_and_clear();
-                                println!("  {} Payment detected", "✓".green().bold());
-                            }
-                            if !confirming_shown {
-                                confirming_shown = true;
-                                pb.finish_and_clear();
-                                println!("  {} Blockchain confirmed", "✓".green().bold());
-                            }
-                            if !processing_shown {
-                                processing_shown = true;
-                                pb.set_message("Processing payment...");
-                            }
-                        },
-                        "finished" => {
+    match payment_method {
+        "card" => {
+            // Stripe payment flow
+            println!();
+            println!("{}", "Creating Stripe checkout session...".dimmed());
+            
+            let payment = client.purchase_credits_stripe(&pack_id).await?;
+            
+            println!();
+            println!("{}", "━".repeat(50).bright_white());
+            println!("{}", "STRIPE PAYMENT".bold());
+            println!();
+            println!("Amount: {} ({})",
+                format!("${:.2}", selected_pack.price_usd_cents as f64 / 100.0).bold().green(),
+                format!("{} credits", selected_pack.credits + selected_pack.bonus_credits).cyan()
+            );
+            println!();
+            println!("{}", "Opening checkout page in your browser...".dimmed());
+            println!("{}", "━".repeat(50).bright_white());
+            
+            // Open browser
+            if let Err(e) = webbrowser::open(&payment.checkout_url) {
+                println!();
+                println!("{}", "Could not open browser automatically.".yellow());
+                println!("Please visit this URL to complete payment:");
+                println!("{}", payment.checkout_url.bright_blue().underline());
+                println!();
+                println!("Error: {}", e);
+            }
+            
+            // Poll for payment confirmation
+            use indicatif::{ProgressBar, ProgressStyle};
+            
+            println!();
+            println!("{}", "Waiting for payment confirmation...".dimmed());
+            println!("{}", "You can close this window after completing payment in your browser.".dimmed());
+            println!();
+            
+            let pb = ProgressBar::new_spinner();
+            pb.set_style(
+                ProgressStyle::default_spinner()
+                    .tick_chars("⣾⣽⣻⢿⡿⣟⣯⣷")
+                    .template("{spinner:.cyan} {msg}")?
+            );
+            pb.set_message("Waiting for payment...");
+            
+            let mut confirmed = false;
+            let start_time = std::time::Instant::now();
+            let timeout = std::time::Duration::from_secs(10 * 60); // 10 minutes
+            
+            while !confirmed && start_time.elapsed() < timeout {
+                pb.tick();
+                tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+                
+                match client.check_purchase_status(&payment.purchase_id).await {
+                    Ok(status) => {
+                        if status.status == "completed" {
                             confirmed = true;
                             pb.finish_and_clear();
-                            if !waiting_shown {
-                                println!("  {} Payment detected", "✓".green().bold());
-                            }
-                            if !confirming_shown {
-                                println!("  {} Blockchain confirmed", "✓".green().bold());
-                            }
-                            if !processing_shown {
-                                println!("  {} Payment processed", "✓".green().bold());
-                            }
-                            println!("  {} Payment completed", "✓".green().bold());
-                        },
-                        "failed" | "refunded" | "expired" => {
+                            println!("  {} Payment successful!", "✓".green().bold());
+                        } else if status.status == "failed" || status.status == "cancelled" {
                             pb.finish_and_clear();
-                            println!("  {} Payment {}", "✗".red().bold(), payment_status);
+                            println!("  {} Payment {}", "✗".red().bold(), status.status);
                             return Ok(());
-                        },
-                        _ => {}
+                        }
                     }
-                    last_status = payment_status;
+                    Err(e) => {
+                        // Continue polling on error
+                        pb.set_message(format!("Checking status... ({})", e));
+                    }
                 }
             }
-            Err(e) => {
-                pb.finish_with_message(format!("❌ Error checking status: {}", e));
-                return Err(e);
+            
+            if !confirmed {
+                pb.finish_with_message("❌ Payment timeout - please check your payment status");
+                return Ok(());
+            }
+            
+            // Show new balance
+            println!();
+            if let Ok(balance) = client.get_credit_balance().await {
+                let total_credits = selected_pack.credits + selected_pack.bonus_credits;
+                println!("{}", format!("Successfully added {} credits to your account!", total_credits).green().bold());
+                println!("New balance: {} credits", balance.balance.to_string().cyan().bold());
             }
         }
-    }
-    
-    if !confirmed {
-        pb.finish_with_message("❌ Payment expired");
-        return Ok(());
-    }
-    
-    // Show new balance
-    println!();
-    if let Ok(balance) = client.get_credit_balance().await {
-        let total_credits = selected_pack.credits + selected_pack.bonus_credits;
-        println!("{}", format!("Successfully added {} credits to your account!", total_credits).green().bold());
-        println!("New balance: {} credits", balance.balance.to_string().cyan().bold());
+        "crypto" => {
+            // Check if crypto payments are supported for this pack
+            if pack_id == "starter" {
+                println!();
+                println!("{}", "❌ Crypto payments not available for Starter pack".red().bold());
+                println!("{}", "Due to minimum transaction requirements, crypto payments are only available for Basic pack and above.".yellow());
+                println!("{}", "The Starter pack ($1.99) can be purchased with credit/debit cards.".dimmed());
+                return Ok(());
+            }
+            
+            // Interactive crypto selection if not provided
+            let crypto_currency = if let Some(crypto) = crypto_currency {
+                match crypto.to_lowercase().as_str() {
+                    "btc" | "bitcoin" => "btc",
+                    "eth" | "ethereum" => "eth",
+                    "doge" | "dogecoin" => "doge",
+                    "ltc" | "litecoin" => "ltc",
+                    "lightning" => "btc", // Lightning uses BTC
+                    _ => {
+                        println!("{}", "Invalid cryptocurrency!".red());
+                        println!("Supported: btc, eth, doge, ltc");
+                        return Ok(());
+                    }
+                }
+            } else {
+                println!();
+                println!("{}", "💰 Select Cryptocurrency".bold().cyan());
+                println!("{}", "═".repeat(50).cyan());
+                
+                let crypto_options = vec![
+                    "₿  Bitcoin (BTC)",
+                    "Ξ  Ethereum (ETH)",
+                    "Ð  Dogecoin (DOGE)",
+                    "Ł  Litecoin (LTC)"
+                ];
+                
+                let selection = Select::with_theme(&ColorfulTheme::default())
+                    .with_prompt("Select cryptocurrency")
+                    .items(&crypto_options)
+                    .default(0)
+                    .interact()?;
+                
+                match selection {
+                    0 => "btc",
+                    1 => "eth",
+                    2 => "doge",
+                    3 => "ltc",
+                    _ => "btc"
+                }
+            };
+            
+            // Create crypto payment
+            println!();
+            println!("{}", "Creating payment request...".dimmed());
+            
+            let payment = client.purchase_credits_crypto(&pack_id, crypto_currency).await?;
+            
+            // Display payment details
+            println!();
+            println!("{}", "━".repeat(50).bright_white());
+            println!("{} {}", 
+                crypto_currency.to_uppercase().bold().yellow(),
+                "PAYMENT DETAILS".bold()
+            );
+            println!();
+            println!("Amount: {} {} ({})",
+                payment.crypto_amount.bold().green(),
+                payment.crypto_currency,
+                payment.amount_usd.dimmed()
+            );
+            println!("Send to: {}", payment.crypto_address.bold().cyan());
+            println!();
+            
+            // Generate and display QR code
+            use qrcode::{QrCode, render::unicode};
+            
+            if let Ok(code) = QrCode::new(&payment.crypto_address) {
+                let image = code.render::<unicode::Dense1x2>()
+                    .dark_color(unicode::Dense1x2::Light)
+                    .light_color(unicode::Dense1x2::Dark)
+                    .build();
+                println!("{}", image);
+            }
+            
+            println!("Payment ID: {}", payment.purchase_id.dimmed());
+            println!("Expires: {}", payment.expires_at.yellow());
+            println!("{}", "━".repeat(50).bright_white());
+            println!();
+            
+            // Poll for payment confirmation
+            use indicatif::{ProgressBar, ProgressStyle};
+            
+            // Payment progress steps
+            println!();
+            println!("{}", "Payment Progress:".bold());
+            
+            let mut waiting_shown = false;
+            let mut confirming_shown = false;
+            let mut processing_shown = false;
+            
+            // Current status spinner
+            let pb = ProgressBar::new_spinner();
+            pb.set_style(
+                ProgressStyle::default_spinner()
+                    .tick_chars("⣾⣽⣻⢿⡿⣟⣯⣷")
+                    .template("{spinner:.cyan} {msg}")?
+            );
+            
+            let mut confirmed = false;
+            let start_time = std::time::Instant::now();
+            let timeout = std::time::Duration::from_secs(30 * 60); // 30 minutes
+            let mut _last_status = String::new();
+            
+            while !confirmed && start_time.elapsed() < timeout {
+                pb.tick();
+                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+                
+                match client.check_purchase_status(&payment.purchase_id).await {
+                    Ok(status) => {
+                        if status.status == "completed" {
+                            confirmed = true;
+                            if !processing_shown {
+                                pb.finish_and_clear();
+                                println!("  {} Payment completed", "✓".green().bold());
+                            }
+                        } else if let Some(payment_status) = status.payment_status {
+                            // Show progress steps as they happen
+                            match payment_status.as_str() {
+                                "waiting" => {
+                                    if !waiting_shown {
+                                        waiting_shown = true;
+                                        pb.set_message("Waiting for payment to be sent...");
+                                    }
+                                },
+                                "confirming" => {
+                                    if !waiting_shown {
+                                        waiting_shown = true;
+                                        pb.finish_and_clear();
+                                        println!("  {} Payment detected", "✓".green().bold());
+                                    }
+                                    if !confirming_shown {
+                                        confirming_shown = true;
+                                        pb.set_message("Confirming on blockchain...");
+                                    }
+                                },
+                                "confirmed" | "sending" => {
+                                    if !waiting_shown {
+                                        waiting_shown = true;
+                                        pb.finish_and_clear();
+                                        println!("  {} Payment detected", "✓".green().bold());
+                                    }
+                                    if !confirming_shown {
+                                        confirming_shown = true;
+                                        pb.finish_and_clear();
+                                        println!("  {} Blockchain confirmed", "✓".green().bold());
+                                    }
+                                    if !processing_shown {
+                                        processing_shown = true;
+                                        pb.set_message("Processing payment...");
+                                    }
+                                },
+                                "finished" => {
+                                    confirmed = true;
+                                    pb.finish_and_clear();
+                                    if !waiting_shown {
+                                        println!("  {} Payment detected", "✓".green().bold());
+                                    }
+                                    if !confirming_shown {
+                                        println!("  {} Blockchain confirmed", "✓".green().bold());
+                                    }
+                                    if !processing_shown {
+                                        println!("  {} Payment processed", "✓".green().bold());
+                                    }
+                                    println!("  {} Payment completed", "✓".green().bold());
+                                },
+                                "failed" | "refunded" | "expired" => {
+                                    pb.finish_and_clear();
+                                    println!("  {} Payment {}", "✗".red().bold(), payment_status);
+                                    return Ok(());
+                                },
+                                _ => {}
+                            }
+                            _last_status = payment_status;
+                        }
+                    }
+                    Err(e) => {
+                        pb.finish_with_message(format!("❌ Error checking status: {}", e));
+                        return Err(e);
+                    }
+                }
+            }
+            
+            if !confirmed {
+                pb.finish_with_message("❌ Payment expired");
+                return Ok(());
+            }
+            
+            // Show new balance
+            println!();
+            if let Ok(balance) = client.get_credit_balance().await {
+                let total_credits = selected_pack.credits + selected_pack.bonus_credits;
+                println!("{}", format!("Successfully added {} credits to your account!", total_credits).green().bold());
+                println!("New balance: {} credits", balance.balance.to_string().cyan().bold());
+            }
+        }
+        _ => unreachable!()
     }
     
     Ok(())

@@ -324,6 +324,42 @@ impl ApiClient {
         Ok(response.json().await?)
     }
     
+    pub async fn purchase_credits_stripe(&self, pack_id: &str) -> Result<StripePurchaseResponse> {
+        let url = format!("{}/v1/credits/purchase/stripe", self.base_url);
+        
+        #[derive(Debug, Serialize)]
+        struct StripeCheckoutRequest {
+            pack_id: String,
+            success_url: String,
+            cancel_url: String,
+        }
+        
+        let request = StripeCheckoutRequest {
+            pack_id: pack_id.to_string(),
+            success_url: "https://pixie.cli/success".to_string(),
+            cancel_url: "https://pixie.cli/cancel".to_string(),
+        };
+        
+        let response = self.client
+            .post(&url)
+            .headers(self.headers()?)
+            .json(&request)
+            .send()
+            .await?;
+        
+        if !response.status().is_success() {
+            let status = response.status();
+            let text = response.text().await?;
+            if let Ok(error) = serde_json::from_str::<ErrorResponse>(&text) {
+                anyhow::bail!("Failed to create Stripe payment: {}", error.error.message);
+            } else {
+                anyhow::bail!("Failed to create Stripe payment: {} - {}", status, text);
+            }
+        }
+        
+        Ok(response.json().await?)
+    }
+    
     pub async fn check_purchase_status(&self, purchase_id: &str) -> Result<PurchaseStatusResponse> {
         let url = format!("{}/v1/credits/purchase/{}/status", self.base_url, purchase_id);
         
@@ -557,8 +593,11 @@ pub struct PurchaseRequest {
 #[derive(Debug, Deserialize)]
 pub struct CryptoPurchaseResponse {
     pub purchase_id: String,
+    #[allow(dead_code)]
     pub payment_id: String,
+    #[allow(dead_code)]
     pub status: String,
+    #[allow(dead_code)]
     pub credits: u32,
     pub amount_usd: String,
     pub crypto_address: String,
@@ -569,7 +608,16 @@ pub struct CryptoPurchaseResponse {
 
 #[derive(Debug, Deserialize)]
 pub struct PurchaseStatusResponse {
+    #[allow(dead_code)]
     pub purchase_id: String,
     pub status: String,
     pub payment_status: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct StripePurchaseResponse {
+    pub purchase_id: String,
+    #[allow(dead_code)]
+    pub session_id: String,
+    pub checkout_url: String,
 }
