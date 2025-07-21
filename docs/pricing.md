@@ -110,7 +110,7 @@ POST /v1/credits/purchase
 ## Billing Details
 
 ### Payment Methods
-- Cryptocurrency payments (BTC, ETH, DOGE, LTC) via NOWPayments
+- Cryptocurrency payments (BTC, LTC) via NOWPayments
 - Credit/Debit cards via Stripe (coming soon)
 - No subscription required
 - Secure payment processing
@@ -133,9 +133,15 @@ We believe in transparent pricing. Here's how our 3x multiplier breaks down:
 |-----------|------------|
 | OpenAI API costs | 33.3% |
 | Infrastructure & Storage | 5% |
-| Payment processing | 3% |
+| Payment processing (Stripe) | 3% |
+| Payment processing (NOWPayments)* | 0.5-1% |
 | Development & Maintenance | 20% |
-| Profit margin | 38.7% |
+| Profit margin | 37.2-37.7% |
+
+*NOWPayments cryptocurrency fee breakdown:
+- Service fee: 0.5% (0.4-0.5% for high volume)
+- Exchange fee: 0.5% (if currency conversion needed)
+- Network fees: Variable by blockchain (typically under $1 for BTC, LTC)
 
 This ensures sustainable service while keeping prices fair for users.
 

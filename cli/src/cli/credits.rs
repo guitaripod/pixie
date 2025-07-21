@@ -70,12 +70,11 @@ EXAMPLES:
     
 Examples:
   pixie credits buy
-  pixie credits buy --pack popular --crypto btc", long_about = "Purchase credits using cryptocurrency (Bitcoin, Ethereum, or Dogecoin).
+  pixie credits buy --pack popular --crypto btc", long_about = "Purchase credits using cryptocurrency.
 
 Supports:
   - Bitcoin (BTC)
-  - Ethereum (ETH)
-  - Dogecoin (DOGE)
+  - Litecoin (LTC)
   - Lightning Network (instant BTC)
 
 The CLI will:
@@ -93,7 +92,7 @@ EXAMPLES:
         #[arg(short, long, help = "Credit pack to purchase (starter, basic, popular, pro, enterprise)")]
         pack: Option<String>,
         
-        #[arg(short, long, help = "Cryptocurrency to use (btc, eth, doge, ltc, lightning)")]
+        #[arg(short, long, help = "Cryptocurrency to use (btc, ltc, lightning)")]
         crypto: Option<String>,
     },
 }
