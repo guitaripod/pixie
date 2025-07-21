@@ -97,9 +97,3 @@ fn format_generic_error(error: &anyhow::Error, operation: &str) -> String {
     
     message
 }
-
-// Helper function to show user-friendly error and exit
-pub fn exit_with_error(error: anyhow::Error, operation: &str) -> ! {
-    eprintln!("{}", handle_api_error(error, operation));
-    std::process::exit(1);
-}
