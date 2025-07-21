@@ -196,10 +196,10 @@ pub async fn create_checkout_session(
             return Err(AppError::BadRequest(user_message).into());
         }
         
-        match response.status_code() {
+        return match response.status_code() {
             500..=599 => Err(AppError::InternalError("Payment service temporarily unavailable".to_string()).into()),
             _ => Err(AppError::BadRequest("Payment service error. Please try again.".to_string()).into()),
-        }
+        };
     }
     
     let session: StripeCheckoutSession = response.json().await?;
@@ -236,10 +236,10 @@ pub async fn get_checkout_session(env: &Env, session_id: &str) -> Result<StripeC
             return Err(AppError::BadRequest(user_message).into());
         }
         
-        match response.status_code() {
+        return match response.status_code() {
             500..=599 => Err(AppError::InternalError("Payment service temporarily unavailable".to_string()).into()),
             _ => Err(AppError::BadRequest("Payment service error. Please try again.".to_string()).into()),
-        }
+        };
     }
     
     let session: StripeCheckoutSession = response.json().await?;
