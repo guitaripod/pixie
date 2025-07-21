@@ -281,13 +281,19 @@ curl https://your-worker.workers.dev/v1/credits/packs
 
 ### Purchase Credits
 ```bash
+# Crypto payment (currently supported)
 curl -X POST https://your-worker.workers.dev/v1/credits/purchase \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer your-api-key" \
   -d '{
-    "pack_id": "popular",
-    "payment_method": "stripe"
+    "pack_id": "starter",
+    "payment_provider": "nowpayments",
+    "payment_id": "",
+    "payment_currency": "btc"  // btc, eth, doge, or ltc
   }'
+
+# Card payment (coming soon)
+# Will use payment_provider: "stripe"
 ```
 
 ### Transaction History
@@ -447,6 +453,11 @@ The service uses a credit-based pricing system where **1 credit = $0.01 USD**. C
 | Popular | 1,800 | $19.99 | 300 (20%) |
 | Pro | 4,500 | $39.99 | 1,000 (40%) |
 | Enterprise | 11,000 | $79.99 | 3,000 (60%) |
+
+### Payment Methods
+
+- **Cryptocurrency**: Bitcoin (BTC), Ethereum (ETH), Dogecoin (DOGE), Litecoin (LTC) via NOWPayments
+- **Credit/Debit Cards**: Coming soon via Stripe
 
 For detailed pricing information, see [docs/pricing.md](docs/pricing.md).
 

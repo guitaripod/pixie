@@ -110,7 +110,8 @@ POST /v1/credits/purchase
 ## Billing Details
 
 ### Payment Methods
-- Credit/Debit cards via Stripe
+- Cryptocurrency payments (BTC, ETH, DOGE, LTC) via NOWPayments
+- Credit/Debit cards via Stripe (coming soon)
 - No subscription required
 - Secure payment processing
 
