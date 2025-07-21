@@ -183,9 +183,23 @@ pub async fn create_checkout_session(
     if response.status_code() < 200 || response.status_code() >= 300 {
         let error_text = response.text().await?;
         if let Ok(stripe_error) = serde_json::from_str::<StripeError>(&error_text) {
-            return Err(AppError::BadRequest(format!("Stripe error: {}", stripe_error.error.message)).into());
+            let user_message = match stripe_error.error.code.as_deref() {
+                Some("api_key_expired") => "Payment configuration error. Please contact support.".to_string(),
+                Some("insufficient_funds") => "Insufficient funds. Please try a different payment method.".to_string(),
+                Some("card_declined") => "Card declined. Please check your card details or try a different card.".to_string(),
+                Some("expired_card") => "Card expired. Please use a different card.".to_string(),
+                Some("incorrect_cvc") => "Incorrect security code. Please check your card details.".to_string(),
+                Some("processing_error") => "Payment processing error. Please try again.".to_string(),
+                Some("rate_limit") => "Too many payment attempts. Please wait a moment and try again.".to_string(),
+                _ => stripe_error.error.message.clone(),
+            };
+            return Err(AppError::BadRequest(user_message).into());
         }
-        return Err(AppError::BadRequest(format!("Stripe API error: {}", error_text)).into());
+        
+        match response.status_code() {
+            500..=599 => Err(AppError::InternalError("Payment service temporarily unavailable".to_string()).into()),
+            _ => Err(AppError::BadRequest("Payment service error. Please try again.".to_string()).into()),
+        }
     }
     
     let session: StripeCheckoutSession = response.json().await?;
@@ -209,9 +223,23 @@ pub async fn get_checkout_session(env: &Env, session_id: &str) -> Result<StripeC
     if response.status_code() < 200 || response.status_code() >= 300 {
         let error_text = response.text().await?;
         if let Ok(stripe_error) = serde_json::from_str::<StripeError>(&error_text) {
-            return Err(AppError::BadRequest(format!("Stripe error: {}", stripe_error.error.message)).into());
+            let user_message = match stripe_error.error.code.as_deref() {
+                Some("api_key_expired") => "Payment configuration error. Please contact support.".to_string(),
+                Some("insufficient_funds") => "Insufficient funds. Please try a different payment method.".to_string(),
+                Some("card_declined") => "Card declined. Please check your card details or try a different card.".to_string(),
+                Some("expired_card") => "Card expired. Please use a different card.".to_string(),
+                Some("incorrect_cvc") => "Incorrect security code. Please check your card details.".to_string(),
+                Some("processing_error") => "Payment processing error. Please try again.".to_string(),
+                Some("rate_limit") => "Too many payment attempts. Please wait a moment and try again.".to_string(),
+                _ => stripe_error.error.message.clone(),
+            };
+            return Err(AppError::BadRequest(user_message).into());
         }
-        return Err(AppError::BadRequest(format!("Stripe API error: {}", error_text)).into());
+        
+        match response.status_code() {
+            500..=599 => Err(AppError::InternalError("Payment service temporarily unavailable".to_string()).into()),
+            _ => Err(AppError::BadRequest("Payment service error. Please try again.".to_string()).into()),
+        }
     }
     
     let session: StripeCheckoutSession = response.json().await?;
