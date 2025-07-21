@@ -235,6 +235,12 @@ pub async fn purchase_credits(mut req: Request, ctx: RouteContext<()>) -> Result
             }))
         },
         "nowpayments" => {
+            if purchase_req.pack_id == "starter" {
+                return AppError::BadRequest(
+                    "Crypto payments are not available for the Starter pack due to minimum transaction requirements. Please use a credit/debit card or choose a larger pack.".to_string()
+                ).to_response();
+            }
+            
             let purchase_id = record_purchase(
                 &user_id,
                 &purchase_req.pack_id,
