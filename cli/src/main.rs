@@ -8,6 +8,7 @@ mod config;
 mod api;
 mod commands;
 mod cli;
+mod error_handler;
 
 use cli::{Cli, Commands, AuthProvider, GalleryAction, CreditsAction, AdminAction, AdminCreditsAction};
 
