@@ -83,6 +83,9 @@ async fn main() -> Result<()> {
                 Some(CreditsAction::Estimate { quality, size, number, edit }) => {
                     commands::credits::estimate_cost(&api_url, quality.as_deref(), size.as_deref(), number, edit).await?;
                 }
+                Some(CreditsAction::Buy { pack, crypto }) => {
+                    commands::credits::buy_credits(&api_url, pack.as_deref(), crypto.as_deref()).await?;
+                }
             }
         }
         
