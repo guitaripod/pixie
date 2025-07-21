@@ -314,10 +314,23 @@ impl ApiClient {
         if !response.status().is_success() {
             let status = response.status();
             let text = response.text().await?;
-            if let Ok(error) = serde_json::from_str::<ErrorResponse>(&text) {
-                anyhow::bail!("Failed to create crypto payment: {}", error.error.message);
-            } else {
-                anyhow::bail!("Failed to create crypto payment: {} - {}", status, text);
+            
+            // Try to parse as our API error format
+            if let Ok(error_response) = serde_json::from_str::<ErrorResponse>(&text) {
+                // Return a structured error that includes the error response
+                return Err(anyhow::anyhow!("{}", serde_json::to_string(&error_response)?));
+            }
+            
+            // Fallback for non-JSON responses
+            match status.as_u16() {
+                500..=599 => anyhow::bail!("Server error: The service is temporarily unavailable"),
+                400 => anyhow::bail!("Invalid request: Please check your input and try again"),
+                401 => anyhow::bail!("Authentication failed: Your API key may be invalid"),
+                402 => anyhow::bail!("Payment required: Insufficient credits"),
+                403 => anyhow::bail!("Access denied: You don't have permission for this action"),
+                404 => anyhow::bail!("Not found: The requested resource doesn't exist"),
+                429 => anyhow::bail!("Too many requests: Please wait before trying again"),
+                _ => anyhow::bail!("Request failed with status {}: {}", status, text),
             }
         }
         
@@ -350,10 +363,23 @@ impl ApiClient {
         if !response.status().is_success() {
             let status = response.status();
             let text = response.text().await?;
-            if let Ok(error) = serde_json::from_str::<ErrorResponse>(&text) {
-                anyhow::bail!("Failed to create Stripe payment: {}", error.error.message);
-            } else {
-                anyhow::bail!("Failed to create Stripe payment: {} - {}", status, text);
+            
+            // Try to parse as our API error format
+            if let Ok(error_response) = serde_json::from_str::<ErrorResponse>(&text) {
+                // Return a structured error that includes the error response
+                return Err(anyhow::anyhow!("{}", serde_json::to_string(&error_response)?));
+            }
+            
+            // Fallback for non-JSON responses
+            match status.as_u16() {
+                500..=599 => anyhow::bail!("Server error: The service is temporarily unavailable"),
+                400 => anyhow::bail!("Invalid request: Please check your input and try again"),
+                401 => anyhow::bail!("Authentication failed: Your API key may be invalid"),
+                402 => anyhow::bail!("Payment required: Insufficient credits"),
+                403 => anyhow::bail!("Access denied: You don't have permission for this action"),
+                404 => anyhow::bail!("Not found: The requested resource doesn't exist"),
+                429 => anyhow::bail!("Too many requests: Please wait before trying again"),
+                _ => anyhow::bail!("Request failed with status {}: {}", status, text),
             }
         }
         
