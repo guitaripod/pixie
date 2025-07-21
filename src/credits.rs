@@ -81,8 +81,8 @@ pub fn get_credit_packs() -> Vec<CreditPack> {
             description: "Our most popular pack! (~120 medium images)".to_string(),
         },
         CreditPack {
-            id: "pro".to_string(),
-            name: "Pro".to_string(),
+            id: "business".to_string(),
+            name: "Business".to_string(),
             credits: 3500,
             price_usd_cents: 3999,
             bonus_credits: 1000,
@@ -319,13 +319,28 @@ pub async fn complete_purchase(
 ) -> Result<()> {
     let now = Utc::now().to_rfc3339();
     
+    // First check if purchase is already completed
+    let existing = db
+        .prepare("SELECT status FROM credit_purchases WHERE id = ?")
+        .bind(&[purchase_id.into()])?
+        .first::<serde_json::Value>(None)
+        .await?;
+    
+    if let Some(purchase) = existing {
+        if purchase.get("status").and_then(|s| s.as_str()) == Some("completed") {
+            // Already completed, return success (idempotent)
+            worker::console_log!("Purchase {} already completed, skipping", purchase_id);
+            return Ok(());
+        }
+    }
+    
     // Get purchase details
     let purchase = db
         .prepare("SELECT user_id, pack_id, credits FROM credit_purchases WHERE id = ? AND status = 'pending'")
         .bind(&[purchase_id.into()])?
         .first::<serde_json::Value>(None)
         .await?
-        .ok_or_else(|| AppError::NotFound("Purchase not found or already completed".to_string()))?;
+        .ok_or_else(|| AppError::NotFound("Purchase not found".to_string()))?;
     
     let user_id = purchase.get("user_id").and_then(|v| v.as_str()).unwrap_or("");
     let pack_id = purchase.get("pack_id").and_then(|v| v.as_str()).unwrap_or("");
