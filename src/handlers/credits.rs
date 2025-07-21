@@ -37,6 +37,7 @@ pub struct PurchaseRequest {
     pub pack_id: String,
     pub payment_provider: String,
     pub payment_id: String,
+    pub payment_currency: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -193,22 +194,65 @@ pub async fn purchase_credits(mut req: Request, ctx: RouteContext<()>) -> Result
     let total_credits = pack.credits + pack.bonus_credits;
     
     let db = env.d1("DB")?;
-    let purchase_id = record_purchase(
-        &user_id,
-        &purchase_req.pack_id,
-        total_credits as u32,
-        pack.price_usd_cents as u32,
-        &purchase_req.payment_provider,
-        &purchase_req.payment_id,
-        &db,
-    ).await?;
     
-    Response::from_json(&json!({
-        "purchase_id": purchase_id,
-        "status": "pending",
-        "credits": total_credits,
-        "amount_usd": format!("${:.2}", pack.price_usd_cents as f64 / 100.0),
-    }))
+    match purchase_req.payment_provider.as_str() {
+        "stripe" => {
+            let purchase_id = record_purchase(
+                &user_id,
+                &purchase_req.pack_id,
+                total_credits as u32,
+                pack.price_usd_cents as u32,
+                &purchase_req.payment_provider,
+                &purchase_req.payment_id,
+                &db,
+            ).await?;
+            
+            Response::from_json(&json!({
+                "purchase_id": purchase_id,
+                "status": "pending",
+                "credits": total_credits,
+                "amount_usd": format!("${:.2}", pack.price_usd_cents as f64 / 100.0),
+            }))
+        },
+        "nowpayments" => {
+            let purchase_id = record_purchase(
+                &user_id,
+                &purchase_req.pack_id,
+                total_credits as u32,
+                pack.price_usd_cents as u32,
+                &purchase_req.payment_provider,
+                "",  // We'll update with payment_id after creating crypto payment
+                &db,
+            ).await?;
+            
+            let crypto_currency = purchase_req.payment_currency
+                .as_deref()
+                .unwrap_or("btc");
+            
+            let crypto_response = crate::crypto_payments::create_crypto_payment(
+                &env,
+                &purchase_id,
+                &pack.name,
+                pack.price_usd_cents as f64 / 100.0,
+                total_credits as u32,
+                crypto_currency,
+            ).await?;
+            
+            // Update purchase with crypto payment_id
+            db.prepare(
+                "UPDATE credit_purchases SET payment_id = ? WHERE id = ?"
+            )
+            .bind(&[
+                crypto_response.payment_id.clone().into(),
+                purchase_id.into(),
+            ])?
+            .run()
+            .await?;
+            
+            Response::from_json(&crypto_response)
+        },
+        _ => AppError::BadRequest("Invalid payment provider".to_string()).to_response()
+    }
 }
 
 pub async fn complete_purchase_webhook(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
@@ -431,4 +475,105 @@ pub async fn admin_system_stats(req: Request, ctx: RouteContext<()>) -> Result<R
             "total_generated": total_images,
         }
     }))
+}
+
+pub async fn crypto_payment_webhook(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let env = ctx.env;
+    
+    // Get the signature from headers
+    let signature = req.headers().get("x-nowpayments-sig")?
+        .ok_or_else(|| AppError::BadRequest("Missing signature header".to_string()))?;
+    
+    // Get the raw body for signature verification
+    let body = req.text().await?;
+    
+    // Verify webhook signature
+    if !crate::crypto_payments::verify_webhook_signature(&env, &signature, &body)? {
+        return AppError::Unauthorized("Invalid webhook signature".to_string()).to_response();
+    }
+    
+    // Parse the webhook data
+    let webhook: crate::crypto_payments::NOWPaymentsWebhook = serde_json::from_str(&body)
+        .map_err(|e| AppError::BadRequest(format!("Invalid webhook body: {}", e)))?;
+    
+    // Only process confirmed payments
+    if webhook.payment_status == "finished" || webhook.payment_status == "confirmed" {
+        let db = env.d1("DB")?;
+        
+        // Complete the purchase using the order_id (which is our purchase_id)
+        complete_purchase(&webhook.order_id, &db).await?;
+    }
+    
+    Response::ok("OK")
+}
+
+pub async fn get_purchase_status(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let purchase_id = ctx.param("purchase_id")
+        .ok_or_else(|| AppError::BadRequest("Missing purchase_id".to_string()))?
+        .to_string();
+    let env = ctx.env;
+    
+    let db = env.d1("DB")?;
+    
+    // Get purchase details
+    let purchase = db
+        .prepare("SELECT status, payment_provider, payment_id FROM credit_purchases WHERE id = ?")
+        .bind(&[purchase_id.clone().into()])?
+        .first::<serde_json::Value>(None)
+        .await?
+        .ok_or_else(|| AppError::NotFound("Purchase not found".to_string()))?;
+    
+    let status = purchase.get("status")
+        .and_then(|s| s.as_str())
+        .unwrap_or("unknown");
+    
+    let payment_provider = purchase.get("payment_provider")
+        .and_then(|s| s.as_str())
+        .unwrap_or("");
+    
+    // For crypto payments, get live status from NOWPayments
+    if payment_provider == "nowpayments" && status == "pending" {
+        let payment_id = purchase.get("payment_id")
+            .and_then(|s| s.as_str())
+            .unwrap_or("");
+        
+        if !payment_id.is_empty() {
+            match crate::crypto_payments::get_payment_status(&env, payment_id).await {
+                Ok(crypto_status) => {
+                    // If payment is finished, complete the purchase
+                    if crypto_status == "finished" || crypto_status == "confirmed" {
+                        complete_purchase(&purchase_id, &db).await?;
+                        
+                        Response::from_json(&json!({
+                            "purchase_id": purchase_id,
+                            "status": "completed",
+                            "payment_status": crypto_status,
+                        }))
+                    } else {
+                        Response::from_json(&json!({
+                            "purchase_id": purchase_id,
+                            "status": status,
+                            "payment_status": crypto_status,
+                        }))
+                    }
+                },
+                Err(_) => {
+                    Response::from_json(&json!({
+                        "purchase_id": purchase_id,
+                        "status": status,
+                    }))
+                }
+            }
+        } else {
+            Response::from_json(&json!({
+                "purchase_id": purchase_id,
+                "status": status,
+            }))
+        }
+    } else {
+        Response::from_json(&json!({
+            "purchase_id": purchase_id,
+            "status": status,
+        }))
+    }
 }
