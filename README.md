@@ -114,14 +114,24 @@ npx wrangler r2 bucket create openai-image-proxy-images
 ```bash
 npx wrangler secret put OPENAI_API_KEY
 npx wrangler secret put JWT_SECRET
-# For official mode:
+# For official mode with Stripe payments:
 npx wrangler secret put STRIPE_SECRET_KEY
+npx wrangler secret put STRIPE_WEBHOOK_SECRET
 # For OAuth (optional):
 npx wrangler secret put GITHUB_CLIENT_SECRET
 npx wrangler secret put GOOGLE_CLIENT_SECRET
 ```
 
-8. Deploy:
+8. Configure Stripe Price IDs (for official mode):
+   
+   Add these in Cloudflare Dashboard under Workers > Settings > Variables:
+   - `STRIPE_PRICE_ID_STARTER` - Your Stripe price ID for starter pack
+   - `STRIPE_PRICE_ID_BASIC` - Your Stripe price ID for basic pack
+   - `STRIPE_PRICE_ID_POPULAR` - Your Stripe price ID for popular pack
+   - `STRIPE_PRICE_ID_BUSINESS` - Your Stripe price ID for business pack
+   - `STRIPE_PRICE_ID_ENTERPRISE` - Your Stripe price ID for enterprise pack
+
+9. Deploy:
 ```bash
 npx wrangler deploy
 ```
@@ -292,8 +302,15 @@ curl -X POST https://your-worker.workers.dev/v1/credits/purchase \
     "payment_currency": "btc"  // btc, eth, doge, or ltc
   }'
 
-# Card payment (coming soon)
-# Will use payment_provider: "stripe"
+# Card payment (via Stripe)
+curl -X POST https://your-worker.workers.dev/v1/credits/purchase \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-api-key" \
+  -d '{
+    "pack_id": "starter",
+    "payment_provider": "stripe",
+    "payment_id": ""
+  }'
 ```
 
 ### Transaction History
@@ -456,9 +473,11 @@ The service uses a credit-based pricing system where **1 credit = $0.01 USD**. C
 
 ### Payment Methods
 
+- **Credit/Debit Cards**: All major cards via Stripe
+  - Available for all credit packs
+  - Secure checkout with instant credit delivery
 - **Cryptocurrency**: Bitcoin (BTC), Ethereum (ETH), Dogecoin (DOGE), Litecoin (LTC) via NOWPayments
   - *Note: Crypto payments only available for Basic pack ($7.99) and above due to minimum transaction requirements*
-- **Credit/Debit Cards**: Coming soon via Stripe
 
 For detailed pricing information, see [docs/pricing.md](docs/pricing.md).
 
