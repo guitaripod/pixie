@@ -465,11 +465,11 @@ The service uses a credit-based pricing system where **1 credit = $0.01 USD**. C
 
 | Pack | Credits | Price | Bonus |
 |------|---------|-------|-------|
-| Starter | 100 | $1.99 | - |
-| Basic | 550 | $7.99 | 50 (10%) |
-| Popular | 1,800 | $19.99 | 300 (20%) |
-| Business | 4,500 | $39.99 | 1,000 (40%) |
-| Enterprise | 11,000 | $79.99 | 3,000 (60%) |
+| Starter | 150 | $2.99 | - |
+| Basic | 500 | $9.99 | 25 (5%) |
+| Popular | 1,250 | $24.99 | 114 (10%) |
+| Business | 2,500 | $49.99 | 326 (15%) |
+| Enterprise | 5,000 | $99.99 | 833 (20%) |
 
 ### Payment Methods
 
@@ -477,7 +477,7 @@ The service uses a credit-based pricing system where **1 credit = $0.01 USD**. C
   - Available for all credit packs
   - Secure checkout with instant credit delivery
 - **Cryptocurrency**: Bitcoin (BTC), Ethereum (ETH), Dogecoin (DOGE), Litecoin (LTC) via NOWPayments
-  - *Note: Crypto payments only available for Basic pack ($7.99) and above due to minimum transaction requirements*
+  - *Note: Crypto payments only available for Basic pack ($9.99) and above due to minimum transaction requirements*
 
 For detailed pricing information, see [docs/pricing.md](docs/pricing.md).
 
