@@ -37,11 +37,11 @@ The 3x multiplier covers:
 
 | Pack | Credits | Price | Bonus | Value |
 |------|---------|-------|-------|-------|
-| **Starter** | 100 | $1.99 | - | ~20 low or 7 medium images |
-| **Basic** | 550 | $7.99 | 50 (10%) | ~40 medium images |
-| **Popular** ⭐ | 1,800 | $19.99 | 300 (20%) | ~120 medium images |
-| **Pro** | 4,500 | $39.99 | 1,000 (40%) | ~300 medium images |
-| **Enterprise** | 11,000 | $79.99 | 3,000 (60%) | ~730 medium images |
+| **Starter** | 150 | $2.99 | - | ~30 low or 11 medium images |
+| **Basic** | 500 | $9.99 | 25 (5%) | ~38 medium images |
+| **Popular** ⭐ | 1,250 | $24.99 | 114 (10%) | ~96 medium images |
+| **Business** | 2,500 | $49.99 | 326 (15%) | ~192 medium images |
+| **Enterprise** | 5,000 | $99.99 | 833 (20%) | ~384 medium images |
 
 
 ## Cost Comparison
@@ -59,10 +59,10 @@ The 3x multiplier covers:
 
 | Usage Level | Images/Month | Estimated Cost |
 |-------------|--------------|----------------|
-| Casual | 50 medium | ~$7.50 |
-| Regular | 200 medium | ~$30 |
-| Power User | 500 medium | ~$75 |
-| Business | 1000+ medium | ~$150+ |
+| Casual | 50 medium | ~$10 |
+| Regular | 200 medium | ~$40 |
+| Power User | 500 medium | ~$100 |
+| Business | 1000+ medium | ~$200+ |
 
 ## Features Included
 
@@ -118,7 +118,7 @@ POST /v1/credits/purchase
   - Instant credit delivery upon successful payment
   - Secure checkout with 3D Secure authentication
 - **Cryptocurrency** (BTC, ETH, DOGE, LTC) via NOWPayments
-  - **Note**: Due to minimum transaction requirements, crypto payments are only available for Basic pack ($7.99) and above
+  - **Note**: Due to minimum transaction requirements, crypto payments are only available for Basic pack ($9.99) and above
   - QR code provided for easy mobile wallet scanning
   - Automatic confirmation upon blockchain verification
 - No subscription required
@@ -144,8 +144,9 @@ We believe in transparent pricing. Here's how our 3x multiplier breaks down:
 | Infrastructure & Storage | 5% |
 | Payment processing (Stripe) | 3% |
 | Payment processing (NOWPayments)* | 0.5-1% |
-| Development & Maintenance | 20% |
-| Profit margin | 37.2-37.7% |
+| Platform fees (App stores) | 15% |
+| Development & Maintenance | 15% |
+| Profit margin | 27.2-27.7% |
 
 *NOWPayments cryptocurrency fee breakdown:
 - Service fee: 0.5% (0.4-0.5% for high volume)
