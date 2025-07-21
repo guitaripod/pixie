@@ -22,8 +22,23 @@ API_BASE_URL = "https://openai-image-proxy.guitaripod.workers.dev"
 # Environment
 ENVIRONMENT = "production"
 
+# Stripe Configuration (Publishable key is safe in vars)
+STRIPE_PUBLISHABLE_KEY = "pk_test_51QfJU6CLnJ2fO2EeJfP04Z5vnX4hxyUNFCGrxmCCT2K3jOXCsyDBGgRIcfzZJsUrNcgkUnuQBXGu0FWgTxbXHuOb00hNnE5yfO"
+
 # OpenAI API key will be stored as a secret
 # Run: npx wrangler secret put OPENAI_API_KEY
+
+# Stripe keys to be stored as secrets:
+# Run: npx wrangler secret put STRIPE_SECRET_KEY
+# Run: npx wrangler secret put STRIPE_WEBHOOK_SECRET
+
+# Stripe Price IDs - Set these in Cloudflare Dashboard under Workers > Settings > Variables
+# or use wrangler secrets (though they're not truly secret, just configuration):
+# STRIPE_PRICE_ID_STARTER
+# STRIPE_PRICE_ID_BASIC
+# STRIPE_PRICE_ID_POPULAR
+# STRIPE_PRICE_ID_BUSINESS
+# STRIPE_PRICE_ID_ENTERPRISE
 
 [[d1_databases]]
 binding = "DB"

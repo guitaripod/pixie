@@ -103,16 +103,24 @@ GET /v1/credits/pricing
 POST /v1/credits/purchase
 {
   "pack_id": "popular",
-  "payment_method": "stripe"
+  "payment_provider": "stripe",  // or "nowpayments" for crypto
+  "payment_id": "",
+  "payment_currency": "btc"  // only for crypto payments
 }
 ```
 
 ## Billing Details
 
 ### Payment Methods
-- Cryptocurrency payments (BTC, ETH, DOGE, LTC) via NOWPayments
+- **Credit/Debit Cards** via Stripe
+  - All major cards accepted (Visa, Mastercard, American Express, Discover)
+  - Available for all credit packs
+  - Instant credit delivery upon successful payment
+  - Secure checkout with 3D Secure authentication
+- **Cryptocurrency** (BTC, ETH, DOGE, LTC) via NOWPayments
   - **Note**: Due to minimum transaction requirements, crypto payments are only available for Basic pack ($7.99) and above
-- Credit/Debit cards via Stripe (coming soon)
+  - QR code provided for easy mobile wallet scanning
+  - Automatic confirmation upon blockchain verification
 - No subscription required
 - Secure payment processing
 
