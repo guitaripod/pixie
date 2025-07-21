@@ -25,3 +25,8 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# CLI test/generated images
+cli/*.png
+cli/**/*.png
+cli/edited_images/
