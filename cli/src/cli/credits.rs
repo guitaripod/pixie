@@ -66,32 +66,31 @@ EXAMPLES:
         edit: bool,
     },
     
-    #[command(about = "Buy credits with cryptocurrency
+    #[command(about = "Buy credits with card or cryptocurrency
     
 Examples:
   pixie credits buy
-  pixie credits buy --pack popular --crypto btc", long_about = "Purchase credits using cryptocurrency.
+  pixie credits buy --pack popular
+  pixie credits buy --pack pro --crypto btc", long_about = "Purchase credits using credit/debit card or cryptocurrency.
 
-Supports:
-  - Bitcoin (BTC)
-  - Ethereum (ETH)
-  - Dogecoin (DOGE)
-  - Litecoin (LTC)
-  - Lightning Network (instant BTC)
-
-Note: Crypto payments are only available for Basic pack ($7.99) and above due to minimum transaction requirements
+Payment Methods:
+  - Credit/Debit Card (Stripe) - Default, all packs supported
+  - Cryptocurrency (Bitcoin, Ethereum, Dogecoin, Litecoin)
+    Note: Crypto only available for Basic pack ($7.99) and above
 
 The CLI will:
   1. Show available credit packs
-  2. Let you choose payment cryptocurrency
-  3. Display payment address and QR code
-  4. Monitor for payment confirmation
-  5. Automatically credit your account
+  2. Let you choose payment method (card or crypto)
+  3. For card: Open secure checkout in your browser
+  4. For crypto: Display payment address and QR code
+  5. Monitor for payment confirmation
+  6. Automatically credit your account
 
 EXAMPLES:
   pixie credits buy                           # Interactive mode
-  pixie credits buy --pack popular            # Buy popular pack
-  pixie credits buy --pack pro --crypto btc   # Buy pro pack with Bitcoin")]
+  pixie credits buy --pack popular            # Buy popular pack with card
+  pixie credits buy --pack pro --crypto btc   # Buy pro pack with Bitcoin
+  pixie credits buy --pack starter            # Buy starter pack with card")]
     Buy {
         #[arg(short, long, help = "Credit pack to purchase (starter, basic, popular, pro, enterprise)")]
         pack: Option<String>,
