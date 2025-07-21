@@ -46,6 +46,26 @@ pub struct CompletePurchaseRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateStripeCheckoutRequest {
+    pub pack_id: String,
+    pub success_url: String,
+    pub cancel_url: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateStripeCheckoutResponse {
+    pub checkout_url: String,
+    pub session_id: String,
+    pub purchase_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StripeConfigResponse {
+    pub publishable_key: String,
+    pub enabled: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdminAdjustCreditsRequest {
     pub user_id: String,
     pub amount: i32,
@@ -570,10 +590,221 @@ pub async fn get_purchase_status(_req: Request, ctx: RouteContext<()>) -> Result
                 "status": status,
             }))
         }
+    }
+    // For Stripe payments, get live status from Stripe
+    else if payment_provider == "stripe" && status == "pending" {
+        let session_id = purchase.get("payment_id")
+            .and_then(|s| s.as_str())
+            .unwrap_or("");
+        
+        if !session_id.is_empty() {
+            match crate::stripe_payments::get_checkout_session(&env, session_id).await {
+                Ok(session) => {
+                    // If payment is completed, complete the purchase
+                    if session.payment_status == "paid" {
+                        complete_purchase(&purchase_id, &db).await?;
+                        
+                        Response::from_json(&json!({
+                            "purchase_id": purchase_id,
+                            "status": "completed",
+                            "payment_status": session.payment_status,
+                            "payment_method": "stripe",
+                        }))
+                    } else {
+                        Response::from_json(&json!({
+                            "purchase_id": purchase_id,
+                            "status": status,
+                            "payment_status": session.payment_status,
+                            "payment_method": "stripe",
+                        }))
+                    }
+                },
+                Err(_) => {
+                    Response::from_json(&json!({
+                        "purchase_id": purchase_id,
+                        "status": status,
+                        "payment_method": "stripe",
+                    }))
+                }
+            }
+        } else {
+            Response::from_json(&json!({
+                "purchase_id": purchase_id,
+                "status": status,
+                "payment_method": "stripe",
+            }))
+        }
     } else {
         Response::from_json(&json!({
             "purchase_id": purchase_id,
             "status": status,
         }))
     }
+}
+
+pub async fn create_stripe_checkout(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let env = ctx.env;
+    
+    let user_id = match validate_api_key(&req) {
+        Err(e) => return e.to_response(),
+        Ok(api_key) => {
+            let db = env.d1("DB")?;
+            let stmt = db.prepare("SELECT id, email FROM users WHERE api_key = ?");
+            let result = stmt
+                .bind(&[api_key.clone().into()])?
+                .first::<serde_json::Value>(None)
+                .await?;
+            
+            match result {
+                Some(value) => {
+                    let user_id = value.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                    let email = value.get("email").and_then(|v| v.as_str());
+                    (user_id, email.map(|s| s.to_string()))
+                },
+                None => return AppError::Unauthorized("Invalid API key".to_string()).to_response(),
+            }
+        }
+    };
+    
+    let checkout_req: CreateStripeCheckoutRequest = match req.json().await {
+        Ok(req) => req,
+        Err(e) => return AppError::BadRequest(format!("Invalid request body: {}", e)).to_response(),
+    };
+    
+    // Find the pack
+    let packs = get_credit_packs();
+    let pack = packs
+        .iter()
+        .find(|p| p.id == checkout_req.pack_id)
+        .ok_or_else(|| AppError::BadRequest("Invalid pack_id".to_string()))?;
+    
+    // Get Stripe price ID for this pack
+    let stripe_price_id = crate::stripe_payments::get_stripe_price_id(&env, &checkout_req.pack_id)
+        .ok_or_else(|| AppError::BadRequest("Pack not available for Stripe payment".to_string()))?;
+    
+    let total_credits = pack.credits + pack.bonus_credits;
+    
+    let db = env.d1("DB")?;
+    
+    // Record the purchase in pending state
+    let purchase_id = record_purchase(
+        &user_id.0,
+        &checkout_req.pack_id,
+        total_credits as u32,
+        pack.price_usd_cents as u32,
+        "stripe",
+        "", // We'll update with session_id after creating
+        &db,
+    ).await?;
+    
+    // Create Stripe checkout session
+    let session = crate::stripe_payments::create_checkout_session(
+        &env,
+        &purchase_id,
+        &checkout_req.pack_id,
+        &pack.name,
+        total_credits as u32,
+        &stripe_price_id,
+        &checkout_req.success_url,
+        &checkout_req.cancel_url,
+        user_id.1.as_deref(),
+    ).await?;
+    
+    // Update purchase with Stripe session ID
+    db.prepare(
+        "UPDATE credit_purchases SET payment_id = ? WHERE id = ?"
+    )
+    .bind(&[
+        session.id.clone().into(),
+        purchase_id.clone().into(),
+    ])?
+    .run()
+    .await?;
+    
+    Response::from_json(&CreateStripeCheckoutResponse {
+        checkout_url: session.url.unwrap_or_else(|| "".to_string()),
+        session_id: session.id,
+        purchase_id,
+    })
+}
+
+pub async fn stripe_webhook(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let env = ctx.env;
+    
+    // Get Stripe signature header
+    let signature = req.headers().get("stripe-signature")?
+        .ok_or_else(|| AppError::BadRequest("Missing stripe-signature header".to_string()))?;
+    
+    // Extract timestamp from signature
+    let sig_parts: Vec<&str> = signature.split(',').collect();
+    let mut timestamp = "";
+    for part in &sig_parts {
+        let kv: Vec<&str> = part.split('=').collect();
+        if kv.len() == 2 && kv[0] == "t" {
+            timestamp = kv[1];
+            break;
+        }
+    }
+    
+    // Get the raw body for signature verification
+    let body = req.text().await?;
+    
+    // Verify webhook signature
+    if !crate::stripe_payments::verify_webhook_signature(&env, &signature, &body, timestamp)? {
+        return AppError::Unauthorized("Invalid webhook signature".to_string()).to_response();
+    }
+    
+    // Parse the webhook event
+    let event: crate::stripe_payments::StripeWebhookEvent = serde_json::from_str(&body)
+        .map_err(|e| AppError::BadRequest(format!("Invalid webhook body: {}", e)))?;
+    
+    worker::console_log!("Received Stripe webhook event: {}", event.event_type);
+    
+    // Handle different event types
+    match event.event_type.as_str() {
+        "checkout.session.completed" => {
+            // Extract the session from the event
+            let session: crate::stripe_payments::StripeCheckoutSession = serde_json::from_value(event.data.object)
+                .map_err(|e| AppError::InternalError(format!("Failed to parse session: {}", e)))?;
+            
+            // Only process if payment is successful
+            if session.payment_status == "paid" {
+                // Extract purchase_id from metadata
+                if let Some(purchase_id) = session.metadata.get("purchase_id") {
+                    let db = env.d1("DB")?;
+                    complete_purchase(purchase_id, &db).await?;
+                    worker::console_log!("Completed purchase: {}", purchase_id);
+                }
+            }
+        },
+        "payment_intent.succeeded" => {
+            worker::console_log!("Payment intent succeeded");
+        },
+        "payment_intent.payment_failed" => {
+            worker::console_log!("Payment intent failed");
+        },
+        _ => {
+            worker::console_log!("Unhandled event type: {}", event.event_type);
+        }
+    }
+    
+    Response::ok("OK")
+}
+
+pub async fn get_stripe_config(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let env = ctx.env;
+    
+    // Check if Stripe is configured
+    let publishable_key = env.var("STRIPE_PUBLISHABLE_KEY")
+        .ok()
+        .map(|k| k.to_string())
+        .unwrap_or_default();
+    
+    let enabled = !publishable_key.is_empty() && 
+                  env.secret("STRIPE_SECRET_KEY").is_ok();
+    
+    Response::from_json(&StripeConfigResponse {
+        publishable_key,
+        enabled,
+    })
 }
