@@ -76,7 +76,7 @@ Examples:
 Payment Methods:
   - Credit/Debit Card (Stripe) - Default, all packs supported
   - Cryptocurrency (Bitcoin, Ethereum, Dogecoin, Litecoin)
-    Note: Crypto only available for Basic pack ($7.99) and above
+    Note: Crypto only available for Basic pack ($9.99) and above
 
 The CLI will:
   1. Show available credit packs

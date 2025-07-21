@@ -507,7 +507,7 @@ pub async fn buy_credits(
                 println!();
                 println!("{}", "❌ Crypto payments not available for Starter pack".red().bold());
                 println!("{}", "Due to minimum transaction requirements, crypto payments are only available for Basic pack and above.".yellow());
-                println!("{}", "The Starter pack ($1.99) can be purchased with credit/debit cards.".dimmed());
+                println!("{}", "The Starter pack ($2.99) can be purchased with credit/debit cards.".dimmed());
                 return Ok(());
             }
             
