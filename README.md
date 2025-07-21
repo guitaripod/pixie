@@ -468,7 +468,7 @@ The service uses a credit-based pricing system where **1 credit = $0.01 USD**. C
 | Starter | 100 | $1.99 | - |
 | Basic | 550 | $7.99 | 50 (10%) |
 | Popular | 1,800 | $19.99 | 300 (20%) |
-| Pro | 4,500 | $39.99 | 1,000 (40%) |
+| Business | 4,500 | $39.99 | 1,000 (40%) |
 | Enterprise | 11,000 | $79.99 | 3,000 (60%) |
 
 ### Payment Methods
