@@ -415,7 +415,13 @@ pub async fn buy_credits(
             println!();
             println!("{}", "Creating Stripe checkout session...".dimmed());
             
-            let payment = client.purchase_credits_stripe(&pack_id).await?;
+            let payment = match client.purchase_credits_stripe(&pack_id).await {
+                Ok(p) => p,
+                Err(e) => {
+                    eprintln!("{}", crate::error_handler::handle_api_error(e, "Payment initiation"));
+                    std::process::exit(1);
+                }
+            };
             
             println!();
             println!("{}", "━".repeat(50).bright_white());
@@ -550,7 +556,13 @@ pub async fn buy_credits(
             println!();
             println!("{}", "Creating payment request...".dimmed());
             
-            let payment = client.purchase_credits_crypto(&pack_id, crypto_currency).await?;
+            let payment = match client.purchase_credits_crypto(&pack_id, crypto_currency).await {
+                Ok(p) => p,
+                Err(e) => {
+                    eprintln!("{}", crate::error_handler::handle_api_error(e, "Crypto payment initiation"));
+                    std::process::exit(1);
+                }
+            };
             
             // Display payment details
             println!();
