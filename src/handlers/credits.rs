@@ -680,7 +680,9 @@ pub async fn create_stripe_checkout(mut req: Request, ctx: RouteContext<()>) -> 
     
     // Get Stripe price ID for this pack
     let stripe_price_id = crate::stripe_payments::get_stripe_price_id(&env, &checkout_req.pack_id)
-        .ok_or_else(|| AppError::BadRequest("Pack not available for Stripe payment".to_string()))?;
+        .ok_or_else(|| AppError::BadRequest(
+            format!("The '{}' pack is not available for card payments. Please try a different pack or payment method.", checkout_req.pack_id)
+        ))?;
     
     let total_credits = pack.credits + pack.bonus_credits;
     
