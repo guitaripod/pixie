@@ -110,7 +110,8 @@ POST /v1/credits/purchase
 ## Billing Details
 
 ### Payment Methods
-- Cryptocurrency payments (BTC, LTC) via NOWPayments
+- Cryptocurrency payments (BTC, ETH, DOGE, LTC) via NOWPayments
+  - **Note**: Due to minimum transaction requirements, crypto payments are only available for Basic pack ($7.99) and above
 - Credit/Debit cards via Stripe (coming soon)
 - No subscription required
 - Secure payment processing
@@ -141,7 +142,9 @@ We believe in transparent pricing. Here's how our 3x multiplier breaks down:
 *NOWPayments cryptocurrency fee breakdown:
 - Service fee: 0.5% (0.4-0.5% for high volume)
 - Exchange fee: 0.5% (if currency conversion needed)
-- Network fees: Variable by blockchain (typically under $1 for BTC, LTC)
+- Network fees: Variable by blockchain
+  - **BTC, DOGE, LTC**: Typically under $1
+  - **ETH**: High gas fees ($18-100+), may make smaller transactions uneconomical
 
 This ensures sustainable service while keeping prices fair for users.
 

@@ -456,7 +456,8 @@ The service uses a credit-based pricing system where **1 credit = $0.01 USD**. C
 
 ### Payment Methods
 
-- **Cryptocurrency**: Bitcoin (BTC), Litecoin (LTC) via NOWPayments
+- **Cryptocurrency**: Bitcoin (BTC), Ethereum (ETH), Dogecoin (DOGE), Litecoin (LTC) via NOWPayments
+  - *Note: Crypto payments only available for Basic pack ($7.99) and above due to minimum transaction requirements*
 - **Credit/Debit Cards**: Coming soon via Stripe
 
 For detailed pricing information, see [docs/pricing.md](docs/pricing.md).

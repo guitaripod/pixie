@@ -74,8 +74,12 @@ Examples:
 
 Supports:
   - Bitcoin (BTC)
+  - Ethereum (ETH)
+  - Dogecoin (DOGE)
   - Litecoin (LTC)
   - Lightning Network (instant BTC)
+
+Note: Crypto payments are only available for Basic pack ($7.99) and above due to minimum transaction requirements
 
 The CLI will:
   1. Show available credit packs
@@ -92,7 +96,7 @@ EXAMPLES:
         #[arg(short, long, help = "Credit pack to purchase (starter, basic, popular, pro, enterprise)")]
         pack: Option<String>,
         
-        #[arg(short, long, help = "Cryptocurrency to use (btc, ltc, lightning)")]
+        #[arg(short, long, help = "Cryptocurrency to use (btc, eth, doge, ltc, lightning)")]
         crypto: Option<String>,
     },
 }

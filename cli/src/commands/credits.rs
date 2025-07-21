@@ -399,15 +399,26 @@ pub async fn buy_credits(
         .find(|p| p.id == pack_id)
         .unwrap();
     
+    // Check if crypto payments are supported for this pack
+    if pack_id == "starter" {
+        println!();
+        println!("{}", "❌ Crypto payments not available for Starter pack".red().bold());
+        println!("{}", "Due to minimum transaction requirements, crypto payments are only available for Basic pack and above.".yellow());
+        println!("{}", "The Starter pack ($1.99) can be purchased with credit/debit cards (coming soon).".dimmed());
+        return Ok(());
+    }
+    
     // Interactive crypto selection if not provided
     let crypto_currency = if let Some(crypto) = crypto_currency {
         match crypto.to_lowercase().as_str() {
             "btc" | "bitcoin" => "btc",
+            "eth" | "ethereum" => "eth",
+            "doge" | "dogecoin" => "doge",
             "ltc" | "litecoin" => "ltc",
             "lightning" => "btc", // Lightning uses BTC
             _ => {
                 println!("{}", "Invalid cryptocurrency!".red());
-                println!("Supported: btc, ltc");
+                println!("Supported: btc, eth, doge, ltc");
                 return Ok(());
             }
         }
@@ -417,9 +428,11 @@ pub async fn buy_credits(
         println!("{}", "═".repeat(50).cyan());
         println!();
         println!("  1) {} - Bitcoin", "BTC".yellow());
-        println!("  2) {} - Litecoin", "LTC".cyan());
+        println!("  2) {} - Ethereum", "ETH".blue());
+        println!("  3) {} - Dogecoin", "DOGE".bright_yellow());
+        println!("  4) {} - Litecoin", "LTC".bright_blue());
         println!();
-        print!("Select cryptocurrency (1-2): ");
+        print!("Select cryptocurrency (1-4): ");
         std::io::stdout().flush()?;
         
         let mut input = String::new();
@@ -427,7 +440,9 @@ pub async fn buy_credits(
         
         match input.trim() {
             "1" => "btc",
-            "2" => "ltc",
+            "2" => "eth",
+            "3" => "doge",
+            "4" => "ltc",
             _ => {
                 println!("{}", "Invalid selection!".red());
                 return Ok(());
