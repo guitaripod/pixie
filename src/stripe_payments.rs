@@ -79,6 +79,7 @@ pub struct LineItem {
 
 // Stripe webhook event types
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct StripeWebhookEvent {
     pub id: String,
     #[serde(rename = "type")]

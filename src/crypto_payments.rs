@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::error::AppError;
 
 #[derive(Debug, Serialize)]
+#[allow(dead_code)]
 struct NOWPaymentsInvoiceRequest {
     price_amount: f64,
     price_currency: String,
@@ -13,6 +14,7 @@ struct NOWPaymentsInvoiceRequest {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct NOWPaymentsInvoiceResponse {
     id: String,
     token_id: String,
@@ -39,6 +41,7 @@ struct NOWPaymentsPaymentRequest {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct NOWPaymentsPaymentResponse {
     pub payment_id: serde_json::Value, // Can be string or number
     pub payment_status: String,
@@ -55,6 +58,7 @@ pub struct NOWPaymentsPaymentResponse {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct NOWPaymentsWebhook {
     pub payment_id: i64,
     pub payment_status: String,
