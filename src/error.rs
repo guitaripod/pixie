@@ -14,14 +14,14 @@ pub enum AppError {
 
 impl AppError {
     pub fn to_response(&self) -> Result<Response> {
-        let (status, error_type, message) = match self {
-            AppError::BadRequest(msg) => (400, "invalid_request_error", msg.clone()),
-            AppError::Unauthorized(msg) => (401, "authentication_error", msg.clone()),
-            AppError::Forbidden(msg) => (403, "permission_denied", msg.clone()),
-            AppError::NotFound(msg) => (404, "not_found", msg.clone()),
-            AppError::PaymentRequired(msg) => (402, "insufficient_credits", msg.clone()),
-            AppError::InternalError(msg) => (500, "internal_error", msg.clone()),
-            AppError::RateLimitExceeded => (429, "rate_limit_exceeded", "Rate limit exceeded. Please try again later.".to_string()),
+        let (status, error_type, message, code) = match self {
+            AppError::BadRequest(msg) => (400, "invalid_request_error", msg.clone(), "bad_request"),
+            AppError::Unauthorized(msg) => (401, "authentication_error", msg.clone(), "unauthorized"),
+            AppError::Forbidden(msg) => (403, "permission_denied", msg.clone(), "forbidden"),
+            AppError::NotFound(msg) => (404, "not_found", msg.clone(), "not_found"),
+            AppError::PaymentRequired(msg) => (402, "insufficient_credits", msg.clone(), "insufficient_credits"),
+            AppError::InternalError(_) => (500, "internal_error", "An internal error occurred. Please try again later.".to_string(), "internal_error"),
+            AppError::RateLimitExceeded => (429, "rate_limit_exceeded", "Rate limit exceeded. Please try again later.".to_string(), "rate_limit_exceeded"),
         };
 
         let error_response = ErrorResponse {
@@ -29,7 +29,7 @@ impl AppError {
                 message,
                 error_type: error_type.to_string(),
                 param: None,
-                code: None,
+                code: Some(code.to_string()),
             },
         };
 
