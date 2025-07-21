@@ -8,6 +8,7 @@ mod storage;
 mod deployment;
 mod credits;
 mod crypto_payments;
+mod stripe_payments;
 
 use handlers::{images, gallery, r2, usage, oauth, device_auth};
 
@@ -46,6 +47,9 @@ async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .post_async("/v1/credits/webhook", handlers::credits::complete_purchase_webhook)
         .post_async("/v1/credits/webhook/crypto", handlers::credits::crypto_payment_webhook)
         .post_async("/v1/ipn/nowpayments", handlers::credits::crypto_payment_webhook)
+        .post_async("/v1/credits/purchase/stripe", handlers::credits::create_stripe_checkout)
+        .post_async("/v1/stripe/webhook", handlers::credits::stripe_webhook)
+        .get_async("/v1/stripe/config", handlers::credits::get_stripe_config)
         .post_async("/v1/admin/credits/adjust", handlers::credits::admin_adjust_credits)
         .get_async("/v1/admin/credits/stats", handlers::credits::admin_system_stats)
         .run(req, env)
