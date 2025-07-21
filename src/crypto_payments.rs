@@ -146,7 +146,7 @@ pub async fn create_crypto_payment(
 pub async fn get_payment_status(env: &Env, payment_id: &str) -> Result<String> {
     let api_key = env.secret("NOWPAYMENTS_API_KEY")?.to_string();
     
-    let mut headers = worker::Headers::new();
+    let headers = worker::Headers::new();
     headers.set("x-api-key", &api_key)?;
     
     // Remove quotes if present
