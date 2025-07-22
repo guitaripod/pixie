@@ -3,5 +3,7 @@ pub mod gallery;
 pub mod r2;
 pub mod usage;
 pub mod oauth;
+pub mod oauth_apple;
+pub mod oauth_apple_callback;
 pub mod device_auth;
 pub mod credits;

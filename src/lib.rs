@@ -12,7 +12,7 @@ mod stripe_payments;
 mod rate_limit;
 mod logger;
 
-use handlers::{images, gallery, r2, usage, oauth, device_auth};
+use handlers::{images, gallery, r2, usage, oauth, oauth_apple, oauth_apple_callback, device_auth};
 
 #[event(fetch)]
 async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
@@ -37,6 +37,9 @@ async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .post_async("/v1/auth/github/callback", oauth::github_auth_callback)
         .get_async("/v1/auth/google", oauth::google_auth_start)
         .post_async("/v1/auth/google/callback", oauth::google_auth_callback)
+        .get_async("/v1/auth/apple", oauth_apple::apple_auth_start)
+        .post_async("/v1/auth/apple/callback", oauth_apple_callback::apple_auth_callback_page)
+        .post_async("/v1/auth/apple/callback/json", oauth_apple::apple_auth_callback)
         .post_async("/v1/auth/device/code", device_auth::start_device_flow)
         .post_async("/v1/auth/device/token", device_auth::poll_device_token)
         .get_async("/v1/auth/device/:device_code/status", device_auth::device_auth_status)

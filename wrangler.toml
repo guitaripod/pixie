@@ -14,6 +14,9 @@ REQUIRE_OWN_OPENAI_KEY = "false"
 GITHUB_CLIENT_ID = "Ov23liVZ3rECA6jltb1f"
 GOOGLE_CLIENT_ID = "720004930052-n4tdei4ua9shd2hqr1f6udmg5ijvj25j.apps.googleusercontent.com"
 GOOGLE_DEVICE_CLIENT_ID = "720004930052-uiv67gpm9rpgj9ku2lq6ie4oiplrle6f.apps.googleusercontent.com"
+APPLE_SERVICE_ID = "com.guitaripod.openai.image.proxy.service"
+APPLE_TEAM_ID = "P4DQK6SRKR"
+APPLE_KEY_ID = "V7GNRF2W6V"
 
 # Service URLs
 SERVICE_URL = "https://openai-image-proxy.guitaripod.workers.dev"
@@ -22,11 +25,16 @@ API_BASE_URL = "https://openai-image-proxy.guitaripod.workers.dev"
 # Environment
 ENVIRONMENT = "production"
 
-# Stripe Configuration (Publishable key is safe in vars)
+# Stripe Configuration
 STRIPE_PUBLISHABLE_KEY = "pk_test_51QfJU6CLnJ2fO2EeJfP04Z5vnX4hxyUNFCGrxmCCT2K3jOXCsyDBGgRIcfzZJsUrNcgkUnuQBXGu0FWgTxbXHuOb00hNnE5yfO"
 
 # OpenAI API key will be stored as a secret
 # Run: npx wrangler secret put OPENAI_API_KEY
+
+# OAuth secrets to be stored as secrets:
+# Run: npx wrangler secret put GITHUB_CLIENT_SECRET
+# Run: npx wrangler secret put GOOGLE_CLIENT_SECRET
+# Run: npx wrangler secret put APPLE_PRIVATE_KEY
 
 # Stripe keys to be stored as secrets:
 # Run: npx wrangler secret put STRIPE_SECRET_KEY
