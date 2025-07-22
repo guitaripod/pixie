@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS user_credits;
 DROP TABLE IF EXISTS device_auth_flows;
 DROP TABLE IF EXISTS usage_records;
 DROP TABLE IF EXISTS stored_images;
+DROP TABLE IF EXISTS user_locks;
 DROP TABLE IF EXISTS users;
 
 -- Create users table
@@ -130,3 +131,11 @@ CREATE TABLE credit_purchases (
 
 CREATE INDEX idx_credit_purchases_user_id ON credit_purchases(user_id);
 CREATE INDEX idx_credit_purchases_status ON credit_purchases(status);
+
+-- Create user_locks table for rate limiting (1 concurrent request per user)
+CREATE TABLE user_locks (
+    user_id TEXT PRIMARY KEY,
+    acquired_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_user_locks_acquired_at ON user_locks(acquired_at);
