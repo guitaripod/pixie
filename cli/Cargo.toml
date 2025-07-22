@@ -23,3 +23,5 @@ colored = "2"
 indicatif = "0.17"
 qrcode = "0.14"
 dialoguer = "0.11"
+uuid = { version = "1.11", features = ["v4"] }
+urlencoding = "2"

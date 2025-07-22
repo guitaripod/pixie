@@ -36,7 +36,8 @@ async fn main() -> Result<()> {
                     auth::authenticate_google(&api_url).await?;
                 }
                 AuthProvider::Apple => {
-                    println!("{}", "Apple authentication not yet implemented".yellow());
+                    println!("{}", "Starting Apple authentication...".green());
+                    auth::authenticate_apple(&api_url).await?;
                 }
                 AuthProvider::DeviceStatus { device_code } => {
                     commands::utils::check_device_auth_status(&api_url, &device_code).await?;

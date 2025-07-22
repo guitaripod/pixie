@@ -159,3 +159,57 @@ pub async fn authenticate_github(api_url: &str) -> Result<()> {
 pub async fn authenticate_google(api_url: &str) -> Result<()> {
     authenticate_provider(api_url, "google").await
 }
+
+pub async fn authenticate_apple(api_url: &str) -> Result<()> {
+    println!("Starting Apple authentication...\n");
+    
+    // Generate a random state for security
+    let state = uuid::Uuid::new_v4().to_string();
+    
+    // Construct the OAuth URL
+    let auth_url = format!(
+        "{}/v1/auth/apple?state={}&redirect_uri={}/v1/auth/apple/callback",
+        api_url,
+        urlencoding::encode(&state),
+        urlencoding::encode(api_url)
+    );
+    
+    println!("{}", "Please visit this URL to authenticate:".bold());
+    println!("{}\n", auth_url.blue().underline());
+    
+    println!("Opening browser...");
+    webbrowser::open(&auth_url)?;
+    
+    println!("\n{}", "After authenticating in your browser, you'll receive an API key and User ID.".yellow());
+    println!("{}", "Please enter them below:\n".dimmed());
+    
+    // Prompt for API key
+    print!("API Key: ");
+    use std::io::Write;
+    std::io::stdout().flush()?;
+    
+    let mut api_key = String::new();
+    std::io::stdin().read_line(&mut api_key)?;
+    let api_key = api_key.trim().to_string();
+    
+    // Prompt for User ID
+    print!("User ID: ");
+    std::io::stdout().flush()?;
+    
+    let mut user_id = String::new();
+    std::io::stdin().read_line(&mut user_id)?;
+    let user_id = user_id.trim().to_string();
+    
+    // Save the credentials
+    let mut config = Config::load()?;
+    config.api_key = Some(api_key);
+    config.user_id = Some(user_id);
+    config.auth_provider = Some("apple".to_string());
+    config.api_url = Some(api_url.to_string());
+    config.save()?;
+    
+    println!("\n{}", "✓ Authentication successful!".green().bold());
+    println!("User ID: {}", config.user_id.as_ref().unwrap());
+    
+    Ok(())
+}
