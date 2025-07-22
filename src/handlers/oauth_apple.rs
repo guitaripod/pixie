@@ -5,6 +5,8 @@ use crate::handlers::oauth::{OAuthCallbackRequest, OAuthTokenResponse, generate_
 use serde::Deserialize;
 use uuid::Uuid;
 use chrono::Utc;
+
+#[cfg(not(target_os = "windows"))]
 use jwt_simple::prelude::*;
 
 #[derive(Debug, Deserialize)]
@@ -35,6 +37,13 @@ struct AppleIdTokenClaims {
 
 
 pub async fn apple_auth_start(req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    #[cfg(target_os = "windows")]
+    {
+        return Response::error("Sign in with Apple is not supported on Windows servers", 501);
+    }
+    
+    #[cfg(not(target_os = "windows"))]
+    {
     let env = ctx.env;
     let url = req.url()?;
     let query_params: std::collections::HashMap<String, String> = url
@@ -59,9 +68,17 @@ pub async fn apple_auth_start(req: Request, ctx: RouteContext<()>) -> Result<Res
     );
     
     Response::redirect(apple_auth_url.parse()?)
+    }
 }
 
 pub async fn apple_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    #[cfg(target_os = "windows")]
+    {
+        return Response::error("Sign in with Apple is not supported on Windows servers", 501);
+    }
+    
+    #[cfg(not(target_os = "windows"))]
+    {
     let env = ctx.env;
     
     let callback_req: OAuthCallbackRequest = match req.json().await {
@@ -183,8 +200,10 @@ pub async fn apple_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Res
     };
     
     Response::from_json(&response)
+    }
 }
 
+#[cfg(not(target_os = "windows"))]
 fn generate_apple_client_secret(team_id: &str, service_id: &str, key_id: &str, private_key: &str) -> Result<String> {
     // Create custom claims for Apple
     let claims = Claims::create(Duration::from_days(180))

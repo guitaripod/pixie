@@ -22,6 +22,7 @@ console_error_panic_hook = "0.1"
 async-trait = "0.1"
 url = "2.5"
 urlencoding = "2"
+[target.'cfg(not(target_os = "windows"))'.dependencies]
 jwt-simple = "0.12"
 
 [profile.release]
