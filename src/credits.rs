@@ -413,9 +413,9 @@ pub fn estimate_image_cost(
         ("high", "1536x1024") | ("high", "1024x1536") => 94,  // ~6240 tokens
         ("high", _) => 78,  // average for other sizes
         
-        // Auto quality (varies based on prompt)
-        ("auto", "1024x1024") => 16,  // defaults to medium for standard size
-        ("auto", _) => 30,  // may use higher quality for larger sizes
+        // Auto quality (often selects high quality based on prompt complexity)
+        ("auto", "1024x1024") => 50,  // often uses high quality (62) but sometimes medium (16)
+        ("auto", _) => 75,  // often uses high quality for larger sizes
         _ => 16,  // default to medium
     };
     
@@ -425,7 +425,7 @@ pub fn estimate_image_cost(
             "low" => base_estimate + 3,
             "medium" => base_estimate + 3,
             "high" => base_estimate + 20,  // High quality edits use significantly more tokens
-            "auto" => base_estimate + 10,  // Auto may use higher quality processing
+            "auto" => base_estimate + 18,  // Auto often uses higher quality processing
             _ => base_estimate + 3,
         }
     } else {
@@ -477,16 +477,16 @@ mod tests {
         assert_eq!(estimate_image_cost("high", "1024x1024", false), 62);
         assert_eq!(estimate_image_cost("high", "1536x1024", false), 94);
         assert_eq!(estimate_image_cost("high", "512x512", false), 78); // other high quality sizes
-        assert_eq!(estimate_image_cost("auto", "1024x1024", false), 16);
-        assert_eq!(estimate_image_cost("auto", "1536x1024", false), 30);
+        assert_eq!(estimate_image_cost("auto", "1024x1024", false), 50);
+        assert_eq!(estimate_image_cost("auto", "1536x1024", false), 75);
         
         // Test edit operations
         assert_eq!(estimate_image_cost("low", "1024x1024", true), 7); // 4 + 3
         assert_eq!(estimate_image_cost("medium", "1024x1024", true), 19); // 16 + 3
         assert_eq!(estimate_image_cost("high", "1024x1024", true), 82); // 62 + 20
         assert_eq!(estimate_image_cost("high", "1536x1024", true), 114); // 94 + 20
-        assert_eq!(estimate_image_cost("auto", "1024x1024", true), 26); // 16 + 10
-        assert_eq!(estimate_image_cost("auto", "1536x1024", true), 40); // 30 + 10
+        assert_eq!(estimate_image_cost("auto", "1024x1024", true), 68); // 50 + 18
+        assert_eq!(estimate_image_cost("auto", "1536x1024", true), 93); // 75 + 18
     }
     
     #[test]
