@@ -2,6 +2,7 @@ use anyhow::Result;
 use colored::*;
 use std::io::{self, Write};
 use crate::{api::{ApiClient, CreditEstimateRequest}, config::Config};
+use crate::commands::parse_size_alias;
 use dialoguer::{Select, theme::ColorfulTheme};
 
 pub async fn show_balance(api_url: &str) -> Result<()> {
@@ -254,11 +255,14 @@ pub async fn estimate_cost(
         }
     };
     
+    // Parse size alias
+    let actual_size = parse_size_alias(&size);
+    
     let client = ApiClient::new(api_url)?;
     let request = CreditEstimateRequest {
         prompt: Some("Sample prompt for estimation".to_string()),
         quality: quality.clone(),
-        size: size.clone(),
+        size: actual_size.clone(),
         n: Some(number),
         is_edit: Some(is_edit),
     };
@@ -274,7 +278,10 @@ pub async fn estimate_cost(
         if is_edit { "Image Edit".cyan() } else { "Image Generation".cyan() }
     );
     println!("  Quality:   {}", quality.to_uppercase().bold());
-    println!("  Size:      {}", size.bold());
+    println!("  Size:      {} {}", 
+        size.bold(), 
+        if size != actual_size { format!("({})", actual_size).dimmed() } else { "".dimmed() }
+    );
     println!("  Quantity:  {}", number.to_string().bold());
     
     println!();
