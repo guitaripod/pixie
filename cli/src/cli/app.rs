@@ -80,7 +80,10 @@ TROUBLESHOOTING:
 
 Examples:
   pixie generate \"cute robot\" -n 4 -o ./images
-  pixie generate \"abstract art\" -s landscape -q high", long_about = "Generate stunning images from text descriptions using gpt-image-1.
+  pixie generate \"abstract art\" -s landscape -q high
+  pixie generate \"logo\" -s square -b transparent -f png
+  pixie generate \"product photo\" -b white -f jpeg -c 85
+  pixie generate \"wallpaper\" -s landscape --moderation low", long_about = "Generate stunning images from text descriptions using gpt-image-1.
 
 EXAMPLES:
   # Simple generation (uses defaults)
@@ -168,7 +171,10 @@ CREDIT COSTS:
 
 Examples:
   pixie edit photo.png \"add a rainbow\"
-  pixie edit gallery:abc-123 \"add neon lights\" -o .", long_about = "Transform existing images using AI-powered editing.
+  pixie edit gallery:abc-123 \"add neon lights\" -o .
+  pixie edit banner.jpg \"enhance colors\" -s landscape -q high
+  pixie edit portrait.png \"add glasses\" --fidelity high
+  pixie edit logo.png \"3D effect\" -n 3 -o variations/", long_about = "Transform existing images using AI-powered editing.
 
 EXAMPLES:
   # Simple edits
