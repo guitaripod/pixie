@@ -395,17 +395,28 @@ pub fn estimate_image_cost(
     size: &str,
     is_edit: bool,
 ) -> u32 {
-    // Rough estimates based on typical token usage
+    // Based on gpt-image-1 documentation:
+    // Low: 272-408 tokens, Medium: 1056-1584 tokens, High: 4160-6240 tokens
     let base_estimate = match (quality, size) {
-        ("low", _) => 4,
-        ("medium", _) => 13,
-        ("high", "1024x1024") => 52,
-        ("high", "1536x1024") | ("high", "1024x1536") => 78,
-        ("high", "1792x1024") | ("high", "1024x1792") => 90,
-        ("high", _) => 65, // default high quality estimate for other sizes
-        ("auto", "1024x1024") => 13, // auto defaults to medium for standard size
-        ("auto", _) => 26, // auto may use higher quality for larger sizes
-        _ => 13, // default to medium
+        // Low quality estimates
+        ("low", "1024x1024") => 4,  // ~272 tokens
+        ("low", "1536x1024") | ("low", "1024x1536") => 6,  // ~408 tokens
+        ("low", _) => 5,  // average for other sizes
+        
+        // Medium quality estimates  
+        ("medium", "1024x1024") => 16,  // ~1056 tokens
+        ("medium", "1536x1024") | ("medium", "1024x1536") => 24,  // ~1584 tokens
+        ("medium", _) => 20,  // average for other sizes
+        
+        // High quality estimates
+        ("high", "1024x1024") => 62,  // ~4160 tokens
+        ("high", "1536x1024") | ("high", "1024x1536") => 94,  // ~6240 tokens
+        ("high", _) => 78,  // average for other sizes
+        
+        // Auto quality (varies based on prompt)
+        ("auto", "1024x1024") => 16,  // defaults to medium for standard size
+        ("auto", _) => 30,  // may use higher quality for larger sizes
+        _ => 16,  // default to medium
     };
     
     if is_edit {
@@ -413,8 +424,8 @@ pub fn estimate_image_cost(
         match quality {
             "low" => base_estimate + 3,
             "medium" => base_estimate + 3,
-            "high" => base_estimate + 20, // High quality edits use significantly more tokens
-            "auto" => base_estimate + 10, // Auto may use higher quality processing
+            "high" => base_estimate + 20,  // High quality edits use significantly more tokens
+            "auto" => base_estimate + 10,  // Auto may use higher quality processing
             _ => base_estimate + 3,
         }
     } else {
@@ -460,21 +471,22 @@ mod tests {
     fn test_estimate_image_cost() {
         // Test generation costs
         assert_eq!(estimate_image_cost("low", "1024x1024", false), 4);
-        assert_eq!(estimate_image_cost("medium", "1024x1024", false), 13);
-        assert_eq!(estimate_image_cost("high", "1024x1024", false), 52);
-        assert_eq!(estimate_image_cost("high", "1536x1024", false), 78);
-        assert_eq!(estimate_image_cost("high", "1792x1024", false), 90);
-        assert_eq!(estimate_image_cost("high", "512x512", false), 65); // other high quality sizes
-        assert_eq!(estimate_image_cost("auto", "1024x1024", false), 13);
-        assert_eq!(estimate_image_cost("auto", "1536x1024", false), 26);
+        assert_eq!(estimate_image_cost("low", "1536x1024", false), 6);
+        assert_eq!(estimate_image_cost("medium", "1024x1024", false), 16);
+        assert_eq!(estimate_image_cost("medium", "1536x1024", false), 24);
+        assert_eq!(estimate_image_cost("high", "1024x1024", false), 62);
+        assert_eq!(estimate_image_cost("high", "1536x1024", false), 94);
+        assert_eq!(estimate_image_cost("high", "512x512", false), 78); // other high quality sizes
+        assert_eq!(estimate_image_cost("auto", "1024x1024", false), 16);
+        assert_eq!(estimate_image_cost("auto", "1536x1024", false), 30);
         
         // Test edit operations
-        assert_eq!(estimate_image_cost("low", "1024x1024", true), 7);
-        assert_eq!(estimate_image_cost("medium", "1024x1024", true), 16);
-        assert_eq!(estimate_image_cost("high", "1024x1024", true), 72); // 52 + 20
-        assert_eq!(estimate_image_cost("high", "1536x1024", true), 98); // 78 + 20
-        assert_eq!(estimate_image_cost("auto", "1024x1024", true), 23); // 13 + 10
-        assert_eq!(estimate_image_cost("auto", "1536x1024", true), 36); // 26 + 10
+        assert_eq!(estimate_image_cost("low", "1024x1024", true), 7); // 4 + 3
+        assert_eq!(estimate_image_cost("medium", "1024x1024", true), 19); // 16 + 3
+        assert_eq!(estimate_image_cost("high", "1024x1024", true), 82); // 62 + 20
+        assert_eq!(estimate_image_cost("high", "1536x1024", true), 114); // 94 + 20
+        assert_eq!(estimate_image_cost("auto", "1024x1024", true), 26); // 16 + 10
+        assert_eq!(estimate_image_cost("auto", "1536x1024", true), 40); // 30 + 10
     }
     
     #[test]
