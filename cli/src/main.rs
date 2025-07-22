@@ -44,12 +44,12 @@ async fn main() -> Result<()> {
             }
         }
         
-        Commands::Generate { prompt, number, size, quality, output } => {
-            commands::generate::handle(&api_url, &prompt, number, &size, &quality, output.as_deref()).await?;
+        Commands::Generate { prompt, number, size, quality, output, background, format, compress, moderation } => {
+            commands::generate::handle(&api_url, &prompt, number, &size, &quality, output.as_deref(), background.as_deref(), format.as_deref(), compress, moderation.as_deref()).await?;
         }
         
-        Commands::Edit { image, prompt, mask, number, size, quality, output } => {
-            commands::edit::handle(&api_url, &image, &prompt, mask.as_deref(), number, &size, &quality, output.as_deref()).await?;
+        Commands::Edit { image, prompt, mask, number, size, quality, fidelity, output } => {
+            commands::edit::handle(&api_url, &image, &prompt, mask.as_deref(), number, &size, &quality, &fidelity, output.as_deref()).await?;
         }
         
         Commands::Gallery { action } => {
