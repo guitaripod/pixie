@@ -41,7 +41,8 @@ A high-performance Rust-based Cloudflare Worker that proxies OpenAI's gpt-image-
 - D1 database integration
 - Public gallery endpoints
 - Usage tracking and analytics
-- OAuth authentication (Apple, GitHub, Google)
+- OAuth authentication (Apple*, GitHub, Google)
+  - *Apple Sign In not supported on Windows servers
 - Admin dashboard in CLI
 - Rate limiting (per-user concurrency control)
 - Structured logging with JSON output
@@ -72,6 +73,10 @@ npx wrangler secret put REQUIRE_OWN_OPENAI_KEY # "true" for self-hosted
 ```
 
 </details>
+
+## Platform Notes
+
+**Sign in with Apple**: Not supported on Windows servers due to cryptographic library dependencies. Windows users should use GitHub or Google authentication instead. This limitation applies to both the server deployment and CLI tool.
 
 ## Quick Start
 

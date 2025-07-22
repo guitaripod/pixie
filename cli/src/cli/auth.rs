@@ -24,12 +24,19 @@ This will:
   3. Save credentials locally for future use")]
     Google,
     
-    #[command(about = "Authenticate with Apple OAuth (coming soon)", long_about = "Authenticate using your Apple ID.
+    #[cfg_attr(target_os = "windows", command(about = "Authenticate with Apple OAuth (not supported on Windows)"))]
+    #[cfg_attr(not(target_os = "windows"), command(about = "Authenticate with Apple OAuth"))]
+    #[command(long_about = "Authenticate using your Apple ID.
 
 EXAMPLE:
   pixie auth apple
 
-Note: Apple authentication is coming soon!")]
+This will:
+  1. Open your browser to Apple OAuth page
+  2. Show your API key and User ID after authentication
+  3. Prompt you to enter these credentials in the CLI
+
+Note: Sign in with Apple is NOT supported on Windows. Please use GitHub or Google authentication instead.")]
     Apple,
     
     #[command(about = "Check device authentication status", long_about = "Check the status of a device authentication flow.
