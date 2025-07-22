@@ -204,7 +204,8 @@ CREDIT COSTS:
   Base edit cost + quality cost:
   Low:    ~7 credits (4 base + 3 input)
   Medium: ~16 credits (13 base + 3 input)
-  High:   ~55-81 credits (varies by size)")]
+  High:   ~72-110 credits (varies by size)
+  Auto:   ~23-36 credits (varies by size)")]
     Edit {
         #[arg(help = "Local image path or gallery:<id> for gallery images")]
         image: String,
