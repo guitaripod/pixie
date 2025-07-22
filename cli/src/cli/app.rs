@@ -106,7 +106,7 @@ EXAMPLES:
   pixie generate \"minimalist logo\" -q low -n 10 -o logos/   # ~4-6 credits each
   pixie generate \"product photo\" -q medium                  # ~16-24 credits
   pixie generate \"detailed artwork\" -q high -s landscape    # ~78-94 credits
-  pixie generate \"quick sketch\" -q auto                     # AI selects (4-94)
+  pixie generate \"quick sketch\" -q auto                     # AI selects (~50-75)
   
   # Output directory
   pixie generate \"nature scene\" -o ~/Pictures/
@@ -139,7 +139,7 @@ CREDIT COSTS:
   Low:    ~4-6 credits per image
   Medium: ~16-24 credits per image
   High:   ~62-94 credits per image (varies by size)
-  Auto:   ~4-94 credits (AI selects based on prompt)")]
+  Auto:   ~50-75 credits (AI often selects high quality)")]
     Generate {
         #[arg(help = "Text description of the image you want to create")]
         prompt: String,
@@ -150,7 +150,7 @@ CREDIT COSTS:
         #[arg(short, long, default_value = "auto", help = "Size: square, landscape, portrait, auto, or dimensions (1024x1024)")]
         size: String,
         
-        #[arg(short, long, default_value = "auto", help = "Output quality (low, medium, high, auto)")]
+        #[arg(short, long, default_value = "low", help = "Output quality (low, medium, high, auto)")]
         quality: String,
         
         #[arg(short, long, help = "Directory to save generated images")]
@@ -242,7 +242,7 @@ CREDIT COSTS:
   Low:    ~7 credits (4 base + 3 input)
   Medium: ~16 credits (13 base + 3 input)
   High:   ~72-110 credits (varies by size)
-  Auto:   ~23-36 credits (varies by size)")]
+  Auto:   ~68-93 credits (AI often selects high quality)")]
     Edit {
         #[arg(help = "Local image path or gallery:<id> for gallery images")]
         image: String,
@@ -259,7 +259,7 @@ CREDIT COSTS:
         #[arg(short, long, default_value = "auto", help = "Size: square, landscape, portrait, auto, or dimensions")]
         size: String,
         
-        #[arg(short, long, default_value = "auto", help = "Output quality (low, medium, high, auto)")]
+        #[arg(short, long, default_value = "low", help = "Output quality (low, medium, high, auto)")]
         quality: String,
         
         #[arg(long, default_value = "low", help = "Input fidelity: low, high (preserves more detail)")]
