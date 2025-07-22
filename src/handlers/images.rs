@@ -1,4 +1,4 @@
-use worker::{Request, Response, RouteContext, Result, console_log};
+use worker::{Request, Response, RouteContext, Result};
 use crate::models::{ImageGenerationRequest, ImageEditRequest, ImageResponse, UsageRecord};
 use crate::error::AppError;
 use crate::auth::validate_api_key;
@@ -6,6 +6,8 @@ use crate::storage::store_image_in_r2;
 use crate::deployment::{DeploymentConfig, get_openai_key};
 use crate::credits::{check_and_reserve_credits, deduct_credits, calculate_openai_cost_usd, calculate_credits_from_cost, estimate_image_cost};
 use crate::rate_limit::{check_and_acquire_lock, release_lock};
+use crate::{log_debug, log_error, log_info};
+use serde_json::json;
 use uuid::Uuid;
 use chrono::Utc;
 
@@ -97,7 +99,13 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
         "user": generation_req.user,
     });
 
-    console_log!("Sending request to OpenAI: {:?}", request_body);
+    log_debug!("Sending request to OpenAI", json!({
+        "model": "gpt-image-1",
+        "prompt_length": generation_req.prompt.len(),
+        "n": generation_req.n,
+        "size": &generation_req.size,
+        "quality": &generation_req.quality
+    }));
 
     let openai_req = worker::Request::new_with_init(
         openai_url,
@@ -180,7 +188,11 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
                     images_stored += 1;
                 }
                 Err(e) => {
-                    console_log!("Failed to store image in R2: {:?}", e);
+                    log_error!("Failed to store image in R2", json!({
+                        "error": e.to_string(),
+                        "user_id": &user_id,
+                        "prompt": &generation_req.prompt
+                    }));
                 }
             }
         }
@@ -198,7 +210,12 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
             &r2_keys.join(","),
             &db
         ).await {
-            console_log!("Failed to deduct credits: {:?}", e);
+            log_error!("Failed to deduct credits", json!({
+                "error": e.to_string(),
+                "user_id": &user_id,
+                "credits": actual_credits_to_charge,
+                "images_stored": images_stored
+            }));
             // Credits couldn't be deducted but images are already stored
             // This is logged but we don't fail the request
         }
@@ -411,14 +428,23 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
     
     let body: Vec<u8> = body_parts.into_iter().flatten().collect();
     
-    console_log!("Multipart body size: {} bytes", body.len());
+    log_debug!("Multipart body prepared", json!({
+        "body_size_bytes": body.len(),
+        "user_id": &user_id,
+        "has_mask": edit_req.mask.is_some()
+    }));
     
     let openai_url = "https://api.openai.com/v1/images/edits";
     let headers = worker::Headers::new();
     headers.set("Authorization", &format!("Bearer {}", openai_key))?;
     headers.set("Content-Type", &format!("multipart/form-data; boundary={}", boundary))?;
     
-    console_log!("Sending edit request to OpenAI with multipart body");
+    log_debug!("Sending edit request to OpenAI", json!({
+        "prompt": &edit_req.prompt,
+        "n": edit_req.n,
+        "size": &edit_req.size,
+        "quality": &edit_req.quality
+    }));
     
     let openai_req = worker::Request::new_with_init(
         openai_url,
@@ -431,7 +457,10 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
     let mut openai_resp = worker::Fetch::Request(openai_req).send().await?;
     let resp_body = openai_resp.text().await?;
     
-    console_log!("OpenAI response status: {}", openai_resp.status_code());
+    log_info!("OpenAI edit response received", json!({
+        "status_code": openai_resp.status_code(),
+        "user_id": &user_id
+    }));
 
     let mut image_response: ImageResponse = match serde_json::from_str(&resp_body) {
         Ok(resp) => resp,
@@ -503,7 +532,11 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
                     images_stored += 1;
                 }
                 Err(e) => {
-                    console_log!("Failed to store image in R2: {:?}", e);
+                    log_error!("Failed to store image in R2", json!({
+                        "error": e.to_string(),
+                        "user_id": &user_id,
+                        "prompt": &edit_req.prompt
+                    }));
                 }
             }
         }
@@ -521,7 +554,12 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
             &r2_keys.join(","),
             &db
         ).await {
-            console_log!("Failed to deduct credits: {:?}", e);
+            log_error!("Failed to deduct credits", json!({
+                "error": e.to_string(),
+                "user_id": &user_id,
+                "credits": actual_credits_to_charge,
+                "images_stored": images_stored
+            }));
             // Credits couldn't be deducted but images are already stored
             // This is logged but we don't fail the request
         }
