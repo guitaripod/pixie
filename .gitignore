@@ -30,3 +30,6 @@ npm-debug.log*
 cli/*.png
 cli/**/*.png
 cli/edited_images/
+
+# Apple Sign in with Apple private keys
+*.p8
