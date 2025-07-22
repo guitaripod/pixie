@@ -22,7 +22,7 @@ console_error_panic_hook = "0.1"
 async-trait = "0.1"
 url = "2.5"
 urlencoding = "2"
-jsonwebtoken = "9"
+jwt-simple = "0.12"
 
 [profile.release]
 lto = true

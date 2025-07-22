@@ -2,10 +2,10 @@ use worker::{Request, Response, RouteContext, Result, console_log};
 use crate::error::AppError;
 use crate::credits::initialize_user_credits;
 use crate::handlers::oauth::{OAuthCallbackRequest, OAuthTokenResponse, generate_api_key};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use uuid::Uuid;
 use chrono::Utc;
-use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
+use jwt_simple::prelude::*;
 
 #[derive(Debug, Deserialize)]
 struct AppleTokenResponse {
@@ -33,14 +33,6 @@ struct AppleIdTokenClaims {
     nonce_supported: bool,
 }
 
-#[derive(Debug, Serialize)]
-struct AppleClientSecretClaims {
-    iss: String, // Team ID
-    iat: i64,    // Issued at
-    exp: i64,    // Expiration
-    aud: String, // https://appleid.apple.com
-    sub: String, // Service ID
-}
 
 pub async fn apple_auth_start(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let env = ctx.env;
@@ -194,25 +186,19 @@ pub async fn apple_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Res
 }
 
 fn generate_apple_client_secret(team_id: &str, service_id: &str, key_id: &str, private_key: &str) -> Result<String> {
-    // Use chrono instead of SystemTime for WASM compatibility
-    let now = Utc::now().timestamp();
+    // Create custom claims for Apple
+    let claims = Claims::create(Duration::from_days(180))
+        .with_issuer(team_id)
+        .with_subject(service_id)
+        .with_audience("https://appleid.apple.com");
     
-    let claims = AppleClientSecretClaims {
-        iss: team_id.to_string(),
-        iat: now,
-        exp: now + 86400 * 180, // 180 days
-        aud: "https://appleid.apple.com".to_string(),
-        sub: service_id.to_string(),
-    };
+    // Parse the ES256 private key and add key ID
+    let key_pair = ES256KeyPair::from_pem(private_key)
+        .map_err(|e| AppError::InternalError(format!("Failed to parse private key: {}", e)))?
+        .with_key_id(key_id);
     
-    // The private key is already in PEM format from the secret
-    let encoding_key = EncodingKey::from_ec_pem(private_key.as_bytes())
-        .map_err(|e| AppError::InternalError(format!("Failed to parse private key: {}", e)))?;
-    
-    let mut header = Header::new(Algorithm::ES256);
-    header.kid = Some(key_id.to_string());
-    
-    let token = encode(&header, &claims, &encoding_key)
+    // Sign the token (key ID is automatically included in header)
+    let token = key_pair.sign(claims)
         .map_err(|e| AppError::InternalError(format!("Failed to sign JWT: {}", e)))?;
     
     Ok(token)

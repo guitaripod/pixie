@@ -1,4 +1,4 @@
-use worker::{Request, Response, RouteContext, Result, console_log};
+use worker::{Request, Response, RouteContext, Result};
 use crate::error::AppError;
 use serde::Deserialize;
 
@@ -11,7 +11,7 @@ pub struct AppleCallbackForm {
     user: Option<String>,
 }
 
-pub async fn apple_auth_callback_page(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
+pub async fn apple_auth_callback_page(mut req: Request, _ctx: RouteContext<()>) -> Result<Response> {
     // Apple sends a form POST, not JSON
     let form_data = req.form_data().await
         .map_err(|e| AppError::BadRequest(format!("Failed to parse form data: {}", e)))?;
