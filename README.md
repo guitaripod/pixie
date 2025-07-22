@@ -43,10 +43,8 @@ A high-performance Rust-based Cloudflare Worker that proxies OpenAI's gpt-image-
 - Usage tracking and analytics
 - OAuth authentication (~~Apple~~(soon), GitHub, Google)
 - Admin dashboard in CLI
-
-**Planned:**
-- Rate limiting
-- Streaming responses
+- Rate limiting (per-user concurrency control)
+- Structured logging with JSON output
 
 </details>
 
