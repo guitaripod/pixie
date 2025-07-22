@@ -80,7 +80,7 @@ TROUBLESHOOTING:
 
 Examples:
   pixie generate \"cute robot\" -n 4 -o ./images
-  pixie generate \"abstract art\" -s 1536x1024 -q high", long_about = "Generate stunning images from text descriptions using gpt-image-1.
+  pixie generate \"abstract art\" -s landscape -q high", long_about = "Generate stunning images from text descriptions using gpt-image-1.
 
 EXAMPLES:
   # Simple generation (uses defaults)
@@ -193,9 +193,9 @@ EXAMPLES:
   pixie edit portrait.png \"change background to beach\" -m mask.png
   pixie edit product.jpg \"replace logo\" -m logo-mask.png -o branded/
   
-  # Size options
-  pixie edit icon.png \"higher resolution\" -s 1024x1024
-  pixie edit banner.jpg \"resize and enhance\" -s 1536x1024
+  # Size options (using aliases)
+  pixie edit icon.png \"higher resolution\" -s square
+  pixie edit banner.jpg \"resize and enhance\" -s landscape
   
   # Quality variations (affects credits)
   pixie edit sketch.png \"quick colorize\" -q low              # ~7 credits
@@ -215,7 +215,7 @@ EXAMPLES:
   pixie edit product.png \"change background, keep logo sharp\" --fidelity high
   
   # All parameters
-  pixie edit photo.png \"dramatic lighting\" -m mask.png -n 3 -s 1024x1536 -q high -o edits/
+  pixie edit photo.png \"dramatic lighting\" -m mask.png -n 3 -s portrait -q high -o edits/
 
 PARAMETERS:
   image           Local path or gallery:<id>
