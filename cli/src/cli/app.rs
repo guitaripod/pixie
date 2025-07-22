@@ -92,16 +92,16 @@ EXAMPLES:
   pixie generate \"fantasy creature\" -n 10 -o creatures/
   
   # Size variations
-  pixie generate \"abstract art\" -s 1536x1024              # Wide
-  pixie generate \"portrait in oil painting style\" -s 1024x1536  # Tall
-  pixie generate \"icon design\" -s 1024x1024               # Square
+  pixie generate \"banner art\" -s landscape               # 1536x1024
+  pixie generate \"poster\" -s portrait                    # 1024x1536
+  pixie generate \"icon design\" -s square                  # 1024x1024
   pixie generate \"banner image\" -s auto                   # Auto-select
   
   # Quality options (affects detail and credits)
-  pixie generate \"minimalist logo\" -q low -n 10 -o logos/   # ~4-5 credits each
-  pixie generate \"product photo\" -q medium                  # ~12-15 credits
-  pixie generate \"detailed artwork\" -q high -s 1536x1024    # ~78 credits
-  pixie generate \"quick sketch\" -q auto                     # Auto-select
+  pixie generate \"minimalist logo\" -q low -n 10 -o logos/   # ~4-6 credits each
+  pixie generate \"product photo\" -q medium                  # ~16-24 credits
+  pixie generate \"detailed artwork\" -q high -s landscape    # ~78-94 credits
+  pixie generate \"quick sketch\" -q auto                     # AI selects (4-94)
   
   # Output directory
   pixie generate \"nature scene\" -o ~/Pictures/
@@ -112,19 +112,29 @@ EXAMPLES:
   pixie generate \"A steampunk owl wearing goggles, highly detailed, 4k\"
   pixie generate \"Minimalist japanese ink painting of mountains\"
   
+  # Advanced features
+  pixie generate \"logo\" -b transparent -f png             # Transparent background
+  pixie generate \"product photo\" -b white -c 85 -f jpeg   # White bg, compressed
+  pixie generate \"artwork\" --moderation low               # Less restrictive
+  
   # All parameters
-  pixie generate \"futuristic car\" -n 3 -s 1536x1024 -q high -o ./cars/
+  pixie generate \"futuristic car\" -n 3 -s landscape -q high -o ./cars/
 
 PARAMETERS:
   -n, --number    Number of images (1-10, default: 1)
-  -s, --size      Dimensions: 1024x1024, 1536x1024, 1024x1536, auto
+  -s, --size      Size: square, landscape, portrait, auto
+  -b, --background Background: auto, transparent, white, black
+  -f, --format    Output: png, jpeg, webp
+  -c, --compress  Compression: 0-100 (JPEG/WebP only)
   -q, --quality   Quality: low, medium, high, auto
   -o, --output    Save directory (optional)
+  --moderation    Strictness: auto (default), low
 
 CREDIT COSTS:
-  Low:    ~4-5 credits per image
-  Medium: ~12-15 credits per image
-  High:   ~50-80 credits per image (varies by size)")]
+  Low:    ~4-6 credits per image
+  Medium: ~16-24 credits per image
+  High:   ~62-94 credits per image (varies by size)
+  Auto:   ~4-94 credits (AI selects based on prompt)")]
     Generate {
         #[arg(help = "Text description of the image you want to create")]
         prompt: String,
@@ -132,7 +142,7 @@ CREDIT COSTS:
         #[arg(short, long, default_value = "1", help = "Number of images to generate (1-10)")]
         number: u8,
         
-        #[arg(short, long, default_value = "auto", help = "Image dimensions (1024x1024, 1536x1024, 1024x1536, auto)")]
+        #[arg(short, long, default_value = "auto", help = "Size: square, landscape, portrait, auto, or dimensions (1024x1024)")]
         size: String,
         
         #[arg(short, long, default_value = "auto", help = "Output quality (low, medium, high, auto)")]
@@ -140,6 +150,18 @@ CREDIT COSTS:
         
         #[arg(short, long, help = "Directory to save generated images")]
         output: Option<String>,
+        
+        #[arg(short = 'b', long, help = "Background style (auto, transparent, white, black)")]
+        background: Option<String>,
+        
+        #[arg(short = 'f', long, help = "Output format (png, jpeg, webp)")]
+        format: Option<String>,
+        
+        #[arg(short = 'c', long, help = "Compression level for JPEG/WebP (0-100)")]
+        compress: Option<u8>,
+        
+        #[arg(long, help = "Moderation level (auto, low)")]
+        moderation: Option<String>,
     },
     
     #[command(about = "Edit existing images with AI
@@ -178,7 +200,7 @@ EXAMPLES:
   # Quality variations (affects credits)
   pixie edit sketch.png \"quick colorize\" -q low              # ~7 credits
   pixie edit photo.jpg \"enhance details\" -q medium           # ~16 credits
-  pixie edit artwork.png \"ultra HD version\" -q high -s 1536x1024  # ~81 credits
+  pixie edit artwork.png \"ultra HD version\" -q high -s landscape  # ~98-110 credits
   
   # Output directories
   pixie edit input.png \"artistic style\" -o ~/Pictures/
@@ -187,6 +209,10 @@ EXAMPLES:
   # Complex edits
   pixie edit room.jpg \"add modern furniture, warm lighting, plants\"
   pixie edit car.png \"change color to red, add racing stripes, sporty wheels\"
+  
+  # High fidelity (preserve face/logo details)
+  pixie edit portrait.jpg \"add company logo to shirt\" --fidelity high
+  pixie edit product.png \"change background, keep logo sharp\" --fidelity high
   
   # All parameters
   pixie edit photo.png \"dramatic lighting\" -m mask.png -n 3 -s 1024x1536 -q high -o edits/
@@ -198,6 +224,7 @@ PARAMETERS:
   -n, --number    Number of variations (1-10, default: 1)
   -s, --size      Output size (same as generate)
   -q, --quality   Output quality (same as generate)
+  --fidelity      Input preservation: low (default), high
   -o, --output    Save directory
 
 CREDIT COSTS:
@@ -219,11 +246,14 @@ CREDIT COSTS:
         #[arg(short, long, default_value = "1", help = "Number of edited variations (1-10)")]
         number: u8,
         
-        #[arg(short, long, default_value = "auto", help = "Output dimensions (same options as generate)")]
+        #[arg(short, long, default_value = "auto", help = "Size: square, landscape, portrait, auto, or dimensions")]
         size: String,
         
-        #[arg(short, long, default_value = "auto", help = "Output quality (same options as generate)")]
+        #[arg(short, long, default_value = "auto", help = "Output quality (low, medium, high, auto)")]
         quality: String,
+        
+        #[arg(long, default_value = "low", help = "Input fidelity: low, high (preserves more detail)")]
+        fidelity: String,
         
         #[arg(short, long, help = "Directory to save edited images")]
         output: Option<String>,
