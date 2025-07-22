@@ -10,6 +10,7 @@ mod credits;
 mod crypto_payments;
 mod stripe_payments;
 mod rate_limit;
+mod logger;
 
 use handlers::{images, gallery, r2, usage, oauth, device_auth};
 
