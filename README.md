@@ -155,12 +155,18 @@ cargo install --path .
 
 ### Features
 
-- Generate images from the command line
+- Generate images from the command line with advanced options
+- Edit existing images with high fidelity support
 - Manage credits and view balance
 - Admin commands for system management
 - Device authentication support
 - View transaction history
 - Comprehensive help documentation
+- Size aliases for easy use (square, landscape, portrait)
+- Background control (transparent, white, black)
+- Output format selection (PNG, JPEG, WebP)
+- Compression settings for JPEG/WebP
+- Moderation level control
 
 ### Basic Usage
 
@@ -170,11 +176,20 @@ pixie auth github
 # or
 pixie auth google
 
-# Generate an image
-pixie generate "A beautiful sunset" --quality medium -o ./images
+# Generate an image with size alias
+pixie generate "A beautiful sunset" -s landscape -q medium -o ./images
 
-# Edit an image
-pixie edit photo.png "add a rainbow" -o ./edited
+# Generate with transparent background
+pixie generate "logo design" -s square -b transparent -f png
+
+# Generate with compression
+pixie generate "product photo" -b white -f jpeg -c 85
+
+# Edit an image with high fidelity
+pixie edit photo.png "add company logo" --fidelity high -o ./edited
+
+# Edit with size alias
+pixie edit banner.jpg "enhance colors" -s landscape -q high
 
 # Check credit balance
 pixie credits
@@ -188,6 +203,35 @@ pixie gallery list
 # View help
 pixie --help
 ```
+
+### CLI Parameters
+
+#### Size Options
+- **Aliases**: `square`, `landscape`, `portrait`, `auto`
+- **Explicit**: `1024x1024`, `1536x1024`, `1024x1536`
+- Example: `pixie generate "icon" -s square`
+
+#### Quality Levels
+- `low` - Fast generation, ~4-6 credits
+- `medium` - Balanced quality, ~16-24 credits  
+- `high` - Maximum detail, ~62-94 credits
+- `auto` - AI selects based on prompt
+
+#### Background Options (Generation only)
+- `auto` - AI decides (default)
+- `transparent` - Transparent background (PNG/WebP only)
+- `white` - White background
+- `black` - Black background
+
+#### Output Formats
+- `png` - Default, supports transparency
+- `jpeg` - Faster, smaller files
+- `webp` - Modern format, supports transparency
+
+#### Advanced Options
+- `--compress` - JPEG/WebP compression (0-100)
+- `--moderation` - Content filter level (`auto`, `low`)
+- `--fidelity` - Edit mode only (`low`, `high`)
 
 ### New Commands
 
