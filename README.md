@@ -1,5 +1,9 @@
 # OpenAI Image Proxy
 
+![Visitor Count](https://komarev.com/ghpvc/?username=guitaripod&repo=openai-image-proxy)
+![Visitor Badge](https://visitor-badge.glitch.me/badge?page_id=guitaripod.openai-image-proxy)
+![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fguitaripod%2Fopenai-image-proxy)
+
 A high-performance Rust-based Cloudflare Worker that proxies OpenAI's gpt-image-1 model with enhanced features like automatic image storage, usage tracking, and public galleries.
 
 ## Table of Contents
