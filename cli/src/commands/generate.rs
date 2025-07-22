@@ -7,6 +7,7 @@ use chrono;
 use crate::api::{ApiClient, ImageGenerationRequest};
 use crate::config::Config;
 use crate::commands::utils::{check_credits_and_estimate, show_credits_used};
+use crate::commands::parse_size_alias;
 
 pub async fn handle(
     api_url: &str,
@@ -15,6 +16,10 @@ pub async fn handle(
     size: &str,
     quality: &str,
     output: Option<&str>,
+    background: Option<&str>,
+    format: Option<&str>,
+    compress: Option<u8>,
+    moderation: Option<&str>,
 ) -> Result<()> {
     let config = Config::load()?;
     if !config.is_authenticated() {
@@ -26,10 +31,13 @@ pub async fn handle(
     
     let client = ApiClient::new(api_url)?;
     
+    // Parse size alias
+    let actual_size = parse_size_alias(size);
+    
     let (initial_balance, _) = check_credits_and_estimate(
         &client,
         quality,
-        size,
+        &actual_size,
         number,
         false,
         prompt,
@@ -47,8 +55,15 @@ pub async fn handle(
         prompt: prompt.to_string(),
         model: "gpt-image-1".to_string(),
         n: number,
-        size: size.to_string(),
+        size: actual_size,
         quality: quality.to_string(),
+        background: background.map(|s| s.to_string()),
+        moderation: moderation.map(|s| s.to_string()),
+        output_compression: compress,
+        output_format: format.map(|s| s.to_string()),
+        partial_images: None,
+        stream: None,
+        user: None,
     };
     
     let response = client.generate_images(&request).await?;
@@ -75,9 +90,11 @@ pub async fn handle(
                 let output_path = Path::new(output_dir);
                 std::fs::create_dir_all(output_path)?;
                 
-                let filename = format!("image_{}_{}.png", 
+                let extension = format.unwrap_or("png");
+                let filename = format!("image_{}_{}.{}", 
                     chrono::Local::now().format("%Y%m%d_%H%M%S"),
-                    i + 1
+                    i + 1,
+                    extension
                 );
                 let file_path = output_path.join(&filename);
                 

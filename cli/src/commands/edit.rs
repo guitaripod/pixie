@@ -9,6 +9,7 @@ use chrono;
 use crate::api::{ApiClient, ImageEditRequest};
 use crate::config::Config;
 use crate::commands::utils::{check_credits_and_estimate, show_credits_used};
+use crate::commands::parse_size_alias;
 
 pub async fn handle(
     api_url: &str,
@@ -18,6 +19,7 @@ pub async fn handle(
     number: u8,
     size: &str,
     quality: &str,
+    fidelity: &str,
     output: Option<&str>,
 ) -> Result<()> {
     let config = Config::load()?;
@@ -30,10 +32,13 @@ pub async fn handle(
     
     let client = ApiClient::new(api_url)?;
     
+    // Parse size alias
+    let actual_size = parse_size_alias(size);
+    
     let (initial_balance, _) = check_credits_and_estimate(
         &client,
         quality,
-        size,
+        &actual_size,
         number,
         true,
         prompt,
@@ -121,10 +126,10 @@ pub async fn handle(
         mask: mask_data_url,
         model: "gpt-image-1".to_string(),
         n: number,
-        size: size.to_string(),
+        size: actual_size,
         quality: quality.to_string(),
         background: "auto".to_string(),
-        input_fidelity: "low".to_string(),
+        input_fidelity: fidelity.to_string(),
         output_format: "png".to_string(),
         output_compression: None,
         partial_images: 0,
