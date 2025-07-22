@@ -19,6 +19,7 @@ npx wrangler secret put OPENAI_API_KEY
 
 # CLI development
 cd cli && cargo run -- [args]
+The CLI app is a standalone product, but we also use it to validate the backend functions correctly.
 ```
 
 ## Important Notes

@@ -41,7 +41,7 @@ A high-performance Rust-based Cloudflare Worker that proxies OpenAI's gpt-image-
 - D1 database integration
 - Public gallery endpoints
 - Usage tracking and analytics
-- OAuth authentication (~~Apple~~(soon), GitHub, Google)
+- OAuth authentication (Apple, GitHub, Google)
 - Admin dashboard in CLI
 - Rate limiting (per-user concurrency control)
 - Structured logging with JSON output
@@ -108,28 +108,23 @@ npx wrangler d1 migrations apply DB --local
 npx wrangler r2 bucket create openai-image-proxy-images
 ```
 
-7. Set secrets:
-```bash
-npx wrangler secret put OPENAI_API_KEY
-npx wrangler secret put JWT_SECRET
-# For official mode with Stripe payments:
-npx wrangler secret put STRIPE_SECRET_KEY
-npx wrangler secret put STRIPE_WEBHOOK_SECRET
-# For OAuth (optional):
-npx wrangler secret put GITHUB_CLIENT_SECRET
-npx wrangler secret put GOOGLE_CLIENT_SECRET
-```
-
-8. Configure Stripe Price IDs (for official mode):
+7. Configure environment variables and secrets:
    
-   Add these in Cloudflare Dashboard under Workers > Settings > Variables:
-   - `STRIPE_PRICE_ID_STARTER` - Your Stripe price ID for starter pack
-   - `STRIPE_PRICE_ID_BASIC` - Your Stripe price ID for basic pack
-   - `STRIPE_PRICE_ID_POPULAR` - Your Stripe price ID for popular pack
-   - `STRIPE_PRICE_ID_BUSINESS` - Your Stripe price ID for business pack
-   - `STRIPE_PRICE_ID_ENTERPRISE` - Your Stripe price ID for enterprise pack
+   See [docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md) for the complete list of required environment variables and secrets.
 
-9. Deploy:
+   Quick setup for secrets:
+   ```bash
+   npx wrangler secret put OPENAI_API_KEY
+   # OAuth secrets
+   npx wrangler secret put GITHUB_CLIENT_SECRET
+   npx wrangler secret put GOOGLE_CLIENT_SECRET
+   npx wrangler secret put APPLE_PRIVATE_KEY
+   # Stripe secrets (for official mode)
+   npx wrangler secret put STRIPE_SECRET_KEY
+   npx wrangler secret put STRIPE_WEBHOOK_SECRET
+   ```
+
+8. Deploy:
 ```bash
 npx wrangler deploy
 ```
