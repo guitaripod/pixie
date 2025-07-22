@@ -71,6 +71,7 @@ struct GoogleUser {
     picture: Option<String>,
 }
 
+
 pub async fn github_auth_start(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let env = ctx.env;
     let url = req.url()?;
@@ -217,8 +218,8 @@ pub async fn github_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Re
     Response::from_json(&response)
 }
 
-fn generate_api_key() -> String {
-    format!("oip_{}", Uuid::new_v4().to_string().replace("-", ""))
+pub fn generate_api_key() -> String {
+    format!("pixie_{}", Uuid::new_v4().to_string().replace("-", ""))
 }
 
 pub async fn google_auth_start(req: Request, ctx: RouteContext<()>) -> Result<Response> {
