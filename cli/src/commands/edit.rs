@@ -35,6 +35,23 @@ pub async fn handle(
     // Parse size alias
     let actual_size = parse_size_alias(size);
     
+    // Show edit summary
+    println!("\n{}", "✏️ Edit Summary".bold().magenta());
+    println!("  Image:      {}", image_path.cyan());
+    println!("  Prompt:     {}", prompt.cyan());
+    println!("  Quality:    {}", quality.to_uppercase().yellow());
+    println!("  Size:       {} {}", 
+        size.green(), 
+        if size != &actual_size { format!("({})", actual_size).dimmed() } else { "".dimmed() }
+    );
+    println!("  Quantity:   {}", number.to_string().blue());
+    println!("  Fidelity:   {}", fidelity.green());
+    
+    // Show optional mask if provided
+    if let Some(m) = mask_path {
+        println!("  Mask:       {}", m.green());
+    }
+    
     let (initial_balance, _) = check_credits_and_estimate(
         &client,
         quality,
