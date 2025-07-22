@@ -5,6 +5,7 @@ use crate::auth::validate_api_key;
 use crate::storage::store_image_in_r2;
 use crate::deployment::{DeploymentConfig, get_openai_key};
 use crate::credits::{check_and_reserve_credits, deduct_credits, calculate_openai_cost_usd, calculate_credits_from_cost, estimate_image_cost};
+use crate::rate_limit::{check_and_acquire_lock, release_lock};
 use uuid::Uuid;
 use chrono::Utc;
 
@@ -44,6 +45,11 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
     
     let db = env.d1("DB")?;
     
+    // Acquire per-user lock to prevent concurrent requests
+    if let Err(_) = check_and_acquire_lock(&user_id, &db).await {
+        return Ok(Response::error("Another request is already in progress", 429)?);
+    }
+    
     // Estimate credit cost and check balance
     let estimated_credits = estimate_image_cost(
         &generation_req.quality, 
@@ -52,17 +58,24 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
     ) * generation_req.n as u32;
     
     if let Err(e) = check_and_reserve_credits(&user_id, estimated_credits, &db).await {
+        let _ = release_lock(&user_id, &db).await;
         return AppError::from(e).to_response();
     }
 
     let deployment_config = match DeploymentConfig::from_env(&env) {
         Ok(config) => config,
-        Err(e) => return e.to_response(),
+        Err(e) => {
+            let _ = release_lock(&user_id, &db).await;
+            return e.to_response();
+        }
     };
 
     let openai_key = match get_openai_key(&env, &deployment_config, generation_req.openai_api_key.clone()) {
         Ok(key) => key,
-        Err(e) => return e.to_response(),
+        Err(e) => {
+            let _ = release_lock(&user_id, &db).await;
+            return e.to_response();
+        }
     };
     let openai_url = "https://api.openai.com/v1/images/generations";
     let headers = worker::Headers::new();
@@ -102,6 +115,7 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
         Err(_) => {
             let mut response = Response::from_bytes(resp_body.into_bytes())?;
             response.headers_mut().set("Content-Type", "application/json")?;
+            let _ = release_lock(&user_id, &db).await;
             return Ok(response.with_status(openai_resp.status_code()));
         }
     };
@@ -246,6 +260,7 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
         .run()
         .await?;
 
+    let _ = release_lock(&user_id, &db).await;
     Response::from_json(&image_response)
 }
 
@@ -285,6 +300,11 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
     
     let db = env.d1("DB")?;
     
+    // Acquire per-user lock to prevent concurrent requests
+    if let Err(_) = check_and_acquire_lock(&user_id, &db).await {
+        return Ok(Response::error("Another request is already in progress", 429)?);
+    }
+    
     // Estimate credit cost for edit operation and check balance
     let estimated_credits = estimate_image_cost(
         &edit_req.quality, 
@@ -293,17 +313,24 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
     ) * edit_req.n as u32;
     
     if let Err(e) = check_and_reserve_credits(&user_id, estimated_credits, &db).await {
+        let _ = release_lock(&user_id, &db).await;
         return AppError::from(e).to_response();
     }
 
     let deployment_config = match DeploymentConfig::from_env(&env) {
         Ok(config) => config,
-        Err(e) => return e.to_response(),
+        Err(e) => {
+            let _ = release_lock(&user_id, &db).await;
+            return e.to_response();
+        }
     };
 
     let openai_key = match get_openai_key(&env, &deployment_config, edit_req.openai_api_key.clone()) {
         Ok(key) => key,
-        Err(e) => return e.to_response(),
+        Err(e) => {
+            let _ = release_lock(&user_id, &db).await;
+            return e.to_response();
+        }
     };
 
     let boundary = format!("----WebKitFormBoundary{}", uuid::Uuid::new_v4().to_string().replace("-", ""));
@@ -411,6 +438,7 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
         Err(_) => {
             let mut response = Response::from_bytes(resp_body.into_bytes())?;
             response.headers_mut().set("Content-Type", "application/json")?;
+            let _ = release_lock(&user_id, &db).await;
             return Ok(response.with_status(openai_resp.status_code()));
         }
     };
@@ -555,5 +583,6 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
         .run()
         .await?;
 
+    let _ = release_lock(&user_id, &db).await;
     Response::from_json(&image_response)
 }
