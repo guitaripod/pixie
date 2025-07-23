@@ -10,8 +10,11 @@ import com.guitaripod.pixie.data.api.NetworkCallAdapter
 import com.guitaripod.pixie.data.api.NetworkConnectivityObserver
 import com.guitaripod.pixie.data.api.PixieApiService
 import com.guitaripod.pixie.data.api.interceptor.AuthInterceptor
+import com.guitaripod.pixie.data.auth.OAuthManager
 import com.guitaripod.pixie.data.local.ConfigManager
 import com.guitaripod.pixie.data.local.PreferencesDataStore
+import com.guitaripod.pixie.data.repository.AuthRepository
+import com.guitaripod.pixie.data.repository.AuthRepositoryImpl
 import com.guitaripod.pixie.data.repository.PreferencesRepository
 import com.guitaripod.pixie.data.repository.PreferencesRepositoryImpl
 import com.squareup.moshi.Moshi
@@ -105,6 +108,16 @@ class AppContainer(private val context: Context) {
     // Network connectivity observer
     val networkConnectivityObserver: NetworkConnectivityObserver by lazy {
         NetworkConnectivityObserver(context)
+    }
+    
+    // OAuth Manager
+    val oAuthManager: OAuthManager by lazy {
+        OAuthManager(context, pixieApiService, configManager, networkCallAdapter)
+    }
+    
+    // Auth Repository
+    val authRepository: AuthRepository by lazy {
+        AuthRepositoryImpl(oAuthManager, preferencesRepository)
     }
     
     // Storage
