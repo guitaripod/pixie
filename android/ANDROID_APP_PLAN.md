@@ -148,11 +148,14 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [ ] Add low balance notifications
 
 #### 6.3 Credit Purchase
-- [ ] Integrate Google Play Billing for IAP
+- [ ] Integrate RevenueCat SDK for in-app purchases
+- [ ] Configure RevenueCat offerings and products
 - [ ] Create pack selection UI with benefits
-- [ ] Implement purchase flow with confirmations
-- [ ] Add purchase restoration
-- [ ] Create crypto payment web view (if needed)
+- [ ] Implement RevenueCat purchase flow with confirmations
+- [ ] Add purchase restoration via RevenueCat
+- [ ] Implement receipt validation through RevenueCat
+- [ ] Add subscription status monitoring
+- [ ] Create webhook handler for server-side events (if needed)
 
 ### Phase 7: Admin Features
 
@@ -243,7 +246,7 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 #### 10.3 Launch
 - [ ] Create signed release build
 - [ ] Set up Play Console project
-- [ ] Configure in-app purchases
+- [ ] Configure RevenueCat products in Play Console
 - [ ] Submit for Play Store review
 - [ ] Plan phased rollout strategy
 
@@ -262,6 +265,7 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - **Storage**: DataStore + Room
 - **Security**: BiometricPrompt + Encrypted DataStore
 - **Analytics**: Firebase Analytics (optional)
+- **Payments**: RevenueCat SDK
 
 ### API Integration
 - Base URL: `https://openai-image-proxy.guitaripod.workers.dev`
