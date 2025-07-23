@@ -20,12 +20,12 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [x] Set up MVVM architecture with Clean Architecture layers
 - [x] Create base classes: BaseViewModel, BaseRepository, BaseUseCase
 
-#### 1.3 Networking Layer
-- [ ] Create Retrofit service interface matching OpenAPI spec
-- [ ] Implement custom OkHttp interceptor for auth headers
-- [ ] Create data models matching API responses
-- [ ] Implement error handling with sealed classes
-- [ ] Add network connectivity observer
+#### 1.3 Networking Layer ✅
+- [x] Create Retrofit service interface matching OpenAPI spec
+- [x] Implement custom OkHttp interceptor for auth headers
+- [x] Create data models matching API responses
+- [x] Implement error handling with sealed classes
+- [x] Add network connectivity observer
 
 #### 1.4 Local Storage
 - [ ] Set up encrypted DataStore for API keys and user preferences
