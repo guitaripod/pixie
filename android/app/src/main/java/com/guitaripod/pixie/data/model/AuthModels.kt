@@ -3,37 +3,21 @@ package com.guitaripod.pixie.data.model
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
-/**
- * Request to start device code flow
- */
 @JsonClass(generateAdapter = true)
 data class DeviceCodeRequest(
     @Json(name = "client_type") val clientType: String = "android",
     @Json(name = "provider") val provider: String
 )
-
-
-/**
- * Request to exchange device code for token
- */
 @JsonClass(generateAdapter = true)
 data class DeviceTokenRequest(
     @Json(name = "device_code") val deviceCode: String,
     @Json(name = "client_type") val clientType: String = "android"
 )
-
-/**
- * Response from device token endpoint
- */
 @JsonClass(generateAdapter = true)
 data class DeviceTokenResponse(
     @Json(name = "api_key") val apiKey: String,
     @Json(name = "user_id") val userId: String
 )
-
-/**
- * OAuth state for security
- */
 data class OAuthState(
     val state: String = java.util.UUID.randomUUID().toString(),
     val provider: String,
@@ -44,10 +28,6 @@ data class OAuthState(
         return System.currentTimeMillis() - timestamp < 10 * 60 * 1000
     }
 }
-
-/**
- * Authentication result
- */
 sealed class AuthResult {
     data class Success(
         val apiKey: String,
@@ -59,11 +39,47 @@ sealed class AuthResult {
     object Cancelled : AuthResult()
     object Pending : AuthResult()
 }
-
-/**
- * Request for native Google Sign-In
- */
 @JsonClass(generateAdapter = true)
 data class GoogleTokenRequest(
     @Json(name = "id_token") val idToken: String
+)
+@JsonClass(generateAdapter = true)
+data class User(
+    val id: String,
+    val provider: String,
+    val email: String? = null,
+    val name: String? = null,
+    val avatar_url: String? = null,
+    val created_at: String? = null
+)
+@JsonClass(generateAdapter = true)
+data class LoginResponse(
+    val user: User,
+    val api_key: String
+)
+@JsonClass(generateAdapter = true)
+data class ImageGenerationRequest(
+    val prompt: String,
+    val model: String = "gpt-image-1",
+    val n: Int = 1,
+    val size: String = "auto",
+    val quality: String = "low",
+    val background: String? = null,
+    val moderation: String? = null,
+    val output_compression: Int? = null,
+    val output_format: String? = null,
+    val partial_images: Int? = null,
+    val stream: Boolean? = null,
+    val user: String? = null
+)
+@JsonClass(generateAdapter = true)
+data class ImageGenerationResponse(
+    val created: Long,
+    val data: List<GeneratedImage>
+)
+@JsonClass(generateAdapter = true)
+data class GeneratedImage(
+    val url: String,
+    val id: String? = null,
+    @Json(name = "revised_prompt") val revisedPrompt: String? = null
 )
