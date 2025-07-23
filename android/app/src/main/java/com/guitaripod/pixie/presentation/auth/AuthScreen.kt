@@ -15,6 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.guitaripod.pixie.data.model.AuthResult
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,8 +29,9 @@ fun AuthScreen(
     
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showManualAuthDialog by remember { mutableStateOf(false) }
+    var manualAuthProvider by remember { mutableStateOf("") }
     
-    // Google Sign-In launcher
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -100,6 +102,10 @@ fun AuthScreen(
                     is AuthResult.Pending -> {
                         isLoading = true
                         errorMessage = null
+                        delay(2000)
+                        isLoading = false
+                        manualAuthProvider = "apple"
+                        showManualAuthDialog = true
                     }
                     is AuthResult.Success -> {
                         isLoading = false
@@ -193,5 +199,35 @@ fun AuthScreen(
                 }
             }
         }
+    }
+    
+    if (showManualAuthDialog) {
+        ManualAuthDialog(
+            onDismiss = { 
+                showManualAuthDialog = false
+                manualAuthProvider = ""
+            },
+            onSubmit = { apiKey, userId ->
+                scope.launch {
+                    authViewModel.authenticateManually(apiKey, userId, manualAuthProvider).collect { result ->
+                        when (result) {
+                            is AuthResult.Success -> {
+                                showManualAuthDialog = false
+                                onAuthSuccess()
+                            }
+                            is AuthResult.Error -> {
+                                errorMessage = result.message
+                            }
+                            is AuthResult.Pending -> {
+                            }
+                            is AuthResult.Cancelled -> {
+                                showManualAuthDialog = false
+                            }
+                        }
+                    }
+                }
+            },
+            isLoading = false
+        )
     }
 }
