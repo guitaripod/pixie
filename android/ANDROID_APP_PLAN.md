@@ -33,7 +33,7 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [x] Implement PreferencesRepository for centralized access
 - [x] Add config data class matching CLI structure
 
-### Phase 2: Authentication System
+### Phase 2: Authentication System ✅
 
 #### 2.1 OAuth Infrastructure ✅
 - [x] Create OAuth activity with Chrome Custom Tabs
@@ -41,17 +41,22 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [x] Handle deep links for OAuth callbacks
 - [x] Create auth interceptor for API requests
 
-#### 2.2 Provider Implementations
-- [ ] Implement GitHub OAuth flow with device code fallback
-- [ ] Implement Google OAuth with Play Services integration
-- [ ] Implement Apple Sign In (exclude for initial release if complex)
+#### 2.2 Provider Implementations ✅
+- [x] Implement GitHub OAuth flow with web redirect
+- [x] Implement Google OAuth with native Google Sign-In SDK
+- [x] Implement Apple Sign In with manual credential entry
 - [ ] Add biometric authentication for app access
 
-#### 2.3 Session Management
-- [ ] Create UserSession manager with encrypted storage
-- [ ] Implement token refresh mechanism
-- [ ] Add logout functionality with credential cleanup
-- [ ] Create auth state flow for UI updates
+#### 2.3 Session Management ✅
+- [x] Create ConfigManager with encrypted storage for credentials
+- [x] Implement logout functionality with credential cleanup
+- [x] Create auth state flow for UI updates
+- [ ] Implement token refresh mechanism (if needed)
+
+**Implementation Notes:**
+- GitHub: Uses web OAuth flow with `pixie://auth` deep link redirect
+- Google: Uses native Google Sign-In SDK with ID token validation on backend
+- Apple: Uses web OAuth flow with manual credential entry (Apple doesn't support custom URI schemes)
 
 ### Phase 3: Image Generation Feature
 
@@ -254,7 +259,7 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 
 ### Architecture
 - **Pattern**: MVVM with Clean Architecture
-- **DI**: Hilt
+- **DI**: Manual Dependency Injection (AppContainer)
 - **Async**: Coroutines + Flow
 - **UI**: Jetpack Compose
 - **Navigation**: Navigation Compose
@@ -262,8 +267,9 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 ### Key Libraries
 - **Networking**: Retrofit + OkHttp + Moshi
 - **Images**: Coil
-- **Storage**: DataStore + Room
+- **Storage**: DataStore + Encrypted SharedPreferences
 - **Security**: BiometricPrompt + Encrypted DataStore
+- **Authentication**: Google Sign-In SDK
 - **Analytics**: Firebase Analytics (optional)
 - **Payments**: RevenueCat SDK
 
