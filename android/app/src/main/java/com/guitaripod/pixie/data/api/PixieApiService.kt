@@ -1,0 +1,138 @@
+package com.guitaripod.pixie.data.api
+
+import com.guitaripod.pixie.data.api.model.*
+import retrofit2.Response
+import retrofit2.http.*
+
+/**
+ * Retrofit service interface for Pixie API.
+ * Based on the OpenAPI specification.
+ */
+interface PixieApiService {
+    
+    // Health Check
+    @GET("/")
+    suspend fun healthCheck(): Response<String>
+    
+    // Authentication
+    @GET("/v1/auth/github")
+    suspend fun startGithubAuth(
+        @Query("redirect_uri") redirectUri: String? = null
+    ): Response<Unit>
+    
+    @POST("/v1/auth/github/callback")
+    suspend fun githubAuthCallback(
+        @Body request: OAuthCallbackRequest
+    ): Response<AuthResponse>
+    
+    @GET("/v1/auth/google")
+    suspend fun startGoogleAuth(
+        @Query("redirect_uri") redirectUri: String? = null
+    ): Response<Unit>
+    
+    @POST("/v1/auth/google/callback")
+    suspend fun googleAuthCallback(
+        @Body request: OAuthCallbackRequest
+    ): Response<AuthResponse>
+    
+    @GET("/v1/auth/apple")
+    suspend fun startAppleAuth(
+        @Query("redirect_uri") redirectUri: String? = null
+    ): Response<Unit>
+    
+    @POST("/v1/auth/apple/callback")
+    suspend fun appleAuthCallback(
+        @Body request: OAuthCallbackRequest
+    ): Response<AuthResponse>
+    
+    @GET("/v1/auth/device")
+    suspend fun startDeviceAuth(): Response<DeviceCodeResponse>
+    
+    @POST("/v1/auth/device")
+    suspend fun checkDeviceAuth(
+        @Body request: DeviceAuthRequest
+    ): Response<AuthResponse>
+    
+    // Image Generation
+    @POST("/v1/images/generations")
+    suspend fun generateImages(
+        @Body request: ImageGenerationRequest,
+        @Header("OpenAI-API-Key") openAiKey: String? = null
+    ): Response<ImageGenerationResponse>
+    
+    @Multipart
+    @POST("/v1/images/edits")
+    suspend fun editImages(
+        @Part("prompt") prompt: String,
+        @Part image: okhttp3.MultipartBody.Part,
+        @Part mask: okhttp3.MultipartBody.Part? = null,
+        @Part("n") n: Int? = null,
+        @Part("size") size: String? = null,
+        @Part("quality") quality: String? = null,
+        @Part("response_format") responseFormat: String? = null,
+        @Part("transparency") transparency: String? = null,
+        @Part("background") background: String? = null,
+        @Part("output_format") outputFormat: String? = null,
+        @Part("output_quality") outputQuality: Int? = null,
+        @Part("fidelity") fidelity: String? = null,
+        @Header("OpenAI-API-Key") openAiKey: String? = null
+    ): Response<ImageGenerationResponse>
+    
+    // Gallery
+    @GET("/v1/images")
+    suspend fun listPublicImages(
+        @Query("limit") limit: Int? = null,
+        @Query("offset") offset: Int? = null
+    ): Response<ImageListResponse>
+    
+    @GET("/v1/me/images")
+    suspend fun listMyImages(
+        @Query("limit") limit: Int? = null,
+        @Query("offset") offset: Int? = null
+    ): Response<ImageListResponse>
+    
+    @GET("/v1/images/{image_id}")
+    suspend fun getImage(
+        @Path("image_id") imageId: String
+    ): Response<ImageDetails>
+    
+    @DELETE("/v1/images/{image_id}")
+    suspend fun deleteImage(
+        @Path("image_id") imageId: String
+    ): Response<Unit>
+    
+    // Credits
+    @GET("/v1/me/credits")
+    suspend fun getCredits(): Response<CreditsResponse>
+    
+    @GET("/v1/me/credits/history")
+    suspend fun getCreditHistory(
+        @Query("limit") limit: Int? = null,
+        @Query("offset") offset: Int? = null
+    ): Response<CreditHistoryResponse>
+    
+    @GET("/v1/credits/packs")
+    suspend fun getCreditPacks(): Response<CreditPacksResponse>
+    
+    @POST("/v1/credits/estimate")
+    suspend fun estimateCredits(
+        @Body request: CreditEstimateRequest
+    ): Response<CreditEstimateResponse>
+    
+    // Usage
+    @GET("/v1/me/usage")
+    suspend fun getUsage(
+        @Query("start_date") startDate: String? = null,
+        @Query("end_date") endDate: String? = null
+    ): Response<UsageResponse>
+    
+    // Admin
+    @GET("/v1/admin/stats")
+    suspend fun getAdminStats(): Response<AdminStatsResponse>
+    
+    @POST("/v1/admin/users/{user_id}/credits")
+    suspend fun adjustUserCredits(
+        @Path("user_id") userId: String,
+        @Body request: CreditAdjustmentRequest
+    ): Response<CreditAdjustmentResponse>
+}
