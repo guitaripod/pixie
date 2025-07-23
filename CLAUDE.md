@@ -32,3 +32,4 @@ The CLI app is a standalone product, but we also use it to validate the backend 
 - **Build failures**: Run `cargo install worker-build` first.
 - **Database migrations**: Tables have foreign keys - order matters.
 - **No warnings**: There should be no compiler warnings.
+- **No code comments**: Don't add code comments until specifically asked for, such as interface documentation.

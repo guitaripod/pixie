@@ -62,25 +62,30 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 
 ### Phase 3: Image Generation Feature
 
-#### 3.1 Generation UI
-- [ ] Create prompt input screen with Material TextField
-- [ ] Add expandable advanced options panel
-- [ ] Implement size selector (square/landscape/portrait/custom)
-- [ ] Create quality selector with credit cost preview
-- [ ] Add number picker (1-10 images)
+#### 3.1 Generation UI ✅
+- [x] Create prompt input screen with Material TextField
+- [x] Add expandable advanced options panel
+- [x] Implement size selector (square/landscape/portrait/custom)
+- [x] Create quality selector with credit cost preview
+- [x] Add number picker (1-10 images)
+- [x] Redesign as chat-based timeline UI
+- [x] Implement collapsible bottom toolbar
+- [x] Add generation request message bubbles
+- [x] Add image response bubbles with loading states
 
-#### 3.2 Advanced Generation Options
-- [ ] Implement background style selector (auto/transparent/colors)
-- [ ] Add output format selector (PNG/JPEG/WebP)
-- [ ] Create compression level slider for JPEG/WebP
-- [ ] Add moderation level toggle
+#### 3.2 Advanced Generation Options ✅
+- [x] Implement background style selector (auto/transparent/colors)
+- [x] Add output format selector (PNG/JPEG/WebP)
+- [x] Create compression level slider for JPEG/WebP (only shown when applicable)
+- [x] Add moderation level toggle
+- [x] Correct implementation of -n flag for multiple images per generation
 
-#### 3.3 Generation Process
-- [ ] Create generation progress screen with animated placeholder
-- [ ] Implement queue management for multiple images
-- [ ] Add real-time progress updates
-- [ ] Create error recovery with retry mechanism
-- [ ] Implement result preview gallery
+#### 3.3 Generation Process ✅
+- [x] Create generation progress integrated into chat bubbles
+- [x] Implement proper error handling with detailed messages
+- [x] Add loading states with correct singular/plural text
+- [x] Create error display in chat timeline
+- [x] Display generated images inline in chat
 
 #### 3.4 Image Saving
 - [ ] Request storage permissions appropriately
