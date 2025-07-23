@@ -107,6 +107,9 @@ dependencies {
     implementation(libs.google.play.services.auth)
     implementation(libs.kotlinx.coroutines.play.services)
     
+    // Apple Sign-In
+    implementation(libs.apple.signin.button)
+    
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
