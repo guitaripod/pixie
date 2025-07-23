@@ -27,11 +27,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.ContentScale
 import com.guitaripod.pixie.data.model.*
+import coil.compose.AsyncImage
+import androidx.compose.ui.platform.LocalContext
+import coil.request.ImageRequest
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun GenerationToolbar(
+    mode: ToolbarMode,
     isExpanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     prompt: String,
@@ -54,6 +59,7 @@ fun GenerationToolbar(
     onModerationSelected: (ModerationLevel?) -> Unit,
     isGenerating: Boolean,
     onGenerate: () -> Unit,
+    onSwitchToGenerate: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val transition = updateTransition(targetState = isExpanded, label = "toolbar")
@@ -97,7 +103,6 @@ fun GenerationToolbar(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
             .height(toolbarHeight)
             .shadow(
                 elevation = shadowElevation,
@@ -132,25 +137,57 @@ fun GenerationToolbar(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(
-                                painter = painterResource(id = android.R.drawable.star_on),
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Text(
-                                text = "Create Image",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            when (mode) {
+                                is ToolbarMode.Generate -> {
+                                    Icon(
+                                        painter = painterResource(id = android.R.drawable.star_on),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Text(
+                                        text = "Create Image",
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                                is ToolbarMode.Edit -> {
+                                    Surface(
+                                        modifier = Modifier.size(32.dp),
+                                        shape = CircleShape,
+                                        tonalElevation = 2.dp
+                                    ) {
+                                        AsyncImage(
+                                            model = mode.selectedImage.uri,
+                                            contentDescription = "Selected image",
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
+                                    Text(
+                                        text = "Edit Image",
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                            }
                         }
                         
-                        IconButton(onClick = { onExpandedChange(false) }) {
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowDown,
-                                contentDescription = "Collapse",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            if (mode is ToolbarMode.Edit) {
+                                TextButton(onClick = onSwitchToGenerate) {
+                                    Text("New image")
+                                }
+                            }
+                            IconButton(onClick = { onExpandedChange(false) }) {
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowDown,
+                                    contentDescription = "Collapse",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                     
@@ -159,7 +196,12 @@ fun GenerationToolbar(
                         onValueChange = onPromptChange,
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = { 
-                            Text("Describe what you want to create...") 
+                            Text(
+                                when (mode) {
+                                    is ToolbarMode.Generate -> "Describe what you want to create..."
+                                    is ToolbarMode.Edit -> "Describe how you want to edit this image..."
+                                }
+                            ) 
                         },
                         minLines = 3,
                         maxLines = 5,
@@ -276,7 +318,10 @@ fun GenerationToolbar(
                                     modifier = Modifier.size(22.dp)
                                 )
                                 Text(
-                                    text = "Generate (${estimatedCredits.first}-${estimatedCredits.last} credits)",
+                                    text = when (mode) {
+                                        is ToolbarMode.Generate -> "Generate (${estimatedCredits.first}-${estimatedCredits.last} credits)"
+                                        is ToolbarMode.Edit -> "Edit (${estimatedCredits.first}-${estimatedCredits.last} credits)"
+                                    },
                                     style = MaterialTheme.typography.labelLarge,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -296,28 +341,56 @@ fun GenerationToolbar(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Surface(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .shadow(
-                                elevation = 8.dp,
+                    when (mode) {
+                        is ToolbarMode.Generate -> {
+                            Surface(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .shadow(
+                                        elevation = 8.dp,
+                                        shape = CircleShape,
+                                        spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                                        ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                    ),
                                 shape = CircleShape,
-                                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                                ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                            ),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
-                        tonalElevation = 4.dp
-                    ) {
-                        Box(
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = android.R.drawable.star_on),
-                                contentDescription = "Create",
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(24.dp)
-                            )
+                                color = MaterialTheme.colorScheme.primary,
+                                tonalElevation = 4.dp
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = android.R.drawable.star_on),
+                                        contentDescription = "Create",
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+                        }
+                        is ToolbarMode.Edit -> {
+                            Surface(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .shadow(
+                                        elevation = 8.dp,
+                                        shape = CircleShape,
+                                        spotColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f),
+                                        ambientColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                                    ),
+                                shape = CircleShape,
+                                tonalElevation = 4.dp
+                            ) {
+                                AsyncImage(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(mode.selectedImage.uri)
+                                        .crossfade(true)
+                                        .build(),
+                                    contentDescription = "Selected image",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
                         }
                     }
                     
@@ -325,17 +398,34 @@ fun GenerationToolbar(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Text(
-                            text = if (prompt.isNotBlank()) prompt else "What do you want to create?",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = if (prompt.isNotBlank()) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1
-                        )
-                        Text(
-                            text = "Tap to customize",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
+                        when (mode) {
+                            is ToolbarMode.Generate -> {
+                                Text(
+                                    text = if (prompt.isNotBlank()) prompt else "What do you want to create?",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = if (prompt.isNotBlank()) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1
+                                )
+                                Text(
+                                    text = "Tap to customize",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                            is ToolbarMode.Edit -> {
+                                Text(
+                                    text = if (prompt.isNotBlank()) prompt else "How do you want to edit this image?",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = if (prompt.isNotBlank()) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1
+                                )
+                                Text(
+                                    text = "Tap to describe edits",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
                     }
                     
                     Icon(
