@@ -203,7 +203,6 @@ private fun DrawScope.drawSparkles(rotation: Float, alpha: Float) {
 private fun DrawScope.drawStar(center: Offset, size: Float, color: Color) {
     val points = 4
     val outerRadius = size
-    val innerRadius = size * 0.3f
     
     for (i in 0 until points) {
         val angle = (90f * i) * PI / 180
