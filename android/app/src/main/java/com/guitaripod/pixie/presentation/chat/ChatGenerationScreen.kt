@@ -63,6 +63,10 @@ fun ChatGenerationScreen(
     var compressionLevel by remember { mutableIntStateOf(85) }
     var selectedModeration by remember { mutableStateOf<ModerationLevel?>(null) }
     
+    // Edit-specific state
+    var editOptions by remember { mutableStateOf(EditOptions()) }
+    var editToolbarState by remember { mutableStateOf(EditToolbarState()) }
+    
     LaunchedEffect(viewModel) {
         viewModel.generationResult.collect { result ->
             result?.let { imageUrls ->
@@ -192,38 +196,39 @@ fun ChatGenerationScreen(
                 }
             }
             
-            GenerationToolbar(
-                    mode = toolbarMode,
-                    isExpanded = isToolbarExpanded,
-                    onExpandedChange = { isToolbarExpanded = it },
-                    prompt = prompt,
-                    onPromptChange = { prompt = it },
-                    number = number,
-                    onNumberChange = { number = it },
-                    selectedSize = selectedSize,
-                    onSizeSelected = { selectedSize = it },
-                    customSize = customSize,
-                    onCustomSizeChanged = { customSize = it },
-                    selectedQuality = selectedQuality,
-                    onQualitySelected = { selectedQuality = it },
-                    selectedBackground = selectedBackground,
-                    onBackgroundSelected = { selectedBackground = it },
-                    selectedFormat = selectedFormat,
-                    onFormatSelected = { selectedFormat = it },
-                    compressionLevel = compressionLevel,
-                    onCompressionChanged = { compressionLevel = it },
-                    selectedModeration = selectedModeration,
-                    onModerationSelected = { selectedModeration = it },
-                    isGenerating = isGenerating,
-                    onGenerate = {
-                        val actualSize = if (selectedSize == ImageSize.CUSTOM) {
-                            customSize.ifEmpty { "1024x1024" }
-                        } else {
-                            selectedSize.value
-                        }
-                        
-                        val userMessage = when (toolbarMode) {
-                            is ToolbarMode.Generate -> ChatMessage.UserMessage(
+            when (toolbarMode) {
+                is ToolbarMode.Generate -> {
+                    GenerationToolbar(
+                        mode = toolbarMode,
+                        isExpanded = isToolbarExpanded,
+                        onExpandedChange = { isToolbarExpanded = it },
+                        prompt = prompt,
+                        onPromptChange = { prompt = it },
+                        number = number,
+                        onNumberChange = { number = it },
+                        selectedSize = selectedSize,
+                        onSizeSelected = { selectedSize = it },
+                        customSize = customSize,
+                        onCustomSizeChanged = { customSize = it },
+                        selectedQuality = selectedQuality,
+                        onQualitySelected = { selectedQuality = it },
+                        selectedBackground = selectedBackground,
+                        onBackgroundSelected = { selectedBackground = it },
+                        selectedFormat = selectedFormat,
+                        onFormatSelected = { selectedFormat = it },
+                        compressionLevel = compressionLevel,
+                        onCompressionChanged = { compressionLevel = it },
+                        selectedModeration = selectedModeration,
+                        onModerationSelected = { selectedModeration = it },
+                        isGenerating = isGenerating,
+                        onGenerate = {
+                            val actualSize = if (selectedSize == ImageSize.CUSTOM) {
+                                customSize.ifEmpty { "1024x1024" }
+                            } else {
+                                selectedSize.value
+                            }
+                            
+                            val userMessage = ChatMessage.UserMessage(
                                 prompt = prompt,
                                 quality = selectedQuality.value,
                                 size = selectedSize.displayName,
@@ -234,50 +239,97 @@ fun ChatGenerationScreen(
                                 compression = if (selectedFormat?.supportsCompression == true) compressionLevel else null,
                                 moderation = selectedModeration?.displayName
                             )
-                            is ToolbarMode.Edit -> ChatMessage.UserMessage(
-                                prompt = "Edit: $prompt",
-                                quality = selectedQuality.value,
-                                size = selectedSize.displayName,
-                                actualSize = actualSize,
-                                quantity = 1, // Edits only produce 1 image
-                                background = null,
-                                format = selectedFormat?.displayName,
-                                compression = if (selectedFormat?.supportsCompression == true) compressionLevel else null,
-                                moderation = selectedModeration?.displayName
+                            messages = messages + userMessage
+                            
+                            messages = messages + ChatMessage.ImageResponse(
+                                imageUrls = emptyList(),
+                                isLoading = true
                             )
-                        }
-                        messages = messages + userMessage
-                        
-                        messages = messages + ChatMessage.ImageResponse(
-                            imageUrls = emptyList(),
-                            isLoading = true
-                        )
-                        
-                        coroutineScope.launch {
-                            listState.animateScrollToItem(messages.size - 1)
-                        }
-                        
-                        val options = GenerationOptions(
-                            prompt = prompt,
-                            number = number,
-                            size = actualSize,
-                            quality = selectedQuality.value,
-                            background = selectedBackground?.value,
-                            outputFormat = selectedFormat?.value,
-                            compression = if (selectedFormat?.supportsCompression == true) compressionLevel else null,
-                            moderation = selectedModeration?.value
-                        )
-                        viewModel.generateImages(options)
-                        
-                        prompt = ""
-                        isToolbarExpanded = false
-                    },
-                    onSwitchToGenerate = {
-                        toolbarMode = ToolbarMode.Generate
-                        prompt = ""
-                    },
-                    modifier = Modifier.align(Alignment.BottomCenter)
-                )
+                            
+                            coroutineScope.launch {
+                                listState.animateScrollToItem(messages.size - 1)
+                            }
+                            
+                            val options = GenerationOptions(
+                                prompt = prompt,
+                                number = number,
+                                size = actualSize,
+                                quality = selectedQuality.value,
+                                background = selectedBackground?.value,
+                                outputFormat = selectedFormat?.value,
+                                compression = if (selectedFormat?.supportsCompression == true) compressionLevel else null,
+                                moderation = selectedModeration?.value
+                            )
+                            viewModel.generateImages(options)
+                            
+                            prompt = ""
+                            isToolbarExpanded = false
+                        },
+                        onSwitchToGenerate = {
+                            toolbarMode = ToolbarMode.Generate
+                            prompt = ""
+                        },
+                        modifier = Modifier.align(Alignment.BottomCenter)
+                    )
+                }
+                is ToolbarMode.Edit -> {
+                    val editMode = toolbarMode as ToolbarMode.Edit
+                    EditingToolbar(
+                        selectedImage = editMode.selectedImage,
+                        editOptions = editOptions,
+                        onEditOptionsChange = { editOptions = it },
+                        editToolbarState = editToolbarState,
+                        onEditToolbarStateChange = { editToolbarState = it },
+                        isProcessing = isGenerating,
+                        onStartEdit = {
+                            val actualSize = if (editOptions.size == ImageSize.CUSTOM) {
+                                editOptions.customSize.ifEmpty { "1024x1024" }
+                            } else {
+                                editOptions.size.value
+                            }
+                            
+                            val editModeText = "Edit"
+                            
+                            val userMessage = ChatMessage.UserMessage(
+                                prompt = "$editModeText: ${editOptions.prompt}",
+                                quality = editOptions.quality.value,
+                                size = editOptions.size.displayName,
+                                actualSize = actualSize,
+                                quantity = editOptions.variations,
+                                background = null,
+                                format = "PNG",
+                                compression = null,
+                                moderation = null
+                            )
+                            messages = messages + userMessage
+                            
+                            messages = messages + ChatMessage.ImageResponse(
+                                imageUrls = emptyList(),
+                                isLoading = true
+                            )
+                            
+                            coroutineScope.launch {
+                                listState.animateScrollToItem(messages.size - 1)
+                            }
+                            
+                            viewModel.editImage(
+                                imageUri = editMode.selectedImage.uri,
+                                editOptions = editOptions
+                            )
+                            
+                            editOptions = EditOptions()
+                            editToolbarState = EditToolbarState()
+                        },
+                        onSwitchToGenerate = {
+                            toolbarMode = ToolbarMode.Generate
+                            prompt = ""
+                            editOptions = EditOptions()
+                            editToolbarState = EditToolbarState()
+                        },
+                        modifier = Modifier.align(Alignment.BottomCenter)
+                    )
+                }
+            }
             
             previewImageUri?.let { uri ->
                 ImagePreviewDialog(
@@ -287,7 +339,7 @@ fun ChatGenerationScreen(
                             SelectedImage(uri = uri)
                         )
                         previewImageUri = null
-                        isToolbarExpanded = true
+                        editToolbarState = editToolbarState.copy(isExpanded = true)
                     },
                     onDismiss = {
                         previewImageUri = null
