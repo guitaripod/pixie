@@ -11,6 +11,7 @@ use jwt_simple::prelude::*;
 
 #[derive(Debug, Deserialize)]
 struct AppleTokenResponse {
+    #[allow(dead_code)]
     access_token: String,
     #[allow(dead_code)]
     token_type: String,

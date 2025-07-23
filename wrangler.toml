@@ -2,6 +2,9 @@ name = "openai-image-proxy"
 main = "build/worker/shim.mjs"
 compatibility_date = "2024-01-01"
 
+# Note: This file has multiple environments defined (production and development)
+# Use --env="" for production or --env="development" for development deployment
+
 [build]
 command = "cargo install -q worker-build && ~/.cargo/bin/worker-build --release --no-opt"
 
