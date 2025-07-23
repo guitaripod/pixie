@@ -41,16 +41,13 @@ class GitHubOAuthManager(
         val state = OAuthState(provider = "github")
         pendingAuthState = state
         
-        // Build OAuth URL
         val apiUrl = configManager.getApiUrl() ?: "https://openai-image-proxy.guitaripod.workers.dev"
         val authUrl = "$apiUrl/v1/auth/github?" + buildString {
             append("state=").append(Uri.encode(state.state))
             append("&redirect_uri=").append(Uri.encode(REDIRECT_URI))
         }
         
-        // Open browser
         openCustomTab(authUrl)
-        
         emit(AuthResult.Pending)
     }
     
@@ -58,31 +55,26 @@ class GitHubOAuthManager(
      * Handle OAuth callback from deep link
      */
     suspend fun handleOAuthCallback(uri: Uri): AuthResult {
-        // Extract parameters from callback URL
         val code = uri.getQueryParameter("code")
         val state = uri.getQueryParameter("state")
         val error = uri.getQueryParameter("error")
         
-        // Check for errors
         if (error != null) {
             pendingAuthState = null
             return AuthResult.Error(error)
         }
         
-        // Validate we have required parameters
         if (code == null || state == null) {
             pendingAuthState = null
             return AuthResult.Error("Missing required parameters")
         }
         
-        // Validate state
         val savedState = pendingAuthState
         if (savedState == null || savedState.state != state || !savedState.isValid()) {
             pendingAuthState = null
             return AuthResult.Error("Invalid OAuth state")
         }
         
-        // Exchange code for token
         val callbackRequest = OAuthCallbackRequest(
             code = code,
             state = state,
@@ -120,22 +112,12 @@ class GitHubOAuthManager(
     }
     
     /**
-     * Open URL in Chrome Custom Tab
+     * Open URL in external browser
      */
     private fun openCustomTab(url: String) {
-        try {
-            val customTabsIntent = CustomTabsIntent.Builder()
-                .setShowTitle(true)
-                .setUrlBarHidingEnabled(true)
-                .build()
-            
-            customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            customTabsIntent.launchUrl(context, Uri.parse(url))
-        } catch (e: Exception) {
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(browserIntent)
-        }
+        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(browserIntent)
     }
     
     /**
