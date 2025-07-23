@@ -17,7 +17,7 @@ info:
     url: https://github.com/guitaripod/openai-image-proxy
     email: support@openai-image-proxy.guitaripod.workers.dev
   license:
-    name: MIT
+    name: GPL-3.0
     url: https://github.com/guitaripod/openai-image-proxy/blob/master/LICENSE
 
 externalDocs:
