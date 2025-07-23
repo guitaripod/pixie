@@ -1,0 +1,8 @@
+# Redocly configuration file
+extends:
+  - recommended
+
+rules:
+  # Disable these rules for endpoints that legitimately don't need them
+  operation-4xx-response: off
+  operation-2xx-response: off

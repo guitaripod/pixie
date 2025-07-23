@@ -1,0 +1,1494 @@
+openapi: 3.0.3
+info:
+  title: OpenAI Image Proxy API
+  description: |
+    A Cloudflare Worker-based proxy for OpenAI's GPT Image (gpt-image-1) API with additional features:
+    - Credit-based billing system
+    - OAuth authentication (GitHub, Google, Apple)
+    - Device flow authentication
+    - Image gallery and storage
+    - Usage tracking and analytics
+    - Support for both official and self-hosted deployment modes
+    
+    This API exclusively supports the gpt-image-1 model for image generation.
+  version: 1.0.0
+  contact:
+    name: API Support
+    url: https://github.com/guitaripod/openai-image-proxy
+    email: support@openai-image-proxy.guitaripod.workers.dev
+  license:
+    name: MIT
+    url: https://github.com/guitaripod/openai-image-proxy/blob/master/LICENSE
+
+externalDocs:
+  description: Find more info on GitHub
+  url: https://github.com/guitaripod/openai-image-proxy
+
+servers:
+  - url: https://openai-image-proxy.guitaripod.workers.dev
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Authentication
+    description: OAuth and device authentication endpoints
+  - name: Images
+    description: Image generation and editing endpoints
+  - name: Gallery
+    description: Image gallery and management
+  - name: Credits
+    description: Credit system and billing
+  - name: Usage
+    description: Usage tracking and statistics
+  - name: Admin
+    description: Administrative endpoints
+  - name: Webhooks
+    description: Payment provider webhooks
+
+paths:
+  /:
+    get:
+      operationId: healthCheck
+      summary: Health check
+      description: Returns a simple health check message
+      tags: [Health]
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "OpenAI Image Proxy - Ready"
+
+  # Authentication Endpoints
+  /v1/auth/github:
+    get:
+      operationId: githubAuthStart
+      summary: Start GitHub OAuth flow
+      tags: [Authentication]
+      security: []
+      parameters:
+        - in: query
+          name: redirect_uri
+          schema:
+            type: string
+          description: URI to redirect after authentication
+      responses:
+        '302':
+          description: Redirect to GitHub OAuth
+          headers:
+            Location:
+              schema:
+                type: string
+
+  /v1/auth/github/callback:
+    post:
+      operationId: githubAuthCallback
+      summary: GitHub OAuth callback
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                  description: OAuth authorization code
+                state:
+                  type: string
+                  description: OAuth state parameter
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/auth/google:
+    get:
+      operationId: googleAuthStart
+      summary: Start Google OAuth flow
+      tags: [Authentication]
+      security: []
+      parameters:
+        - in: query
+          name: redirect_uri
+          schema:
+            type: string
+          description: URI to redirect after authentication
+      responses:
+        '302':
+          description: Redirect to Google OAuth
+          headers:
+            Location:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/auth/google/callback:
+    post:
+      operationId: googleAuthCallback
+      summary: Google OAuth callback
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                  description: OAuth authorization code
+                state:
+                  type: string
+                  description: OAuth state parameter
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/auth/apple:
+    get:
+      operationId: appleAuthStart
+      summary: Start Apple OAuth flow
+      tags: [Authentication]
+      security: []
+      parameters:
+        - in: query
+          name: redirect_uri
+          schema:
+            type: string
+          description: URI to redirect after authentication
+      responses:
+        '302':
+          description: Redirect to Apple OAuth
+          headers:
+            Location:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/auth/apple/callback:
+    post:
+      operationId: appleAuthCallbackForm
+      summary: Apple OAuth callback (form post)
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                state:
+                  type: string
+                id_token:
+                  type: string
+                user:
+                  type: string
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            text/html:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/auth/apple/callback/json:
+    post:
+      operationId: appleAuthCallbackJson
+      summary: Apple OAuth callback (JSON)
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                state:
+                  type: string
+                id_token:
+                  type: string
+                user:
+                  type: object
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/auth/device/code:
+    post:
+      operationId: deviceAuthStart
+      summary: Start device flow authentication
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                client_id:
+                  type: string
+                  default: "openai-image-proxy-cli"
+      responses:
+        '200':
+          description: Device code created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceCodeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/auth/device/token:
+    post:
+      operationId: deviceAuthPoll
+      summary: Poll for device authentication token
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [device_code]
+              properties:
+                device_code:
+                  type: string
+                client_id:
+                  type: string
+                  default: "openai-image-proxy-cli"
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Authorization pending or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceTokenError'
+
+  /v1/auth/device/{device_code}/status:
+    get:
+      operationId: deviceAuthStatus
+      summary: Check device authentication status
+      tags: [Authentication]
+      security: []
+      parameters:
+        - in: path
+          name: device_code
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Device status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Image Generation Endpoints
+  /v1/images/generations:
+    post:
+      operationId: generateImages
+      summary: Generate images (OpenAI-compatible)
+      description: |
+        Generate images from text prompts using the gpt-image-1 model. This endpoint is compatible with OpenAI's API format.
+        In self-hosted mode, users can provide their own OpenAI API key.
+      tags: [Images]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImageGenerationRequest'
+      responses:
+        '200':
+          description: Images generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageGenerationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/InsufficientCredits'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /v1/images/edits:
+    post:
+      operationId: editImages
+      summary: Edit images (OpenAI-compatible)
+      description: Edit images using the gpt-image-1 model. Supports providing multiple reference images.
+      tags: [Images]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image, prompt]
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: The image to edit (PNG format, RGBA, max 4MB)
+                mask:
+                  type: string
+                  format: binary
+                  description: Optional mask indicating areas to edit
+                prompt:
+                  type: string
+                  description: Description of how to edit the image
+                n:
+                  type: integer
+                  default: 1
+                  minimum: 1
+                  maximum: 10
+                size:
+                  type: string
+                  enum: ["1024x1024", "1536x1024", "1024x1536"]
+                  default: "1024x1024"
+                  description: Image dimensions for edits with gpt-image-1
+                response_format:
+                  type: string
+                  enum: ["url", "b64_json"]
+                  default: "url"
+                user:
+                  type: string
+      responses:
+        '200':
+          description: Image edited successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageGenerationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/InsufficientCredits'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Gallery Endpoints
+  /v1/images:
+    get:
+      operationId: listImages
+      summary: List all images in public gallery
+      tags: [Gallery]
+      security: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of images
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/images/user/{user_id}:
+    get:
+      operationId: listUserImages
+      summary: List images for specific user
+      tags: [Gallery]
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of user's images
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/images/{image_id}:
+    get:
+      operationId: getImage
+      summary: Get specific image details
+      tags: [Gallery]
+      parameters:
+        - in: path
+          name: image_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Image details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageDetails'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /r2/{user_id}/{image_id}:
+    get:
+      operationId: serveImage
+      summary: Serve raw image file
+      tags: [Gallery]
+      security: []
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: image_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: download
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Image file
+          content:
+            image/png: {}
+            image/jpeg: {}
+            image/webp: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Usage Endpoints
+  /v1/usage/users/{user_id}:
+    get:
+      operationId: getUserUsage
+      summary: Get user usage statistics
+      tags: [Usage]
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User usage statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUsageStats'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/usage/users/{user_id}/details:
+    get:
+      operationId: getUserUsageDetails
+      summary: Get detailed user usage
+      tags: [Usage]
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: start_date
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: end_date
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Detailed usage information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailedUsage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/usage/system:
+    get:
+      operationId: getSystemUsage
+      summary: Get system-wide usage statistics
+      tags: [Usage]
+      responses:
+        '200':
+          description: System usage statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemUsageStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # Credits Endpoints
+  /v1/credits/balance:
+    get:
+      operationId: getCreditBalance
+      summary: Get user credit balance
+      tags: [Credits]
+      responses:
+        '200':
+          description: Credit balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditBalance'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/credits/transactions:
+    get:
+      operationId: listTransactions
+      summary: List user transactions
+      tags: [Credits]
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Transaction history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/credits/packs:
+    get:
+      operationId: listCreditPacks
+      summary: List available credit packs
+      tags: [Credits]
+      security: []
+      responses:
+        '200':
+          description: Available credit packs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditPackList'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/credits/estimate:
+    post:
+      operationId: estimateCost
+      summary: Estimate cost for image generation
+      tags: [Credits]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quality:
+                  type: string
+                  enum: ["low", "medium", "high"]
+                  default: "auto"
+                n:
+                  type: integer
+                  default: 1
+      responses:
+        '200':
+          description: Cost estimate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CostEstimate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/credits/purchase:
+    post:
+      operationId: purchaseCredits
+      summary: Purchase credits
+      tags: [Credits]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseRequest'
+      responses:
+        '200':
+          description: Purchase initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/credits/purchase/{purchase_id}/status:
+    get:
+      operationId: getPurchaseStatus
+      summary: Check purchase status
+      tags: [Credits]
+      parameters:
+        - in: path
+          name: purchase_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Purchase status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/credits/purchase/stripe:
+    post:
+      operationId: createStripeCheckout
+      summary: Create Stripe checkout session
+      tags: [Credits]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pack_id]
+              properties:
+                pack_id:
+                  type: string
+                success_url:
+                  type: string
+                cancel_url:
+                  type: string
+      responses:
+        '200':
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checkout_url:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/stripe/config:
+    get:
+      operationId: getStripeConfig
+      summary: Get Stripe configuration
+      tags: [Credits]
+      security: []
+      responses:
+        '200':
+          description: Stripe public configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  publishable_key:
+                    type: string
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Webhook Endpoints
+  /v1/credits/webhook:
+    post:
+      operationId: creditWebhook
+      summary: Complete purchase webhook
+      description: Generic webhook endpoint for payment providers to notify of completed purchases
+      tags: [Webhooks]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook processed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/credits/webhook/crypto:
+    post:
+      operationId: cryptoWebhook
+      summary: Crypto payment webhook
+      description: Webhook endpoint for cryptocurrency payment notifications
+      tags: [Webhooks]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook processed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/ipn/nowpayments:
+    post:
+      operationId: nowpaymentsWebhook
+      summary: NowPayments IPN webhook
+      description: |
+        Instant Payment Notification webhook for NowPayments cryptocurrency transactions.
+        Used to receive payment status updates for BTC, ETH, DOGE, and LTC payments.
+      tags: [Webhooks]
+      security: []
+      parameters:
+        - in: header
+          name: x-nowpayments-sig
+          required: true
+          schema:
+            type: string
+          description: HMAC-SHA512 signature for webhook validation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook processed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/stripe/webhook:
+    post:
+      operationId: stripeWebhook
+      summary: Stripe webhook handler
+      description: |
+        Webhook endpoint for Stripe payment events.
+        Handles checkout.session.completed events to credit user accounts after successful payments.
+      tags: [Webhooks]
+      security: []
+      parameters:
+        - in: header
+          name: stripe-signature
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook processed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Admin Endpoints
+  /v1/admin/credits/adjust:
+    post:
+      operationId: adminAdjustCredits
+      summary: Adjust user credits (admin only)
+      tags: [Admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, amount, reason]
+              properties:
+                user_id:
+                  type: string
+                amount:
+                  type: integer
+                  description: Positive to add, negative to subtract
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Credits adjusted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  new_balance:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /v1/admin/credits/stats:
+    get:
+      operationId: adminGetStats
+      summary: Get system credit statistics
+      tags: [Admin]
+      responses:
+        '200':
+          description: Credit statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        Use the API key provided after OAuth authentication.
+        Include in the Authorization header as: `Bearer your-api-key`
+        
+        To obtain an API key:
+        1. Authenticate via OAuth (GitHub, Google, Apple) or device flow
+        2. The API key will be returned in the authentication response
+        3. Store this key securely and include it in all API requests
+
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        user_id:
+          type: string
+          example: "user_123456"
+        email:
+          type: string
+          example: "user@example.com"
+        name:
+          type: string
+          example: "John Doe"
+        api_key:
+          type: string
+          example: "sk_live_abc123def456..."
+        credits:
+          type: integer
+          example: 500
+        provider:
+          type: string
+          enum: ["github", "google", "apple", "device"]
+          example: "github"
+
+    DeviceCodeResponse:
+      type: object
+      properties:
+        device_code:
+          type: string
+          example: "abc123def456"
+        user_code:
+          type: string
+          example: "ABCD-1234"
+        verification_uri:
+          type: string
+          example: "https://github.com/login/device"
+        verification_uri_complete:
+          type: string
+          example: "https://github.com/login/device?user_code=ABCD-1234"
+        expires_in:
+          type: integer
+          example: 900
+        interval:
+          type: integer
+          example: 5
+
+    DeviceTokenError:
+      type: object
+      properties:
+        error:
+          type: string
+          enum: ["authorization_pending", "slow_down", "expired_token", "access_denied"]
+        error_description:
+          type: string
+
+    DeviceStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: ["pending", "authorized", "expired"]
+        expires_at:
+          type: string
+          format: date-time
+
+    ImageGenerationRequest:
+      type: object
+      required: [prompt]
+      properties:
+        prompt:
+          type: string
+          description: Text description of the desired image
+          maxLength: 4000
+        model:
+          type: string
+          enum: ["gpt-image-1"]
+          default: "gpt-image-1"
+          description: Only gpt-image-1 is supported
+        n:
+          type: integer
+          description: Number of images to generate
+          minimum: 1
+          maximum: 10
+          default: 1
+        quality:
+          type: string
+          enum: ["auto", "low", "medium", "high"]
+          default: "auto"
+          description: |
+            Image quality and credit cost:
+            - low: 4-5 credits
+            - medium: 15-25 credits
+            - high: 50-80 credits
+            - auto: system decides based on context
+        size:
+          type: string
+          enum: ["auto", "1024x1024", "1536x1024", "1024x1536"]
+          default: "auto"
+          description: |
+            Image dimensions for gpt-image-1:
+            - 1024x1024: Square format
+            - 1536x1024: Landscape format
+            - 1024x1536: Portrait format
+            - auto: System selects based on prompt
+        background:
+          type: string
+          enum: ["auto", "transparent", "white", "black"]
+          default: "auto"
+        output_format:
+          type: string
+          enum: ["png", "jpeg", "webp"]
+          default: "png"
+        response_format:
+          type: string
+          enum: ["url", "b64_json"]
+          default: "url"
+        stream:
+          type: boolean
+          default: false
+          description: Stream response (not yet implemented)
+        user:
+          type: string
+          description: Optional user identifier
+        openai_api_key:
+          type: string
+          description: Optional OpenAI API key (self-hosted mode only)
+
+    ImageGenerationResponse:
+      type: object
+      properties:
+        created:
+          type: integer
+          description: Unix timestamp
+          example: 1706745600
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                description: URL of the generated image
+                example: "https://openai-image-proxy.guitaripod.workers.dev/r2/user_123456/img_abc123def456.png"
+              b64_json:
+                type: string
+                description: Base64-encoded image data (if requested)
+                example: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+              revised_prompt:
+                type: string
+                description: Revised prompt (if applicable)
+                example: "A serene mountain landscape with snow-capped peaks at sunset"
+        usage:
+          type: object
+          properties:
+            total_tokens:
+              type: integer
+            input_tokens:
+              type: integer
+            output_tokens:
+              type: integer
+            input_tokens_details:
+              type: object
+              properties:
+                text_tokens:
+                  type: integer
+                image_tokens:
+                  type: integer
+
+    ImageList:
+      type: object
+      properties:
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageDetails'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ImageDetails:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        url:
+          type: string
+        prompt:
+          type: string
+        quality:
+          type: string
+        size:
+          type: string
+        output_format:
+          type: string
+        credits_used:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    UserUsageStats:
+      type: object
+      properties:
+        user_id:
+          type: string
+        total_images:
+          type: integer
+        total_credits_used:
+          type: integer
+        images_by_quality:
+          type: object
+          properties:
+            low:
+              type: integer
+            medium:
+              type: integer
+            high:
+              type: integer
+        average_credits_per_image:
+          type: number
+
+    DetailedUsage:
+      type: object
+      properties:
+        user_id:
+          type: string
+        period:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date
+            end_date:
+              type: string
+              format: date
+        daily_usage:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              images_generated:
+                type: integer
+              credits_used:
+                type: integer
+
+    SystemUsageStats:
+      type: object
+      properties:
+        total_users:
+          type: integer
+        total_images:
+          type: integer
+        total_credits_used:
+          type: integer
+        active_users_24h:
+          type: integer
+        images_24h:
+          type: integer
+
+    CreditBalance:
+      type: object
+      properties:
+        user_id:
+          type: string
+          example: "user_123456"
+        balance:
+          type: integer
+          example: 1250
+        last_updated:
+          type: string
+          format: date-time
+          example: "2024-01-25T15:30:00Z"
+
+    TransactionList:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              user_id:
+                type: string
+              type:
+                type: string
+                enum: ["purchase", "usage", "adjustment", "bonus"]
+              amount:
+                type: integer
+              balance_after:
+                type: integer
+              description:
+                type: string
+              created_at:
+                type: string
+                format: date-time
+
+    CreditPackList:
+      type: object
+      properties:
+        packs:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                example: "starter"
+              name:
+                type: string
+                example: "Starter Pack"
+              credits:
+                type: integer
+                example: 150
+              price:
+                type: number
+                example: 2.99
+              currency:
+                type: string
+                example: "USD"
+              bonus_percentage:
+                type: integer
+                example: 0
+              description:
+                type: string
+                example: "Perfect for trying out the service"
+
+    CostEstimate:
+      type: object
+      properties:
+        credits_per_image:
+          type: integer
+        total_credits:
+          type: integer
+        quality:
+          type: string
+
+    PurchaseRequest:
+      type: object
+      required: [pack_id, payment_method]
+      properties:
+        pack_id:
+          type: string
+        payment_method:
+          type: string
+          enum: ["stripe", "crypto"]
+        return_url:
+          type: string
+
+    PurchaseResponse:
+      type: object
+      properties:
+        purchase_id:
+          type: string
+        payment_url:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+
+    PurchaseStatus:
+      type: object
+      properties:
+        purchase_id:
+          type: string
+        status:
+          type: string
+          enum: ["pending", "completed", "failed", "expired"]
+        credits:
+          type: integer
+        amount:
+          type: number
+        currency:
+          type: string
+
+    CreditStats:
+      type: object
+      properties:
+        total_credits_purchased:
+          type: integer
+        total_credits_used:
+          type: integer
+        total_credits_available:
+          type: integer
+        revenue:
+          type: object
+          properties:
+            total:
+              type: number
+            by_payment_method:
+              type: object
+              additionalProperties:
+                type: number
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - message
+            - error_type
+            - code
+          properties:
+            message:
+              type: string
+              description: Human-readable error message
+            error_type:
+              type: string
+              description: Error category
+              enum: 
+                - invalid_request_error
+                - authentication_error
+                - permission_denied
+                - not_found
+                - insufficient_credits
+                - internal_error
+                - rate_limit_exceeded
+            param:
+              type: string
+              nullable: true
+              description: Parameter that caused the error
+            code:
+              type: string
+              description: Error code
+              enum:
+                - bad_request
+                - unauthorized
+                - forbidden
+                - not_found
+                - insufficient_credits
+                - internal_error
+                - rate_limit_exceeded
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Unauthorized - Invalid or missing API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InsufficientCredits:
+      description: Payment required - Insufficient credits
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    TooManyRequests:
+      description: Too many requests - Concurrent request limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
