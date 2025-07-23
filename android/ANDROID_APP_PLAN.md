@@ -100,11 +100,11 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 
 ### Phase 4: Image Editing Feature
 
-#### 4.1 Image Selection
-- [ ] Create image picker with gallery and camera options
-- [ ] Implement gallery image browser (gallery:id support)
-- [ ] Add recent images quick access
-- [ ] Create image preview with pinch-to-zoom
+#### 4.1 Image Selection ✅
+- [x] Create image picker with gallery and camera options
+- [x] Implement gallery image browser (gallery:id support)
+- [x] Add recent images quick access
+- [x] Create image preview with pinch-to-zoom
 
 #### 4.2 Editing Interface
 - [ ] Create edit prompt input with suggestions
