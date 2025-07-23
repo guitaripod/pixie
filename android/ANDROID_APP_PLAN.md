@@ -87,12 +87,16 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [x] Create error display in chat timeline
 - [x] Display generated images inline in chat
 
-#### 3.4 Image Saving
-- [ ] Request storage permissions appropriately
-- [ ] Create app-specific album in gallery
-- [ ] Implement MediaStore integration for public gallery
-- [ ] Add share functionality with intent chooser
-- [ ] Create download progress notifications
+#### 3.4 Image Saving ✅
+- [x] Request storage permissions appropriately
+- [x] Create app-specific album in gallery ("Pixie")
+- [x] Implement MediaStore integration for public gallery
+- [x] Add share functionality with intent chooser
+- [x] Create download progress notifications
+- [x] Implement tap-to-reveal save/share buttons
+- [x] Add "Save all" functionality for multiple images
+- [x] Separate share (temp cache) from save (gallery) functionality
+- [x] Add FileProvider for secure sharing
 
 ### Phase 4: Image Editing Feature
 
