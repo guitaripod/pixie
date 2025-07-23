@@ -7,6 +7,10 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.guitaripod.pixie.data.api.NetworkCallAdapter
+import com.guitaripod.pixie.data.api.NetworkConnectivityObserver
+import com.guitaripod.pixie.data.api.PixieApiService
+import com.guitaripod.pixie.data.api.interceptor.AuthInterceptor
 import com.guitaripod.pixie.data.local.PixieDatabase
 import com.guitaripod.pixie.data.repository.ImageRepositoryImpl
 import com.guitaripod.pixie.domain.repository.ImageRepository
@@ -41,6 +45,10 @@ class AppContainer(private val context: Context) {
             .build()
     }
     
+    val authInterceptor: AuthInterceptor by lazy {
+        AuthInterceptor(encryptedPreferences)
+    }
+    
     private val okHttpClient: OkHttpClient by lazy {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = if (com.guitaripod.pixie.BuildConfig.DEBUG) {
@@ -51,6 +59,7 @@ class AppContainer(private val context: Context) {
         }
         
         OkHttpClient.Builder()
+            .addInterceptor(authInterceptor)
             .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
@@ -64,6 +73,21 @@ class AppContainer(private val context: Context) {
             .client(okHttpClient)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
+    }
+    
+    // API Service
+    val pixieApiService: PixieApiService by lazy {
+        retrofit.create(PixieApiService::class.java)
+    }
+    
+    // Network call adapter for error handling
+    val networkCallAdapter: NetworkCallAdapter by lazy {
+        NetworkCallAdapter(moshi)
+    }
+    
+    // Network connectivity observer
+    val networkConnectivityObserver: NetworkConnectivityObserver by lazy {
+        NetworkConnectivityObserver(context)
     }
     
     // Storage
