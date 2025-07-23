@@ -33,3 +33,29 @@ cli/edited_images/
 
 # Apple Sign in with Apple private keys
 *.p8
+
+# Android
+android/.gradle/
+android/build/
+android/local.properties
+android/captures/
+android/.externalNativeBuild/
+android/.cxx/
+android/**/*.iml
+android/.idea/
+android/app/build/
+android/app/release/
+android/app/debug/
+android/app/profile/
+android/**/*.apk
+android/**/*.aab
+android/**/*.ap_
+android/**/*.dex
+android/**/*.class
+android/**/out/
+android/**/proguard/
+android/**/.navigation/
+android/**/*.keystore
+android/**/google-services.json
+android/**/output.json
+android/**/*.hprof
