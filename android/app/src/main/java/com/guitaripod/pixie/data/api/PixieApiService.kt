@@ -57,9 +57,9 @@ interface PixieApiService {
     
     @POST("/v1/images/generations")
     suspend fun generateImages(
-        @Body request: ImageGenerationRequest,
+        @Body request: com.guitaripod.pixie.data.model.ImageGenerationRequest,
         @Header("OpenAI-API-Key") openAiKey: String? = null
-    ): Response<ImageGenerationResponse>
+    ): Response<com.guitaripod.pixie.data.model.ImageGenerationResponse>
     
     @Multipart
     @POST("/v1/images/edits")
@@ -77,7 +77,7 @@ interface PixieApiService {
         @Part("output_quality") outputQuality: Int? = null,
         @Part("fidelity") fidelity: String? = null,
         @Header("OpenAI-API-Key") openAiKey: String? = null
-    ): Response<ImageGenerationResponse>
+    ): Response<com.guitaripod.pixie.data.model.ImageGenerationResponse>
     
     @GET("/v1/images")
     suspend fun listPublicImages(
