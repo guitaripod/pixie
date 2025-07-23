@@ -51,12 +51,14 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [x] Create ConfigManager with encrypted storage for credentials
 - [x] Implement logout functionality with credential cleanup
 - [x] Create auth state flow for UI updates
-- [ ] Fetch and use official UI components for each login button
+- [x] Fetch and use official UI components for each login button
 
 **Implementation Notes:**
 - GitHub: Uses web OAuth flow with `pixie://auth` deep link redirect
-- Google: Uses native Google Sign-In SDK with ID token validation on backend
+- Google: Uses native Google Sign-In SDK with official button component
 - Apple: Uses web OAuth flow with manual credential entry (Apple doesn't support custom URI schemes)
+- Apple uses external browser for better app switching UX when copying credentials
+- Official button components: Google (SDK), Apple & GitHub (custom following brand guidelines)
 
 ### Phase 3: Image Generation Feature
 
