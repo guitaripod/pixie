@@ -45,7 +45,7 @@ class GoogleSignInManager(
     /**
      * Sign in with Google using native flow
      */
-    fun signIn(activity: Activity, launcher: ActivityResultLauncher<Intent>) {
+    fun signIn(@Suppress("UNUSED_PARAMETER") activity: Activity, launcher: ActivityResultLauncher<Intent>) {
         val signInIntent = googleSignInClient.signInIntent
         launcher.launch(signInIntent)
     }
