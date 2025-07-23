@@ -11,11 +11,10 @@ import com.guitaripod.pixie.presentation.auth.AuthViewModelFactory
 import com.guitaripod.pixie.presentation.generation.GenerationScreen
 import com.guitaripod.pixie.presentation.generation.GenerationViewModel
 import com.guitaripod.pixie.presentation.generation.GenerationViewModelFactory
-import com.guitaripod.pixie.presentation.home.HomeScreen
+import com.guitaripod.pixie.presentation.results.ResultsScreen
 
 sealed class Screen {
     object Auth : Screen()
-    object Home : Screen()
     object Generation : Screen()
     data class Results(val imageUrls: List<String>) : Screen()
 }
@@ -31,28 +30,15 @@ fun PixieNavigation(
     
     var currentScreen by remember { 
         mutableStateOf(
-            if (authViewModel.isAuthenticated()) Screen.Home else Screen.Auth
+            if (authViewModel.isAuthenticated()) Screen.Generation else Screen.Auth
         )
     }
     
-    when (val screen = currentScreen) {
+    when (currentScreen) {
         is Screen.Auth -> {
             AuthScreen(
                 authViewModel = authViewModel,
-                onAuthSuccess = { currentScreen = Screen.Home },
-                modifier = modifier
-            )
-        }
-        
-        is Screen.Home -> {
-            val config = authViewModel.getCurrentConfig()
-            HomeScreen(
-                config = config,
-                onLogout = {
-                    authViewModel.logout()
-                    currentScreen = Screen.Auth
-                },
-                onNavigateToGenerate = { currentScreen = Screen.Generation },
+                onAuthSuccess = { currentScreen = Screen.Generation },
                 modifier = modifier
             )
         }
@@ -67,18 +53,23 @@ fun PixieNavigation(
                 onNavigateToResults = { imageUrls ->
                     currentScreen = Screen.Results(imageUrls)
                 },
+                onLogout = {
+                    authViewModel.logout()
+                    currentScreen = Screen.Auth
+                },
                 modifier = modifier
             )
         }
         
         is Screen.Results -> {
-            HomeScreen(
-                config = authViewModel.getCurrentConfig(),
+            val results = currentScreen as Screen.Results
+            ResultsScreen(
+                imageUrls = results.imageUrls,
+                onNavigateBack = { currentScreen = Screen.Generation },
                 onLogout = {
                     authViewModel.logout()
                     currentScreen = Screen.Auth
                 },
-                onNavigateToGenerate = { currentScreen = Screen.Generation },
                 modifier = modifier
             )
         }
