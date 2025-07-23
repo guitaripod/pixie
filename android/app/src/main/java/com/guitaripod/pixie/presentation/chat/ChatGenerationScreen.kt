@@ -43,6 +43,8 @@ fun ChatGenerationScreen(
 ) {
     var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
     var isToolbarExpanded by remember { mutableStateOf(false) }
+    var toolbarMode by remember { mutableStateOf<ToolbarMode>(ToolbarMode.Generate) }
+    var previewImageUri by remember { mutableStateOf<android.net.Uri?>(null) }
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -88,12 +90,11 @@ fun ChatGenerationScreen(
     }
     
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .navigationBarsPadding(),
         snackbarHost = {
-            SnackbarHost(
-                hostState = snackbarHostState,
-                modifier = Modifier.navigationBarsPadding()
-            )
+            SnackbarHost(hostState = snackbarHostState)
         },
         topBar = {
             TopAppBar(
@@ -155,6 +156,16 @@ fun ChatGenerationScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                if (messages.isEmpty()) {
+                    item {
+                        RecentImagesRow(
+                            onImageSelected = { uri ->
+                                previewImageUri = uri
+                            }
+                        )
+                    }
+                }
+                
                 items(messages) { message ->
                     when (message) {
                         is ChatMessage.UserMessage -> {
@@ -182,6 +193,7 @@ fun ChatGenerationScreen(
             }
             
             GenerationToolbar(
+                    mode = toolbarMode,
                     isExpanded = isToolbarExpanded,
                     onExpandedChange = { isToolbarExpanded = it },
                     prompt = prompt,
@@ -210,17 +222,30 @@ fun ChatGenerationScreen(
                             selectedSize.value
                         }
                         
-                        val userMessage = ChatMessage.UserMessage(
-                            prompt = prompt,
-                            quality = selectedQuality.value,
-                            size = selectedSize.displayName,
-                            actualSize = actualSize,
-                            quantity = number,
-                            background = selectedBackground?.displayName,
-                            format = selectedFormat?.displayName,
-                            compression = if (selectedFormat?.supportsCompression == true) compressionLevel else null,
-                            moderation = selectedModeration?.displayName
-                        )
+                        val userMessage = when (toolbarMode) {
+                            is ToolbarMode.Generate -> ChatMessage.UserMessage(
+                                prompt = prompt,
+                                quality = selectedQuality.value,
+                                size = selectedSize.displayName,
+                                actualSize = actualSize,
+                                quantity = number,
+                                background = selectedBackground?.displayName,
+                                format = selectedFormat?.displayName,
+                                compression = if (selectedFormat?.supportsCompression == true) compressionLevel else null,
+                                moderation = selectedModeration?.displayName
+                            )
+                            is ToolbarMode.Edit -> ChatMessage.UserMessage(
+                                prompt = "Edit: $prompt",
+                                quality = selectedQuality.value,
+                                size = selectedSize.displayName,
+                                actualSize = actualSize,
+                                quantity = 1, // Edits only produce 1 image
+                                background = null,
+                                format = selectedFormat?.displayName,
+                                compression = if (selectedFormat?.supportsCompression == true) compressionLevel else null,
+                                moderation = selectedModeration?.displayName
+                            )
+                        }
                         messages = messages + userMessage
                         
                         messages = messages + ChatMessage.ImageResponse(
@@ -247,8 +272,28 @@ fun ChatGenerationScreen(
                         prompt = ""
                         isToolbarExpanded = false
                     },
+                    onSwitchToGenerate = {
+                        toolbarMode = ToolbarMode.Generate
+                        prompt = ""
+                    },
                     modifier = Modifier.align(Alignment.BottomCenter)
                 )
+            
+            previewImageUri?.let { uri ->
+                ImagePreviewDialog(
+                    imageUri = uri,
+                    onConfirm = {
+                        toolbarMode = ToolbarMode.Edit(
+                            SelectedImage(uri = uri)
+                        )
+                        previewImageUri = null
+                        isToolbarExpanded = true
+                    },
+                    onDismiss = {
+                        previewImageUri = null
+                    }
+                )
+            }
         }
     }
 }
