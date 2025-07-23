@@ -38,21 +38,16 @@ class OAuthWebFlowManager(
     fun authenticateGithub(): Flow<AuthResult> = flow {
         emit(AuthResult.Pending)
         
-        // Generate state for security
         val state = OAuthState(provider = "github")
         pendingAuthState = state
         
-        // Build OAuth URL
         val apiUrl = configManager.getApiUrl() ?: "https://openai-image-proxy.guitaripod.workers.dev"
         val authUrl = "$apiUrl/v1/auth/github?" + buildString {
             append("state=").append(Uri.encode(state.state))
             append("&redirect_uri=").append(Uri.encode(REDIRECT_URI))
         }
         
-        // Open browser
         openCustomTab(authUrl)
-        
-        // Return pending - actual result will come from callback
         emit(AuthResult.Pending)
     }
     
@@ -62,21 +57,16 @@ class OAuthWebFlowManager(
     fun authenticateGoogle(): Flow<AuthResult> = flow {
         emit(AuthResult.Pending)
         
-        // Generate state for security
         val state = OAuthState(provider = "google")
         pendingAuthState = state
         
-        // Build OAuth URL
         val apiUrl = configManager.getApiUrl() ?: "https://openai-image-proxy.guitaripod.workers.dev"
         val authUrl = "$apiUrl/v1/auth/google?" + buildString {
             append("state=").append(Uri.encode(state.state))
             append("&redirect_uri=").append(Uri.encode(REDIRECT_URI))
         }
         
-        // Open browser
         openCustomTab(authUrl)
-        
-        // Return pending - actual result will come from callback
         emit(AuthResult.Pending)
     }
     
@@ -86,21 +76,17 @@ class OAuthWebFlowManager(
     fun authenticateApple(): Flow<AuthResult> = flow {
         emit(AuthResult.Pending)
         
-        // Generate state for security
         val state = OAuthState(provider = "apple")
         pendingAuthState = state
         
-        // Build OAuth URL
         val apiUrl = configManager.getApiUrl() ?: "https://openai-image-proxy.guitaripod.workers.dev"
+        val callbackUrl = "$apiUrl/v1/auth/apple/callback"
         val authUrl = "$apiUrl/v1/auth/apple?" + buildString {
             append("state=").append(Uri.encode(state.state))
-            append("&redirect_uri=").append(Uri.encode(REDIRECT_URI))
+            append("&redirect_uri=").append(Uri.encode(callbackUrl))
         }
         
-        // Open browser
         openCustomTab(authUrl)
-        
-        // Return pending - actual result will come from callback
         emit(AuthResult.Pending)
     }
     
@@ -108,31 +94,26 @@ class OAuthWebFlowManager(
      * Handle OAuth callback from deep link
      */
     suspend fun handleOAuthCallback(uri: Uri): AuthResult {
-        // Extract parameters from callback URL
         val code = uri.getQueryParameter("code")
         val state = uri.getQueryParameter("state")
         val error = uri.getQueryParameter("error")
         
-        // Check for errors
         if (error != null) {
             pendingAuthState = null
             return AuthResult.Error(error)
         }
         
-        // Validate we have required parameters
         if (code == null || state == null) {
             pendingAuthState = null
             return AuthResult.Error("Missing required parameters")
         }
         
-        // Validate state
         val savedState = pendingAuthState
         if (savedState == null || savedState.state != state || !savedState.isValid()) {
             pendingAuthState = null
             return AuthResult.Error("Invalid OAuth state")
         }
         
-        // Exchange code for token
         val callbackRequest = OAuthCallbackRequest(
             code = code,
             state = state,
@@ -174,31 +155,18 @@ class OAuthWebFlowManager(
                 AuthResult.Error(result.exception.message ?: "Authentication failed")
             }
             is NetworkResult.Loading -> {
-                // Should not happen
                 AuthResult.Error("Unexpected loading state")
             }
         }
     }
     
     /**
-     * Open URL in Chrome Custom Tab
+     * Open URL in external browser
      */
     private fun openCustomTab(url: String) {
-        try {
-            val customTabsIntent = CustomTabsIntent.Builder()
-                .setShowTitle(true)
-                .setUrlBarHidingEnabled(true)
-                .build()
-            
-            // Need to add FLAG_ACTIVITY_NEW_TASK for non-Activity context
-            customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            customTabsIntent.launchUrl(context, Uri.parse(url))
-        } catch (e: Exception) {
-            // Fallback to default browser if Chrome Custom Tabs fails
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(browserIntent)
-        }
+        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(browserIntent)
     }
     
     /**
