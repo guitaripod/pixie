@@ -108,7 +108,7 @@ class AppContainer(private val context: Context) {
         AuthRepositoryImpl(gitHubOAuthManager, googleSignInManager, oAuthWebFlowManager, preferencesRepository)
     }
         val imageRepository: ImageRepository by lazy {
-        ImageRepository(pixieApiService)
+        ImageRepository(pixieApiService, context)
     }
     
     val imageSaver: ImageSaver by lazy {
