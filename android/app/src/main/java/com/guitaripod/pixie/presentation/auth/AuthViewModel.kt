@@ -1,0 +1,47 @@
+package com.guitaripod.pixie.presentation.auth
+
+import android.app.Activity
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.guitaripod.pixie.data.model.AuthResult
+import com.guitaripod.pixie.data.repository.AuthRepository
+import kotlinx.coroutines.flow.Flow
+
+class AuthViewModel(
+    private val authRepository: AuthRepository
+) : ViewModel() {
+    
+    fun authenticateGithub(): Flow<AuthResult> {
+        return authRepository.authenticateGithub()
+    }
+    
+    fun authenticateGoogle(): Flow<AuthResult> {
+        return authRepository.authenticateGoogle()
+    }
+    
+    fun authenticateApple(activity: Activity): Flow<AuthResult> {
+        return authRepository.authenticateApple(activity)
+    }
+    
+    fun isAuthenticated(): Boolean {
+        return authRepository.isAuthenticated()
+    }
+    
+    fun logout() {
+        authRepository.logout()
+    }
+    
+    fun getCurrentConfig() = authRepository.getCurrentConfig()
+}
+
+class AuthViewModelFactory(
+    private val authRepository: AuthRepository
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return AuthViewModel(authRepository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}

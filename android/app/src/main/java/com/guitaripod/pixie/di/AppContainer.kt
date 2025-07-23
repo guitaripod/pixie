@@ -11,6 +11,7 @@ import com.guitaripod.pixie.data.api.NetworkConnectivityObserver
 import com.guitaripod.pixie.data.api.PixieApiService
 import com.guitaripod.pixie.data.api.interceptor.AuthInterceptor
 import com.guitaripod.pixie.data.auth.OAuthManager
+import com.guitaripod.pixie.data.auth.OAuthWebFlowManager
 import com.guitaripod.pixie.data.local.ConfigManager
 import com.guitaripod.pixie.data.local.PreferencesDataStore
 import com.guitaripod.pixie.data.repository.AuthRepository
@@ -110,9 +111,14 @@ class AppContainer(private val context: Context) {
         NetworkConnectivityObserver(context)
     }
     
-    // OAuth Manager
+    // OAuth Manager (for device flow - keeping for backward compatibility)
     val oAuthManager: OAuthManager by lazy {
         OAuthManager(context, pixieApiService, configManager, networkCallAdapter)
+    }
+    
+    // OAuth Web Flow Manager (for proper mobile OAuth)
+    val oAuthWebFlowManager: OAuthWebFlowManager by lazy {
+        OAuthWebFlowManager(context, pixieApiService, configManager, networkCallAdapter)
     }
     
     // Auth Repository

@@ -198,12 +198,21 @@ class OAuthManager(
      * Open URL in Chrome Custom Tab
      */
     private fun openCustomTab(url: String) {
-        val customTabsIntent = CustomTabsIntent.Builder()
-            .setShowTitle(true)
-            .setUrlBarHidingEnabled(true)
-            .build()
-        
-        customTabsIntent.launchUrl(context, Uri.parse(url))
+        try {
+            val customTabsIntent = CustomTabsIntent.Builder()
+                .setShowTitle(true)
+                .setUrlBarHidingEnabled(true)
+                .build()
+            
+            // Need to add FLAG_ACTIVITY_NEW_TASK for non-Activity context
+            customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            customTabsIntent.launchUrl(context, Uri.parse(url))
+        } catch (e: Exception) {
+            // Fallback to default browser if Chrome Custom Tabs fails
+            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(browserIntent)
+        }
     }
     
     /**
