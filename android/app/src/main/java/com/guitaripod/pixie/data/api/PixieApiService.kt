@@ -5,17 +5,11 @@ import com.guitaripod.pixie.data.model.*
 import retrofit2.Response
 import retrofit2.http.*
 
-/**
- * Retrofit service interface for Pixie API.
- * Based on the OpenAPI specification.
- */
 interface PixieApiService {
     
-    // Health Check
     @GET("/")
     suspend fun healthCheck(): Response<String>
     
-    // Authentication
     @GET("/v1/auth/github")
     suspend fun startGithubAuth(
         @Query("redirect_uri") redirectUri: String? = null
@@ -51,7 +45,6 @@ interface PixieApiService {
         @Body request: OAuthCallbackRequest
     ): Response<AuthResponse>
     
-    // Device Authentication (for GitHub/Google)
     @POST("/v1/auth/device/code")
     suspend fun startDeviceAuth(
         @Body request: DeviceCodeRequest
@@ -62,7 +55,6 @@ interface PixieApiService {
         @Body request: DeviceTokenRequest
     ): Response<DeviceTokenResponse>
     
-    // Image Generation
     @POST("/v1/images/generations")
     suspend fun generateImages(
         @Body request: ImageGenerationRequest,
@@ -87,7 +79,6 @@ interface PixieApiService {
         @Header("OpenAI-API-Key") openAiKey: String? = null
     ): Response<ImageGenerationResponse>
     
-    // Gallery
     @GET("/v1/images")
     suspend fun listPublicImages(
         @Query("limit") limit: Int? = null,
@@ -110,7 +101,6 @@ interface PixieApiService {
         @Path("image_id") imageId: String
     ): Response<Unit>
     
-    // Credits
     @GET("/v1/me/credits")
     suspend fun getCredits(): Response<CreditsResponse>
     
@@ -128,14 +118,12 @@ interface PixieApiService {
         @Body request: CreditEstimateRequest
     ): Response<CreditEstimateResponse>
     
-    // Usage
     @GET("/v1/me/usage")
     suspend fun getUsage(
         @Query("start_date") startDate: String? = null,
         @Query("end_date") endDate: String? = null
     ): Response<UsageResponse>
     
-    // Admin
     @GET("/v1/admin/stats")
     suspend fun getAdminStats(): Response<AdminStatsResponse>
     

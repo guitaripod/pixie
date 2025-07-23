@@ -17,6 +17,7 @@ import com.guitaripod.pixie.data.local.ConfigManager
 import com.guitaripod.pixie.data.local.PreferencesDataStore
 import com.guitaripod.pixie.data.repository.AuthRepository
 import com.guitaripod.pixie.data.repository.AuthRepositoryImpl
+import com.guitaripod.pixie.data.repository.ImageRepository
 import com.guitaripod.pixie.data.repository.PreferencesRepository
 import com.guitaripod.pixie.data.repository.PreferencesRepositoryImpl
 import com.squareup.moshi.Moshi
@@ -29,29 +30,18 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
 
-// DataStore extension
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "pixie_preferences")
 
-/**
- * Dependency container for the app.
- * This is a simple manual DI solution that provides all dependencies.
- */
 class AppContainer(private val context: Context) {
-    
-    // Coroutine Dispatchers
-    val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+        val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
     val mainDispatcher: CoroutineDispatcher = Dispatchers.Main
     val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
-    
-    // Networking
-    private val moshi: Moshi by lazy {
+        private val moshi: Moshi by lazy {
         Moshi.Builder()
             .add(KotlinJsonAdapterFactory())
             .build()
     }
-    
-    // Configuration and preferences
-    val configManager: ConfigManager by lazy {
+        val configManager: ConfigManager by lazy {
         ConfigManager(encryptedPreferences)
     }
     
@@ -86,7 +76,6 @@ class AppContainer(private val context: Context) {
     }
     
     val retrofit: Retrofit by lazy {
-        // Use custom API URL if set, otherwise use default
         val baseUrl = configManager.getApiUrl() 
             ?: "https://openai-image-proxy.guitaripod.workers.dev/"
         
@@ -96,44 +85,31 @@ class AppContainer(private val context: Context) {
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
     }
-    
-    // API Service
-    val pixieApiService: PixieApiService by lazy {
+        val pixieApiService: PixieApiService by lazy {
         retrofit.create(PixieApiService::class.java)
     }
-    
-    // Network call adapter for error handling
-    val networkCallAdapter: NetworkCallAdapter by lazy {
+        val networkCallAdapter: NetworkCallAdapter by lazy {
         NetworkCallAdapter(moshi)
     }
-    
-    // Network connectivity observer
-    val networkConnectivityObserver: NetworkConnectivityObserver by lazy {
+        val networkConnectivityObserver: NetworkConnectivityObserver by lazy {
         NetworkConnectivityObserver(context)
     }
-    
-    // GitHub OAuth Manager
-    val gitHubOAuthManager: GitHubOAuthManager by lazy {
+        val gitHubOAuthManager: GitHubOAuthManager by lazy {
         GitHubOAuthManager(context, pixieApiService, configManager, networkCallAdapter)
     }
-    
-    // Google Sign-In Manager
-    val googleSignInManager: GoogleSignInManager by lazy {
+        val googleSignInManager: GoogleSignInManager by lazy {
         GoogleSignInManager(context, pixieApiService, configManager, networkCallAdapter)
     }
-    
-    // OAuth Web Flow Manager (for Apple)
-    val oAuthWebFlowManager: OAuthWebFlowManager by lazy {
+        val oAuthWebFlowManager: OAuthWebFlowManager by lazy {
         OAuthWebFlowManager(context, pixieApiService, configManager, networkCallAdapter)
     }
-    
-    // Auth Repository
-    val authRepository: AuthRepository by lazy {
+        val authRepository: AuthRepository by lazy {
         AuthRepositoryImpl(gitHubOAuthManager, googleSignInManager, oAuthWebFlowManager, preferencesRepository)
     }
-    
-    // Storage
-    val dataStore: DataStore<Preferences> by lazy {
+        val imageRepository: ImageRepository by lazy {
+        ImageRepository(pixieApiService)
+    }
+        val dataStore: DataStore<Preferences> by lazy {
         context.dataStore
     }
     
