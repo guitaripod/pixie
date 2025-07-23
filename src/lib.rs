@@ -22,7 +22,29 @@ async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     
     router
         .get("/", |_, _| {
-            Response::ok("OpenAI Image Proxy - Ready")
+            Response::ok(r#"OpenAI Image Proxy - Ready
+
+API Documentation: /docs
+OpenAPI Specification: /openapi.yaml"#)
+        })
+        .get("/docs", |_, _| {
+            Response::ok(include_str!("swagger-ui.html"))
+                .map(|mut r| {
+                    r.headers_mut().set("Content-Type", "text/html").unwrap();
+                    r
+                })
+        })
+        .get("/docs/", |req, _| {
+            let url = req.url().unwrap();
+            let base = format!("{}://{}", url.scheme(), url.host().unwrap());
+            Response::redirect(format!("{}/docs", base).parse().unwrap())
+        })
+        .get("/openapi.yaml", |_, _| {
+            Response::ok(include_str!("../openapi.yaml"))
+                .map(|mut r| {
+                    r.headers_mut().set("Content-Type", "application/yaml").unwrap();
+                    r
+                })
         })
         .post_async("/v1/images/generations", images::handle_generation)
         .post_async("/v1/images/edits", images::handle_edit)
