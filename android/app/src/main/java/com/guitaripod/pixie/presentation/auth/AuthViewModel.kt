@@ -1,11 +1,15 @@
 package com.guitaripod.pixie.presentation.auth
 
 import android.app.Activity
+import android.content.Intent
+import androidx.activity.result.ActivityResultLauncher
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import com.guitaripod.pixie.data.model.AuthResult
 import com.guitaripod.pixie.data.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 
 class AuthViewModel(
     private val authRepository: AuthRepository
@@ -15,8 +19,12 @@ class AuthViewModel(
         return authRepository.authenticateGithub()
     }
     
-    fun authenticateGoogle(): Flow<AuthResult> {
-        return authRepository.authenticateGoogle()
+    fun authenticateGoogle(activity: Activity, launcher: ActivityResultLauncher<Intent>): Flow<AuthResult> {
+        return authRepository.authenticateGoogle(activity, launcher)
+    }
+    
+    fun handleGoogleSignInResult(data: Intent?): Flow<AuthResult> {
+        return authRepository.handleGoogleSignInResult(data)
     }
     
     fun authenticateApple(activity: Activity): Flow<AuthResult> {
@@ -28,7 +36,9 @@ class AuthViewModel(
     }
     
     fun logout() {
-        authRepository.logout()
+        viewModelScope.launch {
+            authRepository.logout()
+        }
     }
     
     fun getCurrentConfig() = authRepository.getCurrentConfig()

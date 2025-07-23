@@ -1,5 +1,8 @@
 package com.guitaripod.pixie.presentation.auth
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -7,65 +10,110 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import kotlinx.coroutines.launch
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.guitaripod.pixie.R
 import com.guitaripod.pixie.data.model.AuthResult
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthScreen(
-    onGithubAuth: () -> Flow<AuthResult>,
-    onGoogleAuth: () -> Flow<AuthResult>,
-    onAppleAuth: () -> Flow<AuthResult>,
+    authViewModel: AuthViewModel,
     onAuthSuccess: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var currentProvider by remember { mutableStateOf<String?>(null) }
-    
+    val activity = LocalContext.current as Activity
     val scope = rememberCoroutineScope()
     
-    fun handleAuth(provider: String) {
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
+    // Google Sign-In launcher
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
         scope.launch {
-            try {
-                val authFlow = when (provider) {
-                    "github" -> onGithubAuth()
-                    "google" -> onGoogleAuth()
-                    "apple" -> onAppleAuth()
-                    else -> return@launch
-                }
-                
-                authFlow.collect { result ->
-                    when (result) {
-                        is AuthResult.Pending -> {
-                            isLoading = true
-                            errorMessage = null
-                        }
-                        is AuthResult.Success -> {
-                            isLoading = false
-                            onAuthSuccess()
-                        }
-                        is AuthResult.Error -> {
-                            isLoading = false
-                            errorMessage = result.message
-                            currentProvider = null
-                        }
-                        is AuthResult.Cancelled -> {
-                            isLoading = false
-                            errorMessage = "Authentication cancelled"
-                            currentProvider = null
-                        }
+            authViewModel.handleGoogleSignInResult(result.data).collect { authResult ->
+                when (authResult) {
+                    is AuthResult.Success -> {
+                        isLoading = false
+                        onAuthSuccess()
+                    }
+                    is AuthResult.Error -> {
+                        isLoading = false
+                        errorMessage = authResult.message
+                    }
+                    is AuthResult.Cancelled -> {
+                        isLoading = false
+                        errorMessage = "Sign in cancelled"
+                    }
+                    is AuthResult.Pending -> {
+                        isLoading = true
                     }
                 }
-            } catch (e: Exception) {
-                isLoading = false
-                errorMessage = "Authentication failed: ${e.message}"
-                currentProvider = null
+            }
+        }
+    }
+    
+    fun handleGithubAuth() {
+        scope.launch {
+            authViewModel.authenticateGithub().collect { result ->
+                when (result) {
+                    is AuthResult.Pending -> {
+                        isLoading = true
+                        errorMessage = null
+                    }
+                    is AuthResult.Success -> {
+                        isLoading = false
+                        onAuthSuccess()
+                    }
+                    is AuthResult.Error -> {
+                        isLoading = false
+                        errorMessage = result.message
+                    }
+                    is AuthResult.Cancelled -> {
+                        isLoading = false
+                        errorMessage = "Authentication cancelled"
+                    }
+                }
+            }
+        }
+    }
+    
+    fun handleGoogleAuth() {
+        scope.launch {
+            isLoading = true
+            errorMessage = null
+            authViewModel.authenticateGoogle(activity, googleSignInLauncher).collect { result ->
+                if (result !is AuthResult.Pending) {
+                    isLoading = false
+                }
+            }
+        }
+    }
+    
+    fun handleAppleAuth() {
+        scope.launch {
+            authViewModel.authenticateApple(activity).collect { result ->
+                when (result) {
+                    is AuthResult.Pending -> {
+                        isLoading = true
+                        errorMessage = null
+                    }
+                    is AuthResult.Success -> {
+                        isLoading = false
+                        onAuthSuccess()
+                    }
+                    is AuthResult.Error -> {
+                        isLoading = false
+                        errorMessage = result.message
+                    }
+                    is AuthResult.Cancelled -> {
+                        isLoading = false
+                        errorMessage = "Authentication cancelled"
+                    }
+                }
             }
         }
     }
@@ -102,31 +150,28 @@ fun AuthScreen(
                 
                 // GitHub Button
                 OutlinedButton(
-                    onClick = { handleAuth("github") },
+                    onClick = { handleGithubAuth() },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading
                 ) {
-                    // Icon placeholder - would use actual GitHub icon
                     Text("Sign in with GitHub")
                 }
                 
                 // Google Button
                 OutlinedButton(
-                    onClick = { handleAuth("google") },
+                    onClick = { handleGoogleAuth() },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading
                 ) {
-                    // Icon placeholder - would use actual Google icon
                     Text("Sign in with Google")
                 }
                 
                 // Apple Button
                 OutlinedButton(
-                    onClick = { handleAuth("apple") },
+                    onClick = { handleAppleAuth() },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading
                 ) {
-                    // Icon placeholder - would use actual Apple icon
                     Text("Sign in with Apple")
                 }
                 
