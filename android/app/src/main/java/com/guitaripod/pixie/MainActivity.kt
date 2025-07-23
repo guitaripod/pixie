@@ -17,6 +17,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        // Example: Access AppContainer if needed
+        // val appContainer = appContainer()
+        // val viewModelFactory = appContainer.viewModelFactory()
+        
         setContent {
             PixieTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
