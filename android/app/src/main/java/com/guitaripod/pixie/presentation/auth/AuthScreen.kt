@@ -154,32 +154,24 @@ fun AuthScreen(
                 
                 Spacer(modifier = Modifier.height(32.dp))
                 
-                // GitHub Button
-                OutlinedButton(
-                    onClick = { handleGithubAuth() },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isLoading
-                ) {
-                    Text("Sign in with GitHub")
-                }
-                
-                // Google Button
-                OutlinedButton(
+                GoogleSignInButton(
                     onClick = { handleGoogleAuth() },
-                    modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading
-                ) {
-                    Text("Sign in with Google")
-                }
+                )
                 
-                // Apple Button
-                OutlinedButton(
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                AppleSignInButton(
                     onClick = { handleAppleAuth() },
-                    modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading
-                ) {
-                    Text("Sign in with Apple")
-                }
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                GitHubSignInButton(
+                    onClick = { handleGithubAuth() },
+                    enabled = !isLoading
+                )
                 
                 // Error message
                 errorMessage?.let { error ->

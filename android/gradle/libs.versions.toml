@@ -86,6 +86,9 @@ androidx-biometric = { group = "androidx.biometric", name = "biometric", version
 # Browser
 androidx-browser = { group = "androidx.browser", name = "browser", version = "1.8.0" }
 
+# Apple Sign-In
+apple-signin-button = { group = "com.willowtreeapps", name = "signinwithapplebutton", version = "0.3" }
+
 # Google Sign-In
 google-play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version = "21.0.0" }
 kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
