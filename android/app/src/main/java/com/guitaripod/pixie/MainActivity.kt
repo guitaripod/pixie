@@ -11,13 +11,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.guitaripod.pixie.ui.theme.PixieTheme
 import com.guitaripod.pixie.data.model.AuthResult
-import com.guitaripod.pixie.presentation.auth.AuthScreen
-import com.guitaripod.pixie.presentation.auth.AuthViewModel
-import com.guitaripod.pixie.presentation.auth.AuthViewModelFactory
-import com.guitaripod.pixie.presentation.home.HomeScreen
+import com.guitaripod.pixie.navigation.PixieNavigation
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -25,37 +21,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
-        // Handle OAuth callback if launched from deep link
         handleIntent(intent)
         
         val appContainer = (application as PixieApplication).appContainer
         
         setContent {
             PixieTheme {
-                val authViewModel: AuthViewModel = viewModel(
-                    factory = AuthViewModelFactory(appContainer.authRepository)
-                )
-                
-                var isAuthenticated by remember { mutableStateOf(authViewModel.isAuthenticated()) }
-                
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    if (isAuthenticated) {
-                        val config = authViewModel.getCurrentConfig()
-                        HomeScreen(
-                            config = config,
-                            onLogout = {
-                                authViewModel.logout()
-                                isAuthenticated = false
-                            },
-                            modifier = Modifier.padding(innerPadding)
-                        )
-                    } else {
-                        AuthScreen(
-                            authViewModel = authViewModel,
-                            onAuthSuccess = { isAuthenticated = true },
-                            modifier = Modifier.padding(innerPadding)
-                        )
-                    }
+                    PixieNavigation(
+                        appContainer = appContainer,
+                        modifier = Modifier.padding(innerPadding)
+                    )
                 }
             }
         }
@@ -69,26 +45,19 @@ class MainActivity : ComponentActivity() {
     private fun handleIntent(intent: Intent) {
         intent.data?.let { uri ->
             if (uri.scheme == "pixie" && uri.host == "auth") {
-                // Handle OAuth callback
                 lifecycleScope.launch {
                     val appContainer = (application as PixieApplication).appContainer
                     val result = appContainer.authRepository.handleOAuthCallback(uri)
                     
-                    // TODO: Handle the auth result (e.g., show toast, navigate to home)
                     when (result) {
                         is AuthResult.Success -> {
-                            // TODO: Navigate to home screen
-                            // For now, just recreate to refresh auth state
                             recreate()
                         }
                         is AuthResult.Error -> {
-                            // TODO: Show error message
                         }
                         is AuthResult.Cancelled -> {
-                            // TODO: Handle cancellation
                         }
                         is AuthResult.Pending -> {
-                            // Should not happen for callback
                         }
                     }
                 }

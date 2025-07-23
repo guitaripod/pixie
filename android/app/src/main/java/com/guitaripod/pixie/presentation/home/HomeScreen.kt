@@ -1,6 +1,8 @@
 package com.guitaripod.pixie.presentation.home
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,6 +15,7 @@ import com.guitaripod.pixie.data.model.Config
 fun HomeScreen(
     config: Config,
     onLogout: () -> Unit,
+    onNavigateToGenerate: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -72,10 +75,11 @@ fun HomeScreen(
             
             Spacer(modifier = Modifier.weight(1f))
             
-            Text(
-                text = "Image generation features coming soon!",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            ExtendedFloatingActionButton(
+                onClick = onNavigateToGenerate,
+                icon = { Icon(Icons.Default.Add, contentDescription = "Generate") },
+                text = { Text("Generate Image") },
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
