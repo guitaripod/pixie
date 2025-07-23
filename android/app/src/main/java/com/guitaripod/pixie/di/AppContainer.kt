@@ -4,16 +4,16 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import androidx.room.Room
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.guitaripod.pixie.data.api.NetworkCallAdapter
 import com.guitaripod.pixie.data.api.NetworkConnectivityObserver
 import com.guitaripod.pixie.data.api.PixieApiService
 import com.guitaripod.pixie.data.api.interceptor.AuthInterceptor
-import com.guitaripod.pixie.data.local.PixieDatabase
-import com.guitaripod.pixie.data.repository.ImageRepositoryImpl
-import com.guitaripod.pixie.domain.repository.ImageRepository
+import com.guitaripod.pixie.data.local.ConfigManager
+import com.guitaripod.pixie.data.local.PreferencesDataStore
+import com.guitaripod.pixie.data.repository.PreferencesRepository
+import com.guitaripod.pixie.data.repository.PreferencesRepositoryImpl
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.CoroutineDispatcher
@@ -45,8 +45,21 @@ class AppContainer(private val context: Context) {
             .build()
     }
     
+    // Configuration and preferences
+    val configManager: ConfigManager by lazy {
+        ConfigManager(encryptedPreferences)
+    }
+    
+    val preferencesDataStore: PreferencesDataStore by lazy {
+        PreferencesDataStore(dataStore)
+    }
+    
+    val preferencesRepository: PreferencesRepository by lazy {
+        PreferencesRepositoryImpl(configManager, preferencesDataStore)
+    }
+    
     val authInterceptor: AuthInterceptor by lazy {
-        AuthInterceptor(encryptedPreferences)
+        AuthInterceptor(configManager)
     }
     
     private val okHttpClient: OkHttpClient by lazy {
@@ -68,8 +81,12 @@ class AppContainer(private val context: Context) {
     }
     
     val retrofit: Retrofit by lazy {
+        // Use custom API URL if set, otherwise use default
+        val baseUrl = configManager.getApiUrl() 
+            ?: "https://openai-image-proxy.guitaripod.workers.dev/"
+        
         Retrofit.Builder()
-            .baseUrl("https://openai-image-proxy.guitaripod.workers.dev/")
+            .baseUrl(baseUrl)
             .client(okHttpClient)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
@@ -109,24 +126,5 @@ class AppContainer(private val context: Context) {
             EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
-    }
-    
-    // Database
-    val database: PixieDatabase by lazy {
-        Room.databaseBuilder(
-            context,
-            PixieDatabase::class.java,
-            "pixie_database"
-        )
-            .fallbackToDestructiveMigration()
-            .build()
-    }
-    
-    // DAOs
-    val imageDao by lazy { database.imageDao() }
-    
-    // Repositories
-    val imageRepository: ImageRepository by lazy {
-        ImageRepositoryImpl(imageDao)
     }
 }
