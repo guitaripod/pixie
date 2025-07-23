@@ -27,11 +27,11 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [x] Implement error handling with sealed classes
 - [x] Add network connectivity observer
 
-#### 1.4 Local Storage
-- [ ] Set up encrypted SharedPreferences for storing config (api_key, user_id, auth_provider)
-- [ ] Create preferences DataStore for non-sensitive settings (theme, default quality, custom api_url)
-- [ ] Implement PreferencesRepository for centralized access
-- [ ] Add config data class matching CLI structure
+#### 1.4 Local Storage ✅
+- [x] Set up encrypted SharedPreferences for storing config (api_key, user_id, auth_provider)
+- [x] Create preferences DataStore for non-sensitive settings (theme, default quality, custom api_url)
+- [x] Implement PreferencesRepository for centralized access
+- [x] Add config data class matching CLI structure
 
 ### Phase 2: Authentication System
 
