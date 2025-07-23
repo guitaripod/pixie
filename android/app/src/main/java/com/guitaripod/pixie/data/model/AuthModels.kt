@@ -59,3 +59,11 @@ sealed class AuthResult {
     object Cancelled : AuthResult()
     object Pending : AuthResult()
 }
+
+/**
+ * Request for native Google Sign-In
+ */
+@JsonClass(generateAdapter = true)
+data class GoogleTokenRequest(
+    @Json(name = "id_token") val idToken: String
+)

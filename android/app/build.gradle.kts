@@ -103,6 +103,10 @@ dependencies {
     // Browser for OAuth
     implementation(libs.androidx.browser)
     
+    // Google Sign-In
+    implementation(libs.google.play.services.auth)
+    implementation(libs.kotlinx.coroutines.play.services)
+    
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
