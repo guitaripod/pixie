@@ -30,6 +30,9 @@ import coil.request.ImageRequest
 import com.guitaripod.pixie.data.model.*
 import com.guitaripod.pixie.presentation.generation.GenerationViewModel
 import kotlinx.coroutines.launch
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarDuration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +45,7 @@ fun ChatGenerationScreen(
     var isToolbarExpanded by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     
     val isGenerating by viewModel.isGenerating.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -85,6 +89,12 @@ fun ChatGenerationScreen(
     
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.navigationBarsPadding()
+            )
+        },
         topBar = {
             TopAppBar(
                 title = { 
@@ -154,7 +164,18 @@ fun ChatGenerationScreen(
                             val previousUserMessage = messages.findLast { 
                                 it is ChatMessage.UserMessage && messages.indexOf(it) < messages.indexOf(message) 
                             } as? ChatMessage.UserMessage
-                            ImageResponseBubble(message, previousUserMessage?.quantity ?: 1)
+                            ImageResponseBubble(
+                                message = message,
+                                quantity = previousUserMessage?.quantity ?: 1,
+                                onShowSnackbar = { text ->
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = text,
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
+                                }
+                            )
                         }
                     }
                 }
@@ -312,7 +333,11 @@ fun DetailRow(label: String, value: String, color: Color) {
 }
 
 @Composable
-fun ImageResponseBubble(message: ChatMessage.ImageResponse, quantity: Int = 1) {
+fun ImageResponseBubble(
+    message: ChatMessage.ImageResponse,
+    quantity: Int = 1,
+    onShowSnackbar: (String) -> Unit
+) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.Start
@@ -383,32 +408,19 @@ fun ImageResponseBubble(message: ChatMessage.ImageResponse, quantity: Int = 1) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     message.imageUrls.forEach { imageUrl ->
-                        Surface(
-                            shape = RoundedCornerShape(
-                                topStart = 4.dp,
-                                topEnd = 20.dp,
-                                bottomStart = 20.dp,
-                                bottomEnd = 20.dp
-                            ),
-                            tonalElevation = 2.dp
-                        ) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(LocalContext.current)
-                                    .data(imageUrl)
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = "Generated image",
-                                modifier = Modifier
-                                    .widthIn(max = 320.dp)
-                                    .clip(RoundedCornerShape(
-                                        topStart = 4.dp,
-                                        topEnd = 20.dp,
-                                        bottomStart = 20.dp,
-                                        bottomEnd = 20.dp
-                                    )),
-                                contentScale = ContentScale.FillWidth
-                            )
-                        }
+                        ImageBubble(
+                            imageUrl = imageUrl,
+                            onSaveSuccess = onShowSnackbar,
+                            onSaveError = onShowSnackbar
+                        )
+                    }
+                    
+                    if (message.imageUrls.size > 1) {
+                        SaveAllButton(
+                            imageUrls = message.imageUrls,
+                            onSaveSuccess = onShowSnackbar,
+                            onSaveError = onShowSnackbar
+                        )
                     }
                 }
             }
