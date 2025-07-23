@@ -13,12 +13,12 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [x] Configure Material Design 3 theme with dynamic color support
 - [x] Set up version control with .gitignore for Android
 
-#### 1.2 Dependencies & Architecture
-- [ ] Add core dependencies: Retrofit, Moshi, Coroutines, Hilt
-- [ ] Add UI dependencies: Jetpack Compose, Navigation Compose, Coil
-- [ ] Add security dependencies: DataStore (encrypted), BiometricPrompt
-- [ ] Set up MVVM architecture with Clean Architecture layers
-- [ ] Create base classes: BaseViewModel, BaseRepository, BaseUseCase
+#### 1.2 Dependencies & Architecture ✅
+- [x] Add core dependencies: Retrofit, Moshi, Coroutines, ~~Hilt~~ Manual DI
+- [x] Add UI dependencies: Jetpack Compose, Navigation Compose, Coil
+- [x] Add security dependencies: DataStore (encrypted), BiometricPrompt
+- [x] Set up MVVM architecture with Clean Architecture layers
+- [x] Create base classes: BaseViewModel, BaseRepository, BaseUseCase
 
 #### 1.3 Networking Layer
 - [ ] Create Retrofit service interface matching OpenAPI spec
