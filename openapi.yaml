@@ -73,7 +73,14 @@ paths:
       security: []
       parameters:
         - in: query
+          name: state
+          required: true
+          schema:
+            type: string
+          description: OAuth state parameter for security
+        - in: query
           name: redirect_uri
+          required: true
           schema:
             type: string
           description: URI to redirect after authentication
@@ -97,7 +104,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [code]
+              required: [code, redirect_uri]
               properties:
                 code:
                   type: string
@@ -105,6 +112,9 @@ paths:
                 state:
                   type: string
                   description: OAuth state parameter
+                redirect_uri:
+                  type: string
+                  description: The redirect URI used in the initial auth request
       responses:
         '200':
           description: Authentication successful
@@ -127,7 +137,14 @@ paths:
       security: []
       parameters:
         - in: query
+          name: state
+          required: true
+          schema:
+            type: string
+          description: OAuth state parameter for security
+        - in: query
           name: redirect_uri
+          required: true
           schema:
             type: string
           description: URI to redirect after authentication
@@ -155,7 +172,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [code]
+              required: [code, redirect_uri]
               properties:
                 code:
                   type: string
@@ -163,6 +180,46 @@ paths:
                 state:
                   type: string
                   description: OAuth state parameter
+                redirect_uri:
+                  type: string
+                  description: The redirect URI used in the initial auth request
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/auth/google/token:
+    post:
+      operationId: googleTokenAuth
+      summary: Authenticate with Google ID token (native apps)
+      description: |
+        Authenticate using a Google ID token from native Google Sign-In.
+        This endpoint accepts ID tokens from multiple client IDs:
+        - Android app client ID
+        - iOS app client ID  
+        - Web app client ID
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_token]
+              properties:
+                id_token:
+                  type: string
+                  description: Google ID token from native sign-in
       responses:
         '200':
           description: Authentication successful
@@ -185,7 +242,14 @@ paths:
       security: []
       parameters:
         - in: query
+          name: state
+          required: true
+          schema:
+            type: string
+          description: OAuth state parameter for security
+        - in: query
           name: redirect_uri
+          required: true
           schema:
             type: string
           description: URI to redirect after authentication
@@ -1001,26 +1065,16 @@ components:
   schemas:
     AuthResponse:
       type: object
+      required: [api_key, user_id]
       properties:
-        user_id:
-          type: string
-          example: "user_123456"
-        email:
-          type: string
-          example: "user@example.com"
-        name:
-          type: string
-          example: "John Doe"
         api_key:
           type: string
-          example: "sk_live_abc123def456..."
-        credits:
-          type: integer
-          example: 500
-        provider:
+          example: "pixie_abc123def456..."
+          description: API key for authenticating subsequent requests
+        user_id:
           type: string
-          enum: ["github", "google", "apple", "device"]
-          example: "github"
+          example: "763135bb-02dd-4bd8-a3ca-4dab2666e1e9"
+          description: Unique identifier for the authenticated user
 
     DeviceCodeResponse:
       type: object
