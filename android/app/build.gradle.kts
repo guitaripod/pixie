@@ -100,6 +100,9 @@ dependencies {
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.biometric)
     
+    // Browser for OAuth
+    implementation(libs.androidx.browser)
+    
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
