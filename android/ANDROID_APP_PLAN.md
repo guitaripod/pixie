@@ -35,11 +35,11 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 
 ### Phase 2: Authentication System
 
-#### 2.1 OAuth Infrastructure
-- [ ] Create OAuth activity with Chrome Custom Tabs
-- [ ] Implement OAuth state parameter for security
-- [ ] Handle deep links for OAuth callbacks
-- [ ] Create auth interceptor for API requests
+#### 2.1 OAuth Infrastructure ✅
+- [x] Create OAuth activity with Chrome Custom Tabs
+- [x] Implement OAuth state parameter for security
+- [x] Handle deep links for OAuth callbacks
+- [x] Create auth interceptor for API requests
 
 #### 2.2 Provider Implementations
 - [ ] Implement GitHub OAuth flow with device code fallback
