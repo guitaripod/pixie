@@ -12,7 +12,7 @@ mod stripe_payments;
 mod rate_limit;
 mod logger;
 
-use handlers::{images, gallery, r2, usage, oauth, oauth_apple, oauth_apple_callback, device_auth};
+use handlers::{images, gallery, r2, usage, oauth, oauth_apple, oauth_apple_callback, oauth_native, device_auth};
 
 #[event(fetch)]
 async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
@@ -59,6 +59,7 @@ OpenAPI Specification: /openapi.yaml"#)
         .post_async("/v1/auth/github/callback", oauth::github_auth_callback)
         .get_async("/v1/auth/google", oauth::google_auth_start)
         .post_async("/v1/auth/google/callback", oauth::google_auth_callback)
+        .post_async("/v1/auth/google/token", oauth_native::google_token_auth)
         .get_async("/v1/auth/apple", oauth_apple::apple_auth_start)
         .post_async("/v1/auth/apple/callback", oauth_apple_callback::apple_auth_callback_page)
         .post_async("/v1/auth/apple/callback/json", oauth_apple::apple_auth_callback)

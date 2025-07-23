@@ -5,5 +5,6 @@ pub mod usage;
 pub mod oauth;
 pub mod oauth_apple;
 pub mod oauth_apple_callback;
+pub mod oauth_native;
 pub mod device_auth;
 pub mod credits;
