@@ -711,7 +711,7 @@ paths:
               properties:
                 quality:
                   type: string
-                  enum: ["low", "medium", "high"]
+                  enum: ["auto", "low", "medium", "high"]
                   default: "auto"
                 n:
                   type: integer
