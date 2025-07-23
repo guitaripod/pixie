@@ -3,8 +3,6 @@ package com.guitaripod.pixie.data.api.model
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
-// Authentication Models
-
 @JsonClass(generateAdapter = true)
 data class OAuthCallbackRequest(
     @Json(name = "code") val code: String,
@@ -14,12 +12,8 @@ data class OAuthCallbackRequest(
 
 @JsonClass(generateAdapter = true)
 data class AuthResponse(
-    @Json(name = "user_id") val userId: String,
-    @Json(name = "email") val email: String,
-    @Json(name = "name") val name: String,
     @Json(name = "api_key") val apiKey: String,
-    @Json(name = "credits") val credits: Int,
-    @Json(name = "provider") val provider: String
+    @Json(name = "user_id") val userId: String
 )
 
 @JsonClass(generateAdapter = true)
