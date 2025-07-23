@@ -1,6 +1,7 @@
 package com.guitaripod.pixie.data.api
 
 import com.guitaripod.pixie.data.api.model.*
+import com.guitaripod.pixie.data.model.*
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -45,13 +46,16 @@ interface PixieApiService {
         @Body request: OAuthCallbackRequest
     ): Response<AuthResponse>
     
-    @GET("/v1/auth/device")
-    suspend fun startDeviceAuth(): Response<DeviceCodeResponse>
+    // Device Authentication (for GitHub/Google)
+    @POST("/v1/auth/device/code")
+    suspend fun startDeviceAuth(
+        @Body request: DeviceCodeRequest
+    ): Response<com.guitaripod.pixie.data.api.model.DeviceCodeResponse>
     
-    @POST("/v1/auth/device")
+    @POST("/v1/auth/device/token")
     suspend fun checkDeviceAuth(
-        @Body request: DeviceAuthRequest
-    ): Response<AuthResponse>
+        @Body request: DeviceTokenRequest
+    ): Response<DeviceTokenResponse>
     
     // Image Generation
     @POST("/v1/images/generations")
