@@ -61,21 +61,9 @@ interface PixieApiService {
         @Header("OpenAI-API-Key") openAiKey: String? = null
     ): Response<com.guitaripod.pixie.data.model.ImageGenerationResponse>
     
-    @Multipart
     @POST("/v1/images/edits")
     suspend fun editImages(
-        @Part("prompt") prompt: String,
-        @Part image: okhttp3.MultipartBody.Part,
-        @Part mask: okhttp3.MultipartBody.Part? = null,
-        @Part("n") n: Int? = null,
-        @Part("size") size: String? = null,
-        @Part("quality") quality: String? = null,
-        @Part("response_format") responseFormat: String? = null,
-        @Part("transparency") transparency: String? = null,
-        @Part("background") background: String? = null,
-        @Part("output_format") outputFormat: String? = null,
-        @Part("output_quality") outputQuality: Int? = null,
-        @Part("fidelity") fidelity: String? = null,
+        @Body request: com.guitaripod.pixie.data.model.EditRequest,
         @Header("OpenAI-API-Key") openAiKey: String? = null
     ): Response<com.guitaripod.pixie.data.model.ImageGenerationResponse>
     
