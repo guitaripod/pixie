@@ -8,7 +8,8 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class OAuthCallbackRequest(
     @Json(name = "code") val code: String,
-    @Json(name = "state") val state: String? = null
+    @Json(name = "state") val state: String? = null,
+    @Json(name = "redirect_uri") val redirectUri: String
 )
 
 @JsonClass(generateAdapter = true)

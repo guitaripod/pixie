@@ -41,7 +41,7 @@ interface PixieApiService {
         @Query("redirect_uri") redirectUri: String? = null
     ): Response<Unit>
     
-    @POST("/v1/auth/apple/callback")
+    @POST("/v1/auth/apple/callback/json")
     suspend fun appleAuthCallback(
         @Body request: OAuthCallbackRequest
     ): Response<AuthResponse>
