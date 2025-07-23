@@ -10,7 +10,8 @@ import com.guitaripod.pixie.data.api.NetworkCallAdapter
 import com.guitaripod.pixie.data.api.NetworkConnectivityObserver
 import com.guitaripod.pixie.data.api.PixieApiService
 import com.guitaripod.pixie.data.api.interceptor.AuthInterceptor
-import com.guitaripod.pixie.data.auth.OAuthManager
+import com.guitaripod.pixie.data.auth.GitHubOAuthManager
+import com.guitaripod.pixie.data.auth.GoogleSignInManager
 import com.guitaripod.pixie.data.auth.OAuthWebFlowManager
 import com.guitaripod.pixie.data.local.ConfigManager
 import com.guitaripod.pixie.data.local.PreferencesDataStore
@@ -111,19 +112,24 @@ class AppContainer(private val context: Context) {
         NetworkConnectivityObserver(context)
     }
     
-    // OAuth Manager (for device flow - keeping for backward compatibility)
-    val oAuthManager: OAuthManager by lazy {
-        OAuthManager(context, pixieApiService, configManager, networkCallAdapter)
+    // GitHub OAuth Manager
+    val gitHubOAuthManager: GitHubOAuthManager by lazy {
+        GitHubOAuthManager(context, pixieApiService, configManager, networkCallAdapter)
     }
     
-    // OAuth Web Flow Manager (for proper mobile OAuth)
+    // Google Sign-In Manager
+    val googleSignInManager: GoogleSignInManager by lazy {
+        GoogleSignInManager(context, pixieApiService, configManager, networkCallAdapter)
+    }
+    
+    // OAuth Web Flow Manager (for Apple)
     val oAuthWebFlowManager: OAuthWebFlowManager by lazy {
         OAuthWebFlowManager(context, pixieApiService, configManager, networkCallAdapter)
     }
     
     // Auth Repository
     val authRepository: AuthRepository by lazy {
-        AuthRepositoryImpl(oAuthManager, preferencesRepository)
+        AuthRepositoryImpl(gitHubOAuthManager, googleSignInManager, oAuthWebFlowManager, preferencesRepository)
     }
     
     // Storage
