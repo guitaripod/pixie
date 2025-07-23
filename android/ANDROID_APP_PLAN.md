@@ -106,24 +106,24 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [x] Add recent images quick access
 - [x] Create image preview with pinch-to-zoom
 
-#### 4.2 Editing Interface
-- [ ] Create edit prompt input with suggestions
-- [ ] Implement mask drawing tools (brush, eraser, clear)
-- [ ] Add mask opacity slider
-- [ ] Create undo/redo for mask editing
-- [ ] Add mask import from gallery
+#### 4.2 Editing Interface ✅
+- [x] Create edit prompt input with suggestions
+- [x] ~~Implement mask drawing tools~~ (removed - not needed)
+- [x] ~~Add mask opacity slider~~ (removed - not needed)
+- [x] ~~Create undo/redo for mask editing~~ (removed - not needed)
+- [x] ~~Add mask import from gallery~~ (removed - not needed)
 
-#### 4.3 Edit Options
-- [ ] Implement size selector for output
-- [ ] Add quality selector with cost preview
-- [ ] Create fidelity toggle (low/high)
-- [ ] Add variation count selector
+#### 4.3 Edit Options ✅
+- [x] Implement size selector for output
+- [x] Add quality selector with cost preview
+- [x] Create fidelity toggle (low/high)
+- [x] Add variation count selector
 
-#### 4.4 Edit Processing
-- [ ] Create edit progress screen
+#### 4.4 Edit Processing (Partial)
+- [x] Create edit progress integrated in chat timeline
 - [ ] Implement before/after comparison view
 - [ ] Add swipe between variations
-- [ ] Create save individual/all options
+- [x] Create save individual/all options (reuses generation save)
 
 ### Phase 5: Gallery Features
 
