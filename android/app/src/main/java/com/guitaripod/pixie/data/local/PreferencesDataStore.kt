@@ -38,12 +38,12 @@ class PreferencesDataStore(
                 theme = AppTheme.valueOf(
                     preferences[KEY_THEME] ?: AppTheme.SYSTEM.name
                 ),
-                defaultQuality = ImageQuality.valueOf(
-                    preferences[KEY_DEFAULT_QUALITY] ?: ImageQuality.LOW.name
+                defaultQuality = DefaultImageQuality.valueOf(
+                    preferences[KEY_DEFAULT_QUALITY] ?: DefaultImageQuality.LOW.name
                 ),
                 defaultSize = preferences[KEY_DEFAULT_SIZE] ?: "1024x1024",
-                defaultOutputFormat = OutputFormat.valueOf(
-                    preferences[KEY_DEFAULT_OUTPUT_FORMAT] ?: OutputFormat.PNG.name
+                defaultOutputFormat = DefaultOutputFormat.valueOf(
+                    preferences[KEY_DEFAULT_OUTPUT_FORMAT] ?: DefaultOutputFormat.PNG.name
                 ),
                 defaultCompressionLevel = preferences[KEY_DEFAULT_COMPRESSION_LEVEL] ?: 75
             )
