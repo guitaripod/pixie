@@ -12,23 +12,19 @@ import com.guitaripod.pixie.data.model.Config
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-/**
- * Repository for authentication operations
- */
 interface AuthRepository {
     fun authenticateGithub(): Flow<AuthResult>
     fun authenticateGoogle(activity: Activity, launcher: ActivityResultLauncher<Intent>): Flow<AuthResult>
     fun handleGoogleSignInResult(data: Intent?): Flow<AuthResult>
     fun authenticateApple(activity: Activity): Flow<AuthResult>
+    fun authenticateManually(apiKey: String, userId: String, provider: String): Flow<AuthResult>
     suspend fun handleOAuthCallback(uri: Uri): AuthResult
     suspend fun logout()
     fun isAuthenticated(): Boolean
     fun getCurrentConfig(): Config
+    fun saveCredentials(config: Config)
 }
 
-/**
- * Implementation of AuthRepository
- */
 class AuthRepositoryImpl(
     private val gitHubOAuthManager: GitHubOAuthManager,
     private val googleSignInManager: GoogleSignInManager,
@@ -61,4 +57,26 @@ class AuthRepositoryImpl(
     override fun isAuthenticated(): Boolean = preferencesRepository.isAuthenticated()
     
     override fun getCurrentConfig(): Config = preferencesRepository.loadConfig()
+    
+    override fun saveCredentials(config: Config) {
+        preferencesRepository.saveConfig(config)
+    }
+    
+    override fun authenticateManually(apiKey: String, userId: String, provider: String): Flow<AuthResult> = flow {
+        emit(AuthResult.Pending)
+        
+        val config = Config(
+            apiKey = apiKey,
+            userId = userId,
+            authProvider = provider,
+            apiUrl = preferencesRepository.loadConfig().apiUrl
+        )
+        saveCredentials(config)
+        
+        emit(AuthResult.Success(
+            apiKey = apiKey,
+            userId = userId,
+            provider = provider
+        ))
+    }
 }

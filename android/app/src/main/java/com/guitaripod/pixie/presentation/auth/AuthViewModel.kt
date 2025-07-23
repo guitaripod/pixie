@@ -31,6 +31,10 @@ class AuthViewModel(
         return authRepository.authenticateApple(activity)
     }
     
+    fun authenticateManually(apiKey: String, userId: String, provider: String): Flow<AuthResult> {
+        return authRepository.authenticateManually(apiKey, userId, provider)
+    }
+    
     fun isAuthenticated(): Boolean {
         return authRepository.isAuthenticated()
     }
