@@ -1,6 +1,6 @@
 package com.guitaripod.pixie
 
-import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -10,19 +10,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.guitaripod.pixie.ui.theme.PixieTheme
+import com.guitaripod.pixie.data.model.AuthResult
 import com.guitaripod.pixie.presentation.auth.AuthScreen
 import com.guitaripod.pixie.presentation.auth.AuthViewModel
 import com.guitaripod.pixie.presentation.auth.AuthViewModelFactory
 import com.guitaripod.pixie.presentation.home.HomeScreen
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
+        // Handle OAuth callback if launched from deep link
+        handleIntent(intent)
         
         val appContainer = (application as PixieApplication).appContainer
         
@@ -46,11 +50,8 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.padding(innerPadding)
                         )
                     } else {
-                        val activity = LocalContext.current as Activity
                         AuthScreen(
-                            onGithubAuth = { authViewModel.authenticateGithub() },
-                            onGoogleAuth = { authViewModel.authenticateGoogle() },
-                            onAppleAuth = { authViewModel.authenticateApple(activity) },
+                            authViewModel = authViewModel,
                             onAuthSuccess = { isAuthenticated = true },
                             modifier = Modifier.padding(innerPadding)
                         )
@@ -60,4 +61,38 @@ class MainActivity : ComponentActivity() {
         }
     }
     
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+    
+    private fun handleIntent(intent: Intent) {
+        intent.data?.let { uri ->
+            if (uri.scheme == "pixie" && uri.host == "auth") {
+                // Handle OAuth callback
+                lifecycleScope.launch {
+                    val appContainer = (application as PixieApplication).appContainer
+                    val result = appContainer.authRepository.handleOAuthCallback(uri)
+                    
+                    // TODO: Handle the auth result (e.g., show toast, navigate to home)
+                    when (result) {
+                        is AuthResult.Success -> {
+                            // TODO: Navigate to home screen
+                            // For now, just recreate to refresh auth state
+                            recreate()
+                        }
+                        is AuthResult.Error -> {
+                            // TODO: Show error message
+                        }
+                        is AuthResult.Cancelled -> {
+                            // TODO: Handle cancellation
+                        }
+                        is AuthResult.Pending -> {
+                            // Should not happen for callback
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

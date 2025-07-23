@@ -36,6 +36,11 @@ interface PixieApiService {
         @Body request: OAuthCallbackRequest
     ): Response<AuthResponse>
     
+    @POST("/v1/auth/google/token")
+    suspend fun googleTokenAuth(
+        @Body request: GoogleTokenRequest
+    ): Response<AuthResponse>
+    
     @GET("/v1/auth/apple")
     suspend fun startAppleAuth(
         @Query("redirect_uri") redirectUri: String? = null
