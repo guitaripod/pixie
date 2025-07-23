@@ -51,7 +51,6 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [x] Create ConfigManager with encrypted storage for credentials
 - [x] Implement logout functionality with credential cleanup
 - [x] Create auth state flow for UI updates
-- [ ] Implement token refresh mechanism (if needed)
 
 **Implementation Notes:**
 - GitHub: Uses web OAuth flow with `pixie://auth` deep link redirect
