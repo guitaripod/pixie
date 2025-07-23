@@ -1,0 +1,16 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Sparkle/star shape representing AI magic -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M12,2 L14.5,9 L22,9 L16.25,13.5 L18.75,20.5 L12,16 L5.25,20.5 L7.75,13.5 L2,9 L9.5,9 Z"
+        android:strokeWidth="1"
+        android:strokeColor="#000000"/>
+    <!-- Center dot -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M12,11 m-2,0 a2,2 0,1 1,4 0 a2,2 0,1 1,-4 0"/>
+</vector>
