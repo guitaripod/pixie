@@ -19,7 +19,9 @@ data class GalleryUiState(
     val error: String? = null,
     val hasMore: Boolean = true,
     val currentPage: Int = 0,
-    val galleryType: GalleryType = GalleryType.PUBLIC
+    val galleryType: GalleryType = GalleryType.PUBLIC,
+    val hasLoadedInitialData: Boolean = false,
+    val lastRefreshTime: Long = 0L
 )
 
 class GalleryViewModel(
@@ -33,29 +35,60 @@ class GalleryViewModel(
     
     private val clipboardManager = application.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     
+    // Session-based cache: data for each gallery type
+    private val cachedPublicImages = mutableListOf<ImageDetails>()
+    private val cachedPersonalImages = mutableListOf<ImageDetails>()
+    private var hasLoadedPublic = false
+    private var hasLoadedPersonal = false
+    
     init {
-        loadImages()
+        // Don't auto-load on init
     }
     
     fun setGalleryType(type: GalleryType) {
         if (_uiState.value.galleryType != type) {
+            // Check if we have cached data for this gallery type
+            val cachedImages = when (type) {
+                GalleryType.PUBLIC -> if (hasLoadedPublic) cachedPublicImages else emptyList()
+                GalleryType.PERSONAL -> if (hasLoadedPersonal) cachedPersonalImages else emptyList()
+            }
+            
             _uiState.update { it.copy(
                 galleryType = type,
-                images = emptyList(),
-                currentPage = 0,
+                images = cachedImages,
+                currentPage = if (cachedImages.isNotEmpty()) (cachedImages.size / 20) else 0,
                 hasMore = true,
-                error = null
+                error = null,
+                hasLoadedInitialData = cachedImages.isNotEmpty()
             )}
-            loadImages()
+            
+            // Only load if we don't have cached data for this gallery type
+            if (cachedImages.isEmpty()) {
+                loadImages()
+            }
         }
     }
     
     fun refresh() {
+        // Clear cache for current gallery type
+        when (_uiState.value.galleryType) {
+            GalleryType.PUBLIC -> {
+                cachedPublicImages.clear()
+                hasLoadedPublic = false
+            }
+            GalleryType.PERSONAL -> {
+                cachedPersonalImages.clear()
+                hasLoadedPersonal = false
+            }
+        }
+        
         _uiState.update { it.copy(
             images = emptyList(),
             currentPage = 0,
             hasMore = true,
-            error = null
+            error = null,
+            hasLoadedInitialData = false,
+            lastRefreshTime = System.currentTimeMillis()
         )}
         loadImages()
     }
@@ -63,6 +96,19 @@ class GalleryViewModel(
     fun loadMore() {
         if (!_uiState.value.isLoading && _uiState.value.hasMore) {
             loadImages(isLoadMore = true)
+        }
+    }
+    
+    fun loadInitialData() {
+        // Only load if we haven't loaded data for the current gallery type
+        val currentType = _uiState.value.galleryType
+        val hasData = when (currentType) {
+            GalleryType.PUBLIC -> hasLoadedPublic
+            GalleryType.PERSONAL -> hasLoadedPersonal
+        }
+        
+        if (!hasData) {
+            loadImages()
         }
     }
     
@@ -93,11 +139,31 @@ class GalleryViewModel(
                             galleryResponse.images
                         }
                         
+                        // Update cache
+                        when (currentState.galleryType) {
+                            GalleryType.PUBLIC -> {
+                                if (!isLoadMore) {
+                                    cachedPublicImages.clear()
+                                }
+                                cachedPublicImages.addAll(galleryResponse.images)
+                                hasLoadedPublic = true
+                            }
+                            GalleryType.PERSONAL -> {
+                                if (!isLoadMore) {
+                                    cachedPersonalImages.clear()
+                                }
+                                cachedPersonalImages.addAll(galleryResponse.images)
+                                hasLoadedPersonal = true
+                            }
+                        }
+                        
                         _uiState.update { it.copy(
                             images = newImages,
                             isLoading = false,
                             currentPage = page,
-                            hasMore = galleryResponse.images.size == galleryResponse.perPage
+                            hasMore = galleryResponse.images.size == galleryResponse.perPage,
+                            hasLoadedInitialData = true,
+                            lastRefreshTime = if (!isLoadMore) System.currentTimeMillis() else it.lastRefreshTime
                         )}
                     },
                     onFailure = { exception ->
