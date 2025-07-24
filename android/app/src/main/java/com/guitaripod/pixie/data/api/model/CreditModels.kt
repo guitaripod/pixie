@@ -2,8 +2,13 @@ package com.guitaripod.pixie.data.api.model
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import androidx.compose.ui.graphics.Color
 
-// Credit Models
+@JsonClass(generateAdapter = true)
+data class CreditBalance(
+    @Json(name = "balance") val balance: Int,
+    @Json(name = "currency") val currency: String = "USD"
+)
 
 @JsonClass(generateAdapter = true)
 data class CreditsResponse(
@@ -24,12 +29,26 @@ data class CreditHistoryResponse(
 data class CreditTransaction(
     @Json(name = "id") val id: String,
     @Json(name = "user_id") val userId: String,
+    @Json(name = "transaction_type") val transactionType: String,
     @Json(name = "amount") val amount: Int,
-    @Json(name = "type") val type: String,
+    @Json(name = "balance_after") val balanceAfter: Int,
     @Json(name = "description") val description: String,
     @Json(name = "created_at") val createdAt: String,
-    @Json(name = "metadata") val metadata: Map<String, Any>?
+    @Json(name = "metadata") val metadata: Map<String, Any>? = null
 )
+
+enum class TransactionType(val value: String) {
+    PURCHASE("purchase"),
+    SPEND("spend"),
+    REFUND("refund"),
+    BONUS("bonus"),
+    ADMIN_ADJUSTMENT("admin_adjustment");
+    
+    companion object {
+        fun fromString(value: String): TransactionType = 
+            values().find { it.value == value } ?: SPEND
+    }
+}
 
 @JsonClass(generateAdapter = true)
 data class CreditPacksResponse(
@@ -41,12 +60,43 @@ data class CreditPack(
     @Json(name = "id") val id: String,
     @Json(name = "name") val name: String,
     @Json(name = "credits") val credits: Int,
+    @Json(name = "price_usd_cents") val priceUsdCents: Int,
     @Json(name = "bonus_credits") val bonusCredits: Int,
-    @Json(name = "price_usd") val priceUsd: Double,
-    @Json(name = "currency") val currency: String,
-    @Json(name = "popular") val popular: Boolean = false,
-    @Json(name = "description") val description: String?
-)
+    @Json(name = "description") val description: String,
+    @Json(name = "popular") val popular: Boolean = false
+) {
+    val totalCredits: Int
+        get() = credits + bonusCredits
+    
+    val priceUsd: String
+        get() = "$%.2f".format(priceUsdCents / 100.0)
+    
+    val creditValue: String
+        get() = "$%.2f".format(totalCredits * 0.01)
+    
+    val savings: String
+        get() {
+            val regularPrice = totalCredits * 0.01
+            val actualPrice = priceUsdCents / 100.0
+            val savingsAmount = regularPrice - actualPrice
+            return if (savingsAmount > 0) {
+                "$%.2f".format(savingsAmount)
+            } else {
+                "$0.00"
+            }
+        }
+    
+    val savingsPercent: Int
+        get() {
+            val regularPrice = totalCredits * 0.01
+            val actualPrice = priceUsdCents / 100.0
+            return if (regularPrice > 0) {
+                ((regularPrice - actualPrice) / regularPrice * 100).toInt()
+            } else {
+                0
+            }
+        }
+}
 
 @JsonClass(generateAdapter = true)
 data class CreditEstimateRequest(
@@ -59,9 +109,8 @@ data class CreditEstimateRequest(
 @JsonClass(generateAdapter = true)
 data class CreditEstimateResponse(
     @Json(name = "estimated_credits") val estimatedCredits: Int,
-    @Json(name = "per_image") val perImage: Int,
-    @Json(name = "total") val total: Int,
-    @Json(name = "breakdown") val breakdown: CreditBreakdown?
+    @Json(name = "estimated_usd") val estimatedUsd: String,
+    @Json(name = "note") val note: String
 )
 
 @JsonClass(generateAdapter = true)
@@ -71,3 +120,68 @@ data class CreditBreakdown(
     @Json(name = "size_multiplier") val sizeMultiplier: Double,
     @Json(name = "edit_cost") val editCost: Int?
 )
+
+fun String.toTransactionType(): TransactionType = TransactionType.fromString(this)
+
+fun TransactionType.getDisplayName(): String = when (this) {
+    TransactionType.PURCHASE -> "Purchase"
+    TransactionType.SPEND -> "Spent"
+    TransactionType.REFUND -> "Refund"
+    TransactionType.BONUS -> "Bonus"
+    TransactionType.ADMIN_ADJUSTMENT -> "Adjustment"
+}
+
+fun TransactionType.getColor(): Color = when (this) {
+    TransactionType.PURCHASE -> Color(0xFF4CAF50)
+    TransactionType.SPEND -> Color(0xFFF44336)
+    TransactionType.REFUND -> Color(0xFF00BCD4)
+    TransactionType.BONUS -> Color(0xFFFFEB3B)
+    TransactionType.ADMIN_ADJUSTMENT -> Color(0xFF2196F3)
+}
+
+fun CreditBalance.getBalanceColor(): Color = when {
+    balance == 0 -> Color(0xFFF44336)
+    balance < 50 -> Color(0xFFFF9800)
+    else -> Color(0xFF4CAF50)
+}
+
+fun CreditBalance.canGenerate(quality: String, size: String = "1024x1024"): Pair<Boolean, Int> {
+    val cost = getCreditCost(quality, size)
+    return Pair(balance >= cost, balance / cost)
+}
+
+fun getCreditCost(quality: String, size: String, isEdit: Boolean = false): Int {
+    val baseCost = when (quality.lowercase()) {
+        "low" -> when (size) {
+            "1024x1024" -> 4
+            "1536x1024", "1024x1536" -> 6
+            else -> 5
+        }
+        "medium" -> when (size) {
+            "1024x1024" -> 16
+            "1536x1024", "1024x1536" -> 24
+            else -> 20
+        }
+        "high" -> when (size) {
+            "1024x1024" -> 62
+            "1536x1024", "1024x1536" -> 94
+            else -> 78
+        }
+        "auto" -> when (size) {
+            "1024x1024" -> 50
+            else -> 75
+        }
+        else -> 50
+    }
+    
+    return if (isEdit) {
+        baseCost + when (quality.lowercase()) {
+            "low", "medium" -> 3
+            "high" -> 20
+            "auto" -> 18
+            else -> 10
+        }
+    } else {
+        baseCost
+    }
+}
