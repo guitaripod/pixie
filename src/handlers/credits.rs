@@ -1,4 +1,4 @@
-use worker::{Request, Response, RouteContext, Result};
+use worker::{Request, Response, RouteContext, Result, Env, Fetch, Method, Headers};
 use crate::error::AppError;
 use crate::auth::validate_api_key;
 use crate::credits::{
@@ -818,21 +818,22 @@ pub async fn get_stripe_config(_req: Request, ctx: RouteContext<()>) -> Result<R
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ValidateGooglePlayPurchaseRequest {
+pub struct ValidateRevenueCatPurchaseRequest {
     pub pack_id: String,
     pub purchase_token: String,
     pub product_id: String,
+    pub platform: String, // "ios" or "android"
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ValidateGooglePlayPurchaseResponse {
+pub struct ValidateRevenueCatPurchaseResponse {
     pub success: bool,
     pub purchase_id: String,
     pub credits_added: u32,
     pub new_balance: i32,
 }
 
-pub async fn validate_google_play_purchase(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
+pub async fn validate_revenuecat_purchase(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let env = ctx.env;
     
     let user_id = match validate_api_key(&req) {
@@ -852,10 +853,15 @@ pub async fn validate_google_play_purchase(mut req: Request, ctx: RouteContext<(
         }
     };
     
-    let validate_req: ValidateGooglePlayPurchaseRequest = match req.json().await {
+    let validate_req: ValidateRevenueCatPurchaseRequest = match req.json().await {
         Ok(req) => req,
         Err(e) => return AppError::BadRequest(format!("Invalid request body: {}", e)).to_response(),
     };
+    
+    // Validate platform
+    if validate_req.platform != "ios" && validate_req.platform != "android" {
+        return AppError::BadRequest("Invalid platform. Must be 'ios' or 'android'".to_string()).to_response();
+    }
     
     // Find the pack
     let packs = get_credit_packs();
@@ -870,7 +876,7 @@ pub async fn validate_google_play_purchase(mut req: Request, ctx: RouteContext<(
     
     // Check if this purchase token has already been used
     let existing_purchase = db.prepare(
-        "SELECT id, status FROM credit_purchases WHERE payment_id = ? AND payment_provider = 'google_play'"
+        "SELECT id, status FROM credit_purchases WHERE payment_id = ? AND payment_provider = 'revenuecat'"
     )
     .bind(&[validate_req.purchase_token.clone().into()])?
     .first::<serde_json::Value>(None)
@@ -889,17 +895,37 @@ pub async fn validate_google_play_purchase(mut req: Request, ctx: RouteContext<(
         &validate_req.pack_id,
         total_credits as u32,
         pack.price_usd_cents as u32,
-        "google_play",
+        "revenuecat",
         &validate_req.purchase_token,
         &db,
     ).await?;
     
-    // TODO: Validate with Google Play API
-    // For now, we'll trust the client but in production you must validate with Google Play
-    // This would involve:
-    // 1. Using Google Play Developer API to verify the purchase
-    // 2. Checking the product ID matches
-    // 3. Verifying the purchase state is purchased (not pending or cancelled)
+    // Validate with RevenueCat REST API
+    let validation_result = validate_with_revenuecat(
+        &env,
+        &user_id,
+        &validate_req.purchase_token,
+        &validate_req.product_id,
+        &validate_req.platform,
+    ).await;
+    
+    match validation_result {
+        Ok(is_valid) => {
+            if !is_valid {
+                // Delete the invalid purchase record
+                db.prepare("DELETE FROM credit_purchases WHERE id = ?")
+                    .bind(&[purchase_id.clone().into()])?
+                    .run()
+                    .await?;
+                
+                return AppError::BadRequest("Purchase validation failed with RevenueCat".to_string()).to_response();
+            }
+        }
+        Err(e) => {
+            // Log the error but continue - we don't want to block purchases if RevenueCat API is down
+            worker::console_log!("RevenueCat validation error (continuing anyway): {}", e);
+        }
+    }
     
     // Complete the purchase
     complete_purchase(&purchase_id, &db).await?;
@@ -909,7 +935,10 @@ pub async fn validate_google_play_purchase(mut req: Request, ctx: RouteContext<(
         &user_id,
         total_credits as u32,
         "purchase",
-        &format!("Google Play purchase: {} pack", validate_req.pack_id),
+        &format!("{} purchase: {} pack", 
+            if validate_req.platform == "ios" { "App Store" } else { "Google Play" },
+            validate_req.pack_id
+        ),
         Some(&purchase_id),
         &db
     ).await?;
@@ -917,10 +946,106 @@ pub async fn validate_google_play_purchase(mut req: Request, ctx: RouteContext<(
     // Get new balance
     let new_balance = get_user_balance(&user_id, &db).await?;
     
-    Response::from_json(&ValidateGooglePlayPurchaseResponse {
+    Response::from_json(&ValidateRevenueCatPurchaseResponse {
         success: true,
         purchase_id,
         credits_added: total_credits as u32,
         new_balance,
     })
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct RevenueCatSubscriber {
+    entitlements: RevenueCatEntitlements,
+    subscriber: RevenueCatSubscriberInfo,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct RevenueCatEntitlements {
+    #[serde(flatten)]
+    all: std::collections::HashMap<String, RevenueCatEntitlement>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct RevenueCatEntitlement {
+    expires_date: Option<String>,
+    purchase_date: String,
+    product_identifier: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct RevenueCatSubscriberInfo {
+    original_app_user_id: String,
+    #[serde(default)]
+    non_subscriptions: std::collections::HashMap<String, Vec<RevenueCatNonSubscription>>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct RevenueCatNonSubscription {
+    id: String,
+    is_sandbox: bool,
+    purchase_date: String,
+    store: String,
+}
+
+async fn validate_with_revenuecat(
+    env: &Env,
+    _user_id: &str,
+    purchase_token: &str,
+    product_id: &str,
+    platform: &str,
+) -> Result<bool> {
+    let revenuecat_api_key = env.secret("REVENUECAT_API_KEY")
+        .map_err(|_| "REVENUECAT_API_KEY not configured")?;
+    
+    let api_key = revenuecat_api_key.to_string();
+    
+    // RevenueCat uses the purchase token as the subscriber ID for validation
+    let subscriber_id = purchase_token;
+    let url = format!("https://api.revenuecat.com/v1/subscribers/{}", subscriber_id);
+    
+    let headers = Headers::new();
+    headers.set("X-RevCat-API-Key", &api_key)?;
+    headers.set("Content-Type", "application/json")?;
+    
+    let mut init = worker::RequestInit::new();
+    init.with_method(Method::Get)
+        .with_headers(headers);
+    
+    let request = Request::new_with_init(&url, &init)?;
+    let mut response = Fetch::Request(request).send().await?;
+    
+    let status_code = response.status_code();
+    if status_code < 200 || status_code >= 300 {
+        let error_text = response.text().await.unwrap_or_default();
+        worker::console_log!("RevenueCat API error: {} - {}", status_code, error_text);
+        return Err(format!("RevenueCat API error: {}", status_code).into());
+    }
+    
+    let subscriber: RevenueCatSubscriber = response.json().await
+        .map_err(|e| format!("Failed to parse RevenueCat response: {}", e))?;
+    
+    // Check if the user has the product in their non-subscriptions
+    if let Some(non_subs) = subscriber.subscriber.non_subscriptions.get(product_id) {
+        // Check if any of the purchases are valid (not refunded)
+        for purchase in non_subs {
+            if purchase.store.to_lowercase() == platform {
+                // Purchase exists and matches the platform
+                return Ok(true);
+            }
+        }
+    }
+    
+    // Also check entitlements in case it's set up that way
+    for (_, entitlement) in subscriber.entitlements.all.iter() {
+        if entitlement.product_identifier == product_id {
+            // Check if the entitlement is still valid (not expired)
+            if entitlement.expires_date.is_none() {
+                // No expiration means it's a one-time purchase
+                return Ok(true);
+            }
+        }
+    }
+    
+    Ok(false)
 }

@@ -891,6 +891,53 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /v1/credits/purchase/revenuecat/validate:
+    post:
+      operationId: validateRevenueCatPurchase
+      summary: Validate RevenueCat purchase (iOS/Android)
+      tags: [Credits]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pack_id, purchase_token, product_id, platform]
+              properties:
+                pack_id:
+                  type: string
+                  description: The credit pack ID being purchased
+                purchase_token:
+                  type: string
+                  description: The RevenueCat purchase token
+                product_id:
+                  type: string
+                  description: The product ID from the app store
+                platform:
+                  type: string
+                  enum: [ios, android]
+                  description: The platform where the purchase was made
+      responses:
+        '200':
+          description: Purchase validated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  purchase_id:
+                    type: string
+                  credits_added:
+                    type: integer
+                  new_balance:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
   # Webhook Endpoints
   /v1/credits/webhook:
     post:
