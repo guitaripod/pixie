@@ -816,3 +816,111 @@ pub async fn get_stripe_config(_req: Request, ctx: RouteContext<()>) -> Result<R
         enabled,
     })
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ValidateGooglePlayPurchaseRequest {
+    pub pack_id: String,
+    pub purchase_token: String,
+    pub product_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ValidateGooglePlayPurchaseResponse {
+    pub success: bool,
+    pub purchase_id: String,
+    pub credits_added: u32,
+    pub new_balance: i32,
+}
+
+pub async fn validate_google_play_purchase(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let env = ctx.env;
+    
+    let user_id = match validate_api_key(&req) {
+        Err(e) => return e.to_response(),
+        Ok(api_key) => {
+            let db = env.d1("DB")?;
+            let stmt = db.prepare("SELECT id FROM users WHERE api_key = ?");
+            let result = stmt
+                .bind(&[api_key.clone().into()])?
+                .first::<serde_json::Value>(None)
+                .await?;
+            
+            match result {
+                Some(value) => value.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+                None => return AppError::Unauthorized("Invalid API key".to_string()).to_response(),
+            }
+        }
+    };
+    
+    let validate_req: ValidateGooglePlayPurchaseRequest = match req.json().await {
+        Ok(req) => req,
+        Err(e) => return AppError::BadRequest(format!("Invalid request body: {}", e)).to_response(),
+    };
+    
+    // Find the pack
+    let packs = get_credit_packs();
+    let pack = packs
+        .iter()
+        .find(|p| p.id == validate_req.pack_id)
+        .ok_or_else(|| AppError::BadRequest("Invalid pack_id".to_string()))?;
+    
+    let total_credits = pack.credits + pack.bonus_credits;
+    
+    let db = env.d1("DB")?;
+    
+    // Check if this purchase token has already been used
+    let existing_purchase = db.prepare(
+        "SELECT id, status FROM credit_purchases WHERE payment_id = ? AND payment_provider = 'google_play'"
+    )
+    .bind(&[validate_req.purchase_token.clone().into()])?
+    .first::<serde_json::Value>(None)
+    .await?;
+    
+    if let Some(existing) = existing_purchase {
+        let status = existing.get("status").and_then(|v| v.as_str()).unwrap_or("");
+        if status == "completed" {
+            return AppError::BadRequest("Purchase has already been processed".to_string()).to_response();
+        }
+    }
+    
+    // Record the purchase
+    let purchase_id = record_purchase(
+        &user_id,
+        &validate_req.pack_id,
+        total_credits as u32,
+        pack.price_usd_cents as u32,
+        "google_play",
+        &validate_req.purchase_token,
+        &db,
+    ).await?;
+    
+    // TODO: Validate with Google Play API
+    // For now, we'll trust the client but in production you must validate with Google Play
+    // This would involve:
+    // 1. Using Google Play Developer API to verify the purchase
+    // 2. Checking the product ID matches
+    // 3. Verifying the purchase state is purchased (not pending or cancelled)
+    
+    // Complete the purchase
+    complete_purchase(&purchase_id, &db).await?;
+    
+    // Add credits to user
+    add_credits(
+        &user_id,
+        total_credits as u32,
+        "purchase",
+        &format!("Google Play purchase: {} pack", validate_req.pack_id),
+        Some(&purchase_id),
+        &db
+    ).await?;
+    
+    // Get new balance
+    let new_balance = get_user_balance(&user_id, &db).await?;
+    
+    Response::from_json(&ValidateGooglePlayPurchaseResponse {
+        success: true,
+        purchase_id,
+        credits_added: total_credits as u32,
+        new_balance,
+    })
+}
