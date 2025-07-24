@@ -9,6 +9,7 @@ import com.guitaripod.pixie.data.auth.GoogleSignInManager
 import com.guitaripod.pixie.data.auth.OAuthWebFlowManager
 import com.guitaripod.pixie.data.model.AuthResult
 import com.guitaripod.pixie.data.model.Config
+import com.guitaripod.pixie.data.purchases.RevenueCatManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
@@ -29,7 +30,8 @@ class AuthRepositoryImpl(
     private val gitHubOAuthManager: GitHubOAuthManager,
     private val googleSignInManager: GoogleSignInManager,
     private val oAuthWebFlowManager: OAuthWebFlowManager,
-    private val preferencesRepository: PreferencesRepository
+    private val preferencesRepository: PreferencesRepository,
+    private val revenueCatManager: RevenueCatManager
 ) : AuthRepository {
     
     override fun authenticateGithub(): Flow<AuthResult> = gitHubOAuthManager.authenticate()
@@ -60,6 +62,10 @@ class AuthRepositoryImpl(
     
     override fun saveCredentials(config: Config) {
         preferencesRepository.saveConfig(config)
+        // Set RevenueCat user ID when credentials are saved
+        config.userId?.let { userId ->
+            revenueCatManager.setUserId(userId)
+        }
     }
     
     override fun authenticateManually(apiKey: String, userId: String, provider: String): Flow<AuthResult> = flow {

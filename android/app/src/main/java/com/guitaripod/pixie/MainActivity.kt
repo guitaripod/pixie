@@ -25,6 +25,12 @@ class MainActivity : ComponentActivity() {
         
         val appContainer = (application as PixieApplication).appContainer
         
+        // Set RevenueCat user ID if authenticated
+        val config = appContainer.preferencesRepository.loadConfig()
+        config.userId?.let { userId ->
+            appContainer.revenueCatManager.setUserId(userId)
+        }
+        
         setContent {
             PixieTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
