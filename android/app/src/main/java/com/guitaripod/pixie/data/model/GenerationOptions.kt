@@ -29,12 +29,19 @@ data class GenerationOptions(
     
     fun estimateCredits(): IntRange {
         val baseCredits = when (quality) {
-            "low" -> 4..6
-            "medium" -> 16..24
+            "low" -> when (size) {
+                "1024x1024" -> 4..4
+                "1536x1024", "1024x1536" -> 6..6
+                else -> 4..6
+            }
+            "medium" -> when (size) {
+                "1024x1024" -> 16..16
+                "1536x1024", "1024x1536" -> 24..24
+                else -> 16..24
+            }
             "high" -> when (size) {
-                "square", "1024x1024" -> 62..78
-                "landscape", "1536x1024" -> 78..94
-                "portrait", "1024x1536" -> 78..94
+                "1024x1024" -> 62..62
+                "1536x1024", "1024x1536" -> 94..94
                 else -> 62..94
             }
             "auto" -> 50..75
@@ -49,9 +56,9 @@ data class GenerationOptions(
 
 enum class ImageSize(val value: String, val displayName: String, val dimensions: String) {
     AUTO("auto", "Auto", "Optimal"),
-    SQUARE("square", "Square", "1024×1024"),
-    LANDSCAPE("landscape", "Landscape", "1536×1024"),
-    PORTRAIT("portrait", "Portrait", "1024×1536"),
+    SQUARE("1024x1024", "Square", "1024×1024"),
+    LANDSCAPE("1536x1024", "Landscape", "1536×1024"),
+    PORTRAIT("1024x1536", "Portrait", "1024×1536"),
     CUSTOM("custom", "Custom", "Custom size")
 }
 
