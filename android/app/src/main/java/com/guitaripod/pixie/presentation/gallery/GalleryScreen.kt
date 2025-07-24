@@ -57,14 +57,6 @@ fun GalleryScreen(
     
     Scaffold(
         modifier = modifier,
-        topBar = {
-            GalleryTopBar(
-                selectedTab = selectedTab,
-                onTabSelected = { selectedTab = it },
-                isLoading = uiState.isLoading,
-                onRefresh = { viewModel.refresh() }
-            )
-        },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onNavigateToChat,
@@ -109,7 +101,10 @@ fun GalleryScreen(
                         onImageClick = onImageClick,
                         onImageAction = { image, action ->
                             viewModel.handleImageAction(image, action)
-                        }
+                        },
+                        selectedTab = selectedTab,
+                        onTabSelected = { selectedTab = it },
+                        onRefresh = { viewModel.refresh() }
                     )
                 }
             }
@@ -185,15 +180,28 @@ private fun GalleryGrid(
     hasMore: Boolean,
     onLoadMore: () -> Unit,
     onImageClick: (ImageDetails) -> Unit,
-    onImageAction: (ImageDetails, ImageAction) -> Unit
+    onImageAction: (ImageDetails, ImageAction) -> Unit,
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    onRefresh: () -> Unit
 ) {
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Adaptive(180.dp),
-        contentPadding = PaddingValues(8.dp),
+        contentPadding = PaddingValues(bottom = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalItemSpacing = 8.dp,
         modifier = Modifier.fillMaxSize()
     ) {
+        // Header that scrolls with content
+        item(span = StaggeredGridItemSpan.FullLine) {
+            GalleryTopBar(
+                selectedTab = selectedTab,
+                onTabSelected = onTabSelected,
+                isLoading = isLoading,
+                onRefresh = onRefresh
+            )
+        }
+        
         itemsIndexed(
             items = images,
             key = { _, image -> image.id }
@@ -209,7 +217,9 @@ private fun GalleryGrid(
                 image = image,
                 onClick = { onImageClick(image) },
                 onAction = { action -> onImageAction(image, action) },
-                modifier = Modifier.animateItem()
+                modifier = Modifier
+                    .animateItem()
+                    .padding(horizontal = 8.dp)
             )
         }
         

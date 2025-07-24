@@ -122,12 +122,13 @@ fun ChatGenerationScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onNavigateToGallery) {
-                        Icon(
-                            imageVector = Icons.Default.AccountBox,
-                            contentDescription = "Gallery",
-                            tint = MaterialTheme.colorScheme.primary
+                    TextButton(
+                        onClick = onNavigateToGallery,
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
                         )
+                    ) {
+                        Text("Gallery")
                     }
                     TextButton(
                         onClick = onLogout,
