@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -120,9 +121,13 @@ class ImageSaver(private val context: Context) {
             }
         }
         
-        val mediaScanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
-        mediaScanIntent.data = Uri.fromFile(imageFile)
-        context.sendBroadcast(mediaScanIntent)
+        // Use MediaScannerConnection instead of deprecated ACTION_MEDIA_SCANNER_SCAN_FILE
+        MediaScannerConnection.scanFile(
+            context,
+            arrayOf(imageFile.absolutePath),
+            arrayOf("image/png"),
+            null
+        )
         
         return Uri.fromFile(imageFile)
     }

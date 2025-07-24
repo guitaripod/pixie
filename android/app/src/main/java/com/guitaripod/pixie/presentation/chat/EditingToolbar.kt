@@ -3,6 +3,7 @@ package com.guitaripod.pixie.presentation.chat
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -54,23 +55,26 @@ fun EditingToolbar(
             )
         }
     ) { expanded ->
-        if (expanded) 580.dp else 160.dp
+        if (expanded) 520.dp else 140.dp
     }
     
-    Box(modifier = modifier.fillMaxWidth()) {
-        // Main toolbar surface
-        Surface(
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 16.dp,
+                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+            ),
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 8.dp
+    ) {
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(toolbarHeight)
-                .shadow(
-                    elevation = 16.dp,
-                    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                    spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                ),
-            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 8.dp
+                .navigationBarsPadding()
         ) {
             AnimatedContent(
                 targetState = editToolbarState.isExpanded,
@@ -93,7 +97,6 @@ fun EditingToolbar(
                 } else {
                     // Expanded state - full editing interface
                     ExpandedEditToolbar(
-                        selectedImage = selectedImage,
                         editOptions = editOptions,
                         onEditOptionsChange = onEditOptionsChange,
                         editToolbarState = editToolbarState,
@@ -114,13 +117,30 @@ private fun CollapsedEditToolbar(
     editOptions: EditOptions,
     onExpand: () -> Unit
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .clickable { onExpand() }
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // Handlebar at the top
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp)
+                .width(40.dp)
+                .height(4.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(2.dp)
+                )
+        )
+        
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
         // Preview row
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -189,6 +209,7 @@ private fun CollapsedEditToolbar(
                 label = "${estimatedCredits.first}-${estimatedCredits.last} credits"
             )
         }
+        }
     }
 }
 
@@ -236,7 +257,6 @@ private fun EditStatChip(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ExpandedEditToolbar(
-    selectedImage: SelectedImage,
     editOptions: EditOptions,
     onEditOptionsChange: (EditOptions) -> Unit,
     editToolbarState: EditToolbarState,
@@ -247,13 +267,39 @@ private fun ExpandedEditToolbar(
 ) {
     val scrollState = rememberScrollState()
     
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                onEditToolbarStateChange(
+                    editToolbarState.copy(isExpanded = false)
+                )
+            }
     ) {
+        // Handlebar at the top
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp)
+                .width(40.dp)
+                .height(4.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(2.dp)
+                )
+        )
+        
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(16.dp)
+                .padding(top = 8.dp), // Extra padding to account for handlebar
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
         // Header
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -270,24 +316,8 @@ private fun ExpandedEditToolbar(
                 )
             }
             
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                TextButton(onClick = onSwitchToGenerate) {
-                    Text("New image")
-                }
-                IconButton(
-                    onClick = {
-                        onEditToolbarStateChange(
-                            editToolbarState.copy(isExpanded = false)
-                        )
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = "Collapse"
-                    )
-                }
+            TextButton(onClick = onSwitchToGenerate) {
+                Text("New image")
             }
         }
         
@@ -392,6 +422,7 @@ private fun ExpandedEditToolbar(
                 }
             }
         }
+        }
     }
 }
 
@@ -445,42 +476,6 @@ private fun QuickEditOptions(
                             style = MaterialTheme.typography.labelMedium
                         )
                     }
-                }
-            }
-        }
-        
-        // Variations
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Variations",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "${editOptions.variations} ${if (editOptions.variations == 1) "image" else "images"}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-            
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                (1..5).forEach { num ->
-                    FilterChip(
-                        selected = editOptions.variations == num,
-                        onClick = {
-                            onEditOptionsChange(editOptions.copy(variations = num))
-                        },
-                        label = { Text(num.toString()) }
-                    )
                 }
             }
         }

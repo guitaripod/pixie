@@ -58,7 +58,6 @@ fun ChatGenerationScreen(
     
     // Generation options state
     var prompt by remember { mutableStateOf("") }
-    var number by remember { mutableIntStateOf(1) }
     var selectedSize by remember { mutableStateOf(ImageSize.AUTO) }
     var customSize by remember { mutableStateOf("") }
     var selectedQuality by remember { mutableStateOf(ImageQuality.LOW) }
@@ -116,13 +115,38 @@ fun ChatGenerationScreen(
     
     Scaffold(
         modifier = modifier
-            .fillMaxSize()
-            .navigationBarsPadding(),
+            .fillMaxSize(),
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         },
         topBar = {
             TopAppBar(
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            // Reset chat and toolbar state
+                            messages = emptyList()
+                            prompt = ""
+                            isToolbarExpanded = false
+                            toolbarMode = ToolbarMode.Generate
+                            selectedSize = ImageSize.AUTO
+                            customSize = ""
+                            selectedQuality = ImageQuality.LOW
+                            selectedBackground = null
+                            selectedFormat = null
+                            compressionLevel = 85
+                            selectedModeration = null
+                            editOptions = EditOptions()
+                            editToolbarState = EditToolbarState()
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "New Chat",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                },
                 title = { 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -175,17 +199,17 @@ fun ChatGenerationScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
         ) {
             LazyColumn(
                 state = listState,
                 modifier = Modifier
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .padding(paddingValues),
                 contentPadding = PaddingValues(
                     start = 16.dp,
                     end = 16.dp,
                     top = 16.dp,
-                    bottom = 96.dp
+                    bottom = if (isToolbarExpanded) 620.dp else 100.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -233,8 +257,6 @@ fun ChatGenerationScreen(
                         onExpandedChange = { isToolbarExpanded = it },
                         prompt = prompt,
                         onPromptChange = { prompt = it },
-                        number = number,
-                        onNumberChange = { number = it },
                         selectedSize = selectedSize,
                         onSizeSelected = { selectedSize = it },
                         customSize = customSize,
@@ -262,7 +284,7 @@ fun ChatGenerationScreen(
                                 quality = selectedQuality.value,
                                 size = selectedSize.displayName,
                                 actualSize = actualSize,
-                                quantity = number,
+                                quantity = 1,
                                 background = selectedBackground?.displayName,
                                 format = selectedFormat?.displayName,
                                 compression = if (selectedFormat?.supportsCompression == true) compressionLevel else null,
@@ -281,7 +303,7 @@ fun ChatGenerationScreen(
                             
                             val options = GenerationOptions(
                                 prompt = prompt,
-                                number = number,
+                                number = 1,
                                 size = actualSize,
                                 quality = selectedQuality.value,
                                 background = selectedBackground?.value,
