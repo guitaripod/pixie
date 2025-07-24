@@ -147,24 +147,7 @@ fun ChatGenerationScreen(
                         )
                     }
                 },
-                title = { 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = android.R.drawable.star_on),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text(
-                            text = "Pixie",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                },
+                title = { },
                 actions = {
                     TextButton(
                         onClick = onNavigateToGallery,
