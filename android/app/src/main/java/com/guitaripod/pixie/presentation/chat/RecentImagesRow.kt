@@ -113,7 +113,7 @@ fun RecentImagesRow(
                     }
                 }
             ) {
-                Text("Browse gallery")
+                Text("Choose from device")
             }
         }
         
