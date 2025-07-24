@@ -20,6 +20,7 @@ import com.guitaripod.pixie.data.repository.AuthRepositoryImpl
 import com.guitaripod.pixie.data.repository.ImageRepository
 import com.guitaripod.pixie.data.repository.PreferencesRepository
 import com.guitaripod.pixie.data.repository.PreferencesRepositoryImpl
+import com.guitaripod.pixie.data.repository.GalleryRepository
 import com.guitaripod.pixie.utils.ImageSaver
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -109,6 +110,10 @@ class AppContainer(private val context: Context) {
     }
         val imageRepository: ImageRepository by lazy {
         ImageRepository(pixieApiService, context)
+    }
+    
+    val galleryRepository: GalleryRepository by lazy {
+        GalleryRepository(pixieApiService, configManager)
     }
     
     val imageSaver: ImageSaver by lazy {
