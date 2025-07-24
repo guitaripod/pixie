@@ -239,42 +239,16 @@ fun SizeSelector(
             )
             
             val sizes = listOf(
-                "256x256" to "Small",
-                "512x512" to "Medium",
-                "1024x1024" to "Large",
-                "1024x1792" to "Portrait",
-                "1792x1024" to "Landscape"
+                "1024x1024" to "Square",
+                "1536x1024" to "Landscape",
+                "1024x1536" to "Portrait"
             )
             
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                sizes.take(3).forEach { (size, label) ->
-                    FilterChip(
-                        selected = selectedSize == size,
-                        onClick = { onSizeSelected(size) },
-                        label = {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(label)
-                                Text(
-                                    text = size,
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            }
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                sizes.drop(3).forEach { (size, label) ->
+                sizes.forEach { (size, label) ->
                     FilterChip(
                         selected = selectedSize == size,
                         onClick = { onSizeSelected(size) },
