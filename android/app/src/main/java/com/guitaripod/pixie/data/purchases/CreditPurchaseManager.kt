@@ -71,13 +71,14 @@ class CreditPurchaseManager @Inject constructor(
         productId: String
     ): Result<CreditPurchaseResult> {
         return try {
-            val request = GooglePlayPurchaseValidationRequest(
+            val request = RevenueCatPurchaseValidationRequest(
                 packId = packId,
                 purchaseToken = purchaseToken,
-                productId = productId
+                productId = productId,
+                platform = "android"
             )
             
-            val response = apiService.validateGooglePlayPurchase(request)
+            val response = apiService.validateRevenueCatPurchase(request)
             
             if (response.isSuccessful) {
                 response.body()?.let { validationResponse ->
@@ -224,13 +225,14 @@ data class CreditPurchaseResponse(
     val status: String
 )
 
-data class GooglePlayPurchaseValidationRequest(
+data class RevenueCatPurchaseValidationRequest(
     val packId: String,
     val purchaseToken: String,
-    val productId: String
+    val productId: String,
+    val platform: String
 )
 
-data class GooglePlayPurchaseValidationResponse(
+data class RevenueCatPurchaseValidationResponse(
     val success: Boolean,
     val purchaseId: String,
     val creditsAdded: Int,
