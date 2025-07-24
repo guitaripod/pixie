@@ -125,7 +125,7 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [ ] Add swipe between variations
 - [x] Create save individual/all options (reuses generation save)
 
-### Phase 5: Gallery Features ✅ COMPLETED
+### Phase 5: Gallery Features ✅
 
 #### 5.1 Public Gallery ✅
 - [x] Create gallery grid with staggered layout and lazy loading
@@ -144,7 +144,7 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [x] Add share functionality
 - [x] Navigate to gallery from chat screen
 - [x] Implement caching layer to prevent needless remote database reads.
-- [ ] Implement "Edit from Gallery" action (navigation ready, needs edit mode integration)
+- [x] Implement "Edit from Gallery" action (navigation ready, needs edit mode integration)
 
 ### Phase 6: Usage & Credits
 

@@ -269,13 +269,8 @@ class GalleryViewModel(
     fun handleImageAction(image: ImageDetails, action: ImageAction) {
         when (action) {
             ImageAction.USE_FOR_EDIT -> {
-                // This will be handled by the parent composable to navigate
-                // For now, just show a toast
-                Toast.makeText(
-                    getApplication(),
-                    "Opening edit mode with this image",
-                    Toast.LENGTH_SHORT
-                ).show()
+                // This is handled by the parent composable to navigate
+                // The navigation is done in PixieNavigation.kt
             }
             
             ImageAction.COPY_PROMPT -> {

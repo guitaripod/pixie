@@ -21,6 +21,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.net.URL
+import java.net.HttpURLConnection
 
 class ImageRepository(
     private val apiService: PixieApiService,
@@ -112,9 +114,22 @@ class ImageRepository(
         try {
             // Convert image to base64
             val imageBytes = withContext(Dispatchers.IO) {
-                context.contentResolver.openInputStream(imageUri)?.use { inputStream ->
-                    inputStream.readBytes()
-                } ?: throw IOException("Failed to read image")
+                // Check if this is a remote URL or local URI
+                if (imageUri.scheme?.startsWith("http") == true) {
+                    // Handle remote URL
+                    val url = URL(imageUri.toString())
+                    val connection = url.openConnection() as HttpURLConnection
+                    connection.doInput = true
+                    connection.connect()
+                    connection.inputStream.use { inputStream ->
+                        inputStream.readBytes()
+                    }
+                } else {
+                    // Handle local URI
+                    context.contentResolver.openInputStream(imageUri)?.use { inputStream ->
+                        inputStream.readBytes()
+                    } ?: throw IOException("Failed to read image")
+                }
             }
             
             // Convert to base64 data URL
@@ -210,11 +225,16 @@ class ImageRepository(
                 emit(Result.failure(Exception(errorMessage)))
             }
         } catch (e: IOException) {
-            emit(Result.failure(Exception("Network error. Please check your connection.")))
+            val message = when {
+                e.message?.contains("Failed to read image") == true -> "Failed to read image. The file may be corrupted or inaccessible."
+                e.message?.contains("No address associated") == true -> "Network error. Please check your internet connection."
+                else -> "Failed to load image. Please try again."
+            }
+            emit(Result.failure(Exception(message)))
         } catch (e: HttpException) {
             emit(Result.failure(Exception("Server error: ${e.message()}")))
         } catch (e: Exception) {
-            emit(Result.failure(Exception("Unexpected error: ${e.message}")))
+            emit(Result.failure(Exception("Failed to edit image: ${e.message}")))
         }
     }
 }

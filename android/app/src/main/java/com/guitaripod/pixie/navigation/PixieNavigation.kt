@@ -21,7 +21,7 @@ import com.guitaripod.pixie.data.api.model.ImageDetails
 
 sealed class Screen {
     object Auth : Screen()
-    object Chat : Screen()
+    data class Chat(val editImage: ImageDetails? = null) : Screen()
     object Gallery : Screen()
 }
 
@@ -35,8 +35,8 @@ fun PixieNavigation(
     )
     
     var currentScreen by remember { 
-        mutableStateOf(
-            if (authViewModel.isAuthenticated()) Screen.Chat else Screen.Auth
+        mutableStateOf<Screen>(
+            if (authViewModel.isAuthenticated()) Screen.Chat() else Screen.Auth
         )
     }
     
@@ -44,18 +44,20 @@ fun PixieNavigation(
         is Screen.Auth -> {
             AuthScreen(
                 authViewModel = authViewModel,
-                onAuthSuccess = { currentScreen = Screen.Chat },
+                onAuthSuccess = { currentScreen = Screen.Chat() },
                 modifier = modifier
             )
         }
         
         is Screen.Chat -> {
+            val chatScreen = currentScreen as Screen.Chat
             val generationViewModel: GenerationViewModel = viewModel(
                 factory = GenerationViewModelFactory(appContainer.imageRepository)
             )
             
             ChatGenerationScreen(
                 viewModel = generationViewModel,
+                initialEditImage = chatScreen.editImage,
                 onLogout = {
                     authViewModel.logout()
                     currentScreen = Screen.Auth
@@ -82,10 +84,21 @@ fun PixieNavigation(
             GalleryScreen(
                 viewModel = galleryViewModel,
                 onNavigateToChat = {
-                    currentScreen = Screen.Chat
+                    currentScreen = Screen.Chat()
                 },
                 onImageClick = { image ->
                     selectedImage = image
+                },
+                onImageAction = { image, action ->
+                    when (action) {
+                        ImageAction.USE_FOR_EDIT -> {
+                            // Navigate to chat with edit mode
+                            currentScreen = Screen.Chat(editImage = image)
+                        }
+                        else -> {
+                            galleryViewModel.handleImageAction(image, action)
+                        }
+                    }
                 },
                 modifier = modifier
             )
@@ -97,8 +110,8 @@ fun PixieNavigation(
                     onAction = { action ->
                         when (action) {
                             ImageAction.USE_FOR_EDIT -> {
-                                // TODO: Navigate to chat with edit mode
-                                currentScreen = Screen.Chat
+                                // Navigate to chat with edit mode
+                                currentScreen = Screen.Chat(editImage = image)
                                 selectedImage = null
                             }
                             else -> {
