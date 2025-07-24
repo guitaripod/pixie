@@ -148,29 +148,34 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 
 ### Phase 6: Usage & Credits
 
-#### 6.1 Usage Statistics
-- [ ] Create usage dashboard with charts
-- [ ] Implement date range picker
-- [ ] Add daily/weekly/monthly views
-- [ ] Create usage breakdown by type
-- [ ] Add export to CSV functionality
+#### 6.1 Usage Statistics ✅
+- [x] Create usage dashboard with charts
+- [x] Implement date range picker
+- [x] Add daily/weekly/monthly views
+- [x] Create usage breakdown by type
+- [x] Add export to CSV functionality
 
-#### 6.2 Credit Management
-- [ ] Create credit balance display with visual indicator
-- [ ] Implement transaction history with infinite scroll
-- [ ] Add credit pack browser with descriptions
-- [ ] Create cost estimator tool
-- [ ] Add low balance notifications
+#### 6.2 Credit Management ✅
+- [x] Create credit balance display with visual indicator
+- [x] Implement transaction history with infinite scroll
+- [x] Add credit pack browser with descriptions
+- [x] Create cost estimator tool
+- [x] Add low balance notifications
 
-#### 6.3 Credit Purchase
-- [ ] Integrate RevenueCat SDK for in-app purchases
-- [ ] Configure RevenueCat offerings and products
-- [ ] Create pack selection UI with benefits
-- [ ] Implement RevenueCat purchase flow with confirmations
-- [ ] Add purchase restoration via RevenueCat
-- [ ] Implement receipt validation through RevenueCat
-- [ ] Add subscription status monitoring
-- [ ] Create webhook handler for server-side events (if needed)
+#### 6.3 Credit Purchase ✅
+- [x] Integrate RevenueCat SDK for in-app purchases
+- [x] Configure RevenueCat offerings and products
+- [x] Create pack selection UI with benefits
+- [x] Implement RevenueCat purchase flow with confirmations
+- [x] Add purchase restoration via RevenueCat
+- [x] Implement receipt validation through RevenueCat
+- [x] Add subscription status monitoring (RevenueCat handles this)
+- [x] Create webhook handler for server-side events (backend endpoint ready)
+
+**Note**: RevenueCat integration complete but requires Google Play Console setup:
+- Payment profile must be verified
+- App must be published to internal testing track
+- Products will then be fetchable from Play Store
 
 ### Phase 7: Admin Features
 
