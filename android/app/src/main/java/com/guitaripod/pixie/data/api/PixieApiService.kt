@@ -69,14 +69,15 @@ interface PixieApiService {
     
     @GET("/v1/images")
     suspend fun listPublicImages(
-        @Query("limit") limit: Int? = null,
-        @Query("offset") offset: Int? = null
+        @Query("page") page: Int? = null,
+        @Query("per_page") perPage: Int? = null
     ): Response<ImageListResponse>
     
-    @GET("/v1/me/images")
+    @GET("/v1/images/user/{user_id}")
     suspend fun listMyImages(
-        @Query("limit") limit: Int? = null,
-        @Query("offset") offset: Int? = null
+        @Path("user_id") userId: String,
+        @Query("page") page: Int? = null,
+        @Query("per_page") perPage: Int? = null
     ): Response<ImageListResponse>
     
     @GET("/v1/images/{image_id}")
