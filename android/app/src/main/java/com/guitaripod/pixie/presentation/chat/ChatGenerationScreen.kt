@@ -39,6 +39,7 @@ import androidx.compose.material3.SnackbarDuration
 fun ChatGenerationScreen(
     viewModel: GenerationViewModel,
     onLogout: () -> Unit,
+    onNavigateToGallery: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
@@ -121,6 +122,13 @@ fun ChatGenerationScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onNavigateToGallery) {
+                        Icon(
+                            imageVector = Icons.Default.AccountBox,
+                            contentDescription = "Gallery",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                     TextButton(
                         onClick = onLogout,
                         colors = ButtonDefaults.textButtonColors(
