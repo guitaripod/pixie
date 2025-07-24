@@ -38,6 +38,7 @@ fun GalleryScreen(
     viewModel: GalleryViewModel,
     onNavigateToChat: () -> Unit,
     onImageClick: (ImageDetails) -> Unit,
+    onImageAction: (ImageDetails, ImageAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -101,9 +102,7 @@ fun GalleryScreen(
                         hasMore = uiState.hasMore,
                         onLoadMore = { viewModel.loadMore() },
                         onImageClick = onImageClick,
-                        onImageAction = { image, action ->
-                            viewModel.handleImageAction(image, action)
-                        },
+                        onImageAction = onImageAction,
                         selectedTab = selectedTab,
                         onTabSelected = { selectedTab = it },
                         onRefresh = { viewModel.refresh() }

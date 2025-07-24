@@ -28,16 +28,19 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.guitaripod.pixie.data.model.*
+import com.guitaripod.pixie.data.api.model.ImageDetails
 import com.guitaripod.pixie.presentation.generation.GenerationViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarDuration
+import android.net.Uri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatGenerationScreen(
     viewModel: GenerationViewModel,
+    initialEditImage: ImageDetails? = null,
     onLogout: () -> Unit,
     onNavigateToGallery: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -67,6 +70,23 @@ fun ChatGenerationScreen(
     // Edit-specific state
     var editOptions by remember { mutableStateOf(EditOptions()) }
     var editToolbarState by remember { mutableStateOf(EditToolbarState()) }
+    
+    // Handle initial edit image from gallery navigation
+    LaunchedEffect(initialEditImage) {
+        initialEditImage?.let { image ->
+            // Convert the image URL to a Uri and set edit mode
+            val uri = Uri.parse(image.url)
+            toolbarMode = ToolbarMode.Edit(
+                SelectedImage(
+                    uri = uri,
+                    displayName = "Gallery Image"
+                )
+            )
+            // Optionally set the prompt from the image's prompt
+            editOptions = editOptions.copy(prompt = image.prompt)
+            isToolbarExpanded = true
+        }
+    }
     
     LaunchedEffect(viewModel) {
         viewModel.generationResult.collect { result ->
