@@ -238,8 +238,11 @@ private fun GalleryGrid(
             }
         }
         
-        // Show message when reaching paging limit
-        if (!isLoading && images.isNotEmpty() && uiState.totalPagesLoaded >= 5 && !uiState.hasReachedEnd) {
+        // Show message when reaching paging limit (only for public gallery)
+        if (!isLoading && images.isNotEmpty() && 
+            uiState.galleryType == GalleryType.PUBLIC && 
+            uiState.totalPagesLoaded >= 5 && 
+            !uiState.hasReachedEnd) {
             item(span = StaggeredGridItemSpan.FullLine) {
                 Card(
                     modifier = Modifier
