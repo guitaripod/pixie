@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,8 +42,6 @@ fun GenerationToolbar(
     onExpandedChange: (Boolean) -> Unit,
     prompt: String,
     onPromptChange: (String) -> Unit,
-    number: Int,
-    onNumberChange: (Int) -> Unit,
     selectedSize: ImageSize,
     onSizeSelected: (ImageSize) -> Unit,
     customSize: String,
@@ -73,7 +72,7 @@ fun GenerationToolbar(
             )
         }
     ) { expanded ->
-        if (expanded) 600.dp else 80.dp
+        if (expanded) 520.dp else 80.dp
     }
     
     val cornerRadius by transition.animateDp(
@@ -103,7 +102,6 @@ fun GenerationToolbar(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .height(toolbarHeight)
             .shadow(
                 elevation = shadowElevation,
                 shape = RoundedCornerShape(topStart = cornerRadius, topEnd = cornerRadius),
@@ -114,6 +112,12 @@ fun GenerationToolbar(
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(toolbarHeight)
+                .navigationBarsPadding()
+        ) {
         AnimatedContent(
             targetState = isExpanded,
             transitionSpec = {
@@ -121,13 +125,35 @@ fun GenerationToolbar(
             }
         ) { expanded ->
             if (expanded) {
-                Column(
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onExpandedChange(false) }
                 ) {
+                    // Handlebar at the top
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 8.dp)
+                            .width(40.dp)
+                            .height(4.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                                shape = RoundedCornerShape(2.dp)
+                            )
+                    )
+                    
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(16.dp)
+                            .padding(top = 8.dp), // Extra padding to account for handlebar
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -173,20 +199,9 @@ fun GenerationToolbar(
                             }
                         }
                         
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            if (mode is ToolbarMode.Edit) {
-                                TextButton(onClick = onSwitchToGenerate) {
-                                    Text("New image")
-                                }
-                            }
-                            IconButton(onClick = { onExpandedChange(false) }) {
-                                Icon(
-                                    imageVector = Icons.Default.KeyboardArrowDown,
-                                    contentDescription = "Collapse",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                        if (mode is ToolbarMode.Edit) {
+                            TextButton(onClick = onSwitchToGenerate) {
+                                Text("New image")
                             }
                         }
                     }
@@ -222,11 +237,6 @@ fun GenerationToolbar(
                     QualitySelector(
                         selectedQuality = selectedQuality,
                         onQualitySelected = onQualitySelected
-                    )
-                    
-                    NumberPicker(
-                        number = number,
-                        onNumberChanged = onNumberChange
                     )
                     
                     var showAdvanced by remember { mutableStateOf(false) }
@@ -281,7 +291,7 @@ fun GenerationToolbar(
                     
                     val estimatedCredits = GenerationOptions(
                         prompt = prompt,
-                        number = number,
+                        number = 1,
                         size = if (selectedSize == ImageSize.CUSTOM) customSize.ifEmpty { "1024x1024" } else selectedSize.value,
                         quality = selectedQuality.value,
                         background = selectedBackground?.value,
@@ -328,19 +338,37 @@ fun GenerationToolbar(
                             }
                         }
                     }
+                    }
                 }
             } else {
-                Row(
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
                         ) { onExpandedChange(true) }
-                        .padding(horizontal = 20.dp, vertical = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    // Handlebar at the top
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 8.dp)
+                            .width(40.dp)
+                            .height(4.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                                shape = RoundedCornerShape(2.dp)
+                            )
+                    )
+                    
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
                     when (mode) {
                         is ToolbarMode.Generate -> {
                             Surface(
@@ -427,14 +455,10 @@ fun GenerationToolbar(
                             }
                         }
                     }
-                    
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowUp,
-                        contentDescription = "Expand",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    }
                 }
             }
+        }
         }
     }
 }
