@@ -26,6 +26,9 @@ navigationCompose = "2.8.5"
 # Image Loading
 coil = "2.7.0"
 
+# In-App Purchases
+revenuecat = "8.5.0"
+
 # Security & Storage
 datastore = "1.1.1"
 room = "2.6.1"
@@ -89,6 +92,9 @@ androidx-browser = { group = "androidx.browser", name = "browser", version = "1.
 # Google Sign-In
 google-play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version = "21.0.0" }
 kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
+
+# RevenueCat
+revenuecat = { group = "com.revenuecat.purchases", name = "purchases", version.ref = "revenuecat" }
 
 # Coroutines
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }

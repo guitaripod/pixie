@@ -115,6 +115,16 @@ interface PixieApiService {
         @Body request: CreditEstimateRequest
     ): Response<CreditEstimateResponse>
     
+    @POST("/v1/credits/purchase")
+    suspend fun recordCreditPurchase(
+        @Body request: com.guitaripod.pixie.data.purchases.CreditPurchaseRequest
+    ): Response<com.guitaripod.pixie.data.purchases.CreditPurchaseResponse>
+    
+    @POST("/v1/credits/purchase/google-play/validate")
+    suspend fun validateGooglePlayPurchase(
+        @Body request: com.guitaripod.pixie.data.purchases.GooglePlayPurchaseValidationRequest
+    ): Response<com.guitaripod.pixie.data.purchases.GooglePlayPurchaseValidationResponse>
+    
     @GET("/v1/me/usage")
     suspend fun getUsage(
         @Query("start_date") startDate: String? = null,

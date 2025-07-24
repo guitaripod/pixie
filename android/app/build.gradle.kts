@@ -13,7 +13,7 @@ android {
         applicationId = "com.guitaripod.pixie"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
+        versionCode = 2
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -90,6 +90,8 @@ dependencies {
     
     implementation(libs.google.play.services.auth)
     implementation(libs.kotlinx.coroutines.play.services)
+    
+    implementation(libs.revenuecat)
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
