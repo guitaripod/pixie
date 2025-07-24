@@ -44,7 +44,10 @@ data class ImageMetadata(
     @Json(name = "height") val height: Int,
     @Json(name = "format") val format: String,
     @Json(name = "size_bytes") val sizeBytes: Long,
-    @Json(name = "credits_used") val creditsUsed: Int
+    @Json(name = "credits_used") val creditsUsed: Int,
+    @Json(name = "quality") val quality: String? = null,
+    @Json(name = "model") val model: String? = null,
+    @Json(name = "revised_prompt") val revisedPrompt: String? = null
 )
 
 // Gallery Models
@@ -53,8 +56,8 @@ data class ImageMetadata(
 data class ImageListResponse(
     @Json(name = "images") val images: List<ImageDetails>,
     @Json(name = "total") val total: Int,
-    @Json(name = "limit") val limit: Int,
-    @Json(name = "offset") val offset: Int
+    @Json(name = "page") val page: Int,
+    @Json(name = "per_page") val perPage: Int
 )
 
 @JsonClass(generateAdapter = true)
@@ -66,6 +69,6 @@ data class ImageDetails(
     @Json(name = "prompt") val prompt: String,
     @Json(name = "created_at") val createdAt: String,
     @Json(name = "metadata") val metadata: ImageMetadata?,
-    @Json(name = "is_public") val isPublic: Boolean,
+    @Json(name = "is_public") val isPublic: Boolean? = null,
     @Json(name = "tags") val tags: List<String>?
 )
