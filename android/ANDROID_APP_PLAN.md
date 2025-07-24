@@ -168,9 +168,10 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [x] Create pack selection UI with benefits
 - [x] Implement RevenueCat purchase flow with confirmations
 - [x] Add purchase restoration via RevenueCat
-- [x] Implement receipt validation through RevenueCat
+- [x] Implement receipt validation through RevenueCat REST API
 - [x] Add subscription status monitoring (RevenueCat handles this)
-- [x] Create webhook handler for server-side events (backend endpoint ready)
+- [x] Create unified cross-platform validation endpoint for iOS/Android
+- [x] Implement proper server-side RevenueCat validation with fallback
 
 **Note**: RevenueCat integration complete but requires Google Play Console setup:
 - Payment profile must be verified
