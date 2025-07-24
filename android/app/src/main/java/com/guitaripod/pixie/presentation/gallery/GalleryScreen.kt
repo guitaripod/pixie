@@ -48,6 +48,13 @@ fun GalleryScreen(
         )
     }
     
+    // Load initial data when screen is first opened
+    LaunchedEffect(Unit) {
+        if (!uiState.hasLoadedInitialData && uiState.images.isEmpty()) {
+            viewModel.loadInitialData()
+        }
+    }
+    
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -94,16 +101,54 @@ fun GalleryScreen(
                     )
                 }
                 else -> {
-                    GalleryGrid(
-                        images = uiState.images,
-                        isLoading = uiState.isLoading,
-                        hasMore = uiState.hasMore,
-                        onLoadMore = { viewModel.loadMore() },
-                        onImageClick = onImageClick,
-                        onImageAction = { image, action ->
-                            viewModel.handleImageAction(image, action)
+                    Column(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        // Show last refresh time if data was loaded from cache
+                        if (uiState.hasLoadedInitialData && uiState.lastRefreshTime > 0) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Last updated: ${formatTimeAgo(uiState.lastRefreshTime)}",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    TextButton(
+                                        onClick = { viewModel.refresh() },
+                                        contentPadding = PaddingValues(horizontal = 8.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Refresh,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Refresh", style = MaterialTheme.typography.labelMedium)
+                                    }
+                                }
+                            }
                         }
-                    )
+                        
+                        GalleryGrid(
+                            images = uiState.images,
+                            isLoading = uiState.isLoading,
+                            hasMore = uiState.hasMore,
+                            onLoadMore = { viewModel.loadMore() },
+                            onImageClick = onImageClick,
+                            onImageAction = { image, action ->
+                                viewModel.handleImageAction(image, action)
+                            }
+                        )
+                    }
                 }
             }
         }
