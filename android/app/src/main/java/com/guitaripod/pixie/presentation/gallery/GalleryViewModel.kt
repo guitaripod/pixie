@@ -19,7 +19,7 @@ data class GalleryUiState(
     val error: String? = null,
     val hasMore: Boolean = true,
     val currentPage: Int = 0,
-    val galleryType: GalleryType = GalleryType.PUBLIC,
+    val galleryType: GalleryType = GalleryType.PERSONAL,
     val hasLoadedInitialData: Boolean = false,
     val lastRefreshTime: Long = 0L
 )

@@ -44,7 +44,7 @@ fun GalleryScreen(
     
     LaunchedEffect(selectedTab) {
         viewModel.setGalleryType(
-            if (selectedTab == 0) GalleryType.PUBLIC else GalleryType.PERSONAL
+            if (selectedTab == 0) GalleryType.PERSONAL else GalleryType.PUBLIC
         )
     }
     
@@ -96,59 +96,21 @@ fun GalleryScreen(
                 }
                 uiState.images.isEmpty() -> {
                     EmptyState(
-                        isPersonalGallery = selectedTab == 1,
+                        isPersonalGallery = selectedTab == 0,
                         onNavigateToChat = onNavigateToChat
                     )
                 }
                 else -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        // Show last refresh time if data was loaded from cache
-                        if (uiState.hasLoadedInitialData && uiState.lastRefreshTime > 0) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "Last updated: ${formatTimeAgo(uiState.lastRefreshTime)}",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    TextButton(
-                                        onClick = { viewModel.refresh() },
-                                        contentPadding = PaddingValues(horizontal = 8.dp)
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Refresh,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Refresh", style = MaterialTheme.typography.labelMedium)
-                                    }
-                                }
-                            }
+                    GalleryGrid(
+                        images = uiState.images,
+                        isLoading = uiState.isLoading,
+                        hasMore = uiState.hasMore,
+                        onLoadMore = { viewModel.loadMore() },
+                        onImageClick = onImageClick,
+                        onImageAction = { image, action ->
+                            viewModel.handleImageAction(image, action)
                         }
-                        
-                        GalleryGrid(
-                            images = uiState.images,
-                            isLoading = uiState.isLoading,
-                            hasMore = uiState.hasMore,
-                            onLoadMore = { viewModel.loadMore() },
-                            onImageClick = onImageClick,
-                            onImageAction = { image, action ->
-                                viewModel.handleImageAction(image, action)
-                            }
-                        )
-                    }
+                    )
                 }
             }
         }
@@ -201,14 +163,14 @@ private fun GalleryTopBar(
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { onTabSelected(0) },
-                    text = { Text("Explore") },
-                    icon = { Icon(Icons.Outlined.Search, null) }
+                    text = { Text("My Images") },
+                    icon = { Icon(Icons.Outlined.Person, null) }
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { onTabSelected(1) },
-                    text = { Text("My Images") },
-                    icon = { Icon(Icons.Outlined.Person, null) }
+                    text = { Text("Explore") },
+                    icon = { Icon(Icons.Outlined.Search, null) }
                 )
             }
         }
