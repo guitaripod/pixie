@@ -2,7 +2,9 @@ package com.guitaripod.pixie
 
 import android.app.Application
 import android.content.Context
+import coil.Coil
 import com.guitaripod.pixie.di.AppContainer
+import com.guitaripod.pixie.utils.ImageLoaderFactory
 
 class PixieApplication : Application() {
     
@@ -13,6 +15,9 @@ class PixieApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         appContainer = AppContainer(this)
+        
+        // Initialize Coil with custom configuration for better caching
+        Coil.setImageLoader(ImageLoaderFactory.create(this))
     }
 }
 

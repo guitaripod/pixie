@@ -51,6 +51,8 @@ fun ImageDetailBottomSheet(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(image.url)
                     .crossfade(true)
+                    .memoryCacheKey(image.id)
+                    .diskCacheKey(image.id)
                     .build(),
                 contentDescription = image.prompt,
                 contentScale = ContentScale.FillWidth,

@@ -270,6 +270,8 @@ private fun GalleryImageCard(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(image.thumbnailUrl ?: image.url)
                     .crossfade(true)
+                    .memoryCacheKey(image.id)
+                    .diskCacheKey(image.id)
                     .build(),
                 contentDescription = image.prompt,
                 contentScale = ContentScale.Crop,
