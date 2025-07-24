@@ -195,11 +195,14 @@ fun PixieNavigation(
                 factory = CreditsViewModelFactory(appContainer.creditsRepository)
             )
             
-            CreditPacksScreen(
-                viewModel = creditsViewModel,
-                onNavigateBack = { navigateBack() },
-                onPackSelected = { pack ->
-                }
+            val purchaseViewModel: PurchaseViewModel = viewModel(
+                factory = PurchaseViewModelFactory(appContainer.creditPurchaseManager)
+            )
+            
+            EnhancedCreditPacksScreen(
+                creditsViewModel = creditsViewModel,
+                purchaseViewModel = purchaseViewModel,
+                onNavigateBack = { navigateBack() }
             )
         }
         
