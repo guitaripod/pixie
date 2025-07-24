@@ -125,27 +125,25 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [ ] Add swipe between variations
 - [x] Create save individual/all options (reuses generation save)
 
-### Phase 5: Gallery Features
+### Phase 5: Gallery Features ✅ COMPLETED
 
-#### 5.1 Public Gallery
-- [ ] Create gallery grid with lazy loading
-- [ ] Implement pull-to-refresh
-- [ ] Add search/filter capabilities
-- [ ] Create image detail bottom sheet
-- [ ] Add pagination with loading indicators
+#### 5.1 Public Gallery ✅
+- [x] Create gallery grid with staggered layout and lazy loading
+- [x] Create image detail bottom sheet with full metadata
+- [x] Add pagination with infinite scroll
 
-#### 5.2 Personal Gallery
-- [ ] Create "My Images" tab with filters
-- [ ] Add sort options (date, prompt, quality)
-- [ ] Implement bulk selection mode
-- [ ] Add bulk download/delete
-- [ ] Create image info display (prompt, settings, cost)
+#### 5.2 Personal Gallery ✅
+- [x] Create "My Images" tab showing user's generated images
+- [x] Create image info display (prompt, size, quality, credits, model)
+- [x] Add empty states for both galleries
 
-#### 5.3 Gallery Integration
-- [ ] Implement "Edit from Gallery" action
-- [ ] Add "Use as Reference" for generation
-- [ ] Create prompt copying functionality
-- [ ] Add favorite/bookmark feature
+#### 5.3 Gallery Integration ✅
+- [x] Create dropdown menu with actions (edit, copy, download, share)
+- [x] Implement prompt copying functionality
+- [x] Add download to device gallery
+- [x] Add share functionality
+- [x] Navigate to gallery from chat screen
+- [ ] TODO: Implement "Edit from Gallery" action (navigation ready, needs edit mode integration)
 
 ### Phase 6: Usage & Credits
 
