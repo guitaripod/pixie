@@ -33,3 +33,4 @@ The CLI app is a standalone product, but we also use it to validate the backend 
 - **Database migrations**: Tables have foreign keys - order matters.
 - **No warnings**: There should be no compiler warnings.
 - **No code comments**: Don't add code comments until specifically asked for, such as interface documentation.
+- **CLI is the source of truth**: All client code must consider the CLI as the source of truth.
