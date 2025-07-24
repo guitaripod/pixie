@@ -22,6 +22,8 @@ import com.guitaripod.pixie.data.repository.PreferencesRepository
 import com.guitaripod.pixie.data.repository.PreferencesRepositoryImpl
 import com.guitaripod.pixie.data.repository.GalleryRepository
 import com.guitaripod.pixie.data.repository.CreditsRepository
+import com.guitaripod.pixie.data.purchases.RevenueCatManager
+import com.guitaripod.pixie.data.purchases.CreditPurchaseManager
 import com.guitaripod.pixie.utils.ImageSaver
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -107,7 +109,7 @@ class AppContainer(private val context: Context) {
         OAuthWebFlowManager(context, pixieApiService, configManager, networkCallAdapter)
     }
         val authRepository: AuthRepository by lazy {
-        AuthRepositoryImpl(gitHubOAuthManager, googleSignInManager, oAuthWebFlowManager, preferencesRepository)
+        AuthRepositoryImpl(gitHubOAuthManager, googleSignInManager, oAuthWebFlowManager, preferencesRepository, revenueCatManager)
     }
         val imageRepository: ImageRepository by lazy {
         ImageRepository(pixieApiService, context)
@@ -123,6 +125,14 @@ class AppContainer(private val context: Context) {
     
     val imageSaver: ImageSaver by lazy {
         ImageSaver(context)
+    }
+    
+    val revenueCatManager: RevenueCatManager by lazy {
+        RevenueCatManager(context.applicationContext as android.app.Application)
+    }
+    
+    val creditPurchaseManager: CreditPurchaseManager by lazy {
+        CreditPurchaseManager(revenueCatManager, pixieApiService, creditsRepository)
     }
         val dataStore: DataStore<Preferences> by lazy {
         context.dataStore
