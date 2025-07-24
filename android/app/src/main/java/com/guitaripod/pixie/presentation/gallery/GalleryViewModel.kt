@@ -133,26 +133,40 @@ class GalleryViewModel(
                 
                 response.fold(
                     onSuccess = { galleryResponse ->
+                        // Create deduplicated image list for UI state
                         val newImages = if (isLoadMore) {
-                            currentState.images + galleryResponse.images
+                            // When loading more, we need to ensure no duplicates in the final list
+                            val existingIds = currentState.images.map { it.id }.toSet()
+                            val newUniqueImages = galleryResponse.images.filter { it.id !in existingIds }
+                            currentState.images + newUniqueImages
                         } else {
                             galleryResponse.images
                         }
                         
-                        // Update cache
+                        // Update cache with deduplication
                         when (currentState.galleryType) {
                             GalleryType.PUBLIC -> {
                                 if (!isLoadMore) {
                                     cachedPublicImages.clear()
+                                    cachedPublicImages.addAll(galleryResponse.images)
+                                } else {
+                                    // Only add new images that aren't already in the cache
+                                    val existingIds = cachedPublicImages.map { it.id }.toSet()
+                                    val newImagesToCache = galleryResponse.images.filter { it.id !in existingIds }
+                                    cachedPublicImages.addAll(newImagesToCache)
                                 }
-                                cachedPublicImages.addAll(galleryResponse.images)
                                 hasLoadedPublic = true
                             }
                             GalleryType.PERSONAL -> {
                                 if (!isLoadMore) {
                                     cachedPersonalImages.clear()
+                                    cachedPersonalImages.addAll(galleryResponse.images)
+                                } else {
+                                    // Only add new images that aren't already in the cache
+                                    val existingIds = cachedPersonalImages.map { it.id }.toSet()
+                                    val newImagesToCache = galleryResponse.images.filter { it.id !in existingIds }
+                                    cachedPersonalImages.addAll(newImagesToCache)
                                 }
-                                cachedPersonalImages.addAll(galleryResponse.images)
                                 hasLoadedPersonal = true
                             }
                         }
