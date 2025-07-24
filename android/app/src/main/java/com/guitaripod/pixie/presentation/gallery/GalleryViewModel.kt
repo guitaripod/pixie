@@ -44,7 +44,7 @@ class GalleryViewModel(
     private var hasLoadedPersonal = false
     
     // Intelligent paging configuration
-    private val MAX_PAGES_TO_LOAD = 5 // Load maximum 5 pages (100 images) per gallery type
+    private val MAX_PAGES_PUBLIC = 5 // Load maximum 5 pages (100 images) for public gallery
     private var publicPagesLoaded = 0
     private var personalPagesLoaded = 0
     private var publicHasReachedEnd = false
@@ -75,11 +75,16 @@ class GalleryViewModel(
                 GalleryType.PERSONAL -> personalHasReachedEnd
             }
             
+            val hasMore = when (type) {
+                GalleryType.PUBLIC -> !hasReachedEnd && pagesLoaded < MAX_PAGES_PUBLIC
+                GalleryType.PERSONAL -> !hasReachedEnd // No limit for personal gallery
+            }
+            
             _uiState.update { it.copy(
                 galleryType = type,
                 images = deduplicatedImages,
                 currentPage = if (deduplicatedImages.isNotEmpty()) (deduplicatedImages.size / 20) else 0,
-                hasMore = !hasReachedEnd && pagesLoaded < MAX_PAGES_TO_LOAD,
+                hasMore = hasMore,
                 error = null,
                 hasLoadedInitialData = deduplicatedImages.isNotEmpty(),
                 totalPagesLoaded = pagesLoaded,
@@ -131,9 +136,14 @@ class GalleryViewModel(
         }
         
         // Check if we should load more based on intelligent paging
+        val shouldLoadMore = when (currentState.galleryType) {
+            GalleryType.PUBLIC -> pagesLoaded < MAX_PAGES_PUBLIC
+            GalleryType.PERSONAL -> true // No limit for personal gallery
+        }
+        
         if (!currentState.isLoading && 
             currentState.hasMore && 
-            pagesLoaded < MAX_PAGES_TO_LOAD &&
+            shouldLoadMore &&
             !currentState.hasReachedEnd) {
             loadImages(isLoadMore = true)
         }
@@ -224,11 +234,16 @@ class GalleryViewModel(
                             GalleryType.PERSONAL -> personalPagesLoaded
                         }
                         
+                        val hasMore = when (currentState.galleryType) {
+                            GalleryType.PUBLIC -> !hasReachedEndOfData && currentPagesLoaded < MAX_PAGES_PUBLIC
+                            GalleryType.PERSONAL -> !hasReachedEndOfData // No limit for personal gallery
+                        }
+                        
                         _uiState.update { it.copy(
                             images = newImages,
                             isLoading = false,
                             currentPage = page,
-                            hasMore = !hasReachedEndOfData && currentPagesLoaded < MAX_PAGES_TO_LOAD,
+                            hasMore = hasMore,
                             hasLoadedInitialData = true,
                             lastRefreshTime = if (!isLoadMore) System.currentTimeMillis() else it.lastRefreshTime,
                             totalPagesLoaded = currentPagesLoaded,
