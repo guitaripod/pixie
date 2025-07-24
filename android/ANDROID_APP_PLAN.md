@@ -162,7 +162,7 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [x] Create cost estimator tool
 - [x] Add low balance notifications
 
-#### 6.3 Credit Purchase ✅
+#### 6.3 Credit Purchase (Partially Complete)
 - [x] Integrate RevenueCat SDK for in-app purchases
 - [x] Configure RevenueCat offerings and products
 - [x] Create pack selection UI with benefits
@@ -173,10 +173,15 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [x] Create unified cross-platform validation endpoint for iOS/Android
 - [x] Implement proper server-side RevenueCat validation with fallback
 
-**Note**: RevenueCat integration complete but requires Google Play Console setup:
-- Payment profile must be verified
-- App must be published to internal testing track
-- Products will then be fetchable from Play Store
+**Remaining tasks (pending Play Console verification):**
+- [ ] Upload signed AAB to Google Play Console internal testing track
+- [ ] Verify products are fetchable from Play Store
+- [ ] Test complete purchase flow end-to-end with real payment
+- [ ] Test purchase restoration across app reinstalls
+- [ ] Verify credits sync correctly with CLI using same account
+- [ ] Test error handling for declined payments
+- [ ] Verify RevenueCat webhooks are working correctly
+- [ ] Test purchases on different Android versions (API 24+)
 
 ### Phase 7: Admin Features
 
