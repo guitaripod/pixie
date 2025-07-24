@@ -90,8 +90,16 @@ interface PixieApiService {
         @Path("image_id") imageId: String
     ): Response<Unit>
     
+    @GET("/v1/credits/balance")
+    suspend fun getCreditBalance(): Response<CreditBalance>
+    
     @GET("/v1/me/credits")
     suspend fun getCredits(): Response<CreditsResponse>
+    
+    @GET("/v1/credits/transactions")
+    suspend fun getCreditTransactions(
+        @Query("limit") limit: Int? = null
+    ): Response<CreditHistoryResponse>
     
     @GET("/v1/me/credits/history")
     suspend fun getCreditHistory(

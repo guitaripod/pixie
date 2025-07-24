@@ -3,8 +3,6 @@ package com.guitaripod.pixie.data.api.model
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
-// Usage Models
-
 @JsonClass(generateAdapter = true)
 data class UsageResponse(
     @Json(name = "user_id") val userId: String,
@@ -36,8 +34,6 @@ data class DailyUsage(
     @Json(name = "credits") val credits: Int,
     @Json(name = "images") val images: Int
 )
-
-// Admin Models
 
 @JsonClass(generateAdapter = true)
 data class AdminStatsResponse(
