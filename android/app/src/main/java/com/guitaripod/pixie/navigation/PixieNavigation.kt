@@ -4,6 +4,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.activity.compose.BackHandler
 import com.guitaripod.pixie.data.model.Config
 import com.guitaripod.pixie.di.AppContainer
 import com.guitaripod.pixie.presentation.auth.AuthScreen
@@ -40,17 +41,36 @@ fun PixieNavigation(
         factory = AuthViewModelFactory(appContainer.authRepository)
     )
     
-    var currentScreen by remember { 
-        mutableStateOf<Screen>(
+    var navigationStack by remember { 
+        mutableStateOf(listOf(
             if (authViewModel.isAuthenticated()) Screen.Chat() else Screen.Auth
-        )
+        ))
+    }
+    
+    val currentScreen = navigationStack.lastOrNull() ?: Screen.Auth
+    
+    fun navigateTo(screen: Screen) {
+        navigationStack = navigationStack + screen
+    }
+    
+    fun navigateBack(): Boolean {
+        return if (navigationStack.size > 1) {
+            navigationStack = navigationStack.dropLast(1)
+            true
+        } else {
+            false
+        }
+    }
+    
+    BackHandler(enabled = navigationStack.size > 1) {
+        navigateBack()
     }
     
     when (currentScreen) {
         is Screen.Auth -> {
             AuthScreen(
                 authViewModel = authViewModel,
-                onAuthSuccess = { currentScreen = Screen.Chat() },
+                onAuthSuccess = { navigateTo(Screen.Chat()) },
                 modifier = modifier
             )
         }
@@ -66,13 +86,13 @@ fun PixieNavigation(
                 initialEditImage = chatScreen.editImage,
                 onLogout = {
                     authViewModel.logout()
-                    currentScreen = Screen.Auth
+                    navigationStack = listOf(Screen.Auth)
                 },
                 onNavigateToGallery = {
-                    currentScreen = Screen.Gallery
+                    navigateTo(Screen.Gallery)
                 },
                 onNavigateToCredits = {
-                    currentScreen = Screen.CreditsMain
+                    navigateTo(Screen.CreditsMain)
                 },
                 modifier = modifier
             )
@@ -93,7 +113,7 @@ fun PixieNavigation(
             GalleryScreen(
                 viewModel = galleryViewModel,
                 onNavigateToChat = {
-                    currentScreen = Screen.Chat()
+                    navigateBack()
                 },
                 onImageClick = { image ->
                     selectedImage = image
@@ -101,7 +121,7 @@ fun PixieNavigation(
                 onImageAction = { image, action ->
                     when (action) {
                         ImageAction.USE_FOR_EDIT -> {
-                            currentScreen = Screen.Chat(editImage = image)
+                            navigateTo(Screen.Chat(editImage = image))
                         }
                         else -> {
                             galleryViewModel.handleImageAction(image, action)
@@ -118,7 +138,7 @@ fun PixieNavigation(
                     onAction = { action ->
                         when (action) {
                             ImageAction.USE_FOR_EDIT -> {
-                                currentScreen = Screen.Chat(editImage = image)
+                                navigateTo(Screen.Chat(editImage = image))
                                 selectedImage = null
                             }
                             else -> {
@@ -138,11 +158,11 @@ fun PixieNavigation(
             
             CreditsMainScreen(
                 viewModel = creditsViewModel,
-                onNavigateBack = { currentScreen = Screen.Chat() },
-                onNavigateToDashboard = { currentScreen = Screen.UsageDashboard },
-                onNavigateToHistory = { currentScreen = Screen.TransactionHistory },
-                onNavigateToPacks = { currentScreen = Screen.CreditPacks },
-                onNavigateToEstimator = { currentScreen = Screen.CostEstimator }
+                onNavigateBack = { navigateBack() },
+                onNavigateToDashboard = { navigateTo(Screen.UsageDashboard) },
+                onNavigateToHistory = { navigateTo(Screen.TransactionHistory) },
+                onNavigateToPacks = { navigateTo(Screen.CreditPacks) },
+                onNavigateToEstimator = { navigateTo(Screen.CostEstimator) }
             )
         }
         
@@ -153,7 +173,7 @@ fun PixieNavigation(
             
             UsageDashboardScreen(
                 viewModel = creditsViewModel,
-                onNavigateBack = { currentScreen = Screen.CreditsMain },
+                onNavigateBack = { navigateBack() },
                 onExportCsv = {
                 }
             )
@@ -166,7 +186,7 @@ fun PixieNavigation(
             
             TransactionHistoryScreen(
                 viewModel = creditsViewModel,
-                onNavigateBack = { currentScreen = Screen.CreditsMain }
+                onNavigateBack = { navigateBack() }
             )
         }
         
@@ -177,7 +197,7 @@ fun PixieNavigation(
             
             CreditPacksScreen(
                 viewModel = creditsViewModel,
-                onNavigateBack = { currentScreen = Screen.CreditsMain },
+                onNavigateBack = { navigateBack() },
                 onPackSelected = { pack ->
                 }
             )
@@ -190,7 +210,7 @@ fun PixieNavigation(
             
             CostEstimatorScreen(
                 viewModel = creditsViewModel,
-                onNavigateBack = { currentScreen = Screen.CreditsMain }
+                onNavigateBack = { navigateBack() }
             )
         }
     }
