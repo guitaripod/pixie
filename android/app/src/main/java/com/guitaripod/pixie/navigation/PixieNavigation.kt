@@ -18,11 +18,17 @@ import com.guitaripod.pixie.presentation.gallery.GalleryViewModelFactory
 import com.guitaripod.pixie.presentation.gallery.ImageDetailBottomSheet
 import com.guitaripod.pixie.presentation.gallery.ImageAction
 import com.guitaripod.pixie.data.api.model.ImageDetails
+import com.guitaripod.pixie.presentation.credits.*
 
 sealed class Screen {
     object Auth : Screen()
     data class Chat(val editImage: ImageDetails? = null) : Screen()
     object Gallery : Screen()
+    object CreditsMain : Screen()
+    object UsageDashboard : Screen()
+    object TransactionHistory : Screen()
+    object CreditPacks : Screen()
+    object CostEstimator : Screen()
 }
 
 @Composable
@@ -65,6 +71,9 @@ fun PixieNavigation(
                 onNavigateToGallery = {
                     currentScreen = Screen.Gallery
                 },
+                onNavigateToCredits = {
+                    currentScreen = Screen.CreditsMain
+                },
                 modifier = modifier
             )
         }
@@ -92,7 +101,6 @@ fun PixieNavigation(
                 onImageAction = { image, action ->
                     when (action) {
                         ImageAction.USE_FOR_EDIT -> {
-                            // Navigate to chat with edit mode
                             currentScreen = Screen.Chat(editImage = image)
                         }
                         else -> {
@@ -110,7 +118,6 @@ fun PixieNavigation(
                     onAction = { action ->
                         when (action) {
                             ImageAction.USE_FOR_EDIT -> {
-                                // Navigate to chat with edit mode
                                 currentScreen = Screen.Chat(editImage = image)
                                 selectedImage = null
                             }
@@ -122,6 +129,69 @@ fun PixieNavigation(
                     }
                 )
             }
+        }
+        
+        is Screen.CreditsMain -> {
+            val creditsViewModel: CreditsViewModel = viewModel(
+                factory = CreditsViewModelFactory(appContainer.creditsRepository)
+            )
+            
+            CreditsMainScreen(
+                viewModel = creditsViewModel,
+                onNavigateBack = { currentScreen = Screen.Chat() },
+                onNavigateToDashboard = { currentScreen = Screen.UsageDashboard },
+                onNavigateToHistory = { currentScreen = Screen.TransactionHistory },
+                onNavigateToPacks = { currentScreen = Screen.CreditPacks },
+                onNavigateToEstimator = { currentScreen = Screen.CostEstimator }
+            )
+        }
+        
+        is Screen.UsageDashboard -> {
+            val creditsViewModel: CreditsViewModel = viewModel(
+                factory = CreditsViewModelFactory(appContainer.creditsRepository)
+            )
+            
+            UsageDashboardScreen(
+                viewModel = creditsViewModel,
+                onNavigateBack = { currentScreen = Screen.CreditsMain },
+                onExportCsv = {
+                }
+            )
+        }
+        
+        is Screen.TransactionHistory -> {
+            val creditsViewModel: CreditsViewModel = viewModel(
+                factory = CreditsViewModelFactory(appContainer.creditsRepository)
+            )
+            
+            TransactionHistoryScreen(
+                viewModel = creditsViewModel,
+                onNavigateBack = { currentScreen = Screen.CreditsMain }
+            )
+        }
+        
+        is Screen.CreditPacks -> {
+            val creditsViewModel: CreditsViewModel = viewModel(
+                factory = CreditsViewModelFactory(appContainer.creditsRepository)
+            )
+            
+            CreditPacksScreen(
+                viewModel = creditsViewModel,
+                onNavigateBack = { currentScreen = Screen.CreditsMain },
+                onPackSelected = { pack ->
+                }
+            )
+        }
+        
+        is Screen.CostEstimator -> {
+            val creditsViewModel: CreditsViewModel = viewModel(
+                factory = CreditsViewModelFactory(appContainer.creditsRepository)
+            )
+            
+            CostEstimatorScreen(
+                viewModel = creditsViewModel,
+                onNavigateBack = { currentScreen = Screen.CreditsMain }
+            )
         }
     }
 }

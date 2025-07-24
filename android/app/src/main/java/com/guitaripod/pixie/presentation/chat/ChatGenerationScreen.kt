@@ -43,6 +43,7 @@ fun ChatGenerationScreen(
     initialEditImage: ImageDetails? = null,
     onLogout: () -> Unit,
     onNavigateToGallery: () -> Unit = {},
+    onNavigateToCredits: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
@@ -156,6 +157,14 @@ fun ChatGenerationScreen(
                         )
                     ) {
                         Text("Gallery")
+                    }
+                    TextButton(
+                        onClick = onNavigateToCredits,
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text("Credits")
                     }
                     TextButton(
                         onClick = onLogout,
