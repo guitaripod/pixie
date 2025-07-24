@@ -143,8 +143,8 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [x] Add download to device gallery
 - [x] Add share functionality
 - [x] Navigate to gallery from chat screen
-- [ ] TODO: Implement caching layer to prevent needless remote database reads.
-- [ ] TODO: Implement "Edit from Gallery" action (navigation ready, needs edit mode integration)
+- [x] Implement caching layer to prevent needless remote database reads.
+- [ ] Implement "Edit from Gallery" action (navigation ready, needs edit mode integration)
 
 ### Phase 6: Usage & Credits
 
