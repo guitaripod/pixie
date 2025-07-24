@@ -49,21 +49,24 @@ class GalleryViewModel(
         if (_uiState.value.galleryType != type) {
             // Check if we have cached data for this gallery type
             val cachedImages = when (type) {
-                GalleryType.PUBLIC -> if (hasLoadedPublic) cachedPublicImages else emptyList()
-                GalleryType.PERSONAL -> if (hasLoadedPersonal) cachedPersonalImages else emptyList()
+                GalleryType.PUBLIC -> if (hasLoadedPublic) cachedPublicImages.toList() else emptyList()
+                GalleryType.PERSONAL -> if (hasLoadedPersonal) cachedPersonalImages.toList() else emptyList()
             }
+            
+            // Ensure cached images are deduplicated (defensive programming)
+            val deduplicatedImages = cachedImages.distinctBy { it.id }
             
             _uiState.update { it.copy(
                 galleryType = type,
-                images = cachedImages,
-                currentPage = if (cachedImages.isNotEmpty()) (cachedImages.size / 20) else 0,
+                images = deduplicatedImages,
+                currentPage = if (deduplicatedImages.isNotEmpty()) (deduplicatedImages.size / 20) else 0,
                 hasMore = true,
                 error = null,
-                hasLoadedInitialData = cachedImages.isNotEmpty()
+                hasLoadedInitialData = deduplicatedImages.isNotEmpty()
             )}
             
             // Only load if we don't have cached data for this gallery type
-            if (cachedImages.isEmpty()) {
+            if (deduplicatedImages.isEmpty()) {
                 loadImages()
             }
         }
