@@ -21,7 +21,9 @@ data class GalleryUiState(
     val currentPage: Int = 0,
     val galleryType: GalleryType = GalleryType.PERSONAL,
     val hasLoadedInitialData: Boolean = false,
-    val lastRefreshTime: Long = 0L
+    val lastRefreshTime: Long = 0L,
+    val totalPagesLoaded: Int = 0,
+    val hasReachedEnd: Boolean = false
 )
 
 class GalleryViewModel(
@@ -41,6 +43,13 @@ class GalleryViewModel(
     private var hasLoadedPublic = false
     private var hasLoadedPersonal = false
     
+    // Intelligent paging configuration
+    private val MAX_PAGES_TO_LOAD = 5 // Load maximum 5 pages (100 images) per gallery type
+    private var publicPagesLoaded = 0
+    private var personalPagesLoaded = 0
+    private var publicHasReachedEnd = false
+    private var personalHasReachedEnd = false
+    
     init {
         // Don't auto-load on init
     }
@@ -56,13 +65,25 @@ class GalleryViewModel(
             // Ensure cached images are deduplicated (defensive programming)
             val deduplicatedImages = cachedImages.distinctBy { it.id }
             
+            val pagesLoaded = when (type) {
+                GalleryType.PUBLIC -> publicPagesLoaded
+                GalleryType.PERSONAL -> personalPagesLoaded
+            }
+            
+            val hasReachedEnd = when (type) {
+                GalleryType.PUBLIC -> publicHasReachedEnd
+                GalleryType.PERSONAL -> personalHasReachedEnd
+            }
+            
             _uiState.update { it.copy(
                 galleryType = type,
                 images = deduplicatedImages,
                 currentPage = if (deduplicatedImages.isNotEmpty()) (deduplicatedImages.size / 20) else 0,
-                hasMore = true,
+                hasMore = !hasReachedEnd && pagesLoaded < MAX_PAGES_TO_LOAD,
                 error = null,
-                hasLoadedInitialData = deduplicatedImages.isNotEmpty()
+                hasLoadedInitialData = deduplicatedImages.isNotEmpty(),
+                totalPagesLoaded = pagesLoaded,
+                hasReachedEnd = hasReachedEnd
             )}
             
             // Only load if we don't have cached data for this gallery type
@@ -78,10 +99,14 @@ class GalleryViewModel(
             GalleryType.PUBLIC -> {
                 cachedPublicImages.clear()
                 hasLoadedPublic = false
+                publicPagesLoaded = 0
+                publicHasReachedEnd = false
             }
             GalleryType.PERSONAL -> {
                 cachedPersonalImages.clear()
                 hasLoadedPersonal = false
+                personalPagesLoaded = 0
+                personalHasReachedEnd = false
             }
         }
         
@@ -91,13 +116,25 @@ class GalleryViewModel(
             hasMore = true,
             error = null,
             hasLoadedInitialData = false,
-            lastRefreshTime = System.currentTimeMillis()
+            lastRefreshTime = System.currentTimeMillis(),
+            totalPagesLoaded = 0,
+            hasReachedEnd = false
         )}
         loadImages()
     }
     
     fun loadMore() {
-        if (!_uiState.value.isLoading && _uiState.value.hasMore) {
+        val currentState = _uiState.value
+        val pagesLoaded = when (currentState.galleryType) {
+            GalleryType.PUBLIC -> publicPagesLoaded
+            GalleryType.PERSONAL -> personalPagesLoaded
+        }
+        
+        // Check if we should load more based on intelligent paging
+        if (!currentState.isLoading && 
+            currentState.hasMore && 
+            pagesLoaded < MAX_PAGES_TO_LOAD &&
+            !currentState.hasReachedEnd) {
             loadImages(isLoadMore = true)
         }
     }
@@ -146,41 +183,56 @@ class GalleryViewModel(
                             galleryResponse.images
                         }
                         
-                        // Update cache with deduplication
+                        val hasReachedEndOfData = galleryResponse.images.size < galleryResponse.perPage
+                        
+                        // Update cache with deduplication and track pages
                         when (currentState.galleryType) {
                             GalleryType.PUBLIC -> {
                                 if (!isLoadMore) {
                                     cachedPublicImages.clear()
                                     cachedPublicImages.addAll(galleryResponse.images)
+                                    publicPagesLoaded = 1
                                 } else {
                                     // Only add new images that aren't already in the cache
                                     val existingIds = cachedPublicImages.map { it.id }.toSet()
                                     val newImagesToCache = galleryResponse.images.filter { it.id !in existingIds }
                                     cachedPublicImages.addAll(newImagesToCache)
+                                    publicPagesLoaded++
                                 }
                                 hasLoadedPublic = true
+                                publicHasReachedEnd = hasReachedEndOfData
                             }
                             GalleryType.PERSONAL -> {
                                 if (!isLoadMore) {
                                     cachedPersonalImages.clear()
                                     cachedPersonalImages.addAll(galleryResponse.images)
+                                    personalPagesLoaded = 1
                                 } else {
                                     // Only add new images that aren't already in the cache
                                     val existingIds = cachedPersonalImages.map { it.id }.toSet()
                                     val newImagesToCache = galleryResponse.images.filter { it.id !in existingIds }
                                     cachedPersonalImages.addAll(newImagesToCache)
+                                    personalPagesLoaded++
                                 }
                                 hasLoadedPersonal = true
+                                personalHasReachedEnd = hasReachedEndOfData
                             }
+                        }
+                        
+                        val currentPagesLoaded = when (currentState.galleryType) {
+                            GalleryType.PUBLIC -> publicPagesLoaded
+                            GalleryType.PERSONAL -> personalPagesLoaded
                         }
                         
                         _uiState.update { it.copy(
                             images = newImages,
                             isLoading = false,
                             currentPage = page,
-                            hasMore = galleryResponse.images.size == galleryResponse.perPage,
+                            hasMore = !hasReachedEndOfData && currentPagesLoaded < MAX_PAGES_TO_LOAD,
                             hasLoadedInitialData = true,
-                            lastRefreshTime = if (!isLoadMore) System.currentTimeMillis() else it.lastRefreshTime
+                            lastRefreshTime = if (!isLoadMore) System.currentTimeMillis() else it.lastRefreshTime,
+                            totalPagesLoaded = currentPagesLoaded,
+                            hasReachedEnd = hasReachedEndOfData
                         )}
                     },
                     onFailure = { exception ->

@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -94,6 +95,7 @@ fun GalleryScreen(
                 }
                 else -> {
                     GalleryGrid(
+                        viewModel = viewModel,
                         images = uiState.images,
                         isLoading = uiState.isLoading,
                         hasMore = uiState.hasMore,
@@ -175,6 +177,7 @@ private fun GalleryTopBar(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun GalleryGrid(
+    viewModel: GalleryViewModel,
     images: List<ImageDetails>,
     isLoading: Boolean,
     hasMore: Boolean,
@@ -185,9 +188,10 @@ private fun GalleryGrid(
     onTabSelected: (Int) -> Unit,
     onRefresh: () -> Unit
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Adaptive(180.dp),
-        contentPadding = PaddingValues(bottom = 8.dp),
+        contentPadding = PaddingValues(8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalItemSpacing = 8.dp,
         modifier = Modifier.fillMaxSize()
@@ -217,9 +221,7 @@ private fun GalleryGrid(
                 image = image,
                 onClick = { onImageClick(image) },
                 onAction = { action -> onImageAction(image, action) },
-                modifier = Modifier
-                    .animateItem()
-                    .padding(horizontal = 8.dp)
+                modifier = Modifier.animateItem()
             )
         }
         
@@ -232,6 +234,44 @@ private fun GalleryGrid(
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
+                }
+            }
+        }
+        
+        // Show message when reaching paging limit
+        if (!isLoading && images.isNotEmpty() && uiState.totalPagesLoaded >= 5 && !uiState.hasReachedEnd) {
+            item(span = StaggeredGridItemSpan.FullLine) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Reached viewing limit (100 images)",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "Refresh to see more recent images",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         }
