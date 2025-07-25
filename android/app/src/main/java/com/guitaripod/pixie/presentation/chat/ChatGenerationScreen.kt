@@ -40,10 +40,11 @@ import android.net.Uri
 @Composable
 fun ChatGenerationScreen(
     viewModel: GenerationViewModel,
+    userPreferences: com.guitaripod.pixie.data.model.UserPreferences,
     initialEditImage: ImageDetails? = null,
-    onLogout: () -> Unit,
     onNavigateToGallery: () -> Unit = {},
     onNavigateToCredits: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
@@ -57,14 +58,43 @@ fun ChatGenerationScreen(
     val isGenerating by viewModel.isGenerating.collectAsState()
     val error by viewModel.error.collectAsState()
     
-    // Generation options state
+    // Generation options state - initialize with user preferences
     var prompt by remember { mutableStateOf("") }
-    var selectedSize by remember { mutableStateOf(ImageSize.AUTO) }
+    var selectedSize by remember(userPreferences) { 
+        mutableStateOf(
+            when (userPreferences.defaultSize) {
+                "square" -> ImageSize.SQUARE
+                "landscape" -> ImageSize.LANDSCAPE
+                "portrait" -> ImageSize.PORTRAIT
+                "auto" -> ImageSize.AUTO
+                else -> ImageSize.AUTO
+            }
+        )
+    }
     var customSize by remember { mutableStateOf("") }
-    var selectedQuality by remember { mutableStateOf(ImageQuality.LOW) }
+    var selectedQuality by remember(userPreferences) { 
+        mutableStateOf(
+            when (userPreferences.defaultQuality) {
+                com.guitaripod.pixie.data.model.DefaultImageQuality.LOW -> ImageQuality.LOW
+                com.guitaripod.pixie.data.model.DefaultImageQuality.MEDIUM -> ImageQuality.MEDIUM
+                com.guitaripod.pixie.data.model.DefaultImageQuality.HIGH -> ImageQuality.HIGH
+                com.guitaripod.pixie.data.model.DefaultImageQuality.AUTO -> ImageQuality.AUTO
+            }
+        )
+    }
     var selectedBackground by remember { mutableStateOf<BackgroundStyle?>(null) }
-    var selectedFormat by remember { mutableStateOf<OutputFormat?>(null) }
-    var compressionLevel by remember { mutableIntStateOf(85) }
+    var selectedFormat by remember(userPreferences) { 
+        mutableStateOf<OutputFormat?>(
+            when (userPreferences.defaultOutputFormat) {
+                com.guitaripod.pixie.data.model.DefaultOutputFormat.PNG -> OutputFormat.PNG
+                com.guitaripod.pixie.data.model.DefaultOutputFormat.JPEG -> OutputFormat.JPEG
+                com.guitaripod.pixie.data.model.DefaultOutputFormat.WEBP -> OutputFormat.WEBP
+            }
+        )
+    }
+    var compressionLevel by remember(userPreferences) { 
+        mutableIntStateOf(userPreferences.defaultCompressionLevel) 
+    }
     var selectedModeration by remember { mutableStateOf<ModerationLevel?>(null) }
     
     // Edit-specific state
@@ -166,19 +196,14 @@ fun ChatGenerationScreen(
                     ) {
                         Text("Credits")
                     }
-                    TextButton(
-                        onClick = onLogout,
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    IconButton(
+                        onClick = onNavigateToSettings
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                            contentDescription = "Logout",
-                            modifier = Modifier.size(20.dp)
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Logout")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
