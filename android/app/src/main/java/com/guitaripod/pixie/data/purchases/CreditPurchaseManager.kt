@@ -90,7 +90,7 @@ class CreditPurchaseManager @Inject constructor(
                                 purchaseId = validationResponse.purchaseId,
                                 credits = validationResponse.creditsAdded,
                                 newBalance = validationResponse.newBalance,
-                                amountUsd = "$%.2f".format(validationResponse.creditsAdded * 0.01)
+                                amountUsd = ""
                             )
                         )
                     } else {
