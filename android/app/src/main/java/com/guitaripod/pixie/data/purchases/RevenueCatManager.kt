@@ -33,11 +33,10 @@ class RevenueCatManager @Inject constructor(
     }
     
     private fun setupRevenueCat() {
-        Purchases.debugLogsEnabled = BuildConfig.DEBUG
+        Purchases.logLevel = if (BuildConfig.DEBUG) LogLevel.DEBUG else LogLevel.INFO
         
         Purchases.configure(
             PurchasesConfiguration.Builder(application, REVENUECAT_API_KEY)
-                .observerMode(false)
                 .build()
         )
         
