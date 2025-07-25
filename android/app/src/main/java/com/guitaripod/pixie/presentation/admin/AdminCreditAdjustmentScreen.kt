@@ -1,5 +1,6 @@
 package com.guitaripod.pixie.presentation.admin
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -132,16 +133,17 @@ private fun UserSearchStep(
     ) {
         Text(
             text = "Search for User",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
         )
         
         Spacer(modifier = Modifier.height(8.dp))
         
         Text(
             text = "Enter a user ID or email to search",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
         )
         
         Spacer(modifier = Modifier.height(16.dp))
@@ -176,11 +178,63 @@ private fun UserSearchStep(
                 }
             }
             error != null -> {
-                ErrorMessage(
-                    error = error,
-                    onRetry = onRetry,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    ErrorMessage(
+                        error = error,
+                        onRetry = onRetry,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    // Allow manual entry when search is unavailable
+                    if (error.contains("not available", ignoreCase = true)) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+                            ),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f))
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp)
+                            ) {
+                                Text(
+                                    text = "Manual Entry",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "If you know the user ID, you can proceed by entering it exactly as shown in the system.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Button(
+                                    onClick = {
+                                        if (searchQuery.isNotBlank()) {
+                                            onUserSelected(UserSearchResult(
+                                                id = searchQuery,
+                                                email = null,
+                                                isAdmin = false,
+                                                credits = 0,
+                                                createdAt = ""
+                                            ))
+                                        }
+                                    },
+                                    enabled = searchQuery.isNotBlank(),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Continue with User ID: $searchQuery")
+                                }
+                            }
+                        }
+                    }
+                }
             }
             searchResults.isNotEmpty() -> {
                 LazyColumn(
@@ -207,7 +261,12 @@ private fun UserCard(
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
             modifier = Modifier
@@ -220,7 +279,8 @@ private fun UserCard(
                 Text(
                     text = user.email ?: "No email",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "ID: ${user.id}",
@@ -240,6 +300,7 @@ private fun UserCard(
                 Text(
                     text = "${user.credits} credits",
                     style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Icon(
@@ -277,42 +338,56 @@ private fun AdjustmentFormStep(
     ) {
         Text(
             text = "Adjust Credits",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
         )
         
         Spacer(modifier = Modifier.height(16.dp))
         
         Card(
             modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            )
+                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+            ),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
                     text = "User Details",
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Medium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = selectedUser.email ?: "No email",
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                if (selectedUser.email != null) {
+                    Text(
+                        text = selectedUser.email,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
                 Text(
                     text = "ID: ${selectedUser.id}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Text(
-                    text = "Current balance: ${selectedUser.credits} credits",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                if (selectedUser.credits > 0 || selectedUser.email != null) {
+                    Text(
+                        text = "Current balance: ${selectedUser.credits} credits",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                } else {
+                    Text(
+                        text = "Balance information not available",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                    )
+                }
             }
         }
         
@@ -362,24 +437,34 @@ private fun AdjustmentFormStep(
         
         // Preview new balance
         val amountInt = amount.toIntOrNull() ?: 0
-        val newBalance = selectedUser.credits + amountInt
+        val hasKnownBalance = selectedUser.credits > 0 || selectedUser.email != null
+        val newBalance = if (hasKnownBalance) selectedUser.credits + amountInt else amountInt
         if (amount.isNotBlank() && amountInt != 0) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (newBalance >= 0) 
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                        MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
                     else 
-                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                ),
+                border = BorderStroke(
+                    1.dp, 
+                    if (newBalance >= 0) MaterialTheme.colorScheme.tertiary.copy(alpha = 0.3f)
+                    else MaterialTheme.colorScheme.error.copy(alpha = 0.3f)
                 )
             ) {
                 Text(
-                    text = "New balance: $newBalance credits",
+                    text = if (hasKnownBalance) 
+                        "New balance: $newBalance credits"
+                    else 
+                        "Adjustment: ${if (amountInt >= 0) "+" else ""}$amountInt credits",
                     modifier = Modifier.padding(16.dp),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
                     color = if (newBalance >= 0) 
-                        MaterialTheme.colorScheme.onPrimaryContainer
+                        MaterialTheme.colorScheme.onTertiaryContainer
                     else 
                         MaterialTheme.colorScheme.onErrorContainer
                 )
@@ -523,9 +608,11 @@ private fun ErrorMessage(
 ) {
     Card(
         modifier = modifier,
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        )
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
