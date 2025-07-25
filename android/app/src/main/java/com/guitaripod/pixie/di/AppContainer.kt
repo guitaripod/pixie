@@ -25,6 +25,7 @@ import com.guitaripod.pixie.data.repository.CreditsRepository
 import com.guitaripod.pixie.data.purchases.RevenueCatManager
 import com.guitaripod.pixie.data.purchases.CreditPurchaseManager
 import com.guitaripod.pixie.utils.ImageSaver
+import com.guitaripod.pixie.utils.CacheManager
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.CoroutineDispatcher
@@ -133,6 +134,10 @@ class AppContainer(private val context: Context) {
     
     val creditPurchaseManager: CreditPurchaseManager by lazy {
         CreditPurchaseManager(revenueCatManager, pixieApiService, creditsRepository)
+    }
+    
+    val cacheManager: CacheManager by lazy {
+        CacheManager(context)
     }
         val dataStore: DataStore<Preferences> by lazy {
         context.dataStore
