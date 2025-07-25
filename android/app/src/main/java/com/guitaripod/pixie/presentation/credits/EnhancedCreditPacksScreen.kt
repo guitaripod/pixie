@@ -215,11 +215,6 @@ fun EnhancedCurrentBalanceCard(
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
-            Text(
-                text = "≈ $%.2f".format((balance?.balance ?: 0) * 0.01),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
         }
     }
 }
@@ -295,13 +290,6 @@ fun RevenueCatCreditPackCard(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
-                    if (pack.savingsPercent > 0) {
-                        Text(
-                            text = "Save ${pack.savingsPercent}%",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.tertiary
-                        )
-                    }
                 }
             }
             
@@ -338,21 +326,6 @@ fun RevenueCatCreditPackCard(
                     }
                 }
                 
-                if (pack.savingsPercent > 0) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.tertiaryContainer)
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "Save ${pack.savings}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
             }
             
             if (pack.description.isNotEmpty()) {
@@ -487,8 +460,7 @@ fun InfoCard(
                 color = MaterialTheme.colorScheme.onSecondaryContainer
             )
             Text(
-                text = "• 1 credit = $0.01 USD\n" +
-                      "• Low quality (1024x1024): 4 credits\n" +
+                text = "• Low quality (1024x1024): 4 credits\n" +
                       "• Medium quality (1024x1024): 16 credits\n" +
                       "• High quality (1024x1024): 62 credits\n" +
                       "• Larger sizes cost more credits\n" +
