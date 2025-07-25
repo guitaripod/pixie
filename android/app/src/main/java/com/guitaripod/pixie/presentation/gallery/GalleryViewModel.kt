@@ -266,6 +266,10 @@ class GalleryViewModel(
         }
     }
     
+    fun hasPersonalData(): Boolean = hasLoadedPersonal && cachedPersonalImages.isNotEmpty()
+    
+    fun hasPublicData(): Boolean = hasLoadedPublic && cachedPublicImages.isNotEmpty()
+    
     fun handleImageAction(image: ImageDetails, action: ImageAction) {
         when (action) {
             ImageAction.USE_FOR_EDIT -> {
