@@ -22,6 +22,8 @@ import com.guitaripod.pixie.data.repository.PreferencesRepository
 import com.guitaripod.pixie.data.repository.PreferencesRepositoryImpl
 import com.guitaripod.pixie.data.repository.GalleryRepository
 import com.guitaripod.pixie.data.repository.CreditsRepository
+import com.guitaripod.pixie.data.repository.AdminRepository
+import com.guitaripod.pixie.data.repository.AdminRepositoryImpl
 import com.guitaripod.pixie.data.purchases.RevenueCatManager
 import com.guitaripod.pixie.data.purchases.CreditPurchaseManager
 import com.guitaripod.pixie.utils.ImageSaver
@@ -122,6 +124,10 @@ class AppContainer(private val context: Context) {
     
     val creditsRepository: CreditsRepository by lazy {
         CreditsRepository(pixieApiService)
+    }
+    
+    val adminRepository: AdminRepository by lazy {
+        AdminRepositoryImpl(pixieApiService, preferencesRepository)
     }
     
     val imageSaver: ImageSaver by lazy {
