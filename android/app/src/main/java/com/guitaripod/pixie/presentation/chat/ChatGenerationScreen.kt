@@ -263,8 +263,8 @@ fun ChatGenerationScreen(
                                     }
                                 },
                                 onEditImage = { imageUrl ->
-                                    val prompt = previousUserMessage?.prompt ?: ""
-                                    onEditGeneratedImage(imageUrl, prompt)
+                                    val userPrompt = previousUserMessage?.prompt ?: ""
+                                    onEditGeneratedImage(imageUrl, userPrompt)
                                 }
                             )
                         }
