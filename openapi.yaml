@@ -1099,7 +1099,14 @@ paths:
     get:
       operationId: adminSearchUsers
       summary: Search for users
-      description: Search for users by ID or email. Returns recent users if no search term provided.
+      description: |
+        Search for users by ID or email. Returns recent users if no search term provided.
+        
+        The search is flexible and forgiving:
+        - Automatically trims whitespace from search terms
+        - Supports partial email matching (e.g., "guitaripod" finds "guitaripod@icloud.com")
+        - Case-insensitive email matching
+        - Exact matches are prioritized in results
       tags: [Admin]
       parameters:
         - name: search
