@@ -10,6 +10,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.*
@@ -64,7 +70,7 @@ fun GalleryScreen(
                 onClick = onNavigateToChat,
                 icon = { 
                     Icon(
-                        Icons.Default.Add, 
+                        Icons.Default.AddAPhoto, 
                         contentDescription = "Generate"
                     ) 
                 },
@@ -160,13 +166,13 @@ private fun GalleryTopBar(
                     selected = selectedTab == 0,
                     onClick = { onTabSelected(0) },
                     text = { Text("My Images") },
-                    icon = { Icon(Icons.Outlined.Person, null) }
+                    icon = { Icon(Icons.Default.Person, null) }
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { onTabSelected(1) },
                     text = { Text("Explore") },
-                    icon = { Icon(Icons.Outlined.Search, null) }
+                    icon = { Icon(Icons.Default.Explore, null) }
                 )
             }
         }
@@ -426,7 +432,7 @@ private fun GalleryImageCard(
                     )
                     DropdownMenuItem(
                         text = { Text("Copy Prompt") },
-                        leadingIcon = { Icon(Icons.Default.Star, null) },
+                        leadingIcon = { Icon(Icons.Default.ContentCopy, null) },
                         onClick = {
                             showMenu = false
                             onAction(ImageAction.COPY_PROMPT)
@@ -434,7 +440,7 @@ private fun GalleryImageCard(
                     )
                     DropdownMenuItem(
                         text = { Text("Download") },
-                        leadingIcon = { Icon(Icons.Default.Add, null) },
+                        leadingIcon = { Icon(Icons.Default.Download, null) },
                         onClick = {
                             showMenu = false
                             onAction(ImageAction.DOWNLOAD)
@@ -520,7 +526,7 @@ private fun EmptyState(
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            imageVector = if (isPersonalGallery) Icons.Default.AccountBox else Icons.Outlined.Search,
+            imageVector = if (isPersonalGallery) Icons.Default.PhotoLibrary else Icons.Default.Explore,
             contentDescription = null,
             modifier = Modifier.size(80.dp),
             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
@@ -552,7 +558,7 @@ private fun EmptyState(
                 onClick = onNavigateToChat,
                 modifier = Modifier.height(48.dp)
             ) {
-                Icon(Icons.Default.Add, null)
+                Icon(Icons.Default.AddAPhoto, null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Generate Your First Image")
             }

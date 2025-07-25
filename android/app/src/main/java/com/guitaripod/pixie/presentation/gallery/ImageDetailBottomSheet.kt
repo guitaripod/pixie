@@ -7,6 +7,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -77,12 +79,12 @@ fun ImageDetailBottomSheet(
                     onClick = { onAction(ImageAction.USE_FOR_EDIT) }
                 )
                 ActionChip(
-                    icon = Icons.Default.Star,
+                    icon = Icons.Default.ContentCopy,
                     label = "Copy",
                     onClick = { onAction(ImageAction.COPY_PROMPT) }
                 )
                 ActionChip(
-                    icon = Icons.Default.Add,
+                    icon = Icons.Default.Download,
                     label = "Save",
                     onClick = { onAction(ImageAction.DOWNLOAD) }
                 )
