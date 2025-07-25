@@ -105,6 +105,20 @@ fun PixieNavigation(
                 onNavigateToSettings = {
                     navigateTo(Screen.Settings)
                 },
+                onEditGeneratedImage = { imageUrl, prompt ->
+                    val tempImageDetails = ImageDetails(
+                        id = "temp_${System.currentTimeMillis()}",
+                        userId = "",
+                        url = imageUrl,
+                        thumbnailUrl = imageUrl,
+                        prompt = prompt,
+                        createdAt = System.currentTimeMillis().toString(),
+                        metadata = null,
+                        isPublic = false,
+                        tags = null
+                    )
+                    navigateTo(Screen.Chat(editImage = tempImageDetails))
+                },
                 modifier = modifier
             )
         }
