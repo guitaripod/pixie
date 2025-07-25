@@ -225,8 +225,9 @@ fun GenerationToolbar(
                         maxLines = 5,
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Sentences,
-                            imeAction = ImeAction.Default
+                            imeAction = ImeAction.None
                         ),
+                        singleLine = false,
                         shape = RoundedCornerShape(16.dp)
                     )
                     
