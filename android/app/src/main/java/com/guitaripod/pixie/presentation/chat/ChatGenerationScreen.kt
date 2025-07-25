@@ -114,8 +114,6 @@ fun ChatGenerationScreen(
                     displayName = "Gallery Image"
                 )
             )
-            // Optionally set the prompt from the image's prompt
-            editOptions = editOptions.copy(prompt = image.prompt)
         }
     }
     
@@ -270,8 +268,7 @@ fun ChatGenerationScreen(
                                     }
                                 },
                                 onEditImage = { imageUrl ->
-                                    val userPrompt = previousUserMessage?.prompt ?: ""
-                                    onEditGeneratedImage(imageUrl, userPrompt)
+                                    onEditGeneratedImage(imageUrl, "")
                                 }
                             )
                         }
