@@ -173,9 +173,9 @@ private fun FeaturesContent() {
             title = "Credits System",
             content = """
                 **Understanding Credits:**
-                • 1 credit = $0.01 USD
                 • Credits never expire
                 • Shared across all platforms
+                • Used for image generation and editing
                 
                 **Usage Tracking:**
                 • View daily/weekly/monthly usage
@@ -192,7 +192,7 @@ private fun FAQContent() {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         FAQItem(
             question = "How do credits work?",
-            answer = "Credits are the currency used to generate and edit images. Each operation costs a different amount based on quality and size. 1 credit equals $0.01 USD."
+            answer = "Credits are the currency used to generate and edit images. Each operation costs a different amount based on quality and size."
         )
         
         FAQItem(
