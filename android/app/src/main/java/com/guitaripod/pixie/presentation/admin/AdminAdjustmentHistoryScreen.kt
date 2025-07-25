@@ -1,5 +1,6 @@
 package com.guitaripod.pixie.presentation.admin
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -136,9 +137,11 @@ private fun AdjustmentHistoryCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
             modifier = Modifier
@@ -153,13 +156,14 @@ private fun AdjustmentHistoryCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "User: ${adjustment.userId}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = "Admin: ${adjustment.adminId}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                     )
                 }
                 
@@ -168,10 +172,10 @@ private fun AdjustmentHistoryCard(
                 ) {
                     Text(
                         text = "${if (adjustment.amount >= 0) "+" else ""}${adjustment.amount}",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
                         color = if (adjustment.amount >= 0) 
-                            MaterialTheme.colorScheme.primary 
+                            MaterialTheme.colorScheme.tertiary 
                         else 
                             MaterialTheme.colorScheme.error
                     )
@@ -205,7 +209,8 @@ private fun AdjustmentHistoryCard(
                 Text(
                     text = "New balance: ${adjustment.newBalance}",
                     style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -220,9 +225,11 @@ private fun ErrorMessage(
 ) {
     Card(
         modifier = modifier,
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        )
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
