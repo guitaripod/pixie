@@ -63,7 +63,12 @@ class PreferencesDataStore(
      */
     suspend fun updateDefaultQuality(quality: ImageQuality) {
         dataStore.edit { preferences ->
-            preferences[KEY_DEFAULT_QUALITY] = quality.name
+            preferences[KEY_DEFAULT_QUALITY] = when(quality) {
+                ImageQuality.LOW -> DefaultImageQuality.LOW.name
+                ImageQuality.MEDIUM -> DefaultImageQuality.MEDIUM.name
+                ImageQuality.HIGH -> DefaultImageQuality.HIGH.name
+                ImageQuality.AUTO -> DefaultImageQuality.AUTO.name
+            }
         }
     }
     
@@ -81,7 +86,11 @@ class PreferencesDataStore(
      */
     suspend fun updateDefaultOutputFormat(format: OutputFormat) {
         dataStore.edit { preferences ->
-            preferences[KEY_DEFAULT_OUTPUT_FORMAT] = format.name
+            preferences[KEY_DEFAULT_OUTPUT_FORMAT] = when(format) {
+                OutputFormat.PNG -> DefaultOutputFormat.PNG.name
+                OutputFormat.JPEG -> DefaultOutputFormat.JPEG.name
+                OutputFormat.WEBP -> DefaultOutputFormat.WEBP.name
+            }
         }
     }
     
