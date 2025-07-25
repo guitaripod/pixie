@@ -217,7 +217,7 @@ private fun FAQContent() {
         
         FAQItem(
             question = "Is my data private?",
-            answer = "Your API keys are stored securely on your device. Images you generate are private unless you explicitly share them to the public gallery."
+            answer = "Your API keys are stored securely on your device. All images you generate are automatically shared to the public gallery. You can save images locally or share them to other apps."
         )
         
         FAQItem(
