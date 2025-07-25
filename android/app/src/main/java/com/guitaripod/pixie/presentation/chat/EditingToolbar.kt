@@ -10,6 +10,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.HighQuality
+import androidx.compose.material.icons.filled.Token
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -184,7 +189,7 @@ private fun CollapsedEditToolbar(
             }
             
             Icon(
-                imageVector = Icons.Default.KeyboardArrowUp,
+                imageVector = Icons.Default.ExpandLess,
                 contentDescription = "Expand",
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -197,7 +202,7 @@ private fun CollapsedEditToolbar(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             EditStatChip(
-                icon = Icons.Default.Star,
+                icon = Icons.Default.HighQuality,
                 label = "${editOptions.quality.displayName} quality"
             )
             EditStatChip(
@@ -205,7 +210,7 @@ private fun CollapsedEditToolbar(
                 label = editOptions.size.displayName
             )
             EditStatChip(
-                icon = Icons.Default.ShoppingCart,
+                icon = Icons.Default.Token,
                 label = "${estimatedCredits.first}-${estimatedCredits.last} credits"
             )
         }
@@ -373,8 +378,8 @@ private fun ExpandedEditToolbar(
                 )
                 Icon(
                     imageVector = if (editToolbarState.showAdvancedOptions)
-                        Icons.Default.KeyboardArrowUp
-                    else Icons.Default.KeyboardArrowDown,
+                        Icons.Default.ExpandLess
+                    else Icons.Default.ExpandMore,
                     contentDescription = null
                 )
             }
@@ -410,7 +415,7 @@ private fun ExpandedEditToolbar(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Create,
+                        imageVector = Icons.Default.AutoAwesome,
                         contentDescription = null,
                         modifier = Modifier.size(22.dp)
                     )
