@@ -20,6 +20,7 @@ import com.guitaripod.pixie.presentation.gallery.ImageDetailBottomSheet
 import com.guitaripod.pixie.presentation.gallery.ImageAction
 import com.guitaripod.pixie.data.api.model.ImageDetails
 import com.guitaripod.pixie.presentation.credits.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 sealed class Screen {
     object Auth : Screen()
@@ -30,6 +31,8 @@ sealed class Screen {
     object TransactionHistory : Screen()
     object CreditPacks : Screen()
     object CostEstimator : Screen()
+    object Settings : Screen()
+    object Help : Screen()
 }
 
 @Composable
@@ -76,23 +79,27 @@ fun PixieNavigation(
         }
         
         is Screen.Chat -> {
-            val chatScreen = currentScreen as Screen.Chat
+            val chatScreen = currentScreen
             val generationViewModel: GenerationViewModel = viewModel(
                 factory = GenerationViewModelFactory(appContainer.imageRepository)
             )
             
+            val userPreferences by appContainer.preferencesDataStore.userPreferencesFlow.collectAsStateWithLifecycle(
+                initialValue = com.guitaripod.pixie.data.model.UserPreferences()
+            )
+            
             ChatGenerationScreen(
                 viewModel = generationViewModel,
+                userPreferences = userPreferences,
                 initialEditImage = chatScreen.editImage,
-                onLogout = {
-                    authViewModel.logout()
-                    navigationStack = listOf(Screen.Auth)
-                },
                 onNavigateToGallery = {
                     navigateTo(Screen.Gallery)
                 },
                 onNavigateToCredits = {
                     navigateTo(Screen.CreditsMain)
+                },
+                onNavigateToSettings = {
+                    navigateTo(Screen.Settings)
                 },
                 modifier = modifier
             )
@@ -213,6 +220,33 @@ fun PixieNavigation(
             
             CostEstimatorScreen(
                 viewModel = creditsViewModel,
+                onNavigateBack = { navigateBack() }
+            )
+        }
+        
+        is Screen.Settings -> {
+            val settingsViewModel: com.guitaripod.pixie.presentation.settings.SettingsViewModel = viewModel(
+                factory = com.guitaripod.pixie.presentation.settings.SettingsViewModelFactory(
+                    appContainer.preferencesRepository,
+                    appContainer.configManager,
+                    appContainer.pixieApiService,
+                    appContainer.cacheManager
+                )
+            )
+            
+            com.guitaripod.pixie.presentation.settings.SettingsScreen(
+                viewModel = settingsViewModel,
+                onNavigateBack = { navigateBack() },
+                onNavigateToHelp = { navigateTo(Screen.Help) },
+                onLogout = {
+                    authViewModel.logout()
+                    navigationStack = listOf(Screen.Auth)
+                }
+            )
+        }
+        
+        is Screen.Help -> {
+            com.guitaripod.pixie.presentation.help.HelpScreen(
                 onNavigateBack = { navigateBack() }
             )
         }
