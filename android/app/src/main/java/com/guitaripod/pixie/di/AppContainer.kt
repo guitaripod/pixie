@@ -145,12 +145,35 @@ class AppContainer(private val context: Context) {
     }
     
     val encryptedPreferences by lazy {
-        EncryptedSharedPreferences.create(
-            context,
-            "pixie_secure_prefs",
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+        try {
+            EncryptedSharedPreferences.create(
+                context,
+                "pixie_secure_prefs",
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Exception) {
+            // If decryption fails, delete the corrupted preferences and recreate
+            context.getSharedPreferences("pixie_secure_prefs", Context.MODE_PRIVATE)
+                .edit()
+                .clear()
+                .commit()
+            
+            // Also clear the keystore preferences used by EncryptedSharedPreferences
+            context.getSharedPreferences("pixie_secure_prefs_preferences_pb", Context.MODE_PRIVATE)
+                .edit()
+                .clear()
+                .commit()
+            
+            // Recreate with fresh encryption
+            EncryptedSharedPreferences.create(
+                context,
+                "pixie_secure_prefs",
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        }
     }
 }
