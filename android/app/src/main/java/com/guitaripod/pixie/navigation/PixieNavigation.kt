@@ -126,6 +126,9 @@ fun PixieNavigation(
                 onNavigateToChat = {
                     navigateBack()
                 },
+                onNavigateBack = {
+                    navigateBack()
+                },
                 onImageClick = { image ->
                     selectedImage = image
                 },
