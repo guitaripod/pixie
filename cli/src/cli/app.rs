@@ -390,9 +390,7 @@ CREDIT COSTS:
   Low quality:    ~4-5 credits per image
   Medium quality: ~12-15 credits per image  
   High quality:   ~50-80 credits per image
-  Edit operation: +3-5 credits for input processing
-
-1 credit = $0.01 USD")]
+  Edit operation: +3-5 credits for input processing")]
     Credits {
         #[command(subcommand)]
         action: Option<CreditsAction>,
