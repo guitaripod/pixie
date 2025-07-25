@@ -5,6 +5,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.staggeredgrid.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -16,7 +18,10 @@ import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,21 +43,24 @@ import com.guitaripod.pixie.data.api.model.ImageDetails
 import com.guitaripod.pixie.utils.formatTimeAgo
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun GalleryScreen(
     viewModel: GalleryViewModel,
     onNavigateToChat: () -> Unit,
     onImageClick: (ImageDetails) -> Unit,
     onImageAction: (ImageDetails, ImageAction) -> Unit,
+    onNavigateBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var selectedTab by remember { mutableIntStateOf(0) }
+    val pagerState = rememberPagerState(pageCount = { 2 })
+    val coroutineScope = rememberCoroutineScope()
     
-    LaunchedEffect(selectedTab) {
+    // Initialize gallery type based on pager state
+    LaunchedEffect(pagerState.currentPage) {
         viewModel.setGalleryType(
-            if (selectedTab == 0) GalleryType.PERSONAL else GalleryType.PUBLIC
+            if (pagerState.currentPage == 0) GalleryType.PERSONAL else GalleryType.PUBLIC
         )
     }
     
@@ -65,6 +73,42 @@ fun GalleryScreen(
     
     Scaffold(
         modifier = modifier,
+        topBar = {
+            // Fixed compact top bar
+            TopAppBar(
+                title = { 
+                    Text(
+                        "Gallery",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    ) 
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.refresh() }) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh"
+                        )
+                    }
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .padding(end = 12.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onNavigateToChat,
@@ -79,206 +123,229 @@ fun GalleryScreen(
             )
         }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when {
-                uiState.isLoading && uiState.images.isEmpty() -> {
-                    LoadingState()
-                }
-                uiState.error != null && uiState.images.isEmpty() -> {
-                    ErrorState(
-                        message = uiState.error ?: "An error occurred",
-                        onRetry = { viewModel.refresh() }
-                    )
-                }
-                uiState.images.isEmpty() -> {
-                    EmptyState(
-                        isPersonalGallery = selectedTab == 0,
-                        onNavigateToChat = onNavigateToChat
-                    )
-                }
-                else -> {
-                    GalleryGrid(
-                        viewModel = viewModel,
-                        images = uiState.images,
-                        isLoading = uiState.isLoading,
-                        hasMore = uiState.hasMore,
-                        onLoadMore = { viewModel.loadMore() },
-                        onImageClick = onImageClick,
-                        onImageAction = onImageAction,
-                        selectedTab = selectedTab,
-                        onTabSelected = { selectedTab = it },
-                        onRefresh = { viewModel.refresh() }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun GalleryTopBar(
-    selectedTab: Int,
-    onTabSelected: (Int) -> Unit,
-    isLoading: Boolean,
-    onRefresh: () -> Unit
-) {
-    Surface(
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 3.dp
-    ) {
-        Column {
-            TopAppBar(
-                title = { 
-                    Text(
-                        "Gallery",
-                        fontWeight = FontWeight.Bold
-                    ) 
-                },
-                actions = {
-                    IconButton(onClick = onRefresh) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh"
-                        )
-                    }
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .padding(horizontal = 16.dp),
-                            strokeWidth = 2.dp
-                        )
-                    }
-                }
-            )
-            
+            // Fixed tabs that don't scroll
             TabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = Color.Transparent,
-                divider = {}
+                selectedTabIndex = pagerState.currentPage,
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                divider = {},
+                modifier = Modifier.height(48.dp)
             ) {
                 Tab(
-                    selected = selectedTab == 0,
-                    onClick = { onTabSelected(0) },
-                    text = { Text("My Images") },
-                    icon = { Icon(Icons.Default.Person, null) }
-                )
+                    selected = pagerState.currentPage == 0,
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(0)
+                        }
+                    },
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Person,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text("My Images", fontSize = 14.sp)
+                    }
+                }
                 Tab(
-                    selected = selectedTab == 1,
-                    onClick = { onTabSelected(1) },
-                    text = { Text("Explore") },
-                    icon = { Icon(Icons.Default.Explore, null) }
+                    selected = pagerState.currentPage == 1,
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(1)
+                        }
+                    },
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Explore,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text("Explore", fontSize = 14.sp)
+                    }
+                }
+            }
+            
+            HorizontalDivider()
+            
+            // Content that transitions
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                val galleryType = if (page == 0) GalleryType.PERSONAL else GalleryType.PUBLIC
+                
+                // Each page maintains its own state
+                GalleryPageContent(
+                    viewModel = viewModel,
+                    galleryType = galleryType,
+                    onImageClick = onImageClick,
+                    onImageAction = onImageAction,
+                    onNavigateToChat = onNavigateToChat
                 )
             }
         }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-private fun GalleryGrid(
+private fun GalleryPageContent(
     viewModel: GalleryViewModel,
-    images: List<ImageDetails>,
-    isLoading: Boolean,
-    hasMore: Boolean,
-    onLoadMore: () -> Unit,
+    galleryType: GalleryType,
     onImageClick: (ImageDetails) -> Unit,
     onImageAction: (ImageDetails, ImageAction) -> Unit,
-    selectedTab: Int,
-    onTabSelected: (Int) -> Unit,
-    onRefresh: () -> Unit
+    onNavigateToChat: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    LazyVerticalStaggeredGrid(
-        columns = StaggeredGridCells.Adaptive(180.dp),
-        contentPadding = PaddingValues(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalItemSpacing = 8.dp,
+    
+    // Only show content relevant to this gallery type
+    val isCurrentGallery = uiState.galleryType == galleryType
+    
+    // Maintain separate state for each gallery page
+    var hasInitialized by remember(galleryType) { mutableStateOf(false) }
+    
+    LaunchedEffect(galleryType) {
+        if (!hasInitialized && isCurrentGallery) {
+            // Check if we need to load data for this gallery type
+            val hasData = when (galleryType) {
+                GalleryType.PERSONAL -> viewModel.hasPersonalData()
+                GalleryType.PUBLIC -> viewModel.hasPublicData()
+            }
+            if (!hasData) {
+                viewModel.setGalleryType(galleryType)
+            }
+            hasInitialized = true
+        }
+    }
+    
+    val pullToRefreshState = rememberPullToRefreshState()
+    
+    PullToRefreshBox(
+        isRefreshing = uiState.isLoading && uiState.images.isNotEmpty(),
+        onRefresh = { viewModel.refresh() },
+        state = pullToRefreshState,
         modifier = Modifier.fillMaxSize()
     ) {
-        // Header that scrolls with content
-        item(span = StaggeredGridItemSpan.FullLine) {
-            GalleryTopBar(
-                selectedTab = selectedTab,
-                onTabSelected = onTabSelected,
-                isLoading = isLoading,
-                onRefresh = onRefresh
-            )
-        }
-        
-        itemsIndexed(
-            items = images,
-            key = { _, image -> image.id }
-        ) { index, image ->
-            // Load more when reaching the end
-            if (index >= images.size - 5 && hasMore && !isLoading) {
-                LaunchedEffect(Unit) {
-                    onLoadMore()
-                }
+        when {
+            !isCurrentGallery -> {
+                // Show loading while switching
+                LoadingState()
             }
-            
-            GalleryImageCard(
-                image = image,
-                onClick = { onImageClick(image) },
-                onAction = { action -> onImageAction(image, action) },
-                modifier = Modifier.animateItem()
-            )
-        }
-        
-        if (isLoading && images.isNotEmpty()) {
-            item(span = StaggeredGridItemSpan.FullLine) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+            uiState.isLoading && uiState.images.isEmpty() -> {
+                LoadingState()
             }
-        }
-        
-        // Show message when reaching paging limit (only for public gallery)
-        if (!isLoading && images.isNotEmpty() && 
-            uiState.galleryType == GalleryType.PUBLIC && 
-            uiState.totalPagesLoaded >= 5 && 
-            !uiState.hasReachedEnd) {
-            item(span = StaggeredGridItemSpan.FullLine) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
+            uiState.error != null && uiState.images.isEmpty() -> {
+                ErrorState(
+                    message = uiState.error ?: "An error occurred",
+                    onRetry = { viewModel.refresh() }
+                )
+            }
+            uiState.images.isEmpty() -> {
+                EmptyState(
+                    isPersonalGallery = galleryType == GalleryType.PERSONAL,
+                    onNavigateToChat = onNavigateToChat
+                )
+            }
+            else -> {
+                LazyVerticalStaggeredGrid(
+                    columns = StaggeredGridCells.Adaptive(180.dp),
+                    contentPadding = PaddingValues(
+                        start = 8.dp,
+                        end = 8.dp,
+                        top = 8.dp,
+                        bottom = 80.dp // Account for FAB
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalItemSpacing = 8.dp,
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                    // Image items
+                    itemsIndexed(
+                        items = uiState.images,
+                        key = { _, image -> image.id }
+                    ) { index, image ->
+                        // Load more when reaching the end
+                        if (index >= uiState.images.size - 5 && uiState.hasMore && !uiState.isLoading) {
+                            LaunchedEffect(Unit) {
+                                viewModel.loadMore()
+                            }
+                        }
+                        
+                        GalleryImageCard(
+                            image = image,
+                            onClick = { onImageClick(image) },
+                            onAction = { action -> onImageAction(image, action) },
+                            modifier = Modifier.animateItem()
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Reached viewing limit (100 images)",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            text = "Refresh to see more recent images",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
-                            textAlign = TextAlign.Center
-                        )
+                    }
+                    
+                    if (uiState.isLoading && uiState.images.isNotEmpty()) {
+                        item(span = StaggeredGridItemSpan.FullLine) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                    }
+                    
+                    // Show message when reaching paging limit (only for public gallery)
+                    if (!uiState.isLoading && uiState.images.isNotEmpty() && 
+                        uiState.galleryType == GalleryType.PUBLIC && 
+                        uiState.totalPagesLoaded >= 5 && 
+                        !uiState.hasReachedEnd) {
+                        item(span = StaggeredGridItemSpan.FullLine) {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                                )
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Info,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Reached viewing limit (100 images)",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Text(
+                                        text = "Refresh to see more recent images",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
