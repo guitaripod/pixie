@@ -44,7 +44,7 @@ class AdminCreditAdjustmentViewModel(
                         _uiState.update { 
                             it.copy(
                                 isLoading = false,
-                                searchResults = result.data ?: emptyList(),
+                                searchResults = result.data,
                                 error = if (result.data.isNullOrEmpty()) "No users found" else null
                             )
                         }
@@ -124,7 +124,7 @@ class AdminCreditAdjustmentViewModel(
                         _uiState.update { it.copy(isLoading = true, error = null) }
                     }
                     is NetworkResult.Success -> {
-                        val newBalance = result.data?.newBalance ?: 0
+                        val newBalance = result.data.newBalance
                         _uiState.update { 
                             it.copy(
                                 isLoading = false,

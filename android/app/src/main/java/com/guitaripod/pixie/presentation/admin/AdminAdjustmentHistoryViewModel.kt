@@ -65,7 +65,7 @@ class AdminAdjustmentHistoryViewModel(
                         _uiState.update { 
                             it.copy(
                                 isLoading = false,
-                                adjustments = result.data?.adjustments ?: emptyList(),
+                                adjustments = result.data.adjustments,
                                 error = null
                             )
                         }

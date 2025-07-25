@@ -26,6 +26,8 @@ fun AdminScreen(
     onNavigateToCreditAdjustment: () -> Unit,
     onNavigateToAdjustmentHistory: () -> Unit
 ) {
+    // ViewModel is used for authentication check in parent navigation
+    val _ = viewModel
     Scaffold(
         topBar = {
             TopAppBar(
