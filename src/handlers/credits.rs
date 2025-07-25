@@ -438,23 +438,41 @@ pub async fn admin_search_users(req: Request, ctx: RouteContext<()>) -> Result<R
     let db = env.d1("DB")?;
     
     let results = if let Some(search_term) = search {
-        if search_term.is_empty() {
+        // Clean up the search term - trim whitespace and normalize
+        let cleaned_search = search_term.trim();
+        if cleaned_search.is_empty() {
             return AppError::BadRequest("Search term cannot be empty".to_string()).to_response();
         }
         
-        // Search by ID or email
+        // Search by ID (exact match with trimmed spaces) or email (flexible matching)
         let query = "
             SELECT u.id, u.email, u.is_admin, u.created_at, 
                    COALESCE(uc.balance, 0) as credits
             FROM users u
             LEFT JOIN user_credits uc ON u.id = uc.user_id
-            WHERE u.id = ?1 OR LOWER(u.email) = LOWER(?1)
-            ORDER BY u.created_at DESC
+            WHERE u.id = ?1 
+               OR LOWER(TRIM(u.email)) = LOWER(TRIM(?1))
+               OR LOWER(u.email) LIKE LOWER(?2)
+               OR LOWER(u.email) LIKE LOWER(?3)
+            ORDER BY 
+                CASE 
+                    WHEN u.id = ?1 OR LOWER(TRIM(u.email)) = LOWER(TRIM(?1)) THEN 0
+                    ELSE 1
+                END,
+                u.created_at DESC
             LIMIT 10
         ";
         
+        // Create variations for flexible email matching
+        let email_prefix = format!("{}%", cleaned_search);
+        let email_contains = format!("%{}%", cleaned_search);
+        
         let stmt = db.prepare(query);
-        stmt.bind(&[search_term.clone().into()])?
+        stmt.bind(&[
+            cleaned_search.into(),
+            email_prefix.into(),
+            email_contains.into()
+        ])?
             .all()
             .await?
     } else {
