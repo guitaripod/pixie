@@ -22,6 +22,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.guitaripod.pixie.data.api.model.*
+import androidx.compose.ui.unit.sp
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,6 +41,10 @@ fun CreditsMainScreen(
     onNavigateToEstimator: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
     
     Scaffold(
         topBar = {
@@ -57,7 +68,8 @@ fun CreditsMainScreen(
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Box(
                     modifier = Modifier
@@ -66,17 +78,18 @@ fun CreditsMainScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     if (uiState.isLoadingBalance) {
-                        CircularProgressIndicator()
+                        BalanceSkeletonLoader()
                     } else if (uiState.balance != null) {
                         val balance = uiState.balance
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text(
-                                text = "💰 Current Balance",
+                                text = "Current Balance",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Medium
                             )
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -84,13 +97,13 @@ fun CreditsMainScreen(
                             ) {
                                 Text(
                                     text = "${balance!!.balance}",
-                                    style = MaterialTheme.typography.headlineLarge,
+                                    style = MaterialTheme.typography.displayMedium,
                                     color = balance.getBalanceColor(),
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
                                     text = "credits",
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = MaterialTheme.typography.titleLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -249,6 +262,59 @@ fun CreditsMainScreen(
 }
 
 @Composable
+fun BalanceSkeletonLoader() {
+    val infiniteTransition = rememberInfiniteTransition(label = "shimmer")
+    val alpha = infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "alpha"
+    )
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .width(120.dp)
+                .height(20.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = alpha.value)
+                )
+        )
+        
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.Bottom
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(100.dp)
+                    .height(40.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = alpha.value)
+                    )
+            )
+            Box(
+                modifier = Modifier
+                    .width(60.dp)
+                    .height(24.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = alpha.value)
+                    )
+            )
+        }
+    }
+}
+
+@Composable
 fun QuickActionCard(
     icon: ImageVector,
     title: String,
@@ -259,23 +325,32 @@ fun QuickActionCard(
     Card(
         onClick = onClick,
         modifier = modifier,
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(32.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
             )
             Text(
                 text = subtitle,
@@ -297,7 +372,9 @@ fun FeatureCard(
     Card(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
             modifier = Modifier
