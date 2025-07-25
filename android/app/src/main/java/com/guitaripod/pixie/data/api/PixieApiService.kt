@@ -8,7 +8,7 @@ import retrofit2.http.*
 interface PixieApiService {
     
     @GET("/")
-    suspend fun healthCheck(): Response<String>
+    suspend fun healthCheck(): Response<okhttp3.ResponseBody>
     
     @GET("/v1/auth/github")
     suspend fun startGithubAuth(
