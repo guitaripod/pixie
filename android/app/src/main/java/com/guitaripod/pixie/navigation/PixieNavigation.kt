@@ -33,6 +33,10 @@ sealed class Screen {
     object CostEstimator : Screen()
     object Settings : Screen()
     object Help : Screen()
+    object Admin : Screen()
+    object AdminStats : Screen()
+    object AdminCreditAdjustment : Screen()
+    object AdminAdjustmentHistory : Screen()
 }
 
 @Composable
@@ -230,7 +234,8 @@ fun PixieNavigation(
                     appContainer.preferencesRepository,
                     appContainer.configManager,
                     appContainer.pixieApiService,
-                    appContainer.cacheManager
+                    appContainer.cacheManager,
+                    appContainer.adminRepository
                 )
             )
             
@@ -238,6 +243,7 @@ fun PixieNavigation(
                 viewModel = settingsViewModel,
                 onNavigateBack = { navigateBack() },
                 onNavigateToHelp = { navigateTo(Screen.Help) },
+                onNavigateToAdmin = { navigateTo(Screen.Admin) },
                 onLogout = {
                     authViewModel.logout()
                     navigationStack = listOf(Screen.Auth)
@@ -247,6 +253,61 @@ fun PixieNavigation(
         
         is Screen.Help -> {
             com.guitaripod.pixie.presentation.help.HelpScreen(
+                onNavigateBack = { navigateBack() }
+            )
+        }
+        
+        is Screen.Admin -> {
+            val adminViewModel: com.guitaripod.pixie.presentation.admin.AdminViewModel = viewModel(
+                factory = com.guitaripod.pixie.presentation.admin.AdminViewModelFactory(
+                    appContainer.adminRepository
+                )
+            )
+            
+            com.guitaripod.pixie.presentation.admin.AdminScreen(
+                viewModel = adminViewModel,
+                onNavigateBack = { navigateBack() },
+                onNavigateToStats = { navigateTo(Screen.AdminStats) },
+                onNavigateToCreditAdjustment = { navigateTo(Screen.AdminCreditAdjustment) },
+                onNavigateToAdjustmentHistory = { navigateTo(Screen.AdminAdjustmentHistory) }
+            )
+        }
+        
+        is Screen.AdminStats -> {
+            val adminStatsViewModel: com.guitaripod.pixie.presentation.admin.AdminStatsViewModel = viewModel(
+                factory = com.guitaripod.pixie.presentation.admin.AdminStatsViewModelFactory(
+                    appContainer.adminRepository
+                )
+            )
+            
+            com.guitaripod.pixie.presentation.admin.AdminStatsScreen(
+                viewModel = adminStatsViewModel,
+                onNavigateBack = { navigateBack() }
+            )
+        }
+        
+        is Screen.AdminCreditAdjustment -> {
+            val adminCreditAdjustmentViewModel: com.guitaripod.pixie.presentation.admin.AdminCreditAdjustmentViewModel = viewModel(
+                factory = com.guitaripod.pixie.presentation.admin.AdminCreditAdjustmentViewModelFactory(
+                    appContainer.adminRepository
+                )
+            )
+            
+            com.guitaripod.pixie.presentation.admin.AdminCreditAdjustmentScreen(
+                viewModel = adminCreditAdjustmentViewModel,
+                onNavigateBack = { navigateBack() }
+            )
+        }
+        
+        is Screen.AdminAdjustmentHistory -> {
+            val adminAdjustmentHistoryViewModel: com.guitaripod.pixie.presentation.admin.AdminAdjustmentHistoryViewModel = viewModel(
+                factory = com.guitaripod.pixie.presentation.admin.AdminAdjustmentHistoryViewModelFactory(
+                    appContainer.adminRepository
+                )
+            )
+            
+            com.guitaripod.pixie.presentation.admin.AdminAdjustmentHistoryScreen(
+                viewModel = adminAdjustmentHistoryViewModel,
                 onNavigateBack = { navigateBack() }
             )
         }
