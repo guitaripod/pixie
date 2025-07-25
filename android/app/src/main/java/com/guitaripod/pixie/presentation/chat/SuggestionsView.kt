@@ -61,6 +61,10 @@ data class StylePreset(
     val gradient: List<Color>
 )
 
+private val ContentHorizontalPadding = 8.dp
+private val SectionSpacing = 24.dp
+private val ItemSpacing = 8.dp
+
 @Composable
 fun SuggestionsView(
     onPromptSelected: (String) -> Unit,
@@ -106,7 +110,7 @@ fun SuggestionsView(
     Column(
         modifier = modifier
             .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        verticalArrangement = Arrangement.spacedBy(SectionSpacing)
     ) {
         EditImageSection(
             recentImages = recentImages,
@@ -145,7 +149,7 @@ fun SuggestionsView(
         
         PromptModifiersSection()
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(ContentHorizontalPadding * 2))
     }
 }
 
@@ -388,17 +392,16 @@ private fun QuickActionsSection(
     ) {
         SectionHeader(
             title = "Quick Actions",
-            subtitle = "Start with popular templates",
-            modifier = Modifier.padding(horizontal = 16.dp)
+            subtitle = "Start with popular templates"
         )
         
         LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
+            contentPadding = PaddingValues(horizontal = ContentHorizontalPadding),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(quickActions.chunked(3)) { columnActions ->
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(ItemSpacing)
                 ) {
                     columnActions.forEach { action ->
                         QuickActionCard(
@@ -465,7 +468,7 @@ private fun EditImageSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = ContentHorizontalPadding),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -481,7 +484,7 @@ private fun EditImageSection(
         
         if (hasPermission && recentImages.isNotEmpty()) {
             LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp),
+                contentPadding = PaddingValues(horizontal = ContentHorizontalPadding),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item {
@@ -673,12 +676,11 @@ private fun CreativePromptsSection(
     ) {
         SectionHeader(
             title = "Creative Prompts",
-            subtitle = "Tap a category, then select a prompt",
-            modifier = Modifier.padding(horizontal = 16.dp)
+            subtitle = "Tap a category, then select a prompt"
         )
         
         LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
+            contentPadding = PaddingValues(horizontal = ContentHorizontalPadding),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             items(categories) { category ->
@@ -691,12 +693,12 @@ private fun CreativePromptsSection(
         }
         
         LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
+            contentPadding = PaddingValues(horizontal = ContentHorizontalPadding),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(selectedCategory.prompts.chunked(2)) { columnPrompts ->
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(ItemSpacing)
                 ) {
                     columnPrompts.forEach { prompt ->
                         CompactPromptCard(
@@ -874,17 +876,16 @@ private fun StylePresetsSection(
     ) {
         SectionHeader(
             title = "Style Presets",
-            subtitle = "Apply to any prompt with ' + style'",
-            modifier = Modifier.padding(horizontal = 16.dp)
+            subtitle = "Apply to any prompt with ' + style'"
         )
         
         LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
+            contentPadding = PaddingValues(horizontal = ContentHorizontalPadding),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(styles.chunked(2)) { columnStyles ->
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(ItemSpacing)
                 ) {
                     columnStyles.forEach { style ->
                         CompactStyleCard(
@@ -923,7 +924,7 @@ private fun CompactStyleCard(
                     .fillMaxSize()
                     .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(ItemSpacing)
             ) {
                 Icon(
                     imageVector = style.icon,
@@ -983,12 +984,11 @@ private fun PromptModifiersSection() {
     ) {
         SectionHeader(
             title = "Prompt Modifiers",
-            subtitle = "Add these to enhance your prompts",
-            modifier = Modifier.padding(horizontal = 16.dp)
+            subtitle = "Add these to enhance your prompts"
         )
         
         LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
+            contentPadding = PaddingValues(horizontal = ContentHorizontalPadding),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             items(categoryNames.size) { index ->
@@ -1007,7 +1007,7 @@ private fun PromptModifiersSection() {
         }
         
         LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
+            contentPadding = PaddingValues(horizontal = ContentHorizontalPadding),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(modifiers[selectedCategory]) { modifier ->
@@ -1038,13 +1038,29 @@ private fun ModifierChip(text: String) {
 }
 
 @Composable
+private fun Section(
+    title: String,
+    subtitle: String? = null,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        SectionHeader(title = title, subtitle = subtitle)
+        content()
+    }
+}
+
+@Composable
 private fun SectionHeader(
     title: String,
     subtitle: String? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier,
+        modifier = modifier.padding(horizontal = ContentHorizontalPadding),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
