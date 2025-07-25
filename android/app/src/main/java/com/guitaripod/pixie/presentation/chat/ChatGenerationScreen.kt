@@ -116,7 +116,6 @@ fun ChatGenerationScreen(
             )
             // Optionally set the prompt from the image's prompt
             editOptions = editOptions.copy(prompt = image.prompt)
-            isToolbarExpanded = true
         }
     }
     
@@ -228,16 +227,24 @@ fun ChatGenerationScreen(
                     start = 16.dp,
                     end = 16.dp,
                     top = 16.dp,
-                    bottom = if (isToolbarExpanded) 620.dp else 100.dp
+                    bottom = if (isToolbarExpanded) 620.dp else 120.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 if (messages.isEmpty()) {
                     item {
-                        RecentImagesRow(
+                        SuggestionsView(
+                            onPromptSelected = { selectedPrompt ->
+                                when (toolbarMode) {
+                                    is ToolbarMode.Generate -> prompt = selectedPrompt
+                                    is ToolbarMode.Edit -> editOptions = editOptions.copy(prompt = selectedPrompt)
+                                }
+                                isToolbarExpanded = true
+                            },
                             onImageSelected = { uri ->
                                 previewImageUri = uri
-                            }
+                            },
+                            isInEditMode = toolbarMode is ToolbarMode.Edit
                         )
                     }
                 }
@@ -413,7 +420,6 @@ fun ChatGenerationScreen(
                             SelectedImage(uri = uri)
                         )
                         previewImageUri = null
-                        editToolbarState = editToolbarState.copy(isExpanded = true)
                     },
                     onDismiss = {
                         previewImageUri = null
