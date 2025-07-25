@@ -402,6 +402,95 @@ pub async fn admin_adjust_credits(mut req: Request, ctx: RouteContext<()>) -> Re
     }))
 }
 
+pub async fn admin_search_users(req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let env = ctx.env;
+    
+    match validate_api_key(&req) {
+        Err(e) => return e.to_response(),
+        Ok(api_key) => {
+            let db = env.d1("DB")?;
+            let stmt = db.prepare("SELECT id, is_admin FROM users WHERE api_key = ?");
+            let result = stmt
+                .bind(&[api_key.clone().into()])?
+                .first::<serde_json::Value>(None)
+                .await?;
+            
+            match result {
+                Some(value) => {
+                    let is_admin = value.get("is_admin")
+                        .and_then(|v| v.as_i64())
+                        .map(|v| v != 0)
+                        .unwrap_or(false);
+                    if !is_admin {
+                        return AppError::Forbidden("Admin access required".to_string()).to_response();
+                    }
+                }
+                None => return AppError::Unauthorized("Invalid API key".to_string()).to_response(),
+            }
+        }
+    }
+    
+    let url = req.url()?;
+    let search = url.query_pairs()
+        .find(|(k, _)| k == "search")
+        .map(|(_, v)| v.to_string());
+    
+    let db = env.d1("DB")?;
+    
+    let results = if let Some(search_term) = search {
+        if search_term.is_empty() {
+            return AppError::BadRequest("Search term cannot be empty".to_string()).to_response();
+        }
+        
+        // Search by ID or email
+        let query = "
+            SELECT u.id, u.email, u.is_admin, u.created_at, 
+                   COALESCE(uc.balance, 0) as credits
+            FROM users u
+            LEFT JOIN user_credits uc ON u.id = uc.user_id
+            WHERE u.id = ?1 OR LOWER(u.email) = LOWER(?1)
+            ORDER BY u.created_at DESC
+            LIMIT 10
+        ";
+        
+        let stmt = db.prepare(query);
+        stmt.bind(&[search_term.clone().into()])?
+            .all()
+            .await?
+    } else {
+        // Return recent users if no search term
+        let query = "
+            SELECT u.id, u.email, u.is_admin, u.created_at, 
+                   COALESCE(uc.balance, 0) as credits
+            FROM users u
+            LEFT JOIN user_credits uc ON u.id = uc.user_id
+            ORDER BY u.created_at DESC
+            LIMIT 10
+        ";
+        
+        let stmt = db.prepare(query);
+        stmt.bind(&[])?
+            .all()
+            .await?
+    };
+    
+    let users: Vec<serde_json::Value> = results
+        .results::<serde_json::Value>()?
+        .into_iter()
+        .map(|user| {
+            json!({
+                "id": user.get("id").and_then(|v| v.as_str()).unwrap_or(""),
+                "email": user.get("email").and_then(|v| v.as_str()),
+                "is_admin": user.get("is_admin").and_then(|v| v.as_i64()).map(|v| v != 0).unwrap_or(false),
+                "credits": user.get("credits").and_then(|v| v.as_i64()).unwrap_or(0),
+                "created_at": user.get("created_at").and_then(|v| v.as_str()).unwrap_or("")
+            })
+        })
+        .collect();
+    
+    Response::from_json(&users)
+}
+
 pub async fn admin_system_stats(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let env = ctx.env;
     

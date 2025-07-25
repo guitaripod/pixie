@@ -81,6 +81,7 @@ OpenAPI Specification: /openapi.yaml"#)
         .post_async("/v1/credits/purchase/revenuecat/validate", handlers::credits::validate_revenuecat_purchase)
         .post_async("/v1/admin/credits/adjust", handlers::credits::admin_adjust_credits)
         .get_async("/v1/admin/credits/stats", handlers::credits::admin_system_stats)
+        .get_async("/v1/admin/users", handlers::credits::admin_search_users)
         .run(req, env)
         .await
 }
