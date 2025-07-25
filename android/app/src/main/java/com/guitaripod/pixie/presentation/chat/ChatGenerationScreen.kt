@@ -46,6 +46,7 @@ fun ChatGenerationScreen(
     onNavigateToGallery: () -> Unit = {},
     onNavigateToCredits: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
+    onEditGeneratedImage: (imageUrl: String, prompt: String) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
@@ -260,6 +261,10 @@ fun ChatGenerationScreen(
                                             duration = SnackbarDuration.Short
                                         )
                                     }
+                                },
+                                onEditImage = { imageUrl ->
+                                    val prompt = previousUserMessage?.prompt ?: ""
+                                    onEditGeneratedImage(imageUrl, prompt)
                                 }
                             )
                         }
@@ -502,7 +507,8 @@ fun DetailRow(label: String, value: String, color: Color) {
 fun ImageResponseBubble(
     message: ChatMessage.ImageResponse,
     quantity: Int = 1,
-    onShowSnackbar: (String) -> Unit
+    onShowSnackbar: (String) -> Unit,
+    onEditImage: ((String) -> Unit)? = null
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -577,7 +583,10 @@ fun ImageResponseBubble(
                         ImageBubble(
                             imageUrl = imageUrl,
                             onSaveSuccess = onShowSnackbar,
-                            onSaveError = onShowSnackbar
+                            onSaveError = onShowSnackbar,
+                            onEdit = if (onEditImage != null) {
+                                { onEditImage(imageUrl) }
+                            } else null
                         )
                     }
                     
