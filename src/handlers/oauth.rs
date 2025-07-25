@@ -47,6 +47,15 @@ struct GitHubUser {
 }
 
 #[derive(Debug, Deserialize)]
+struct GitHubEmail {
+    email: String,
+    primary: bool,
+    verified: bool,
+    #[allow(dead_code)]
+    visibility: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
 struct GoogleAccessTokenResponse {
     access_token: String,
     #[allow(dead_code)]
@@ -161,8 +170,39 @@ pub async fn github_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Re
     
     console_log!("GitHub user response: {}", user_body);
     
-    let github_user: GitHubUser = serde_json::from_str(&user_body)
+    let mut github_user: GitHubUser = serde_json::from_str(&user_body)
         .map_err(|e| AppError::InternalError(format!("Failed to parse GitHub user response: {}", e)))?;
+    
+    // If email is not present in the user response, fetch it from /user/emails
+    if github_user.email.is_none() {
+        let emails_url = "https://api.github.com/user/emails";
+        let emails_headers = worker::Headers::new();
+        emails_headers.set("Authorization", &format!("Bearer {}", token_data.access_token))?;
+        emails_headers.set("Accept", "application/vnd.github.v3+json")?;
+        emails_headers.set("User-Agent", "openai-image-proxy/1.0")?;
+        
+        let emails_req = worker::Request::new_with_init(
+            emails_url,
+            worker::RequestInit::new()
+                .with_method(worker::Method::Get)
+                .with_headers(emails_headers)
+        )?;
+        
+        let mut emails_resp = worker::Fetch::Request(emails_req).send().await?;
+        let emails_body = emails_resp.text().await?;
+        
+        console_log!("GitHub emails response: {}", emails_body);
+        
+        let github_emails: Vec<GitHubEmail> = serde_json::from_str(&emails_body)
+            .map_err(|e| AppError::InternalError(format!("Failed to parse GitHub emails response: {}", e)))?;
+        
+        // Find the primary verified email
+        if let Some(primary_email) = github_emails.iter()
+            .find(|e| e.primary && e.verified)
+            .or_else(|| github_emails.iter().find(|e| e.verified)) {
+            github_user.email = Some(primary_email.email.clone());
+        }
+    }
     
     let db = env.d1("DB")?;
     
