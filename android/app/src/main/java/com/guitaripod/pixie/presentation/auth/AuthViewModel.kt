@@ -35,6 +35,10 @@ class AuthViewModel(
         return authRepository.authenticateManually(apiKey, userId, provider)
     }
     
+    fun authenticateDebug(): Flow<AuthResult> {
+        return authRepository.authenticateDebug()
+    }
+    
     fun isAuthenticated(): Boolean {
         return authRepository.isAuthenticated()
     }
