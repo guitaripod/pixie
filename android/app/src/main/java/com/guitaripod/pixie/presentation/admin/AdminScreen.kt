@@ -27,7 +27,8 @@ fun AdminScreen(
     onNavigateToAdjustmentHistory: () -> Unit
 ) {
     // ViewModel is used for authentication check in parent navigation
-    val _ = viewModel
+    @Suppress("UNUSED_VARIABLE")
+    val viewModelRef = viewModel
     Scaffold(
         topBar = {
             TopAppBar(
