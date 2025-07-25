@@ -7,7 +7,8 @@ data class Config(
     val apiUrl: String? = null,
     val apiKey: String? = null,
     val userId: String? = null,
-    val authProvider: String? = null
+    val authProvider: String? = null,
+    val isAdmin: Boolean = false
 ) {
     /**
      * Check if the user is authenticated
