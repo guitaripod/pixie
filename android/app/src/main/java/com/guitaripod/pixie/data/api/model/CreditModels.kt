@@ -67,35 +67,6 @@ data class CreditPack(
 ) {
     val totalCredits: Int
         get() = credits + bonusCredits
-    
-    val priceUsd: String
-        get() = "$%.2f".format(priceUsdCents / 100.0)
-    
-    val creditValue: String
-        get() = "$%.2f".format(totalCredits * 0.01)
-    
-    val savings: String
-        get() {
-            val regularPrice = totalCredits * 0.01
-            val actualPrice = priceUsdCents / 100.0
-            val savingsAmount = regularPrice - actualPrice
-            return if (savingsAmount > 0) {
-                "$%.2f".format(savingsAmount)
-            } else {
-                "$0.00"
-            }
-        }
-    
-    val savingsPercent: Int
-        get() {
-            val regularPrice = totalCredits * 0.01
-            val actualPrice = priceUsdCents / 100.0
-            return if (regularPrice > 0) {
-                ((regularPrice - actualPrice) / regularPrice * 100).toInt()
-            } else {
-                0
-            }
-        }
 }
 
 @JsonClass(generateAdapter = true)
