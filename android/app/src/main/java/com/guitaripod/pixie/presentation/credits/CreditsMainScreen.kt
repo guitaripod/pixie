@@ -8,6 +8,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Wallet
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.DataUsage
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -106,7 +111,7 @@ fun CreditsMainScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 QuickActionCard(
-                    icon = Icons.Default.ShoppingCart,
+                    icon = Icons.Default.Wallet,
                     title = "Buy Credits",
                     subtitle = "View packs",
                     onClick = onNavigateToPacks,
@@ -114,7 +119,7 @@ fun CreditsMainScreen(
                 )
                 
                 QuickActionCard(
-                    icon = Icons.Default.Info,
+                    icon = Icons.Default.Calculate,
                     title = "Estimate",
                     subtitle = "Calculate cost",
                     onClick = onNavigateToEstimator,
@@ -130,14 +135,14 @@ fun CreditsMainScreen(
             )
             
             FeatureCard(
-                icon = Icons.Default.Info,
+                icon = Icons.Default.DataUsage,
                 title = "Usage Dashboard",
                 description = "View detailed usage statistics and charts",
                 onClick = onNavigateToDashboard
             )
             
             FeatureCard(
-                icon = Icons.Default.DateRange,
+                icon = Icons.Default.History,
                 title = "Transaction History",
                 description = "See all your credit transactions",
                 onClick = onNavigateToHistory
@@ -151,7 +156,7 @@ fun CreditsMainScreen(
             )
             
             FeatureCard(
-                icon = Icons.Default.Info,
+                icon = Icons.Default.Calculate,
                 title = "Cost Estimator",
                 description = "Calculate costs before generating images",
                 onClick = onNavigateToEstimator
@@ -323,7 +328,7 @@ fun FeatureCard(
                 )
             }
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
