@@ -5,13 +5,15 @@ import androidx.lifecycle.ViewModelProvider
 import com.guitaripod.pixie.data.api.PixieApiService
 import com.guitaripod.pixie.data.local.ConfigManager
 import com.guitaripod.pixie.data.repository.PreferencesRepository
+import com.guitaripod.pixie.data.repository.AdminRepository
 import com.guitaripod.pixie.utils.CacheManager
 
 class SettingsViewModelFactory(
     private val preferencesRepository: PreferencesRepository,
     private val configManager: ConfigManager,
     private val apiService: PixieApiService,
-    private val cacheManager: CacheManager
+    private val cacheManager: CacheManager,
+    private val adminRepository: AdminRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -20,7 +22,8 @@ class SettingsViewModelFactory(
                 preferencesRepository,
                 configManager,
                 apiService,
-                cacheManager
+                cacheManager,
+                adminRepository
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

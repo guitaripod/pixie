@@ -7,6 +7,7 @@ import com.guitaripod.pixie.data.local.ConfigManager
 import com.guitaripod.pixie.data.local.PreferencesDataStore
 import com.guitaripod.pixie.data.model.*
 import com.guitaripod.pixie.data.repository.PreferencesRepository
+import com.guitaripod.pixie.data.repository.AdminRepository
 import com.guitaripod.pixie.utils.CacheManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -16,7 +17,8 @@ data class SettingsUiState(
     val userPreferences: UserPreferences = UserPreferences(),
     val apiUrl: String = "https://openai-image-proxy.guitaripod.workers.dev",
     val cacheSize: String = "Calculating...",
-    val connectionStatus: ConnectionStatus = ConnectionStatus.Idle
+    val connectionStatus: ConnectionStatus = ConnectionStatus.Idle,
+    val isAdmin: Boolean = false
 )
 
 sealed class ConnectionStatus {
@@ -30,7 +32,8 @@ class SettingsViewModel(
     private val preferencesRepository: PreferencesRepository,
     private val configManager: ConfigManager,
     private val apiService: PixieApiService,
-    private val cacheManager: CacheManager
+    private val cacheManager: CacheManager,
+    private val adminRepository: AdminRepository
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -48,6 +51,10 @@ class SettingsViewModel(
             // Load API URL
             val apiUrl = configManager.getApiUrl() ?: "https://openai-image-proxy.guitaripod.workers.dev"
             _uiState.update { it.copy(apiUrl = apiUrl) }
+            
+            // Check admin status
+            val isAdmin = adminRepository.checkAdminStatus()
+            _uiState.update { it.copy(isAdmin = isAdmin) }
             
             // Calculate cache size
             updateCacheSize()
