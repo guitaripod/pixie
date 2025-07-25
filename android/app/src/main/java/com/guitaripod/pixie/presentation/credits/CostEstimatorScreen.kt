@@ -153,11 +153,6 @@ fun CurrentBalanceCard(
                     color = balance.getBalanceColor()
                 )
             }
-            Text(
-                text = "≈ $%.2f".format(balance.balance * 0.01),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
         }
     }
 }
@@ -399,11 +394,6 @@ fun EstimationResultCard(
                 fontWeight = FontWeight.Bold
             )
             
-            Text(
-                text = "≈ $%.2f USD".format(totalCredits * 0.01),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
             
             if (estimate.note.isNotEmpty()) {
                 Text(

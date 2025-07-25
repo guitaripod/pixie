@@ -149,11 +149,6 @@ fun CreditBalanceCard(
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                     }
-                    Text(
-                        text = "($%.2f USD)".format(balance.balance * 0.01),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                     
                     when {
                         balance.balance == 0 -> {
