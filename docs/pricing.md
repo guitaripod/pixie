@@ -2,7 +2,7 @@
 
 ## Overview
 
-Our service uses a simple credit-based pricing system where **1 credit = $0.01 USD**. Credits are deducted based on actual token usage from OpenAI's gpt-image-1 model, ensuring fair and transparent pricing.
+Our service uses a simple credit-based pricing system. Credits are deducted based on actual token usage from OpenAI's gpt-image-1 model, ensuring fair and transparent pricing.
 
 ## How Pricing Works
 
@@ -22,12 +22,12 @@ The 3x multiplier covers:
 
 ### Typical Credit Costs
 
-| Quality | Size | Typical Credits | USD Cost | Use Case |
-|---------|------|-----------------|----------|----------|
-| Low | 1024×1024 | 3-5 | $0.03-0.05 | Quick drafts, thumbnails |
-| Medium | 1024×1024 | 12-15 | $0.12-0.15 | Social media, web content |
-| High | 1024×1024 | 50-55 | $0.50-0.55 | Print quality, detailed art |
-| High | 1536×1024 | 75-80 | $0.75-0.80 | Wide format, banners |
+| Quality | Size | Typical Credits | Use Case |
+|---------|------|-----------------|----------|
+| Low | 1024×1024 | 3-5 | Quick drafts, thumbnails |
+| Medium | 1024×1024 | 12-15 | Social media, web content |
+| High | 1024×1024 | 50-55 | Print quality, detailed art |
+| High | 1536×1024 | 75-80 | Wide format, banners |
 
 **Image Editing**: Add 2-5 credits for input image processing
 
@@ -35,13 +35,13 @@ The 3x multiplier covers:
 
 ## Credit Packs
 
-| Pack | Credits | Price | Bonus | Value |
-|------|---------|-------|-------|-------|
-| **Starter** | 150 | $2.99 | - | ~30 low or 11 medium images |
-| **Basic** | 500 | $9.99 | 25 (5%) | ~38 medium images |
-| **Popular** ⭐ | 1,250 | $24.99 | 114 (10%) | ~96 medium images |
-| **Business** | 2,500 | $49.99 | 326 (15%) | ~192 medium images |
-| **Enterprise** | 5,000 | $99.99 | 833 (20%) | ~384 medium images |
+| Pack | Credits | Bonus | Value |
+|------|---------|-------|-------|
+| **Starter** | 150 | - | ~30 low or 11 medium images |
+| **Basic** | 500 | 25 (5%) | ~38 medium images |
+| **Popular** ⭐ | 1,250 | 114 (10%) | ~96 medium images |
+| **Business** | 2,500 | 326 (15%) | ~192 medium images |
+| **Enterprise** | 5,000 | 833 (20%) | ~384 medium images |
 
 
 ## Cost Comparison
@@ -51,18 +51,18 @@ The 3x multiplier covers:
 - **Our Service**: Simple credit system, no setup required, includes storage & CDN
 
 ### vs Subscription Services
-- **ChatGPT Plus**: $20/month with usage limits
-- **Midjourney**: $10-120/month subscription required
+- **ChatGPT Plus**: Monthly subscription with usage limits
+- **Midjourney**: Monthly subscription required
 - **Our Service**: No subscription, pay only for what you use
 
-### Example Monthly Costs
+### Example Monthly Usage
 
-| Usage Level | Images/Month | Estimated Cost |
+| Usage Level | Images/Month | Credits Needed |
 |-------------|--------------|----------------|
-| Casual | 50 medium | ~$10 |
-| Regular | 200 medium | ~$40 |
-| Power User | 500 medium | ~$100 |
-| Business | 1000+ medium | ~$200+ |
+| Casual | 50 medium | ~750 |
+| Regular | 200 medium | ~3,000 |
+| Power User | 500 medium | ~7,500 |
+| Business | 1000+ medium | ~15,000+ |
 
 ## Features Included
 
@@ -118,7 +118,7 @@ POST /v1/credits/purchase
   - Instant credit delivery upon successful payment
   - Secure checkout with 3D Secure authentication
 - **Cryptocurrency** (BTC, ETH, DOGE, LTC) via NOWPayments
-  - **Note**: Due to minimum transaction requirements, crypto payments are only available for Basic pack ($9.99) and above
+  - **Note**: Due to minimum transaction requirements, crypto payments are only available for Basic pack and above
   - QR code provided for easy mobile wallet scanning
   - Automatic confirmation upon blockchain verification
 - No subscription required
@@ -152,8 +152,8 @@ We believe in transparent pricing. Here's how our 3x multiplier breaks down:
 - Service fee: 0.5% (0.4-0.5% for high volume)
 - Exchange fee: 0.5% (if currency conversion needed)
 - Network fees: Variable by blockchain
-  - **BTC, DOGE, LTC**: Typically under $1
-  - **ETH**: High gas fees ($18-100+), may make smaller transactions uneconomical
+  - **BTC, DOGE, LTC**: Low network fees
+  - **ETH**: High gas fees, may make smaller transactions uneconomical
 
 This ensures sustainable service while keeping prices fair for users.
 

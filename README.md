@@ -490,7 +490,7 @@ npx wrangler tail
 
 ## Credits & Billing
 
-The service uses a credit-based pricing system where **1 credit = $0.01 USD**. Credits are deducted based on actual token usage.
+The service uses a credit-based pricing system. Credits are deducted based on actual token usage.
 
 <details>
 <summary><b>Pricing Details</b></summary>
