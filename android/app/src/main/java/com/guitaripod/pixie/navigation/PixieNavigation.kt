@@ -48,6 +48,11 @@ fun PixieNavigation(
         factory = AuthViewModelFactory(appContainer.authRepository)
     )
     
+    // Create GenerationViewModel at the navigation level to preserve state
+    val generationViewModel: GenerationViewModel = viewModel(
+        factory = GenerationViewModelFactory(appContainer.imageRepository)
+    )
+    
     var navigationStack by remember { 
         mutableStateOf(listOf(
             if (authViewModel.isAuthenticated()) Screen.Chat() else Screen.Auth
@@ -84,9 +89,6 @@ fun PixieNavigation(
         
         is Screen.Chat -> {
             val chatScreen = currentScreen
-            val generationViewModel: GenerationViewModel = viewModel(
-                factory = GenerationViewModelFactory(appContainer.imageRepository)
-            )
             
             val userPreferences by appContainer.preferencesDataStore.userPreferencesFlow.collectAsStateWithLifecycle(
                 initialValue = com.guitaripod.pixie.data.model.UserPreferences()
