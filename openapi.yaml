@@ -1095,6 +1095,36 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
+  /v1/admin/users:
+    get:
+      operationId: adminSearchUsers
+      summary: Search for users
+      description: Search for users by ID or email. Returns recent users if no search term provided.
+      tags: [Admin]
+      parameters:
+        - name: search
+          in: query
+          description: User ID or email to search for
+          required: false
+          schema:
+            type: string
+            example: "guitaripod@icloud.com"
+      responses:
+        '200':
+          description: List of users matching the search criteria
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSearchResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1501,6 +1531,37 @@ components:
               type: object
               additionalProperties:
                 type: number
+
+    UserSearchResult:
+      type: object
+      required:
+        - id
+        - is_admin
+        - credits
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Unique user identifier
+          example: "763135bb-02dd-4bd8-a3ca-4dab2666e1e9"
+        email:
+          type: string
+          nullable: true
+          description: User's email address
+          example: "guitaripod@icloud.com"
+        is_admin:
+          type: boolean
+          description: Whether the user has admin privileges
+          example: false
+        credits:
+          type: integer
+          description: Current credit balance
+          example: 1250
+        created_at:
+          type: string
+          format: date-time
+          description: When the user was created
+          example: "2024-01-15T10:30:00Z"
 
     Error:
       type: object
