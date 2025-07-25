@@ -14,6 +14,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -166,7 +169,7 @@ fun GenerationToolbar(
                             when (mode) {
                                 is ToolbarMode.Generate -> {
                                     Icon(
-                                        painter = painterResource(id = android.R.drawable.star_on),
+                                        imageVector = Icons.Default.AutoAwesome,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(24.dp)
@@ -260,7 +263,7 @@ fun GenerationToolbar(
                                 fontWeight = FontWeight.Medium
                             )
                             Icon(
-                                imageVector = if (showAdvanced) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                imageVector = if (showAdvanced) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                                 contentDescription = if (showAdvanced) "Hide" else "Show"
                             )
                         }
@@ -323,7 +326,7 @@ fun GenerationToolbar(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Icon(
-                                    painter = painterResource(id = android.R.drawable.star_on),
+                                    imageVector = Icons.Default.AutoAwesome,
                                     contentDescription = null,
                                     modifier = Modifier.size(22.dp)
                                 )
@@ -388,7 +391,7 @@ fun GenerationToolbar(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        painter = painterResource(id = android.R.drawable.star_on),
+                                        imageVector = Icons.Default.AutoAwesome,
                                         contentDescription = "Create",
                                         tint = MaterialTheme.colorScheme.onPrimary,
                                         modifier = Modifier.size(24.dp)

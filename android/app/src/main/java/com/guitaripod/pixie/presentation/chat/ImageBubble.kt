@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -153,7 +154,7 @@ fun ImageBubble(
                 )
                 
                 ImageActionButton(
-                    icon = if (isSaving) Icons.Default.Check else Icons.Default.Add,
+                    icon = if (isSaving) Icons.Default.Check else Icons.Default.Download,
                     label = if (isSaving) "Saving..." else "Save",
                     onClick = {
                         if (!isSaving) {
