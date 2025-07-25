@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -40,6 +41,7 @@ fun ImageBubble(
     imageUrl: String,
     onSaveSuccess: (String) -> Unit,
     onSaveError: (String) -> Unit,
+    onEdit: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -136,15 +138,21 @@ fun ImageBubble(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                if (onEdit != null) {
+                    ImageActionButton(
+                        icon = Icons.Default.Edit,
+                        label = "Edit",
+                        onClick = onEdit
+                    )
+                }
+                
                 ImageActionButton(
                     icon = Icons.Default.Share,
                     label = "Share",
                     onClick = {
                         scope.launch {
                             imageSaver.shareImageFromUrl(imageUrl).fold(
-                                onSuccess = {
-                                    // Share successful
-                                },
+                                onSuccess = { },
                                 onFailure = {
                                     onSaveError("Failed to share image")
                                 }
