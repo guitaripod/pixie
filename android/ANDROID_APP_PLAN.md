@@ -202,26 +202,23 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [ ] Add adjustment history viewer
 - [ ] Create confirmation dialogs
 
-### Phase 8: Settings & Utilities
+### Phase 8: Settings & Utilities ✅
 
-#### 8.1 App Settings
-- [ ] Create settings screen with categories
-- [ ] Add theme selector (light/dark/system)
-- [ ] Implement default quality/size preferences
-- [ ] Add notification preferences
-- [ ] Create cache management tools
+#### 8.1 App Settings ✅
+- [x] Create settings screen with categories
+- [x] Add theme selector (light/dark/system) with real-time updates
+- [x] Implement default quality/size preferences with native dropdown components
+- [x] Create cache management tools with live size calculation and clearing
 
-#### 8.2 API Configuration
-- [ ] Add custom API endpoint option
-- [ ] Create endpoint validation
-- [ ] Implement endpoint switching
-- [ ] Add connection test utility
+#### 8.2 API Configuration ✅
+- [x] Add connection test utility
+- [x] Create endpoint validation using same approach as CLI (GET to base URL)
 
-#### 8.3 Help & Support
-- [ ] Create in-app help documentation
-- [ ] Add FAQ section
-- [ ] Implement feedback form
-- [ ] Add version info and changelog
+#### 8.3 Help & Support ✅
+- [x] Create in-app help documentation with tabs (Getting Started, Features, FAQ)
+- [x] Add FAQ section with expandable cards
+- [x] Add version info in settings (using BuildConfig.VERSION_NAME)
+- [x] Move logout button to settings with confirmation dialog
 
 ### Phase 9: Polish & Optimization
 
