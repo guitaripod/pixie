@@ -5,8 +5,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.*
 import com.guitaripod.pixie.data.model.Config
 import com.guitaripod.pixie.di.AppContainer
+import com.guitaripod.pixie.ui.components.OfflineBanner
 import com.guitaripod.pixie.presentation.auth.AuthScreen
 import com.guitaripod.pixie.presentation.auth.AuthViewModel
 import com.guitaripod.pixie.presentation.auth.AuthViewModelFactory
@@ -78,7 +80,12 @@ fun PixieNavigation(
         navigateBack()
     }
     
-    when (currentScreen) {
+    Column(modifier = modifier.fillMaxSize()) {
+        OfflineBanner(
+            networkObserver = appContainer.networkConnectivityObserver
+        )
+        
+        when (currentScreen) {
         is Screen.Auth -> {
             AuthScreen(
                 authViewModel = authViewModel,
@@ -329,6 +336,7 @@ fun PixieNavigation(
                 viewModel = adminAdjustmentHistoryViewModel,
                 onNavigateBack = { navigateBack() }
             )
+        }
         }
     }
 }
