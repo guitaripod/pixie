@@ -11,10 +11,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
+import androidx.compose.foundation.isSystemInDarkTheme
 import com.guitaripod.pixie.ui.theme.PixieTheme
 import com.guitaripod.pixie.data.model.AuthResult
 import com.guitaripod.pixie.navigation.PixieNavigation
 import kotlinx.coroutines.launch
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,7 +34,17 @@ class MainActivity : ComponentActivity() {
         }
         
         setContent {
-            PixieTheme {
+            val userPreferences by appContainer.preferencesDataStore.userPreferencesFlow.collectAsStateWithLifecycle(
+                initialValue = com.guitaripod.pixie.data.model.UserPreferences()
+            )
+            
+            PixieTheme(
+                darkTheme = when (userPreferences.theme) {
+                    com.guitaripod.pixie.data.model.AppTheme.LIGHT -> false
+                    com.guitaripod.pixie.data.model.AppTheme.DARK -> true
+                    com.guitaripod.pixie.data.model.AppTheme.SYSTEM -> isSystemInDarkTheme()
+                }
+            ) {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     PixieNavigation(
                         appContainer = appContainer,
