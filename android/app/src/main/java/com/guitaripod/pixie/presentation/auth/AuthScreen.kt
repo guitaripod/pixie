@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.guitaripod.pixie.data.model.AuthResult
+import com.guitaripod.pixie.utils.DebugUtils
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
@@ -129,6 +130,31 @@ fun AuthScreen(
         }
     }
     
+    fun handleDebugAuth() {
+        scope.launch {
+            authViewModel.authenticateDebug().collect { result ->
+                when (result) {
+                    is AuthResult.Pending -> {
+                        isLoading = true
+                        errorMessage = null
+                    }
+                    is AuthResult.Success -> {
+                        isLoading = false
+                        onAuthSuccess()
+                    }
+                    is AuthResult.Error -> {
+                        isLoading = false
+                        errorMessage = result.message
+                    }
+                    is AuthResult.Cancelled -> {
+                        isLoading = false
+                        errorMessage = "Authentication cancelled"
+                    }
+                }
+            }
+        }
+    }
+    
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -188,6 +214,19 @@ fun AuthScreen(
                     onClick = { handleGithubAuth() },
                     enabled = !isLoading
                 )
+                
+                if (DebugUtils.isRunningInEmulator()) {
+                    Button(
+                        onClick = { handleDebugAuth() },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isLoading,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiary
+                        )
+                    ) {
+                        Text("Debug Login (Emulator Only)")
+                    }
+                }
             }
             
             Spacer(modifier = Modifier.height(32.dp))

@@ -19,6 +19,7 @@ interface AuthRepository {
     fun handleGoogleSignInResult(data: Intent?): Flow<AuthResult>
     fun authenticateApple(activity: Activity): Flow<AuthResult>
     fun authenticateManually(apiKey: String, userId: String, provider: String): Flow<AuthResult>
+    fun authenticateDebug(): Flow<AuthResult>
     suspend fun handleOAuthCallback(uri: Uri): AuthResult
     suspend fun logout()
     fun isAuthenticated(): Boolean
@@ -83,6 +84,24 @@ class AuthRepositoryImpl(
             apiKey = apiKey,
             userId = userId,
             provider = provider
+        ))
+    }
+    
+    override fun authenticateDebug(): Flow<AuthResult> = flow {
+        emit(AuthResult.Pending)
+        
+        val config = Config(
+            apiKey = "debug-api-key",
+            userId = "debug-user",
+            authProvider = "debug",
+            apiUrl = preferencesRepository.loadConfig().apiUrl
+        )
+        saveCredentials(config)
+        
+        emit(AuthResult.Success(
+            apiKey = "debug-api-key",
+            userId = "debug-user",
+            provider = "debug"
         ))
     }
 }
