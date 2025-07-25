@@ -7,10 +7,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +33,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit,
     onNavigateToHelp: () -> Unit,
+    onNavigateToAdmin: () -> Unit,
     onLogout: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -135,17 +140,29 @@ fun SettingsScreen(
                 )
             }
             
+            // Admin Section (only shown for admins)
+            if (uiState.isAdmin) {
+                SettingsSection(title = "Admin") {
+                    SettingsItem(
+                        icon = Icons.Filled.AdminPanelSettings,
+                        title = "Admin Dashboard",
+                        subtitle = "Manage system and users",
+                        onClick = onNavigateToAdmin
+                    )
+                }
+            }
+            
             // Help & Support Section
             SettingsSection(title = "Help & Support") {
                 SettingsItem(
-                    icon = Icons.Default.Info,
+                    icon = Icons.AutoMirrored.Filled.HelpOutline,
                     title = "Help Documentation",
                     subtitle = "Learn how to use Pixie",
                     onClick = onNavigateToHelp
                 )
                 
                 SettingsItem(
-                    icon = Icons.Default.Info,
+                    icon = Icons.Filled.Info,
                     title = "About",
                     subtitle = "Version ${BuildConfig.VERSION_NAME}",
                     onClick = { }
@@ -155,7 +172,7 @@ fun SettingsScreen(
             // Account Section
             SettingsSection(title = "Account") {
                 SettingsItem(
-                    icon = Icons.AutoMirrored.Filled.ExitToApp,
+                    icon = Icons.AutoMirrored.Filled.Logout,
                     title = "Log Out",
                     subtitle = "Sign out of your account",
                     onClick = { showLogoutDialog = true },
@@ -294,7 +311,7 @@ private fun SettingsItem(
         }
         
         Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -620,7 +637,7 @@ private fun ConnectionStatus(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.CheckCircle,
+                            imageVector = Icons.Filled.CheckCircle,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
@@ -647,7 +664,7 @@ private fun ConnectionStatus(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Warning,
+                            imageVector = Icons.Filled.Warning,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(20.dp)
