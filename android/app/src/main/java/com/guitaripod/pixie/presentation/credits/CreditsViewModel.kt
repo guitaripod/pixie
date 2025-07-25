@@ -48,7 +48,7 @@ class CreditsViewModel(
     private var currentTransactionLimit = 20
     
     init {
-        loadInitialData()
+        // Don't load data in init - let the UI trigger it
     }
     
     private fun loadInitialData() {
