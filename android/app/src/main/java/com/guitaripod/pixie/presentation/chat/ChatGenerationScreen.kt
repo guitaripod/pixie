@@ -49,10 +49,10 @@ fun ChatGenerationScreen(
     onEditGeneratedImage: (imageUrl: String, prompt: String) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
-    var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
-    var isToolbarExpanded by remember { mutableStateOf(false) }
-    var toolbarMode by remember { mutableStateOf<ToolbarMode>(ToolbarMode.Generate) }
-    var previewImageUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    val messages by viewModel.messages.collectAsState()
+    val isToolbarExpanded by viewModel.isToolbarExpanded.collectAsState()
+    val toolbarMode by viewModel.toolbarMode.collectAsState()
+    val previewImageUri by viewModel.previewImageUri.collectAsState()
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -60,70 +60,46 @@ fun ChatGenerationScreen(
     val isGenerating by viewModel.isGenerating.collectAsState()
     val error by viewModel.error.collectAsState()
     
-    // Generation options state - initialize with user preferences
-    var prompt by remember { mutableStateOf("") }
-    var selectedSize by remember(userPreferences) { 
-        mutableStateOf(
-            when (userPreferences.defaultSize) {
-                "square" -> ImageSize.SQUARE
-                "landscape" -> ImageSize.LANDSCAPE
-                "portrait" -> ImageSize.PORTRAIT
-                "auto" -> ImageSize.AUTO
-                else -> ImageSize.AUTO
-            }
-        )
-    }
-    var customSize by remember { mutableStateOf("") }
-    var selectedQuality by remember(userPreferences) { 
-        mutableStateOf(
-            when (userPreferences.defaultQuality) {
-                com.guitaripod.pixie.data.model.DefaultImageQuality.LOW -> ImageQuality.LOW
-                com.guitaripod.pixie.data.model.DefaultImageQuality.MEDIUM -> ImageQuality.MEDIUM
-                com.guitaripod.pixie.data.model.DefaultImageQuality.HIGH -> ImageQuality.HIGH
-                com.guitaripod.pixie.data.model.DefaultImageQuality.AUTO -> ImageQuality.AUTO
-            }
-        )
-    }
-    var selectedBackground by remember { mutableStateOf<BackgroundStyle?>(null) }
-    var selectedFormat by remember(userPreferences) { 
-        mutableStateOf<OutputFormat?>(
-            when (userPreferences.defaultOutputFormat) {
-                com.guitaripod.pixie.data.model.DefaultOutputFormat.PNG -> OutputFormat.PNG
-                com.guitaripod.pixie.data.model.DefaultOutputFormat.JPEG -> OutputFormat.JPEG
-                com.guitaripod.pixie.data.model.DefaultOutputFormat.WEBP -> OutputFormat.WEBP
-            }
-        )
-    }
-    var compressionLevel by remember(userPreferences) { 
-        mutableIntStateOf(userPreferences.defaultCompressionLevel) 
-    }
-    var selectedModeration by remember { mutableStateOf<ModerationLevel?>(null) }
+    // Generation options state from ViewModel
+    val prompt by viewModel.prompt.collectAsState()
+    val selectedSize by viewModel.selectedSize.collectAsState()
+    val customSize by viewModel.customSize.collectAsState()
+    val selectedQuality by viewModel.selectedQuality.collectAsState()
+    val selectedBackground by viewModel.selectedBackground.collectAsState()
+    val selectedFormat by viewModel.selectedFormat.collectAsState()
+    val compressionLevel by viewModel.compressionLevel.collectAsState()
+    val selectedModeration by viewModel.selectedModeration.collectAsState()
     
-    // Edit-specific state
-    var editOptions by remember { mutableStateOf(EditOptions()) }
-    var editToolbarState by remember { mutableStateOf(EditToolbarState()) }
+    // Initialize with user preferences
+    LaunchedEffect(userPreferences) {
+        viewModel.initializeWithUserPreferences(userPreferences)
+    }
+    
+    // Edit-specific state from ViewModel
+    val editOptions by viewModel.editOptions.collectAsState()
+    val editToolbarState by viewModel.editToolbarState.collectAsState()
     
     // Handle initial edit image from gallery navigation
     LaunchedEffect(initialEditImage) {
         initialEditImage?.let { image ->
             // Convert the image URL to a Uri and set edit mode
             val uri = Uri.parse(image.url)
-            toolbarMode = ToolbarMode.Edit(
+            viewModel.updateToolbarMode(ToolbarMode.Edit(
                 SelectedImage(
                     uri = uri,
                     displayName = "Gallery Image"
                 )
-            )
+            ))
         }
     }
     
     LaunchedEffect(viewModel) {
         viewModel.generationResult.collect { result ->
             result?.let { imageUrls ->
-                messages = messages.dropLast(1) + ChatMessage.ImageResponse(
+                viewModel.updateMessages(messages.dropLast(1) + ChatMessage.ImageResponse(
                     imageUrls = imageUrls,
                     isLoading = false
-                )
+                ))
                 coroutineScope.launch {
                     listState.animateScrollToItem(messages.size - 1)
                 }
@@ -135,10 +111,10 @@ fun ChatGenerationScreen(
         error?.let { errorMessage ->
             val lastMessage = messages.lastOrNull()
             if (lastMessage is ChatMessage.ImageResponse && lastMessage.isLoading) {
-                messages = messages.dropLast(1) + lastMessage.copy(
+                viewModel.updateMessages(messages.dropLast(1) + lastMessage.copy(
                     isLoading = false,
                     error = errorMessage
-                )
+                ))
             }
         }
     }
@@ -152,28 +128,27 @@ fun ChatGenerationScreen(
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            // Reset chat and toolbar state
-                            messages = emptyList()
-                            prompt = ""
-                            isToolbarExpanded = false
-                            toolbarMode = ToolbarMode.Generate
-                            selectedSize = ImageSize.AUTO
-                            customSize = ""
-                            selectedQuality = ImageQuality.LOW
-                            selectedBackground = null
-                            selectedFormat = null
-                            compressionLevel = 85
-                            selectedModeration = null
-                            editOptions = EditOptions()
-                            editToolbarState = EditToolbarState()
-                        }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(start = 8.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = "New Chat",
-                            tint = MaterialTheme.colorScheme.primary
+                        IconButton(
+                            onClick = {
+                                viewModel.resetChat()
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = "New Chat",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Text(
+                            text = "New",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(end = 8.dp)
                         )
                     }
                 },
@@ -234,13 +209,13 @@ fun ChatGenerationScreen(
                         SuggestionsView(
                             onPromptSelected = { selectedPrompt ->
                                 when (toolbarMode) {
-                                    is ToolbarMode.Generate -> prompt = selectedPrompt
-                                    is ToolbarMode.Edit -> editOptions = editOptions.copy(prompt = selectedPrompt)
+                                    is ToolbarMode.Generate -> viewModel.updatePrompt(selectedPrompt)
+                                    is ToolbarMode.Edit -> viewModel.updateEditOptions(editOptions.copy(prompt = selectedPrompt))
                                 }
-                                isToolbarExpanded = true
+                                viewModel.updateToolbarExpanded(true)
                             },
                             onImageSelected = { uri ->
-                                previewImageUri = uri
+                                viewModel.updatePreviewImageUri(uri)
                             },
                             isInEditMode = toolbarMode is ToolbarMode.Edit
                         )
@@ -281,23 +256,23 @@ fun ChatGenerationScreen(
                     GenerationToolbar(
                         mode = toolbarMode,
                         isExpanded = isToolbarExpanded,
-                        onExpandedChange = { isToolbarExpanded = it },
+                        onExpandedChange = { viewModel.updateToolbarExpanded(it) },
                         prompt = prompt,
-                        onPromptChange = { prompt = it },
+                        onPromptChange = { viewModel.updatePrompt(it) },
                         selectedSize = selectedSize,
-                        onSizeSelected = { selectedSize = it },
+                        onSizeSelected = { viewModel.updateSelectedSize(it) },
                         customSize = customSize,
-                        onCustomSizeChanged = { customSize = it },
+                        onCustomSizeChanged = { viewModel.updateCustomSize(it) },
                         selectedQuality = selectedQuality,
-                        onQualitySelected = { selectedQuality = it },
+                        onQualitySelected = { viewModel.updateSelectedQuality(it) },
                         selectedBackground = selectedBackground,
-                        onBackgroundSelected = { selectedBackground = it },
+                        onBackgroundSelected = { viewModel.updateSelectedBackground(it) },
                         selectedFormat = selectedFormat,
-                        onFormatSelected = { selectedFormat = it },
+                        onFormatSelected = { viewModel.updateSelectedFormat(it) },
                         compressionLevel = compressionLevel,
-                        onCompressionChanged = { compressionLevel = it },
+                        onCompressionChanged = { viewModel.updateCompressionLevel(it) },
                         selectedModeration = selectedModeration,
-                        onModerationSelected = { selectedModeration = it },
+                        onModerationSelected = { viewModel.updateSelectedModeration(it) },
                         isGenerating = isGenerating,
                         onGenerate = {
                             val actualSize = if (selectedSize == ImageSize.CUSTOM) {
@@ -317,12 +292,10 @@ fun ChatGenerationScreen(
                                 compression = if (selectedFormat?.supportsCompression == true) compressionLevel else null,
                                 moderation = selectedModeration?.displayName
                             )
-                            messages = messages + userMessage
-                            
-                            messages = messages + ChatMessage.ImageResponse(
+                            viewModel.updateMessages(messages + userMessage + ChatMessage.ImageResponse(
                                 imageUrls = emptyList(),
                                 isLoading = true
-                            )
+                            ))
                             
                             coroutineScope.launch {
                                 listState.animateScrollToItem(messages.size - 1)
@@ -340,12 +313,12 @@ fun ChatGenerationScreen(
                             )
                             viewModel.generateImages(options)
                             
-                            prompt = ""
-                            isToolbarExpanded = false
+                            viewModel.updatePrompt("")
+                            viewModel.updateToolbarExpanded(false)
                         },
                         onSwitchToGenerate = {
-                            toolbarMode = ToolbarMode.Generate
-                            prompt = ""
+                            viewModel.updateToolbarMode(ToolbarMode.Generate)
+                            viewModel.updatePrompt("")
                         },
                         modifier = Modifier.align(Alignment.BottomCenter)
                     )
@@ -355,9 +328,9 @@ fun ChatGenerationScreen(
                     EditingToolbar(
                         selectedImage = editMode.selectedImage,
                         editOptions = editOptions,
-                        onEditOptionsChange = { editOptions = it },
+                        onEditOptionsChange = { viewModel.updateEditOptions(it) },
                         editToolbarState = editToolbarState,
-                        onEditToolbarStateChange = { editToolbarState = it },
+                        onEditToolbarStateChange = { viewModel.updateEditToolbarState(it) },
                         isProcessing = isGenerating,
                         onStartEdit = {
                             val actualSize = if (editOptions.size == ImageSize.CUSTOM) {
@@ -379,12 +352,10 @@ fun ChatGenerationScreen(
                                 compression = null,
                                 moderation = null
                             )
-                            messages = messages + userMessage
-                            
-                            messages = messages + ChatMessage.ImageResponse(
+                            viewModel.updateMessages(messages + userMessage + ChatMessage.ImageResponse(
                                 imageUrls = emptyList(),
                                 isLoading = true
-                            )
+                            ))
                             
                             coroutineScope.launch {
                                 listState.animateScrollToItem(messages.size - 1)
@@ -395,14 +366,14 @@ fun ChatGenerationScreen(
                                 editOptions = editOptions
                             )
                             
-                            editOptions = EditOptions()
-                            editToolbarState = EditToolbarState()
+                            viewModel.updateEditOptions(EditOptions())
+                            viewModel.updateEditToolbarState(EditToolbarState())
                         },
                         onSwitchToGenerate = {
-                            toolbarMode = ToolbarMode.Generate
-                            prompt = ""
-                            editOptions = EditOptions()
-                            editToolbarState = EditToolbarState()
+                            viewModel.updateToolbarMode(ToolbarMode.Generate)
+                            viewModel.updatePrompt("")
+                            viewModel.updateEditOptions(EditOptions())
+                            viewModel.updateEditToolbarState(EditToolbarState())
                         },
                         modifier = Modifier.align(Alignment.BottomCenter)
                     )
@@ -413,13 +384,13 @@ fun ChatGenerationScreen(
                 ImagePreviewDialog(
                     imageUri = uri,
                     onConfirm = {
-                        toolbarMode = ToolbarMode.Edit(
+                        viewModel.updateToolbarMode(ToolbarMode.Edit(
                             SelectedImage(uri = uri)
-                        )
-                        previewImageUri = null
+                        ))
+                        viewModel.updatePreviewImageUri(null)
                     },
                     onDismiss = {
-                        previewImageUri = null
+                        viewModel.updatePreviewImageUri(null)
                     }
                 )
             }
