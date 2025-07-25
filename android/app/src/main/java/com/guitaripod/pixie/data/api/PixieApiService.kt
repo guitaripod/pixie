@@ -131,12 +131,23 @@ interface PixieApiService {
         @Query("end_date") endDate: String? = null
     ): Response<UsageResponse>
     
-    @GET("/v1/admin/stats")
-    suspend fun getAdminStats(): Response<AdminStatsResponse>
+    @GET("/v1/admin/credits/stats")
+    suspend fun getAdminStats(): Response<SystemStatsResponse>
     
-    @POST("/v1/admin/users/{user_id}/credits")
+    @POST("/v1/admin/credits/adjust")
     suspend fun adjustUserCredits(
-        @Path("user_id") userId: String,
-        @Body request: CreditAdjustmentRequest
-    ): Response<CreditAdjustmentResponse>
+        @Body request: AdminCreditAdjustmentRequest
+    ): Response<AdminCreditAdjustmentResponse>
+    
+    @GET("/v1/admin/users")
+    suspend fun searchUsers(
+        @Query("search") search: String? = null,
+        @Query("page") page: Int? = null,
+        @Query("per_page") perPage: Int? = null
+    ): Response<List<UserSearchResult>>
+    
+    @GET("/v1/admin/credits/adjustments/{user_id}")
+    suspend fun getAdjustmentHistory(
+        @Path("user_id") userId: String
+    ): Response<AdjustmentHistoryResponse>
 }
