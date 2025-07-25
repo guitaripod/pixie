@@ -120,7 +120,7 @@ class CreditPurchaseManager @Inject constructor(
                             restoredPurchases.add(
                                 RestoredPurchase(
                                     productId = productId,
-                                    purchaseDate = entitlement.latestPurchaseDate?.toString() ?: "",
+                                    purchaseDate = entitlement.latestPurchaseDate.toString(),
                                     expirationDate = entitlement.expirationDate?.toString()
                                 )
                             )
