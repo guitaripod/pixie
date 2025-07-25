@@ -111,7 +111,7 @@ fun PixieNavigation(
                         userId = "",
                         url = imageUrl,
                         thumbnailUrl = imageUrl,
-                        prompt = prompt,
+                        prompt = "",
                         createdAt = System.currentTimeMillis().toString(),
                         metadata = null,
                         isPublic = false,
