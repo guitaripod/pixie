@@ -100,7 +100,7 @@ fun ImagePreviewDialog(
                     )
                 }
                 
-                Button(
+                FilledTonalButton(
                     onClick = onConfirm,
                     modifier = Modifier
                         .weight(1f)
