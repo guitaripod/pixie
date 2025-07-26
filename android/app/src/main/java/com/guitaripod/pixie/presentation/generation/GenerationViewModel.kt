@@ -6,12 +6,20 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.guitaripod.pixie.data.model.*
 import com.guitaripod.pixie.data.repository.ImageRepository
+import com.guitaripod.pixie.utils.NotificationHelper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import com.guitaripod.pixie.service.ImageGenerationForegroundService
 
 class GenerationViewModel(
-    private val imageRepository: ImageRepository
+    private val imageRepository: ImageRepository,
+    private val notificationHelper: NotificationHelper,
+    private val context: Context
 ) : ViewModel() {
     
     private val _isGenerating = MutableStateFlow(false)
@@ -68,35 +76,58 @@ class GenerationViewModel(
     private val _editToolbarState = MutableStateFlow(EditToolbarState())
     val editToolbarState: StateFlow<EditToolbarState> = _editToolbarState.asStateFlow()
     
-    fun generateImages(options: GenerationOptions) {
-        _error.value = null
-        _isGenerating.value = true
-        
-        generationJob = viewModelScope.launch {
-            try {
-                imageRepository.generateImages(options.toApiRequest())
-                    .collect { result ->
-                        result.fold(
-                            onSuccess = { response ->
-                                val imageUrls = response.data.map { it.url }
-                                _generationResult.emit(imageUrls)
-                                _isGenerating.value = false
-                            },
-                            onFailure = { exception ->
-                                _error.value = exception.message ?: "Failed to generate images"
-                                _isGenerating.value = false
-                            }
-                        )
+    private val imageGeneratedReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                "com.guitaripod.pixie.IMAGE_GENERATED" -> {
+                    val imageUrls = intent.getStringArrayListExtra("imageUrls")
+                    if (imageUrls != null) {
+                        viewModelScope.launch {
+                            _generationResult.emit(imageUrls)
+                            _isGenerating.value = false
+                        }
                     }
-            } catch (e: Exception) {
-                _error.value = e.message ?: "An unexpected error occurred"
-                _isGenerating.value = false
+                }
+                "com.guitaripod.pixie.IMAGE_GENERATION_ERROR" -> {
+                    val error = intent.getStringExtra("error")
+                    viewModelScope.launch {
+                        _error.value = error ?: "Generation failed"
+                        _isGenerating.value = false
+                    }
+                }
             }
         }
     }
     
+    init {
+        val filter = IntentFilter().apply {
+            addAction("com.guitaripod.pixie.IMAGE_GENERATED")
+            addAction("com.guitaripod.pixie.IMAGE_GENERATION_ERROR")
+        }
+        
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(
+                imageGeneratedReceiver,
+                filter,
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
+            context.registerReceiver(
+                imageGeneratedReceiver,
+                filter
+            )
+        }
+    }
+    
+    fun generateImages(options: GenerationOptions) {
+        _error.value = null
+        _isGenerating.value = true
+        
+        ImageGenerationForegroundService.startService(context, options.toApiRequest())
+    }
+    
     fun cancelGeneration() {
-        generationJob?.cancel()
+        ImageGenerationForegroundService.stopService(context)
         _isGenerating.value = false
         _error.value = "Generation cancelled"
     }
@@ -202,33 +233,23 @@ class GenerationViewModel(
         _error.value = null
         _isGenerating.value = true
         
-        generationJob = viewModelScope.launch {
-            try {
-                imageRepository.editImage(
-                    imageUri = imageUri,
-                    prompt = editOptions.prompt,
-                    mask = null,
-                    n = editOptions.variations,
-                    size = if (editOptions.size.value == "auto") "1024x1024" else editOptions.size.value,
-                    quality = editOptions.quality.value,
-                    fidelity = editOptions.fidelity.value
-                ).collect { result ->
-                    result.fold(
-                        onSuccess = { response ->
-                            val imageUrls = response.data.map { it.url }
-                            _generationResult.emit(imageUrls)
-                            _isGenerating.value = false
-                        },
-                        onFailure = { exception ->
-                            _error.value = exception.message ?: "Failed to edit image"
-                            _isGenerating.value = false
-                        }
-                    )
-                }
-            } catch (e: Exception) {
-                _error.value = e.message ?: "An unexpected error occurred"
-                _isGenerating.value = false
-            }
-        }
+        val editData = com.guitaripod.pixie.data.model.EditImageData(
+            imageUri = imageUri.toString(),
+            prompt = editOptions.prompt,
+            variations = editOptions.variations,
+            size = if (editOptions.size.value == "auto") "1024x1024" else editOptions.size.value,
+            quality = editOptions.quality.value,
+            fidelity = editOptions.fidelity.value
+        )
+        
+        ImageGenerationForegroundService.startEditService(
+            context = context,
+            editData = editData
+        )
+    }
+    
+    override fun onCleared() {
+        super.onCleared()
+        context.unregisterReceiver(imageGeneratedReceiver)
     }
 }
