@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.guitaripod.pixie.data.api.model.ImageDetails
+import com.guitaripod.pixie.utils.rememberHapticFeedback
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -166,8 +167,13 @@ private fun ActionChip(
     label: String,
     onClick: () -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
+    
     FilledTonalButton(
-        onClick = onClick,
+        onClick = {
+            haptic.click()
+            onClick()
+        },
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
