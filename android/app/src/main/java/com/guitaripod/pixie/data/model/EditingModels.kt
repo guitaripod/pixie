@@ -20,7 +20,6 @@ data class EditOptions(
     val prompt: String = "",
     val variations: Int = 1,
     val size: ImageSize = ImageSize.AUTO,
-    val customSize: String = "",
     val quality: ImageQuality = ImageQuality.LOW,
     val fidelity: FidelityLevel = FidelityLevel.LOW
 )

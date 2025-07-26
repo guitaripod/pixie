@@ -28,9 +28,7 @@ import com.guitaripod.pixie.data.model.*
 @Composable
 fun SizeSelector(
     selectedSize: ImageSize,
-    onSizeSelected: (ImageSize) -> Unit,
-    customSize: String,
-    onCustomSizeChanged: (String) -> Unit
+    onSizeSelected: (ImageSize) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
@@ -55,7 +53,7 @@ fun SizeSelector(
                 )
             }
             Text(
-                text = if (selectedSize == ImageSize.CUSTOM) customSize.ifEmpty { "Custom" } else selectedSize.dimensions,
+                text = selectedSize.dimensions,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Medium
@@ -81,22 +79,6 @@ fun SizeSelector(
                     shape = RoundedCornerShape(12.dp)
                 )
             }
-        }
-        
-        AnimatedVisibility(
-            visible = selectedSize == ImageSize.CUSTOM,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut()
-        ) {
-            OutlinedTextField(
-                value = customSize,
-                onValueChange = onCustomSizeChanged,
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("e.g., 1024x1024") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
-                shape = RoundedCornerShape(8.dp)
-            )
         }
     }
 }

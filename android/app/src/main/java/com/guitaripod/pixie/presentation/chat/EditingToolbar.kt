@@ -498,9 +498,7 @@ private fun AdvancedEditOptions(
         // Size selector
         SizeSelector(
             selectedSize = editOptions.size,
-            onSizeSelected = { onEditOptionsChange(editOptions.copy(size = it)) },
-            customSize = editOptions.customSize,
-            onCustomSizeChanged = { onEditOptionsChange(editOptions.copy(customSize = it)) }
+            onSizeSelected = { onEditOptionsChange(editOptions.copy(size = it)) }
         )
         
         // Fidelity selector

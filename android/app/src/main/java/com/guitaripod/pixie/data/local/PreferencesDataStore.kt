@@ -41,7 +41,7 @@ class PreferencesDataStore(
                 defaultQuality = DefaultImageQuality.valueOf(
                     preferences[KEY_DEFAULT_QUALITY] ?: DefaultImageQuality.LOW.name
                 ),
-                defaultSize = preferences[KEY_DEFAULT_SIZE] ?: "1024x1024",
+                defaultSize = preferences[KEY_DEFAULT_SIZE] ?: "auto",
                 defaultOutputFormat = DefaultOutputFormat.valueOf(
                     preferences[KEY_DEFAULT_OUTPUT_FORMAT] ?: DefaultOutputFormat.PNG.name
                 ),
