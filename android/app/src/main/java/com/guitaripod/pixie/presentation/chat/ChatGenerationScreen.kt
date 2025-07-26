@@ -393,19 +393,19 @@ fun UserMessageBubble(message: ChatMessage.UserMessage) {
         horizontalAlignment = Alignment.End
     ) {
         Surface(
-            modifier = Modifier.widthIn(max = 280.dp),
+            modifier = Modifier.widthIn(max = 240.dp),
             shape = RoundedCornerShape(
-                topStart = 16.dp,
+                topStart = 12.dp,
                 topEnd = 4.dp,
-                bottomStart = 16.dp,
-                bottomEnd = 16.dp
+                bottomStart = 12.dp,
+                bottomEnd = 12.dp
             ),
             color = MaterialTheme.colorScheme.primary,
             tonalElevation = 2.dp
         ) {
             Column(
-                modifier = Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                modifier = Modifier.padding(10.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 Text(
                     text = "🎨 Generation Request",
@@ -426,7 +426,6 @@ fun UserMessageBubble(message: ChatMessage.UserMessage) {
                 
                 DetailRow("Quality", message.quality.uppercase(), MaterialTheme.colorScheme.onPrimary)
                 DetailRow("Size", message.size + if (message.size != message.actualSize) " (${message.actualSize})" else "", MaterialTheme.colorScheme.onPrimary)
-                DetailRow("Quantity", message.quantity.toString(), MaterialTheme.colorScheme.onPrimary)
                 
                 message.background?.let {
                     DetailRow("Background", it, MaterialTheme.colorScheme.onPrimary)
@@ -476,37 +475,61 @@ fun ImageResponseBubble(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.Start
     ) {
-        when {
-            message.isLoading -> {
+        AnimatedContent(
+            targetState = when {
+                message.isLoading -> "loading"
+                message.error != null -> "error"
+                else -> "success"
+            },
+            transitionSpec = {
+                fadeIn(animationSpec = tween(300)) + scaleIn(
+                    initialScale = 0.92f,
+                    animationSpec = tween(300)
+                ) togetherWith fadeOut(animationSpec = tween(200)) + scaleOut(
+                    targetScale = 0.92f,
+                    animationSpec = tween(200)
+                )
+            },
+            label = "image_response_transition"
+        ) { state ->
+            when (state) {
+                "loading" -> {
                 Surface(
-                    modifier = Modifier.widthIn(max = 320.dp),
+                    modifier = Modifier
+                        .widthIn(max = 280.dp)
+                        .height(200.dp),
                     shape = RoundedCornerShape(
                         topStart = 4.dp,
-                        topEnd = 20.dp,
-                        bottomStart = 20.dp,
-                        bottomEnd = 20.dp
+                        topEnd = 16.dp,
+                        bottomStart = 16.dp,
+                        bottomEnd = 16.dp
                     ),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                     tonalElevation = 1.dp
                 ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 3.dp
-                        )
-                        Text(
-                            text = if (quantity == 1) "Generating image..." else "Generating $quantity images...",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(40.dp),
+                                strokeWidth = 3.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = if (quantity == 1) "Generating image..." else "Generating $quantity images...",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
-            message.error != null -> {
+            "error" -> {
                 Surface(
                     modifier = Modifier.widthIn(max = 320.dp),
                     shape = RoundedCornerShape(
@@ -530,14 +553,14 @@ fun ImageResponseBubble(
                             modifier = Modifier.size(20.dp)
                         )
                         Text(
-                            text = message.error,
+                            text = message.error ?: "Unknown error",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
                     }
                 }
             }
-            else -> {
+            "success" -> {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -560,6 +583,7 @@ fun ImageResponseBubble(
                         )
                     }
                 }
+            }
             }
         }
     }
