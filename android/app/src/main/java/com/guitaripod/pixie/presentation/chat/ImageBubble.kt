@@ -93,11 +93,11 @@ fun ImageBubble(
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(imageUrl)
-                        .crossfade(true)
+                        .crossfade(300)
                         .build(),
                     contentDescription = "Generated image",
                     modifier = Modifier
-                        .widthIn(max = 200.dp)
+                        .widthIn(max = 280.dp)
                         .clip(RoundedCornerShape(
                             topStart = 4.dp,
                             topEnd = 16.dp,
