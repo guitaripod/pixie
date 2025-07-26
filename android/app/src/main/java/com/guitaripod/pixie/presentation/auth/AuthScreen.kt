@@ -20,6 +20,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.guitaripod.pixie.data.model.AuthResult
 import com.guitaripod.pixie.utils.DebugUtils
+import com.guitaripod.pixie.utils.rememberHapticFeedback
+import com.guitaripod.pixie.utils.hapticClickable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
@@ -216,8 +218,12 @@ fun AuthScreen(
                 )
                 
                 if (DebugUtils.isRunningInEmulator()) {
+                    val haptic = rememberHapticFeedback()
                     Button(
-                        onClick = { handleDebugAuth() },
+                        onClick = { 
+                            haptic.click()
+                            handleDebugAuth() 
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = !isLoading,
                         colors = ButtonDefaults.buttonColors(
