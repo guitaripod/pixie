@@ -63,7 +63,14 @@ data class ApiError(
     val message: String,
     val type: String? = null,
     val param: String? = null,
-    val code: String? = null
+    val code: String? = null,
+    val details: ErrorDetails? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class ErrorDetails(
+    @Json(name = "required_credits") val required_credits: Int? = null,
+    @Json(name = "available_credits") val available_credits: Int? = null
 )
 
 @JsonClass(generateAdapter = true)
