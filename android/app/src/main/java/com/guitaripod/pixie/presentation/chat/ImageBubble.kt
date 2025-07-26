@@ -2,6 +2,7 @@ package com.guitaripod.pixie.presentation.chat
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -50,6 +51,7 @@ fun ImageBubble(
     
     var isExpanded by remember { mutableStateOf(false) }
     var isSaving by remember { mutableStateOf(false) }
+    var showFullscreen by remember { mutableStateOf(false) }
     
     val hasStoragePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         true
@@ -95,15 +97,35 @@ fun ImageBubble(
                         .build(),
                     contentDescription = "Generated image",
                     modifier = Modifier
-                        .widthIn(max = 320.dp)
+                        .widthIn(max = 200.dp)
                         .clip(RoundedCornerShape(
                             topStart = 4.dp,
-                            topEnd = 20.dp,
-                            bottomStart = 20.dp,
-                            bottomEnd = 20.dp
+                            topEnd = 16.dp,
+                            bottomStart = 16.dp,
+                            bottomEnd = 16.dp
                         )),
                     contentScale = ContentScale.FillWidth
                 )
+                
+                // Fullscreen button always visible in top right
+                IconButton(
+                    onClick = { showFullscreen = true },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(4.dp)
+                        .size(32.dp)
+                        .background(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            shape = CircleShape
+                        )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Fullscreen,
+                        contentDescription = "View fullscreen",
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
                 
                 AnimatedVisibility(
                     visible = isExpanded,
@@ -119,7 +141,7 @@ fun ImageBubble(
                                         Color.Transparent,
                                         Color.Black.copy(alpha = 0.7f)
                                     ),
-                                    startY = 200f
+                                    startY = 100f
                                 )
                             )
                     )
@@ -133,10 +155,10 @@ fun ImageBubble(
             exit = fadeOut() + slideOutVertically { it },
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(12.dp)
+                .padding(8.dp)
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 if (onEdit != null) {
                     ImageActionButton(
@@ -180,6 +202,14 @@ fun ImageBubble(
             }
         }
     }
+    
+    if (showFullscreen) {
+        ImagePreviewDialog(
+            imageUri = Uri.parse(imageUrl),
+            onDismiss = { showFullscreen = false },
+            onConfirm = { showFullscreen = false }
+        )
+    }
 }
 
 @Composable
@@ -203,14 +233,14 @@ private fun ImageActionButton(
             )
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(16.dp)
             )
             Text(
                 text = label,
