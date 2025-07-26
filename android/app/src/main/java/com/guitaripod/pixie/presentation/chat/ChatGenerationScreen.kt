@@ -37,6 +37,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarDuration
 import android.net.Uri
+import com.guitaripod.pixie.utils.NotificationPermissionEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -114,6 +115,17 @@ fun ChatGenerationScreen(
                     isLoading = false,
                     error = errorMessage
                 ))
+            }
+        }
+    }
+    
+    NotificationPermissionEffect { granted ->
+        if (granted) {
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar(
+                    message = "Notifications enabled! You'll be notified when images are ready.",
+                    duration = SnackbarDuration.Short
+                )
             }
         }
     }
