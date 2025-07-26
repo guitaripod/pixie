@@ -25,6 +25,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.guitaripod.pixie.BuildConfig
+import com.guitaripod.pixie.utils.rememberHapticFeedback
+import com.guitaripod.pixie.utils.hapticClickable
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,10 +45,14 @@ fun SettingsScreen(
     
     Scaffold(
         topBar = {
+            val haptic = rememberHapticFeedback()
             TopAppBar(
                 title = { Text("Settings") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        haptic.click()
+                        onNavigateBack()
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -187,6 +193,7 @@ fun SettingsScreen(
     
     // Logout Confirmation Dialog
     if (showLogoutDialog) {
+        val logoutHaptic = rememberHapticFeedback()
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
             title = { Text("Log Out") },
@@ -194,6 +201,7 @@ fun SettingsScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
+                        logoutHaptic.click()
                         showLogoutDialog = false
                         onLogout()
                     },
@@ -205,7 +213,10 @@ fun SettingsScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
+                TextButton(onClick = { 
+                    logoutHaptic.click()
+                    showLogoutDialog = false 
+                }) {
                     Text("Cancel")
                 }
             }
@@ -214,6 +225,7 @@ fun SettingsScreen(
     
     // Clear Cache Confirmation Dialog
     if (showClearCacheDialog) {
+        val cacheHaptic = rememberHapticFeedback()
         AlertDialog(
             onDismissRequest = { showClearCacheDialog = false },
             title = { Text("Clear Cache") },
@@ -221,6 +233,7 @@ fun SettingsScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
+                        cacheHaptic.click()
                         showClearCacheDialog = false
                         scope.launch {
                             viewModel.clearCache()
@@ -231,7 +244,10 @@ fun SettingsScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showClearCacheDialog = false }) {
+                TextButton(onClick = { 
+                    cacheHaptic.click()
+                    showClearCacheDialog = false 
+                }) {
                     Text("Cancel")
                 }
             }
@@ -284,7 +300,7 @@ private fun SettingsItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick)
+            .hapticClickable(onClick = onClick)
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -327,6 +343,7 @@ private fun ThemeSelector(
     currentTheme: com.guitaripod.pixie.data.model.AppTheme,
     onThemeSelected: (com.guitaripod.pixie.data.model.AppTheme) -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     Column {
         Text(
             text = "Theme",
@@ -343,7 +360,10 @@ private fun ThemeSelector(
             com.guitaripod.pixie.data.model.AppTheme.values().forEach { theme ->
                 FilterChip(
                     selected = currentTheme == theme,
-                    onClick = { onThemeSelected(theme) },
+                    onClick = { 
+                        haptic.click()
+                        onThemeSelected(theme) 
+                    },
                     label = { 
                         Text(
                             when (theme) {
@@ -366,6 +386,7 @@ private fun DefaultQualitySelector(
     currentQuality: com.guitaripod.pixie.data.model.DefaultImageQuality,
     onQualitySelected: (com.guitaripod.pixie.data.model.ImageQuality) -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     var expanded by remember { mutableStateOf(false) }
     
     Column {
@@ -409,6 +430,7 @@ private fun DefaultQualitySelector(
                     DropdownMenuItem(
                         text = { Text(label) },
                         onClick = {
+                            haptic.click()
                             onQualitySelected(quality)
                             expanded = false
                         }
@@ -425,6 +447,7 @@ private fun DefaultSizeSelector(
     currentSize: String,
     onSizeSelected: (String) -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     var expanded by remember { mutableStateOf(false) }
     
     val sizeOptions = listOf(
@@ -467,6 +490,7 @@ private fun DefaultSizeSelector(
                     DropdownMenuItem(
                         text = { Text(label) },
                         onClick = {
+                            haptic.click()
                             onSizeSelected(value)
                             expanded = false
                         }
@@ -483,6 +507,7 @@ private fun DefaultFormatSelector(
     currentFormat: com.guitaripod.pixie.data.model.DefaultOutputFormat,
     onFormatSelected: (com.guitaripod.pixie.data.model.OutputFormat) -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     var expanded by remember { mutableStateOf(false) }
     
     Column {
@@ -516,6 +541,7 @@ private fun DefaultFormatSelector(
                     DropdownMenuItem(
                         text = { Text(format.name) },
                         onClick = {
+                            haptic.click()
                             onFormatSelected(format)
                             expanded = false
                         }
@@ -531,6 +557,9 @@ private fun CompressionLevelSlider(
     currentLevel: Int,
     onLevelChanged: (Int) -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
+    var lastValue by remember { mutableStateOf(currentLevel) }
+    
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -552,7 +581,14 @@ private fun CompressionLevelSlider(
         
         Slider(
             value = currentLevel.toFloat(),
-            onValueChange = { onLevelChanged(it.toInt()) },
+            onValueChange = { newValue ->
+                val newInt = newValue.toInt()
+                if (newInt != lastValue && newInt % 5 == 0) {
+                    haptic.sliderTick()
+                }
+                lastValue = newInt
+                onLevelChanged(newInt)
+            },
             valueRange = 0f..100f,
             steps = 19
         )
@@ -564,6 +600,7 @@ private fun CacheManagement(
     cacheSize: String,
     onClearCache: () -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -583,7 +620,10 @@ private fun CacheManagement(
         }
         
         Button(
-            onClick = onClearCache,
+            onClick = {
+                haptic.click()
+                onClearCache()
+            },
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.error
             )
@@ -598,6 +638,7 @@ private fun ConnectionStatus(
     connectionStatus: com.guitaripod.pixie.presentation.settings.ConnectionStatus,
     onTestConnection: () -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -617,7 +658,10 @@ private fun ConnectionStatus(
                 )
             }
             
-            TextButton(onClick = onTestConnection) {
+            TextButton(onClick = {
+                haptic.click()
+                onTestConnection()
+            }) {
                 Text("Test")
             }
         }
