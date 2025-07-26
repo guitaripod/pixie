@@ -35,6 +35,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.guitaripod.pixie.utils.ImageSaver
 import kotlinx.coroutines.launch
+import com.guitaripod.pixie.utils.rememberHapticFeedback
+import com.guitaripod.pixie.utils.hapticClickable
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -216,8 +218,12 @@ private fun ImageActionButton(
     enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
+    val haptic = rememberHapticFeedback()
     Surface(
-        onClick = onClick,
+        onClick = {
+            haptic.click()
+            onClick()
+        },
         enabled = enabled,
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),

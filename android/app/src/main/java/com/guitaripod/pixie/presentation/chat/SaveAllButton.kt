@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.guitaripod.pixie.utils.ImageSaver
 import com.guitaripod.pixie.utils.NotificationHelper
+import com.guitaripod.pixie.utils.rememberHapticFeedback
 import kotlinx.coroutines.launch
 
 @Composable
@@ -62,9 +63,12 @@ fun SaveAllButton(
         }
     }
     
+    val haptic = rememberHapticFeedback()
+    
     Surface(
         onClick = {
             if (!isSaving) {
+                haptic.click()
                 if (hasStoragePermission) {
                     scope.launch {
                         saveAllImages(imageUrls, imageSaver, notificationHelper, onSaveSuccess, onSaveError) { saving, prog ->
