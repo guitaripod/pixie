@@ -28,6 +28,7 @@ import com.guitaripod.pixie.data.purchases.RevenueCatManager
 import com.guitaripod.pixie.data.purchases.CreditPurchaseManager
 import com.guitaripod.pixie.utils.ImageSaver
 import com.guitaripod.pixie.utils.CacheManager
+import com.guitaripod.pixie.utils.NotificationHelper
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.CoroutineDispatcher
@@ -144,6 +145,10 @@ class AppContainer(private val context: Context) {
     
     val cacheManager: CacheManager by lazy {
         CacheManager(context)
+    }
+    
+    val notificationHelper: NotificationHelper by lazy {
+        NotificationHelper(context)
     }
         val dataStore: DataStore<Preferences> by lazy {
         context.dataStore
