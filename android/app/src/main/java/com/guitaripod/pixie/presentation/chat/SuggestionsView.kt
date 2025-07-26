@@ -36,6 +36,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.content.ContentUris
 import android.provider.MediaStore
+import com.guitaripod.pixie.utils.rememberHapticFeedback
+import com.guitaripod.pixie.utils.hapticClickable
 
 data class QuickAction(
     val icon: ImageVector,
@@ -420,11 +422,15 @@ private fun QuickActionCard(
     action: QuickAction,
     onClick: () -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     Surface(
         modifier = Modifier
             .width(100.dp)
             .height(40.dp)
-            .clickable { onClick() },
+            .clickable { 
+                haptic.click()
+                onClick() 
+            },
         shape = RoundedCornerShape(20.dp),
         color = action.backgroundColor,
         tonalElevation = 2.dp
@@ -477,7 +483,11 @@ private fun EditImageSection(
                 subtitle = "Transform your photos with AI"
             )
             
-            TextButton(onClick = onRequestPermission) {
+            val haptic = rememberHapticFeedback()
+            TextButton(onClick = {
+                haptic.click()
+                onRequestPermission()
+            }) {
                 Text("Browse")
             }
         }
@@ -518,10 +528,14 @@ private fun AddImageCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val haptic = rememberHapticFeedback()
     Card(
         modifier = modifier
             .height(120.dp)
-            .clickable { onClick() },
+            .clickable { 
+                haptic.click()
+                onClick() 
+            },
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(
             width = 2.dp,
@@ -564,10 +578,14 @@ private fun RecentImageCard(
     uri: android.net.Uri,
     onClick: () -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     Card(
         modifier = Modifier
             .size(120.dp)
-            .clickable { onClick() },
+            .clickable { 
+                haptic.click()
+                onClick() 
+            },
         shape = RoundedCornerShape(12.dp)
     ) {
         Box {
@@ -719,9 +737,13 @@ private fun CategoryChip(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     FilterChip(
         selected = isSelected,
-        onClick = onClick,
+        onClick = {
+            haptic.click()
+            onClick()
+        },
         modifier = Modifier.height(32.dp),
         label = {
             Row(
@@ -751,11 +773,15 @@ private fun CompactPromptCard(
     color: Color,
     onClick: () -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     Surface(
         modifier = Modifier
             .width(200.dp)
             .height(60.dp)
-            .clickable { onClick() },
+            .clickable { 
+                haptic.click()
+                onClick() 
+            },
         shape = RoundedCornerShape(12.dp),
         color = color.copy(alpha = 0.1f),
         border = BorderStroke(1.dp, color.copy(alpha = 0.3f))
@@ -904,11 +930,15 @@ private fun CompactStyleCard(
     style: StylePreset,
     onClick: () -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     Surface(
         modifier = Modifier
             .width(120.dp)
             .height(50.dp)
-            .clickable { onClick() },
+            .clickable { 
+                haptic.click()
+                onClick() 
+            },
         shape = RoundedCornerShape(12.dp),
         color = Color.Transparent
     ) {
@@ -992,9 +1022,13 @@ private fun PromptModifiersSection() {
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             items(categoryNames.size) { index ->
+                val haptic = rememberHapticFeedback()
                 FilterChip(
                     selected = selectedCategory == index,
-                    onClick = { selectedCategory = index },
+                    onClick = { 
+                        haptic.click()
+                        selectedCategory = index 
+                    },
                     modifier = Modifier.height(32.dp),
                     label = {
                         Text(
