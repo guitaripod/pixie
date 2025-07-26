@@ -36,6 +36,8 @@ import com.guitaripod.pixie.data.model.*
 import coil.compose.AsyncImage
 import androidx.compose.ui.platform.LocalContext
 import coil.request.ImageRequest
+import com.guitaripod.pixie.utils.hapticClickable
+import com.guitaripod.pixie.utils.rememberHapticFeedback
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -129,10 +131,7 @@ fun GenerationToolbar(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { onExpandedChange(false) }
+                        .hapticClickable { onExpandedChange(false) }
                 ) {
                     // Handlebar at the top
                     Box(
@@ -245,7 +244,7 @@ fun GenerationToolbar(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
-                            .clickable { showAdvanced = !showAdvanced },
+                            .hapticClickable { showAdvanced = !showAdvanced },
                         shape = RoundedCornerShape(16.dp),
                         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                     ) {
@@ -300,8 +299,13 @@ fun GenerationToolbar(
                         moderation = selectedModeration?.value
                     ).estimateCredits()
                     
+                    val haptic = rememberHapticFeedback()
+                    
                     Button(
-                        onClick = onGenerate,
+                        onClick = {
+                            haptic.click()
+                            onGenerate()
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
@@ -344,10 +348,7 @@ fun GenerationToolbar(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { onExpandedChange(true) }
+                        .hapticClickable { onExpandedChange(true) }
                 ) {
                     // Handlebar at the top
                     Box(

@@ -15,11 +15,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import com.guitaripod.pixie.service.ImageGenerationForegroundService
+import com.guitaripod.pixie.utils.HapticFeedbackManager
 
 class GenerationViewModel(
     private val imageRepository: ImageRepository,
     private val notificationHelper: NotificationHelper,
-    private val context: Context
+    private val context: Context,
+    private val hapticFeedbackManager: HapticFeedbackManager
 ) : ViewModel() {
     
     private val _isGenerating = MutableStateFlow(false)
@@ -82,6 +84,7 @@ class GenerationViewModel(
                 "com.guitaripod.pixie.IMAGE_GENERATED" -> {
                     val imageUrls = intent.getStringArrayListExtra("imageUrls")
                     if (imageUrls != null) {
+                        hapticFeedbackManager.performHapticFeedback(HapticFeedbackManager.HapticType.SUCCESS)
                         viewModelScope.launch {
                             _generationResult.emit(imageUrls)
                             _isGenerating.value = false
@@ -90,6 +93,7 @@ class GenerationViewModel(
                 }
                 "com.guitaripod.pixie.IMAGE_GENERATION_ERROR" -> {
                     val error = intent.getStringExtra("error")
+                    hapticFeedbackManager.performHapticFeedback(HapticFeedbackManager.HapticType.ERROR)
                     viewModelScope.launch {
                         _error.value = error ?: "Generation failed"
                         _isGenerating.value = false
