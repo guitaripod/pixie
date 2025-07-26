@@ -56,7 +56,8 @@ fun PixieNavigation(
         factory = GenerationViewModelFactory(
             appContainer.imageRepository,
             appContainer.notificationHelper,
-            context.applicationContext
+            context.applicationContext,
+            appContainer.hapticFeedbackManager
         )
     )
     
