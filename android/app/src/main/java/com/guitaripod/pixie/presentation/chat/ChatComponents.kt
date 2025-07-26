@@ -23,6 +23,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.guitaripod.pixie.data.model.*
+import com.guitaripod.pixie.utils.rememberHapticFeedback
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -30,6 +31,7 @@ fun SizeSelector(
     selectedSize: ImageSize,
     onSizeSelected: (ImageSize) -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -68,7 +70,10 @@ fun SizeSelector(
             ImageSize.values().forEach { size ->
                 FilterChip(
                     selected = selectedSize == size,
-                    onClick = { onSizeSelected(size) },
+                    onClick = { 
+                        haptic.click()
+                        onSizeSelected(size) 
+                    },
                     label = { 
                         Text(
                             text = size.displayName,
@@ -89,6 +94,7 @@ fun QualitySelector(
     selectedQuality: ImageQuality,
     onQualitySelected: (ImageQuality) -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -133,7 +139,10 @@ fun QualitySelector(
             ImageQuality.values().forEach { quality ->
                 FilterChip(
                     selected = selectedQuality == quality,
-                    onClick = { onQualitySelected(quality) },
+                    onClick = { 
+                        haptic.click()
+                        onQualitySelected(quality) 
+                    },
                     label = { 
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -254,6 +263,7 @@ fun BackgroundSelector(
     selected: BackgroundStyle?,
     onSelected: (BackgroundStyle?) -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -279,7 +289,10 @@ fun BackgroundSelector(
         ) {
             FilterChip(
                 selected = selected == null,
-                onClick = { onSelected(null) },
+                onClick = { 
+                    haptic.click()
+                    onSelected(null) 
+                },
                 label = { 
                     Text(
                         "Default",
@@ -292,7 +305,10 @@ fun BackgroundSelector(
             BackgroundStyle.values().forEach { style ->
                 FilterChip(
                     selected = selected == style,
-                    onClick = { onSelected(style) },
+                    onClick = { 
+                        haptic.click()
+                        onSelected(style) 
+                    },
                     label = { 
                         Text(
                             style.displayName,
@@ -315,6 +331,7 @@ fun OutputFormatSelector(
     compressionLevel: Int,
     onCompressionChanged: (Int) -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -340,7 +357,10 @@ fun OutputFormatSelector(
         ) {
             FilterChip(
                 selected = selected == null,
-                onClick = { onSelected(null) },
+                onClick = { 
+                    haptic.click()
+                    onSelected(null) 
+                },
                 label = { 
                     Text(
                         "Default",
@@ -353,7 +373,10 @@ fun OutputFormatSelector(
             OutputFormat.values().forEach { format ->
                 FilterChip(
                     selected = selected == format,
-                    onClick = { onSelected(format) },
+                    onClick = { 
+                        haptic.click()
+                        onSelected(format) 
+                    },
                     label = { 
                         Text(
                             format.displayName,
@@ -389,9 +412,18 @@ fun OutputFormatSelector(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
+                var lastValue by remember { mutableStateOf(compressionLevel) }
+                
                 Slider(
                     value = compressionLevel.toFloat(),
-                    onValueChange = { onCompressionChanged(it.toInt()) },
+                    onValueChange = { newValue ->
+                        val newInt = newValue.toInt()
+                        if (newInt != lastValue && newInt % 5 == 0) {
+                            haptic.sliderTick()
+                        }
+                        lastValue = newInt
+                        onCompressionChanged(newInt)
+                    },
                     valueRange = 0f..100f,
                     steps = 19,
                     colors = SliderDefaults.colors(
@@ -411,6 +443,7 @@ fun ModerationSelector(
     selected: ModerationLevel?,
     onSelected: (ModerationLevel?) -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -450,7 +483,10 @@ fun ModerationSelector(
         ) {
             FilterChip(
                 selected = selected == null,
-                onClick = { onSelected(null) },
+                onClick = { 
+                    haptic.click()
+                    onSelected(null) 
+                },
                 label = { 
                     Text(
                         "Default",
@@ -463,7 +499,10 @@ fun ModerationSelector(
             ModerationLevel.values().forEach { level ->
                 FilterChip(
                     selected = selected == level,
-                    onClick = { onSelected(level) },
+                    onClick = { 
+                        haptic.click()
+                        onSelected(level) 
+                    },
                     label = { 
                         Text(
                             level.displayName,
