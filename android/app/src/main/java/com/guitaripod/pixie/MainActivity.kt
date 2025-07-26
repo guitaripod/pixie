@@ -45,12 +45,10 @@ class MainActivity : ComponentActivity() {
                     com.guitaripod.pixie.data.model.AppTheme.SYSTEM -> isSystemInDarkTheme()
                 }
             ) {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    PixieNavigation(
-                        appContainer = appContainer,
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                PixieNavigation(
+                    appContainer = appContainer,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
     }
