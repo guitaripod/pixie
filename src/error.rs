@@ -40,12 +40,45 @@ impl AppError {
 
 impl From<worker::Error> for AppError {
     fn from(err: worker::Error) -> Self {
-        AppError::InternalError(err.to_string())
+        let error_str = err.to_string();
+        
+        if let Some(msg) = error_str.strip_prefix("AppError::PaymentRequired::") {
+            return AppError::PaymentRequired(msg.to_string());
+        }
+        if let Some(msg) = error_str.strip_prefix("AppError::BadRequest::") {
+            return AppError::BadRequest(msg.to_string());
+        }
+        if let Some(msg) = error_str.strip_prefix("AppError::Unauthorized::") {
+            return AppError::Unauthorized(msg.to_string());
+        }
+        if let Some(msg) = error_str.strip_prefix("AppError::Forbidden::") {
+            return AppError::Forbidden(msg.to_string());
+        }
+        if let Some(msg) = error_str.strip_prefix("AppError::NotFound::") {
+            return AppError::NotFound(msg.to_string());
+        }
+        if error_str.starts_with("AppError::RateLimitExceeded::") {
+            return AppError::RateLimitExceeded;
+        }
+        if let Some(msg) = error_str.strip_prefix("AppError::InternalError::") {
+            return AppError::InternalError(msg.to_string());
+        }
+        
+        AppError::InternalError(error_str)
     }
 }
 
 impl From<AppError> for worker::Error {
     fn from(err: AppError) -> Self {
-        worker::Error::RustError(format!("{:?}", err))
+        let encoded = match &err {
+            AppError::BadRequest(msg) => format!("AppError::BadRequest::{}", msg),
+            AppError::Unauthorized(msg) => format!("AppError::Unauthorized::{}", msg),
+            AppError::Forbidden(msg) => format!("AppError::Forbidden::{}", msg),
+            AppError::NotFound(msg) => format!("AppError::NotFound::{}", msg),
+            AppError::PaymentRequired(msg) => format!("AppError::PaymentRequired::{}", msg),
+            AppError::InternalError(msg) => format!("AppError::InternalError::{}", msg),
+            AppError::RateLimitExceeded => "AppError::RateLimitExceeded::".to_string(),
+        };
+        worker::Error::RustError(encoded)
     }
 }
