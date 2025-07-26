@@ -5,7 +5,9 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -19,7 +21,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -66,6 +70,31 @@ data class StylePreset(
 private val ContentHorizontalPadding = 8.dp
 private val SectionSpacing = 24.dp
 private val ItemSpacing = 8.dp
+
+private fun Modifier.scaleClickable(
+    onClick: () -> Unit,
+    enabled: Boolean = true
+) = composed {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        )
+    )
+    
+    this
+        .scale(scale)
+        .clickable(
+            interactionSource = interactionSource,
+            indication = null,
+            enabled = enabled,
+            onClick = onClick
+        )
+}
 
 @Composable
 fun SuggestionsView(
@@ -427,10 +456,12 @@ private fun QuickActionCard(
         modifier = Modifier
             .width(100.dp)
             .height(40.dp)
-            .clickable { 
-                haptic.click()
-                onClick() 
-            },
+            .scaleClickable(
+                onClick = { 
+                    haptic.click()
+                    onClick() 
+                }
+            ),
         shape = RoundedCornerShape(20.dp),
         color = action.backgroundColor,
         tonalElevation = 2.dp
@@ -532,10 +563,12 @@ private fun AddImageCard(
     Card(
         modifier = modifier
             .height(120.dp)
-            .clickable { 
-                haptic.click()
-                onClick() 
-            },
+            .scaleClickable(
+                onClick = { 
+                    haptic.click()
+                    onClick() 
+                }
+            ),
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(
             width = 2.dp,
@@ -582,10 +615,12 @@ private fun RecentImageCard(
     Card(
         modifier = Modifier
             .size(120.dp)
-            .clickable { 
-                haptic.click()
-                onClick() 
-            },
+            .scaleClickable(
+                onClick = { 
+                    haptic.click()
+                    onClick() 
+                }
+            ),
         shape = RoundedCornerShape(12.dp)
     ) {
         Box {
@@ -778,10 +813,12 @@ private fun CompactPromptCard(
         modifier = Modifier
             .width(200.dp)
             .height(60.dp)
-            .clickable { 
-                haptic.click()
-                onClick() 
-            },
+            .scaleClickable(
+                onClick = { 
+                    haptic.click()
+                    onClick() 
+                }
+            ),
         shape = RoundedCornerShape(12.dp),
         color = color.copy(alpha = 0.1f),
         border = BorderStroke(1.dp, color.copy(alpha = 0.3f))
@@ -935,10 +972,12 @@ private fun CompactStyleCard(
         modifier = Modifier
             .width(120.dp)
             .height(50.dp)
-            .clickable { 
-                haptic.click()
-                onClick() 
-            },
+            .scaleClickable(
+                onClick = { 
+                    haptic.click()
+                    onClick() 
+                }
+            ),
         shape = RoundedCornerShape(12.dp),
         color = Color.Transparent
     ) {
