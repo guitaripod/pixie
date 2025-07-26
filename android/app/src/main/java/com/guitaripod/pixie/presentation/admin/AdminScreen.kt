@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.guitaripod.pixie.utils.rememberHapticFeedback
+import com.guitaripod.pixie.utils.hapticClickable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,10 +33,14 @@ fun AdminScreen(
     val viewModelRef = viewModel
     Scaffold(
         topBar = {
+            val haptic = rememberHapticFeedback()
             TopAppBar(
                 title = { Text("Admin Dashboard") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        haptic.click()
+                        onNavigateBack()
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -95,8 +101,12 @@ private fun AdminFeatureCard(
     description: String,
     onClick: () -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     Card(
-        onClick = onClick,
+        onClick = {
+            haptic.click()
+            onClick()
+        },
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(

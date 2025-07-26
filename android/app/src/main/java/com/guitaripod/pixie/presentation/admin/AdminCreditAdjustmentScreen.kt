@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.guitaripod.pixie.data.api.model.UserSearchResult
 import kotlinx.coroutines.launch
+import com.guitaripod.pixie.utils.rememberHapticFeedback
+import com.guitaripod.pixie.utils.hapticClickable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,10 +43,14 @@ fun AdminCreditAdjustmentScreen(
     
     Scaffold(
         topBar = {
+            val haptic = rememberHapticFeedback()
             TopAppBar(
                 title = { Text("Credit Adjustments") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        haptic.click()
+                        onNavigateBack()
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -160,7 +166,11 @@ private fun UserSearchStep(
                 onSearch = { onSearch() }
             ),
             trailingIcon = {
-                IconButton(onClick = onSearch) {
+                val searchHaptic = rememberHapticFeedback()
+                IconButton(onClick = {
+                    searchHaptic.click()
+                    onSearch()
+                }) {
                     Icon(Icons.Filled.Search, contentDescription = "Search")
                 }
             }
@@ -214,8 +224,10 @@ private fun UserSearchStep(
                                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
+                                val manualHaptic = rememberHapticFeedback()
                                 Button(
                                     onClick = {
+                                        manualHaptic.click()
                                         if (searchQuery.isNotBlank()) {
                                             onUserSelected(UserSearchResult(
                                                 id = searchQuery,
@@ -259,8 +271,12 @@ private fun UserCard(
     user: UserSearchResult,
     onClick: () -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     Card(
-        onClick = onClick,
+        onClick = {
+            haptic.click()
+            onClick()
+        },
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(
@@ -493,15 +509,23 @@ private fun AdjustmentFormStep(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            val cancelHaptic = rememberHapticFeedback()
             OutlinedButton(
-                onClick = onCancel,
+                onClick = {
+                    cancelHaptic.click()
+                    onCancel()
+                },
                 modifier = Modifier.weight(1f),
                 enabled = !isLoading
             ) {
                 Text("Cancel")
             }
+            val submitHaptic = rememberHapticFeedback()
             Button(
-                onClick = onSubmit,
+                onClick = {
+                    submitHaptic.click()
+                    onSubmit()
+                },
                 modifier = Modifier.weight(1f),
                 enabled = amount.isNotBlank() && reason.isNotBlank() && !isLoading
             ) {
@@ -559,12 +583,20 @@ private fun ConfirmationDialog(
             }
         },
         confirmButton = {
-            Button(onClick = onConfirm) {
+            val confirmHaptic = rememberHapticFeedback()
+            Button(onClick = {
+                confirmHaptic.confirm()
+                onConfirm()
+            }) {
                 Text("Confirm")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            val cancelHaptic = rememberHapticFeedback()
+            TextButton(onClick = {
+                cancelHaptic.click()
+                onDismiss()
+            }) {
                 Text("Cancel")
             }
         }
@@ -593,7 +625,11 @@ private fun SuccessDialog(
             Text(message)
         },
         confirmButton = {
-            Button(onClick = onDismiss) {
+            val successHaptic = rememberHapticFeedback()
+            Button(onClick = {
+                successHaptic.confirm()
+                onDismiss()
+            }) {
                 Text("OK")
             }
         }
@@ -624,7 +660,11 @@ private fun ErrorMessage(
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
-            TextButton(onClick = onRetry) {
+            val retryHaptic = rememberHapticFeedback()
+            TextButton(onClick = {
+                retryHaptic.click()
+                onRetry()
+            }) {
                 Text("Retry")
             }
         }
