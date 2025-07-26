@@ -12,6 +12,9 @@ import com.guitaripod.pixie.data.repository.GalleryRepository
 import com.guitaripod.pixie.utils.ImageSaver
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.Build
 
 data class GalleryUiState(
     val images: List<ImageDetails> = emptyList(),
@@ -36,6 +39,12 @@ class GalleryViewModel(
     val uiState: StateFlow<GalleryUiState> = _uiState.asStateFlow()
     
     private val clipboardManager = application.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    private val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        application.getSystemService(Vibrator::class.java)
+    } else {
+        @Suppress("DEPRECATION")
+        application.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    }
     
     // Session-based cache: data for each gallery type
     private val cachedPublicImages = mutableListOf<ImageDetails>()
@@ -280,6 +289,15 @@ class GalleryViewModel(
             ImageAction.COPY_PROMPT -> {
                 val clip = ClipData.newPlainText("Image Prompt", image.prompt)
                 clipboardManager.setPrimaryClip(clip)
+                
+                // Haptic feedback for copy action
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(50)
+                }
+                
                 Toast.makeText(
                     getApplication(),
                     "Prompt copied to clipboard",

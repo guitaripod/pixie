@@ -41,6 +41,9 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.guitaripod.pixie.data.api.model.ImageDetails
 import com.guitaripod.pixie.utils.formatTimeAgo
+import com.guitaripod.pixie.utils.rememberHapticFeedback
+import com.guitaripod.pixie.utils.hapticClickable
+import com.guitaripod.pixie.utils.hapticCombinedClickable
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -74,6 +77,7 @@ fun GalleryScreen(
         modifier = Modifier
             .fillMaxSize(),
         topBar = {
+            val haptic = rememberHapticFeedback()
             // Fixed compact top bar
             TopAppBar(
                 title = { 
@@ -84,7 +88,10 @@ fun GalleryScreen(
                     ) 
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        haptic.click()
+                        onNavigateBack()
+                    }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
@@ -92,7 +99,10 @@ fun GalleryScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.refresh() }) {
+                    IconButton(onClick = { 
+                        haptic.click()
+                        viewModel.refresh() 
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = "Refresh"
@@ -110,8 +120,12 @@ fun GalleryScreen(
             )
         },
         floatingActionButton = {
+            val fabHaptic = rememberHapticFeedback()
             ExtendedFloatingActionButton(
-                onClick = onNavigateToChat,
+                onClick = {
+                    fabHaptic.click()
+                    onNavigateToChat()
+                },
                 icon = { 
                     Icon(
                         Icons.Default.AddAPhoto, 
@@ -128,6 +142,7 @@ fun GalleryScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            val haptic = rememberHapticFeedback()
             // Fixed tabs that don't scroll
             TabRow(
                 selectedTabIndex = pagerState.currentPage,
@@ -139,6 +154,7 @@ fun GalleryScreen(
                 Tab(
                     selected = pagerState.currentPage == 0,
                     onClick = {
+                        haptic.click()
                         coroutineScope.launch {
                             pagerState.animateScrollToPage(0)
                         }
@@ -160,6 +176,7 @@ fun GalleryScreen(
                 Tab(
                     selected = pagerState.currentPage == 1,
                     onClick = {
+                        haptic.click()
                         coroutineScope.launch {
                             pagerState.animateScrollToPage(1)
                         }
@@ -235,9 +252,14 @@ private fun GalleryPageContent(
     
     val pullToRefreshState = rememberPullToRefreshState()
     
+    val refreshHaptic = rememberHapticFeedback()
+    
     PullToRefreshBox(
         isRefreshing = uiState.isLoading && uiState.images.isNotEmpty(),
-        onRefresh = { viewModel.refresh() },
+        onRefresh = { 
+            refreshHaptic.confirm()
+            viewModel.refresh() 
+        },
         state = pullToRefreshState,
         modifier = Modifier.fillMaxSize()
     ) {
@@ -361,6 +383,7 @@ private fun GalleryImageCard(
     onAction: (ImageAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val haptic = rememberHapticFeedback()
     var showMenu by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
         targetValue = if (showMenu) 0.95f else 1f,
@@ -370,7 +393,10 @@ private fun GalleryImageCard(
     )
     
     Card(
-        onClick = onClick,
+        onClick = {
+            haptic.click()
+            onClick()
+        },
         modifier = modifier
             .scale(scale)
             .fillMaxWidth(),
@@ -471,7 +497,10 @@ private fun GalleryImageCard(
                     containerColor = Color.Black.copy(alpha = 0.5f)
                 )
                 FilledIconButton(
-                    onClick = { showMenu = true },
+                    onClick = { 
+                        haptic.click()
+                        showMenu = true 
+                    },
                     modifier = Modifier.size(32.dp),
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = Color.Black.copy(alpha = 0.5f)
@@ -493,6 +522,7 @@ private fun GalleryImageCard(
                         text = { Text("Use for Edit") },
                         leadingIcon = { Icon(Icons.Default.Edit, null) },
                         onClick = {
+                            haptic.click()
                             showMenu = false
                             onAction(ImageAction.USE_FOR_EDIT)
                         }
@@ -501,6 +531,7 @@ private fun GalleryImageCard(
                         text = { Text("Copy Prompt") },
                         leadingIcon = { Icon(Icons.Default.ContentCopy, null) },
                         onClick = {
+                            haptic.click()
                             showMenu = false
                             onAction(ImageAction.COPY_PROMPT)
                         }
@@ -509,6 +540,7 @@ private fun GalleryImageCard(
                         text = { Text("Download") },
                         leadingIcon = { Icon(Icons.Default.Download, null) },
                         onClick = {
+                            haptic.click()
                             showMenu = false
                             onAction(ImageAction.DOWNLOAD)
                         }
@@ -517,6 +549,7 @@ private fun GalleryImageCard(
                         text = { Text("Share") },
                         leadingIcon = { Icon(Icons.Default.Share, null) },
                         onClick = {
+                            haptic.click()
                             showMenu = false
                             onAction(ImageAction.SHARE)
                         }
@@ -542,6 +575,7 @@ private fun ErrorState(
     message: String,
     onRetry: () -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -574,7 +608,10 @@ private fun ErrorState(
         
         Spacer(modifier = Modifier.height(24.dp))
         
-        Button(onClick = onRetry) {
+        Button(onClick = {
+            haptic.click()
+            onRetry()
+        }) {
             Text("Try Again")
         }
     }
@@ -585,6 +622,7 @@ private fun EmptyState(
     isPersonalGallery: Boolean,
     onNavigateToChat: () -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -622,7 +660,10 @@ private fun EmptyState(
             Spacer(modifier = Modifier.height(32.dp))
             
             Button(
-                onClick = onNavigateToChat,
+                onClick = {
+                    haptic.click()
+                    onNavigateToChat()
+                },
                 modifier = Modifier.height(48.dp)
             ) {
                 Icon(Icons.Default.AddAPhoto, null)
