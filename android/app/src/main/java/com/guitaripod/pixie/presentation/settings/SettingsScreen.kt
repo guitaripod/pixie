@@ -165,7 +165,8 @@ fun SettingsScreen(
                     icon = Icons.Filled.Info,
                     title = "About",
                     subtitle = "Version ${BuildConfig.VERSION_NAME}",
-                    onClick = { }
+                    onClick = { },
+                    showChevron = false
                 )
             }
             
@@ -276,7 +277,8 @@ private fun SettingsItem(
     title: String,
     subtitle: String? = null,
     onClick: () -> Unit,
-    tint: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
+    tint: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface,
+    showChevron: Boolean = true
 ) {
     Row(
         modifier = Modifier
@@ -310,11 +312,13 @@ private fun SettingsItem(
             }
         }
         
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        if (showChevron) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 
