@@ -127,8 +127,7 @@ fun PixieNavigation(
                         tags = null
                     )
                     navigateTo(Screen.Chat(editImage = tempImageDetails))
-                },
-                modifier = modifier
+                }
             )
         }
         
@@ -164,8 +163,7 @@ fun PixieNavigation(
                             galleryViewModel.handleImageAction(image, action)
                         }
                     }
-                },
-                modifier = modifier
+                }
             )
             
             selectedImage?.let { image ->
