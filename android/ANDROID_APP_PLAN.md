@@ -204,9 +204,8 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 ### Phase 8: Polish & Performance
 
 #### 8.1 UI/UX Improvements
-- [ ] Add app intro/onboarding flow
 - [ ] Create loading skeletons for all screens
-- [ ] Implement empty states with actions
+- [x] Implement empty states with actions
 - [ ] Add haptic feedback for interactions
 
 #### 8.2 Performance
@@ -240,10 +239,9 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 
 #### 9.3 Launch
 - [ ] Create signed release build
-- [ ] Set up Play Console project
-- [ ] Configure RevenueCat products in Play Console
+- [x] Set up Play Console project
+- [x] Configure RevenueCat products in Play Console
 - [ ] Submit for Play Store review
-- [ ] Plan phased rollout strategy
 
 ## Technical Specifications
 
