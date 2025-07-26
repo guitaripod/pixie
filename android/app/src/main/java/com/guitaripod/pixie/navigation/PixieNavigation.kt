@@ -50,9 +50,14 @@ fun PixieNavigation(
         factory = AuthViewModelFactory(appContainer.authRepository)
     )
     
-    // Create GenerationViewModel at the navigation level to preserve state
+    val context = LocalContext.current
+    
     val generationViewModel: GenerationViewModel = viewModel(
-        factory = GenerationViewModelFactory(appContainer.imageRepository)
+        factory = GenerationViewModelFactory(
+            appContainer.imageRepository,
+            appContainer.notificationHelper,
+            context.applicationContext
+        )
     )
     
     var navigationStack by remember { 
@@ -132,12 +137,12 @@ fun PixieNavigation(
         }
         
         is Screen.Gallery -> {
-            val context = LocalContext.current
+            val localContext = LocalContext.current
             val galleryViewModel: GalleryViewModel = viewModel(
                 factory = GalleryViewModelFactory(
                     appContainer.galleryRepository,
                     appContainer.imageSaver,
-                    context.applicationContext as android.app.Application
+                    localContext.applicationContext as android.app.Application
                 )
             )
             
