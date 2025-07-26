@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.common.SignInButton
+import com.guitaripod.pixie.utils.rememberHapticFeedback
 
 @Composable
 fun GoogleSignInButton(
@@ -20,12 +21,18 @@ fun GoogleSignInButton(
     enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
+    val haptic = rememberHapticFeedback()
     AndroidView(
         modifier = modifier.fillMaxWidth().height(50.dp),
         factory = { context ->
             SignInButton(context).apply {
                 setSize(SignInButton.SIZE_WIDE)
-                setOnClickListener { if (enabled) onClick() }
+                setOnClickListener { 
+                    if (enabled) {
+                        haptic.click()
+                        onClick()
+                    }
+                }
             }
         },
         update = { button ->
@@ -40,8 +47,12 @@ fun AppleSignInButton(
     enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
+    val haptic = rememberHapticFeedback()
     Button(
-        onClick = onClick,
+        onClick = {
+            haptic.click()
+            onClick()
+        },
         enabled = enabled,
         modifier = modifier.fillMaxWidth().height(50.dp),
         shape = RoundedCornerShape(8.dp),
@@ -75,8 +86,12 @@ fun GitHubSignInButton(
     enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
+    val haptic = rememberHapticFeedback()
     Button(
-        onClick = onClick,
+        onClick = {
+            haptic.click()
+            onClick()
+        },
         enabled = enabled,
         modifier = modifier.fillMaxWidth().height(50.dp),
         shape = RoundedCornerShape(6.dp),
