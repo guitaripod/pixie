@@ -38,6 +38,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarDuration
 import android.net.Uri
 import com.guitaripod.pixie.utils.NotificationPermissionEffect
+import com.guitaripod.pixie.utils.rememberHapticFeedback
+import com.guitaripod.pixie.utils.hapticClickable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -137,13 +139,14 @@ fun ChatGenerationScreen(
             SnackbarHost(hostState = snackbarHostState)
         },
         topBar = {
+            val haptic = rememberHapticFeedback()
             TopAppBar(
                 navigationIcon = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .padding(start = 8.dp)
-                            .clickable {
+                            .hapticClickable {
                                 viewModel.resetChat()
                             }
                     ) {
@@ -165,7 +168,10 @@ fun ChatGenerationScreen(
                 title = { },
                 actions = {
                     TextButton(
-                        onClick = onNavigateToGallery,
+                        onClick = {
+                            haptic.click()
+                            onNavigateToGallery()
+                        },
                         colors = ButtonDefaults.textButtonColors(
                             contentColor = MaterialTheme.colorScheme.primary
                         )
@@ -173,7 +179,10 @@ fun ChatGenerationScreen(
                         Text("Gallery")
                     }
                     TextButton(
-                        onClick = onNavigateToCredits,
+                        onClick = {
+                            haptic.click()
+                            onNavigateToCredits()
+                        },
                         colors = ButtonDefaults.textButtonColors(
                             contentColor = MaterialTheme.colorScheme.primary
                         )
@@ -181,7 +190,10 @@ fun ChatGenerationScreen(
                         Text("Credits")
                     }
                     IconButton(
-                        onClick = onNavigateToSettings
+                        onClick = {
+                            haptic.click()
+                            onNavigateToSettings()
+                        }
                     ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
