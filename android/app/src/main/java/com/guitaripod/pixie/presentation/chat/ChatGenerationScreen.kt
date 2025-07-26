@@ -195,12 +195,12 @@ fun ChatGenerationScreen(
                     .fillMaxSize()
                     .padding(paddingValues),
                 contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = 16.dp,
+                    start = 12.dp,
+                    end = 12.dp,
+                    top = 12.dp,
                     bottom = if (isToolbarExpanded) 620.dp else 120.dp
                 ),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (messages.isEmpty()) {
                     item {
@@ -393,36 +393,36 @@ fun UserMessageBubble(message: ChatMessage.UserMessage) {
         horizontalAlignment = Alignment.End
     ) {
         Surface(
-            modifier = Modifier.widthIn(max = 320.dp),
+            modifier = Modifier.widthIn(max = 280.dp),
             shape = RoundedCornerShape(
-                topStart = 20.dp,
+                topStart = 16.dp,
                 topEnd = 4.dp,
-                bottomStart = 20.dp,
-                bottomEnd = 20.dp
+                bottomStart = 16.dp,
+                bottomEnd = 16.dp
             ),
             color = MaterialTheme.colorScheme.primary,
             tonalElevation = 2.dp
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
                     text = "🎨 Generation Request",
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
                 
                 Text(
                     text = message.prompt,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
                 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 HorizontalDivider(color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.3f))
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 
                 DetailRow("Quality", message.quality.uppercase(), MaterialTheme.colorScheme.onPrimary)
                 DetailRow("Size", message.size + if (message.size != message.actualSize) " (${message.actualSize})" else "", MaterialTheme.colorScheme.onPrimary)
