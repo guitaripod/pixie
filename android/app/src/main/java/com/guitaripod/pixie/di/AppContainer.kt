@@ -29,6 +29,7 @@ import com.guitaripod.pixie.data.purchases.CreditPurchaseManager
 import com.guitaripod.pixie.utils.ImageSaver
 import com.guitaripod.pixie.utils.CacheManager
 import com.guitaripod.pixie.utils.NotificationHelper
+import com.guitaripod.pixie.utils.HapticFeedbackManager
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.CoroutineDispatcher
@@ -149,6 +150,10 @@ class AppContainer(private val context: Context) {
     
     val notificationHelper: NotificationHelper by lazy {
         NotificationHelper(context)
+    }
+    
+    val hapticFeedbackManager: HapticFeedbackManager by lazy {
+        HapticFeedbackManager(context)
     }
         val dataStore: DataStore<Preferences> by lazy {
         context.dataStore
