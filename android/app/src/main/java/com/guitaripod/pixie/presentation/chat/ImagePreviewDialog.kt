@@ -83,9 +83,9 @@ fun ImagePreviewDialog(
                         .height(56.dp),
                     shape = RoundedCornerShape(28.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.onSurface
+                        contentColor = Color.White
                     ),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f))
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
