@@ -114,16 +114,12 @@ fun ImageBubble(
                         .align(Alignment.TopEnd)
                         .padding(4.dp)
                         .size(32.dp)
-                        .background(
-                            color = Color.Black.copy(alpha = 0.5f),
-                            shape = CircleShape
-                        )
                 ) {
                     Icon(
                         imageVector = Icons.Default.Fullscreen,
                         contentDescription = "View fullscreen",
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
                 
@@ -151,14 +147,14 @@ fun ImageBubble(
         
         AnimatedVisibility(
             visible = isExpanded,
-            enter = fadeIn() + slideInVertically { it },
-            exit = fadeOut() + slideOutVertically { it },
+            enter = fadeIn() + slideInHorizontally { -it },
+            exit = fadeOut() + slideOutHorizontally { -it },
             modifier = Modifier
-                .align(Alignment.BottomStart)
+                .align(Alignment.CenterStart)
                 .padding(8.dp)
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 if (onEdit != null) {
                     ImageActionButton(
