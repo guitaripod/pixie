@@ -47,8 +47,7 @@ fun ChatGenerationScreen(
     onNavigateToGallery: () -> Unit = {},
     onNavigateToCredits: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
-    onEditGeneratedImage: (imageUrl: String, prompt: String) -> Unit = { _, _ -> },
-    modifier: Modifier = Modifier
+    onEditGeneratedImage: (imageUrl: String, prompt: String) -> Unit = { _, _ -> }
 ) {
     val messages by viewModel.messages.collectAsState()
     val isToolbarExpanded by viewModel.isToolbarExpanded.collectAsState()
@@ -120,7 +119,7 @@ fun ChatGenerationScreen(
     }
     
     Scaffold(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize(),
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
