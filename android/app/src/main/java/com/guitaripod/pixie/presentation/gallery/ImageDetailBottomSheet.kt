@@ -33,7 +33,7 @@ fun ImageDetailBottomSheet(
     onAction: (ImageAction) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false
+        skipPartiallyExpanded = true
     )
     
     ModalBottomSheet(
