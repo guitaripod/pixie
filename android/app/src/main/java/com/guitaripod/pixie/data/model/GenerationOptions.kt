@@ -58,8 +58,7 @@ enum class ImageSize(val value: String, val displayName: String, val dimensions:
     AUTO("auto", "Auto", "Optimal"),
     SQUARE("1024x1024", "Square", "1024×1024"),
     LANDSCAPE("1536x1024", "Landscape", "1536×1024"),
-    PORTRAIT("1024x1536", "Portrait", "1024×1536"),
-    CUSTOM("custom", "Custom", "Custom size")
+    PORTRAIT("1024x1536", "Portrait", "1024×1536")
 }
 
 enum class ImageQuality(val value: String, val displayName: String, val creditRange: String) {

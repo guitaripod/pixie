@@ -45,8 +45,6 @@ class GenerationViewModel(
     private val _selectedSize = MutableStateFlow(ImageSize.AUTO)
     val selectedSize: StateFlow<ImageSize> = _selectedSize.asStateFlow()
     
-    private val _customSize = MutableStateFlow("")
-    val customSize: StateFlow<String> = _customSize.asStateFlow()
     
     private val _selectedQuality = MutableStateFlow(ImageQuality.LOW)
     val selectedQuality: StateFlow<ImageQuality> = _selectedQuality.asStateFlow()
@@ -109,7 +107,6 @@ class GenerationViewModel(
         _isToolbarExpanded.value = false
         _toolbarMode.value = ToolbarMode.Generate
         _selectedSize.value = ImageSize.AUTO
-        _customSize.value = ""
         _selectedQuality.value = ImageQuality.LOW
         _selectedBackground.value = null
         _selectedFormat.value = null
@@ -144,9 +141,6 @@ class GenerationViewModel(
         _selectedSize.value = size
     }
     
-    fun updateCustomSize(size: String) {
-        _customSize.value = size
-    }
     
     fun updateSelectedQuality(quality: ImageQuality) {
         _selectedQuality.value = quality

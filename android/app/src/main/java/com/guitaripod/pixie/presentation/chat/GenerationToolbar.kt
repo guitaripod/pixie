@@ -47,8 +47,6 @@ fun GenerationToolbar(
     onPromptChange: (String) -> Unit,
     selectedSize: ImageSize,
     onSizeSelected: (ImageSize) -> Unit,
-    customSize: String,
-    onCustomSizeChanged: (String) -> Unit,
     selectedQuality: ImageQuality,
     onQualitySelected: (ImageQuality) -> Unit,
     selectedBackground: BackgroundStyle?,
@@ -233,9 +231,7 @@ fun GenerationToolbar(
                     
                     SizeSelector(
                         selectedSize = selectedSize,
-                        onSizeSelected = onSizeSelected,
-                        customSize = customSize,
-                        onCustomSizeChanged = onCustomSizeChanged
+                        onSizeSelected = onSizeSelected
                     )
                     
                     QualitySelector(
@@ -296,7 +292,7 @@ fun GenerationToolbar(
                     val estimatedCredits = GenerationOptions(
                         prompt = prompt,
                         number = 1,
-                        size = if (selectedSize == ImageSize.CUSTOM) customSize.ifEmpty { "1024x1024" } else selectedSize.value,
+                        size = selectedSize.value,
                         quality = selectedQuality.value,
                         background = selectedBackground?.value,
                         outputFormat = selectedFormat?.value,
