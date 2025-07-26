@@ -50,8 +50,7 @@ fun GalleryScreen(
     onNavigateToChat: () -> Unit,
     onImageClick: (ImageDetails) -> Unit,
     onImageAction: (ImageDetails, ImageAction) -> Unit,
-    onNavigateBack: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onNavigateBack: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pagerState = rememberPagerState(pageCount = { 2 })
@@ -72,7 +71,8 @@ fun GalleryScreen(
     }
     
     Scaffold(
-        modifier = modifier,
+        modifier = Modifier
+            .fillMaxSize(),
         topBar = {
             // Fixed compact top bar
             TopAppBar(
