@@ -32,6 +32,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.guitaripod.pixie.data.model.*
+import com.guitaripod.pixie.utils.rememberHapticFeedback
+import com.guitaripod.pixie.utils.hapticClickable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,10 +124,14 @@ private fun CollapsedEditToolbar(
     editOptions: EditOptions,
     onExpand: () -> Unit
 ) {
+    val haptic = rememberHapticFeedback()
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .clickable { onExpand() }
+            .clickable { 
+                haptic.click()
+                onExpand() 
+            }
     ) {
         // Handlebar at the top
         Box(
@@ -321,7 +327,11 @@ private fun ExpandedEditToolbar(
                 )
             }
             
-            TextButton(onClick = onSwitchToGenerate) {
+            val haptic = rememberHapticFeedback()
+            TextButton(onClick = {
+                haptic.click()
+                onSwitchToGenerate()
+            }) {
                 Text("New image")
             }
         }
@@ -351,11 +361,13 @@ private fun ExpandedEditToolbar(
         )
         
         // Advanced options toggle
+        val advancedHaptic = rememberHapticFeedback()
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
                 .clickable {
+                    advancedHaptic.toggle()
                     onEditToolbarStateChange(
                         editToolbarState.copy(
                             showAdvancedOptions = !editToolbarState.showAdvancedOptions
@@ -395,8 +407,12 @@ private fun ExpandedEditToolbar(
         
         // Edit button
         val estimatedCredits = estimateEditCredits(editOptions)
+        val editHaptic = rememberHapticFeedback()
         Button(
-            onClick = onStartEdit,
+            onClick = {
+                editHaptic.click()
+                onStartEdit()
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -462,6 +478,7 @@ private fun QuickEditOptions(
                 )
             }
             
+            val qualityHaptic = rememberHapticFeedback()
             SingleChoiceSegmentedButtonRow(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -472,6 +489,7 @@ private fun QuickEditOptions(
                             count = ImageQuality.values().size
                         ),
                         onClick = {
+                            qualityHaptic.click()
                             onEditOptionsChange(editOptions.copy(quality = quality))
                         },
                         selected = editOptions.quality == quality
@@ -511,6 +529,7 @@ private fun AdvancedEditOptions(
                 fontWeight = FontWeight.Medium
             )
             
+            val fidelityHaptic = rememberHapticFeedback()
             SingleChoiceSegmentedButtonRow(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -521,6 +540,7 @@ private fun AdvancedEditOptions(
                             count = FidelityLevel.values().size
                         ),
                         onClick = {
+                            fidelityHaptic.click()
                             onEditOptionsChange(editOptions.copy(fidelity = fidelity))
                         },
                         selected = editOptions.fidelity == fidelity
