@@ -220,8 +220,8 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [ ] Add screen reader optimizations
 
 #### 8.4 Error Handling
-- [ ] Add offline mode detection
-- [ ] Add debug mode for development
+- [x] Add offline mode detection
+- [x] Add debug mode for development
 
 ### Phase 9: Testing & Release
 
