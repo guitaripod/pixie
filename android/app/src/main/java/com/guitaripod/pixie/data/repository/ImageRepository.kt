@@ -56,7 +56,15 @@ class ImageRepository(
                         // Add helpful context based on error code
                         when (errorResponse?.error?.code) {
                             "insufficient_credits" -> {
-                                errorMessage = "$errorMessage\n\nYou don't have enough credits. Please purchase more credits to continue."
+                                val details = errorResponse.error.details
+                                val required = details?.required_credits
+                                val available = details?.available_credits
+                                
+                                errorMessage = if (required != null && available != null) {
+                                    "Insufficient credits: You have $available credits but need $required credits for this generation."
+                                } else {
+                                    "$errorMessage\n\nYou don't have enough credits. Please purchase more credits to continue."
+                                }
                             }
                             "unauthorized" -> {
                                 errorMessage = "$errorMessage\n\nYour session may have expired. Please sign in again."
@@ -182,7 +190,15 @@ class ImageRepository(
                         // Add helpful context based on error code
                         when (errorResponse?.error?.code) {
                             "insufficient_credits" -> {
-                                errorMessage = "$errorMessage\n\nYou don't have enough credits. Please purchase more credits to continue."
+                                val details = errorResponse.error.details
+                                val required = details?.required_credits
+                                val available = details?.available_credits
+                                
+                                errorMessage = if (required != null && available != null) {
+                                    "Insufficient credits: You have $available credits but need $required credits for this generation."
+                                } else {
+                                    "$errorMessage\n\nYou don't have enough credits. Please purchase more credits to continue."
+                                }
                             }
                             "unauthorized" -> {
                                 errorMessage = "$errorMessage\n\nYour session may have expired. Please sign in again."
