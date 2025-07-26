@@ -3,6 +3,7 @@ package com.guitaripod.pixie.presentation.chat
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -63,7 +64,6 @@ fun ChatGenerationScreen(
     // Generation options state from ViewModel
     val prompt by viewModel.prompt.collectAsState()
     val selectedSize by viewModel.selectedSize.collectAsState()
-    val customSize by viewModel.customSize.collectAsState()
     val selectedQuality by viewModel.selectedQuality.collectAsState()
     val selectedBackground by viewModel.selectedBackground.collectAsState()
     val selectedFormat by viewModel.selectedFormat.collectAsState()
@@ -130,19 +130,18 @@ fun ChatGenerationScreen(
                 navigationIcon = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(start = 8.dp)
-                    ) {
-                        IconButton(
-                            onClick = {
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .clickable {
                                 viewModel.resetChat()
                             }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = "New Chat",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = "New Chat",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(8.dp)
+                        )
                         Text(
                             text = "New",
                             style = MaterialTheme.typography.labelLarge,
@@ -261,8 +260,6 @@ fun ChatGenerationScreen(
                         onPromptChange = { viewModel.updatePrompt(it) },
                         selectedSize = selectedSize,
                         onSizeSelected = { viewModel.updateSelectedSize(it) },
-                        customSize = customSize,
-                        onCustomSizeChanged = { viewModel.updateCustomSize(it) },
                         selectedQuality = selectedQuality,
                         onQualitySelected = { viewModel.updateSelectedQuality(it) },
                         selectedBackground = selectedBackground,
@@ -275,11 +272,7 @@ fun ChatGenerationScreen(
                         onModerationSelected = { viewModel.updateSelectedModeration(it) },
                         isGenerating = isGenerating,
                         onGenerate = {
-                            val actualSize = if (selectedSize == ImageSize.CUSTOM) {
-                                customSize.ifEmpty { "1024x1024" }
-                            } else {
-                                selectedSize.value
-                            }
+                            val actualSize = selectedSize.value
                             
                             val userMessage = ChatMessage.UserMessage(
                                 prompt = prompt,
@@ -333,11 +326,7 @@ fun ChatGenerationScreen(
                         onEditToolbarStateChange = { viewModel.updateEditToolbarState(it) },
                         isProcessing = isGenerating,
                         onStartEdit = {
-                            val actualSize = if (editOptions.size == ImageSize.CUSTOM) {
-                                editOptions.customSize.ifEmpty { "1024x1024" }
-                            } else {
-                                editOptions.size.value
-                            }
+                            val actualSize = editOptions.size.value
                             
                             val editModeText = "Edit"
                             
