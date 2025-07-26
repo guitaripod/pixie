@@ -24,6 +24,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.guitaripod.pixie.data.api.model.CreditBalance
 import com.guitaripod.pixie.data.purchases.CreditPackWithPrice
 import com.guitaripod.pixie.data.purchases.PurchaseState
+import com.guitaripod.pixie.utils.rememberHapticFeedback
+import com.guitaripod.pixie.utils.hapticClickable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,16 +44,23 @@ fun EnhancedCreditPacksScreen(
     
     Scaffold(
         topBar = {
+            val haptic = rememberHapticFeedback()
             TopAppBar(
                 title = { Text("🎁 Available Credit Packs") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        haptic.click()
+                        onNavigateBack()
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
                     TextButton(
-                        onClick = { showRestoreDialog = true }
+                        onClick = { 
+                            haptic.click()
+                            showRestoreDialog = true 
+                        }
                     ) {
                         Text("Restore")
                     }
@@ -94,8 +103,12 @@ fun EnhancedCreditPacksScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
+                        val retryHaptic = rememberHapticFeedback()
                         Button(
-                            onClick = { creditsViewModel.loadCreditPacks() }
+                            onClick = { 
+                                retryHaptic.click()
+                                creditsViewModel.loadCreditPacks() 
+                            }
                         ) {
                             Text("Retry")
                         }
@@ -154,7 +167,11 @@ fun EnhancedCreditPacksScreen(
             title = { Text("Purchase Error") },
             text = { Text(error) },
             confirmButton = {
-                TextButton(onClick = { purchaseViewModel.clearError() }) {
+                val errorHaptic = rememberHapticFeedback()
+                TextButton(onClick = { 
+                    errorHaptic.click()
+                    purchaseViewModel.clearError() 
+                }) {
                     Text("OK")
                 }
             }
@@ -228,9 +245,17 @@ fun RevenueCatCreditPackCard(
 ) {
     val pack = creditPackWithPrice.creditPack
     val isPopular = pack.id == "popular"
+    val haptic = rememberHapticFeedback()
     
     Card(
-        onClick = onPackSelected,
+        onClick = {
+            if (isPopular) {
+                haptic.confirm() // Special haptic for popular pack
+            } else {
+                haptic.click()
+            }
+            onPackSelected()
+        },
         modifier = modifier.fillMaxWidth(),
         enabled = !isLoading,
         border = if (isPopular) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
@@ -398,8 +423,12 @@ fun PurchaseSuccessDialog(
                     }
                 }
                 
+                val successHaptic = rememberHapticFeedback()
                 Button(
-                    onClick = onDismiss,
+                    onClick = {
+                        successHaptic.confirm()
+                        onDismiss()
+                    },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Continue")
@@ -427,12 +456,20 @@ fun RestorePurchasesDialog(
             Text("This will restore any previous credit purchases made with this Google account.")
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
+            val restoreHaptic = rememberHapticFeedback()
+            TextButton(onClick = {
+                restoreHaptic.click()
+                onConfirm()
+            }) {
                 Text("Restore")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            val cancelHaptic = rememberHapticFeedback()
+            TextButton(onClick = {
+                cancelHaptic.click()
+                onDismiss()
+            }) {
                 Text("Cancel")
             }
         }
