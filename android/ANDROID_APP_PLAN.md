@@ -160,7 +160,6 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [x] Implement transaction history with infinite scroll
 - [x] Add credit pack browser with descriptions
 - [x] Create cost estimator tool
-- [x] Add low balance notifications
 
 #### 6.3 Credit Purchase (Partially Complete)
 - [x] Integrate RevenueCat SDK for in-app purchases
