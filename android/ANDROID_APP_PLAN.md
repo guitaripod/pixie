@@ -206,7 +206,7 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 #### 8.1 UI/UX Improvements
 - [ ] Create loading skeletons for all screens
 - [x] Implement empty states with actions
-- [ ] Add haptic feedback for interactions
+- [x] Add haptic feedback for interactions
 
 #### 8.2 Performance
 - [x] Implement image caching with Coil
