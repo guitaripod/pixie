@@ -39,11 +39,11 @@ Native Swift iOS app targeting iOS 16+ that replicates all functionality of the 
 ### Phase 2: Authentication System
 
 #### 2.1 OAuth Infrastructure
-- [ ] Create OAuth coordinator with ASWebAuthenticationSession
-- [ ] Implement OAuth state parameter generation and validation
-- [ ] Handle universal links for OAuth callbacks
-- [ ] Create authentication flow with delegate pattern
-- [ ] Implement secure credential storage in Keychain
+- [x] Create OAuth coordinator with ASWebAuthenticationSession
+- [x] Implement OAuth state parameter generation and validation
+- [x] Handle universal links for OAuth callbacks
+- [x] Create authentication flow with delegate pattern
+- [x] Implement secure credential storage in Keychain
 
 #### 2.2 Provider Implementations
 - [ ] Implement GitHub OAuth with ASWebAuthenticationSession
