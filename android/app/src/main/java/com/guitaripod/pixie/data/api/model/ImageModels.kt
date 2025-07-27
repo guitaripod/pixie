@@ -3,8 +3,6 @@ package com.guitaripod.pixie.data.api.model
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
-// Image Generation Models
-
 @JsonClass(generateAdapter = true)
 data class ImageGenerationRequest(
     @Json(name = "prompt") val prompt: String,
@@ -49,8 +47,6 @@ data class ImageMetadata(
     @Json(name = "model") val model: String? = null,
     @Json(name = "revised_prompt") val revisedPrompt: String? = null
 )
-
-// Gallery Models
 
 @JsonClass(generateAdapter = true)
 data class ImageListResponse(

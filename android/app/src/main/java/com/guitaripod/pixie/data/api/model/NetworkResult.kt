@@ -18,36 +18,29 @@ sealed class NetworkException(
     cause: Throwable? = null
 ) : Exception(message, cause) {
     
-    // HTTP errors
     data class HttpException(
         val code: Int,
         val errorMessage: String,
         val errorBody: ErrorResponse? = null
     ) : NetworkException("HTTP $code: $errorMessage")
     
-    // Network connectivity errors
     class NoInternetException : NetworkException("No internet connection")
     
-    // Timeout errors
     class TimeoutException : NetworkException("Request timed out")
     
-    // Authentication errors
     class UnauthorizedException(
         override val message: String = "Authentication required"
     ) : NetworkException(message)
     
-    // Rate limiting
     data class RateLimitException(
         val retryAfter: Int? = null
     ) : NetworkException("Rate limit exceeded")
     
-    // Generic API errors
     data class ApiException(
         override val message: String,
         val errorCode: String? = null
     ) : NetworkException(message)
     
-    // Unknown errors
     data class UnknownException(
         override val cause: Throwable
     ) : NetworkException("Unknown error occurred", cause)

@@ -103,7 +103,6 @@ private fun StatsContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Users Section
         StatsSection(title = "Users") {
             StatCard(
                 icon = Icons.Filled.Groups,
@@ -113,7 +112,6 @@ private fun StatsContent(
             )
         }
         
-        // Credits Section
         StatsSection(title = "Credits") {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -143,7 +141,6 @@ private fun StatsContent(
             )
         }
         
-        // Revenue Section
         StatsSection(title = "Revenue") {
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -175,7 +172,6 @@ private fun StatsContent(
             }
         }
         
-        // Images Section
         StatsSection(title = "Images") {
             StatCard(
                 icon = Icons.Filled.Image,

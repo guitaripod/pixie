@@ -134,7 +134,6 @@ class OAuthWebFlowManager(
             is NetworkResult.Success -> {
                 val authResponse = result.data
                 
-                // Save credentials
                 val config = Config(
                     apiKey = authResponse.apiKey,
                     userId = authResponse.userId,

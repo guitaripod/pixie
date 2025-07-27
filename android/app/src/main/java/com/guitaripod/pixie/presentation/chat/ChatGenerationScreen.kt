@@ -63,7 +63,6 @@ fun ChatGenerationScreen(
     val isGenerating by viewModel.isGenerating.collectAsState()
     val error by viewModel.error.collectAsState()
     
-    // Generation options state from ViewModel
     val prompt by viewModel.prompt.collectAsState()
     val selectedSize by viewModel.selectedSize.collectAsState()
     val selectedQuality by viewModel.selectedQuality.collectAsState()
@@ -72,19 +71,15 @@ fun ChatGenerationScreen(
     val compressionLevel by viewModel.compressionLevel.collectAsState()
     val selectedModeration by viewModel.selectedModeration.collectAsState()
     
-    // Initialize with user preferences
     LaunchedEffect(userPreferences) {
         viewModel.initializeWithUserPreferences(userPreferences)
     }
     
-    // Edit-specific state from ViewModel
     val editOptions by viewModel.editOptions.collectAsState()
     val editToolbarState by viewModel.editToolbarState.collectAsState()
     
-    // Handle initial edit image from gallery navigation
     LaunchedEffect(initialEditImage) {
         initialEditImage?.let { image ->
-            // Convert the image URL to a Uri and set edit mode
             val uri = Uri.parse(image.url)
             viewModel.updateToolbarMode(ToolbarMode.Edit(
                 SelectedImage(

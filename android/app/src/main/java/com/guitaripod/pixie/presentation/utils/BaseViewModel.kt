@@ -17,6 +17,5 @@ abstract class BaseViewModel : ViewModel() {
     }
     
     protected open fun handleError(throwable: Throwable) {
-        // Override in subclasses to handle specific errors
     }
 }

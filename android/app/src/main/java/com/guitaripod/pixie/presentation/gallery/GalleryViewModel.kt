@@ -46,13 +46,11 @@ class GalleryViewModel(
         application.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
     }
     
-    // Session-based cache: data for each gallery type
     private val cachedPublicImages = mutableListOf<ImageDetails>()
     private val cachedPersonalImages = mutableListOf<ImageDetails>()
     private var hasLoadedPublic = false
     private var hasLoadedPersonal = false
     
-    // Intelligent paging configuration
     private val MAX_PAGES_PUBLIC = 5 // Load maximum 5 pages (100 images) for public gallery
     private var publicPagesLoaded = 0
     private var personalPagesLoaded = 0
@@ -60,18 +58,15 @@ class GalleryViewModel(
     private var personalHasReachedEnd = false
     
     init {
-        // Don't auto-load on init
     }
     
     fun setGalleryType(type: GalleryType) {
         if (_uiState.value.galleryType != type) {
-            // Check if we have cached data for this gallery type
             val cachedImages = when (type) {
                 GalleryType.PUBLIC -> if (hasLoadedPublic) cachedPublicImages.toList() else emptyList()
                 GalleryType.PERSONAL -> if (hasLoadedPersonal) cachedPersonalImages.toList() else emptyList()
             }
             
-            // Ensure cached images are deduplicated (defensive programming)
             val deduplicatedImages = cachedImages.distinctBy { it.id }
             
             val pagesLoaded = when (type) {
@@ -100,7 +95,6 @@ class GalleryViewModel(
                 hasReachedEnd = hasReachedEnd
             )}
             
-            // Only load if we don't have cached data for this gallery type
             if (deduplicatedImages.isEmpty()) {
                 loadImages()
             }
@@ -108,7 +102,6 @@ class GalleryViewModel(
     }
     
     fun refresh() {
-        // Clear cache for current gallery type
         when (_uiState.value.galleryType) {
             GalleryType.PUBLIC -> {
                 cachedPublicImages.clear()
@@ -144,7 +137,6 @@ class GalleryViewModel(
             GalleryType.PERSONAL -> personalPagesLoaded
         }
         
-        // Check if we should load more based on intelligent paging
         val shouldLoadMore = when (currentState.galleryType) {
             GalleryType.PUBLIC -> pagesLoaded < MAX_PAGES_PUBLIC
             GalleryType.PERSONAL -> true // No limit for personal gallery
@@ -159,7 +151,6 @@ class GalleryViewModel(
     }
     
     fun loadInitialData() {
-        // Only load if we haven't loaded data for the current gallery type
         val currentType = _uiState.value.galleryType
         val hasData = when (currentType) {
             GalleryType.PUBLIC -> hasLoadedPublic
@@ -192,9 +183,7 @@ class GalleryViewModel(
                 
                 response.fold(
                     onSuccess = { galleryResponse ->
-                        // Create deduplicated image list for UI state
                         val newImages = if (isLoadMore) {
-                            // When loading more, we need to ensure no duplicates in the final list
                             val existingIds = currentState.images.map { it.id }.toSet()
                             val newUniqueImages = galleryResponse.images.filter { it.id !in existingIds }
                             currentState.images + newUniqueImages
@@ -204,7 +193,6 @@ class GalleryViewModel(
                         
                         val hasReachedEndOfData = galleryResponse.images.size < galleryResponse.perPage
                         
-                        // Update cache with deduplication and track pages
                         when (currentState.galleryType) {
                             GalleryType.PUBLIC -> {
                                 if (!isLoadMore) {
@@ -212,7 +200,6 @@ class GalleryViewModel(
                                     cachedPublicImages.addAll(galleryResponse.images)
                                     publicPagesLoaded = 1
                                 } else {
-                                    // Only add new images that aren't already in the cache
                                     val existingIds = cachedPublicImages.map { it.id }.toSet()
                                     val newImagesToCache = galleryResponse.images.filter { it.id !in existingIds }
                                     cachedPublicImages.addAll(newImagesToCache)
@@ -227,7 +214,6 @@ class GalleryViewModel(
                                     cachedPersonalImages.addAll(galleryResponse.images)
                                     personalPagesLoaded = 1
                                 } else {
-                                    // Only add new images that aren't already in the cache
                                     val existingIds = cachedPersonalImages.map { it.id }.toSet()
                                     val newImagesToCache = galleryResponse.images.filter { it.id !in existingIds }
                                     cachedPersonalImages.addAll(newImagesToCache)
@@ -282,15 +268,12 @@ class GalleryViewModel(
     fun handleImageAction(image: ImageDetails, action: ImageAction) {
         when (action) {
             ImageAction.USE_FOR_EDIT -> {
-                // This is handled by the parent composable to navigate
-                // The navigation is done in PixieNavigation.kt
             }
             
             ImageAction.COPY_PROMPT -> {
                 val clip = ClipData.newPlainText("Image Prompt", image.prompt)
                 clipboardManager.setPrimaryClip(clip)
                 
-                // Haptic feedback for copy action
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
                 } else {
@@ -335,7 +318,6 @@ class GalleryViewModel(
                         imageUrl = image.url
                     ).fold(
                         onSuccess = {
-                            // Share intent launched successfully
                         },
                         onFailure = { error ->
                             Toast.makeText(

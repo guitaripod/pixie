@@ -49,7 +49,6 @@ fun ImageDetailBottomSheet(
                 .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
         ) {
-            // Image preview
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(image.url)
@@ -67,7 +66,6 @@ fun ImageDetailBottomSheet(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Quick actions
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -98,13 +96,11 @@ fun ImageDetailBottomSheet(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Image details
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
             ) {
-                // Prompt section
                 DetailSection(
                     title = "Prompt",
                     content = {
@@ -118,7 +114,6 @@ fun ImageDetailBottomSheet(
                 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
                 
-                // Technical details
                 DetailSection(
                     title = "Details",
                     content = {
@@ -139,7 +134,6 @@ fun ImageDetailBottomSheet(
                     }
                 )
                 
-                // Revised prompt if available
                 image.metadata?.revisedPrompt?.let { revised ->
                     HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
                     

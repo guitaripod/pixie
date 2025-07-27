@@ -73,7 +73,6 @@ class AdminCreditAdjustmentViewModel(
     }
     
     fun updateAdjustmentAmount(amount: String) {
-        // Only allow numbers and minus sign
         val filtered = amount.filter { it.isDigit() || (it == '-' && amount.indexOf('-') == 0) }
         _uiState.update { it.copy(adjustmentAmount = filtered) }
     }

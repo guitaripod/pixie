@@ -198,7 +198,6 @@ private fun UserSearchStep(
                         modifier = Modifier.fillMaxWidth()
                     )
                     
-                    // Allow manual entry when search is unavailable
                     if (error.contains("not available", ignoreCase = true)) {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -451,7 +450,6 @@ private fun AdjustmentFormStep(
         
         Spacer(modifier = Modifier.height(8.dp))
         
-        // Preview new balance
         val amountInt = amount.toIntOrNull() ?: 0
         val hasKnownBalance = selectedUser.credits > 0 || selectedUser.email != null
         val newBalance = if (hasKnownBalance) selectedUser.credits + amountInt else amountInt

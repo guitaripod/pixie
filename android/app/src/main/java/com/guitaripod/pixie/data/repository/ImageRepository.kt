@@ -45,7 +45,6 @@ class ImageRepository(
                 val errorBody = response.errorBody()?.string()
                 var errorMessage = "Generation failed"
                 
-                // Try to parse the error response
                 if (!errorBody.isNullOrEmpty()) {
                     try {
                         val adapter = moshi.adapter(ApiErrorResponse::class.java)
@@ -53,7 +52,6 @@ class ImageRepository(
                         
                         errorMessage = errorResponse?.error?.message ?: errorMessage
                         
-                        // Add helpful context based on error code
                         when (errorResponse?.error?.code) {
                             "insufficient_credits" -> {
                                 val details = errorResponse.error.details
@@ -77,7 +75,6 @@ class ImageRepository(
                             }
                         }
                     } catch (e: Exception) {
-                        // If we can't parse the error, fall back to status code
                         errorMessage = when (response.code()) {
                             400 -> "Invalid request. Please check your input."
                             401 -> "Unauthorized. Please sign in again."
@@ -88,7 +85,6 @@ class ImageRepository(
                         }
                     }
                 } else {
-                    // No error body, use status code
                     errorMessage = when (response.code()) {
                         400 -> "Invalid request. Please check your input."
                         401 -> "Unauthorized. Please sign in again."
@@ -120,11 +116,8 @@ class ImageRepository(
         fidelity: String = "low"
     ): Flow<Result<ImageGenerationResponse>> = flow {
         try {
-            // Convert image to base64
             val imageBytes = withContext(Dispatchers.IO) {
-                // Check if this is a remote URL or local URI
                 if (imageUri.scheme?.startsWith("http") == true) {
-                    // Handle remote URL
                     val url = URL(imageUri.toString())
                     val connection = url.openConnection() as HttpURLConnection
                     connection.doInput = true
@@ -133,18 +126,15 @@ class ImageRepository(
                         inputStream.readBytes()
                     }
                 } else {
-                    // Handle local URI
                     context.contentResolver.openInputStream(imageUri)?.use { inputStream ->
                         inputStream.readBytes()
                     } ?: throw IOException("Failed to read image")
                 }
             }
             
-            // Convert to base64 data URL
             val imageBase64 = Base64.encodeToString(imageBytes, Base64.NO_WRAP)
             val imageDataUrl = "data:image/png;base64,$imageBase64"
             
-            // Convert mask to base64 if provided
             val maskDataUrl = mask?.let {
                 val maskBytes = withContext(Dispatchers.IO) {
                     val outputStream = ByteArrayOutputStream()
@@ -155,7 +145,6 @@ class ImageRepository(
                 "data:image/png;base64,$maskBase64"
             }
             
-            // Create request object
             val request = EditRequest(
                 image = listOf(imageDataUrl),
                 prompt = prompt,
@@ -179,7 +168,6 @@ class ImageRepository(
                 val errorBody = response.errorBody()?.string()
                 var errorMessage = "Edit failed"
                 
-                // Try to parse the error response
                 if (!errorBody.isNullOrEmpty()) {
                     try {
                         val adapter = moshi.adapter(ApiErrorResponse::class.java)
@@ -187,7 +175,6 @@ class ImageRepository(
                         
                         errorMessage = errorResponse?.error?.message ?: errorMessage
                         
-                        // Add helpful context based on error code
                         when (errorResponse?.error?.code) {
                             "insufficient_credits" -> {
                                 val details = errorResponse.error.details
@@ -214,7 +201,6 @@ class ImageRepository(
                             }
                         }
                     } catch (e: Exception) {
-                        // If we can't parse the error, fall back to status code
                         errorMessage = when (response.code()) {
                             400 -> "Invalid request. Please check your input."
                             401 -> "Unauthorized. Please sign in again."
@@ -226,7 +212,6 @@ class ImageRepository(
                         }
                     }
                 } else {
-                    // No error body, use status code
                     errorMessage = when (response.code()) {
                         400 -> "Invalid request. Please check your input."
                         401 -> "Unauthorized. Please sign in again."

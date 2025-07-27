@@ -32,7 +32,6 @@ class NetworkCallAdapter(
                     NetworkException.ApiException("Response body is null")
                 )
             } else {
-                // Parse error response
                 val errorBody = response.errorBody()?.string()
                 val networkException = when (response.code()) {
                     401 -> NetworkException.UnauthorizedException()

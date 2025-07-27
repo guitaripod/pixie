@@ -321,14 +321,12 @@ fun DrawScope.drawUsageChart(usageData: UsageResponse, view: UsageView) {
         val x = index * (barWidth + spacing) + spacing
         val y = size.height - barHeight
         
-        // Draw bar
         drawRect(
             color = Color(0xFF4CAF50),
             topLeft = Offset(x, y),
             size = Size(barWidth, barHeight)
         )
         
-        // Draw value on top
         drawContext.canvas.nativeCanvas.apply {
             drawText(
                 usage.credits.toString(),
@@ -429,7 +427,6 @@ private fun getTypeColor(type: String): Color = when (type.lowercase()) {
 }
 
 private fun aggregateToWeekly(daily: List<DailyUsage>): List<DailyUsage> {
-    // Simple weekly aggregation - group by week
     return daily.chunked(7).map { week ->
         DailyUsage(
             date = week.first().date,
@@ -441,7 +438,6 @@ private fun aggregateToWeekly(daily: List<DailyUsage>): List<DailyUsage> {
 }
 
 private fun aggregateToMonthly(daily: List<DailyUsage>): List<DailyUsage> {
-    // Simple monthly aggregation - group by month
     return daily.groupBy { 
         LocalDate.parse(it.date).withDayOfMonth(1).toString()
     }.map { (date, days) ->

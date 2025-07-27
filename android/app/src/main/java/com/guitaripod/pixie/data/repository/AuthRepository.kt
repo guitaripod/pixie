@@ -63,7 +63,6 @@ class AuthRepositoryImpl(
     
     override fun saveCredentials(config: Config) {
         preferencesRepository.saveConfig(config)
-        // Set RevenueCat user ID when credentials are saved
         config.userId?.let { userId ->
             revenueCatManager.setUserId(userId)
         }
