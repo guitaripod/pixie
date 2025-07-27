@@ -108,8 +108,7 @@ class ImageCollectionViewCell: UICollectionViewCell {
     }
     
     private func loadImage(from urlString: String) {
-        // TODO: Implement proper image loading with caching
-        imageView.backgroundColor = .systemGray5
+        imageView.setImage(from: urlString)
     }
     
     static func registration() -> UICollectionView.CellRegistration<ImageCollectionViewCell, Configuration> {

@@ -158,8 +158,7 @@ class ChatMessageTableViewCell: UITableViewCell {
         messageLabel.text = prompt
         
         messageImageView.isHidden = false
-        // TODO: Load image from URL
-        messageImageView.backgroundColor = .systemGray5
+        messageImageView.setImage(from: url)
         
         leadingConstraint.isActive = true
         trailingConstraint.isActive = false
