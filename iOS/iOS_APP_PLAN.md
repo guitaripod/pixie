@@ -8,11 +8,11 @@ Native Swift iOS app targeting iOS 16+ that replicates all functionality of the 
 ### Phase 1: Project Setup & Core Infrastructure
 
 #### 1.1 Project Initialization
-- [ ] Create new iOS project with UIKit App Delegate lifecycle
-- [ ] Set minimum deployment target to iOS 16.0
-- [ ] Configure app capabilities: Associated Domains, Sign in with Apple, In-App Purchase
-- [ ] Set up version control with .gitignore for iOS/Xcode
-- [ ] Configure Info.plist for privacy permissions (Photo Library)
+- [x] Create new iOS project with UIKit App Delegate lifecycle
+- [x] Set minimum deployment target to iOS 16.0
+- [x] Configure app capabilities: Associated Domains, Sign in with Apple, In-App Purchase
+- [x] Set up version control with .gitignore for iOS/Xcode
+- [x] Configure Info.plist for privacy permissions (Photo Library)
 
 #### 1.2 Dependencies & Architecture
 - [ ] Set up Swift Package Manager dependencies
