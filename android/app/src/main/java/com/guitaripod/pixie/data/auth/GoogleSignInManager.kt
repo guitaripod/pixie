@@ -11,6 +11,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
+import com.guitaripod.pixie.BuildConfig
 import com.guitaripod.pixie.data.api.NetworkCallAdapter
 import com.guitaripod.pixie.data.api.PixieApiService
 import com.guitaripod.pixie.data.api.model.NetworkResult
@@ -30,13 +31,8 @@ class GoogleSignInManager(
     private val networkCallAdapter: NetworkCallAdapter
 ) {
     
-    companion object {
-        // Request web client ID token (required for Google Sign-In)
-        const val WEB_CLIENT_ID = "720004930052-n4tdei4ua9shd2hqr1f6udmg5ijvj25j.apps.googleusercontent.com"
-    }
-    
     private val googleSignInOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-        .requestIdToken(WEB_CLIENT_ID)
+        .requestIdToken(BuildConfig.GOOGLE_WEB_CLIENT_ID)
         .requestEmail()
         .build()
         
