@@ -47,7 +47,7 @@ class ConfigurationManager: ConfigurationManagerProtocol {
         }
     }
     
-    @UserDefaultsWrapper(key: "pixie.defaultQuality", defaultValue: "auto")
+    @UserDefaultsWrapper(key: "pixie.defaultQuality", defaultValue: "low")
     var defaultQuality: String {
         didSet { notifyConfigurationChanged() }
     }
@@ -91,7 +91,7 @@ class ConfigurationManager: ConfigurationManagerProtocol {
     func reset() {
         baseURL = "https://openai-image-proxy.guitaripod.workers.dev"
         apiKey = nil
-        defaultQuality = "auto"
+        defaultQuality = "low"
         defaultSize = "auto"
         defaultOutputFormat = "webp"
         defaultCompression = 90
