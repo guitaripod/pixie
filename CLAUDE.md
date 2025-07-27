@@ -24,6 +24,11 @@ The CLI app is a standalone product, but we also use it to validate the backend 
 
 ## iOS Development
 
+```bash
+# Build iOS project
+cd iOS/Pixie && xcodebuild -project Pixie.xcodeproj -scheme Pixie -destination 'platform=iOS Simulator,id=69011470-D880-44F0-A527-480A03C692CA' build -quiet
+```
+- Do not add code comments.
 - Reference the CLI and the Android app when you build the iOS UI components to ensure you don't hallucinate and create the same thing, but with native iOS components and feel.
 
 ## Important Notes
