@@ -9,6 +9,8 @@ protocol AppContainerProtocol {
     var imageRepository: ImageRepositoryProtocol { get }
     var creditRepository: CreditRepositoryProtocol { get }
     var userRepository: UserRepositoryProtocol { get }
+    var imageCache: ImageCacheProtocol { get }
+    var networkMonitor: NetworkMonitorProtocol { get }
 }
 
 class AppContainer: AppContainerProtocol {
@@ -55,6 +57,14 @@ class AppContainer: AppContainerProtocol {
             keychainManager: keychainManager,
             apiService: apiService
         )
+    }()
+    
+    lazy var imageCache: ImageCacheProtocol = {
+        ImageCache.shared
+    }()
+    
+    lazy var networkMonitor: NetworkMonitorProtocol = {
+        NetworkMonitor.shared
     }()
     
     private init() {}
