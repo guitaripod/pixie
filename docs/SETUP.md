@@ -13,8 +13,8 @@ This guide will help you deploy your own instance of the OpenAI Image Proxy on C
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/openai-image-proxy.git
-   cd openai-image-proxy
+   git clone https://github.com/your-username/pixie.git
+   cd pixie
    ```
 
 2. Install dependencies:

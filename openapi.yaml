@@ -14,15 +14,15 @@ info:
   version: 1.0.0
   contact:
     name: API Support
-    url: https://github.com/guitaripod/openai-image-proxy
+    url: https://github.com/guitaripod/pixie
     email: support@openai-image-proxy.guitaripod.workers.dev
   license:
     name: GPL-3.0
-    url: https://github.com/guitaripod/openai-image-proxy/blob/master/LICENSE
+    url: https://github.com/guitaripod/pixie/blob/master/LICENSE
 
 externalDocs:
   description: Find more info on GitHub
-  url: https://github.com/guitaripod/openai-image-proxy
+  url: https://github.com/guitaripod/pixie
 
 servers:
   - url: https://openai-image-proxy.guitaripod.workers.dev

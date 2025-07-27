@@ -46,8 +46,8 @@ High-performance Rust-based Cloudflare Worker that provides OpenAI-compatible im
 
 1. **Clone and install dependencies**
    ```bash
-   git clone https://github.com/guitaripod/openai-image-proxy.git
-   cd openai-image-proxy
+   git clone https://github.com/guitaripod/pixie.git
+   cd pixie
    npm install
    cargo install worker-build
    ```

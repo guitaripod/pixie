@@ -3,7 +3,7 @@ name = "openai-image-proxy"
 version = "0.1.0"
 edition = "2021"
 description = "A Cloudflare Worker-based proxy for OpenAI's GPT Image API with credit billing and OAuth"
-repository = "https://github.com/guitaripod/openai-image-proxy"
+repository = "https://github.com/guitaripod/pixie"
 license = "GPL-3.0"
 
 [lib]
