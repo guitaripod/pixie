@@ -107,11 +107,19 @@ class NetworkService: NetworkServiceProtocol {
     }
     
     private func performRequest<T: Decodable>(_ request: URLRequest, type: T.Type) async throws -> T {
+        #if DEBUG
+        logRequest(request)
+        #endif
+        
         let (data, response) = try await session.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.noData
         }
+        
+        #if DEBUG
+        logResponse(httpResponse, data: data)
+        #endif
         
         if httpResponse.statusCode == 401 {
             throw NetworkError.unauthorized
@@ -134,6 +142,27 @@ class NetworkService: NetworkServiceProtocol {
             throw NetworkError.decodingError(error)
         }
     }
+    
+    #if DEBUG
+    private func logRequest(_ request: URLRequest) {
+        print("🌐 [\(request.httpMethod ?? "?")] \(request.url?.absoluteString ?? "Unknown URL")")
+        if let headers = request.allHTTPHeaderFields {
+            print("📋 Headers: \(headers)")
+        }
+        if let body = request.httpBody,
+           let bodyString = String(data: body, encoding: .utf8) {
+            print("📦 Body: \(bodyString)")
+        }
+    }
+    
+    private func logResponse(_ response: HTTPURLResponse, data: Data) {
+        print("✅ [\(response.statusCode)] \(response.url?.absoluteString ?? "Unknown URL")")
+        if let responseString = String(data: data, encoding: .utf8) {
+            let truncated = responseString.prefix(500)
+            print("📄 Response: \(truncated)\(responseString.count > 500 ? "..." : "")")
+        }
+    }
+    #endif
 }
 
 private struct EmptyResponse: Codable {}
