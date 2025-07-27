@@ -15,10 +15,8 @@ Native Swift iOS app targeting iOS 16+ that replicates all functionality of the 
 - [x] Configure Info.plist for privacy permissions (Photo Library)
 
 #### 1.2 Dependencies & Architecture
-- [ ] Set up Swift Package Manager dependencies
 - [ ] Add networking: URLSession with async/await
 - [ ] Add Keychain for secure storage
-- [ ] Add payments: RevenueCat SDK
 - [ ] Implement protocol-oriented architecture with clear separation of concerns
 - [ ] Create core protocols: NetworkServiceProtocol, AuthenticationProtocol
 - [ ] Set up modern UIKit patterns: UICollectionViewDiffableDataSource, UITableViewDiffableDataSource
