@@ -68,21 +68,21 @@ class AppContainer(private val context: Context) {
     }
     
     private val okHttpClient: OkHttpClient by lazy {
-        val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = if (com.guitaripod.pixie.BuildConfig.DEBUG) {
-                HttpLoggingInterceptor.Level.BODY
-            } else {
-                HttpLoggingInterceptor.Level.NONE
-            }
-        }
-        
-        OkHttpClient.Builder()
+        val builder = OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
-            .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
-            .build()
+        
+        // Only add logging interceptor in debug builds
+        if (com.guitaripod.pixie.BuildConfig.DEBUG) {
+            val loggingInterceptor = HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BODY
+            }
+            builder.addInterceptor(loggingInterceptor)
+        }
+        
+        builder.build()
     }
     
     val retrofit: Retrofit by lazy {
