@@ -23,5 +23,16 @@
 	<string>Pixie needs access to your photo library to save generated images</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Pixie needs permission to save generated images to your photo library</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>pixie</string>
+			</array>
+			<key>CFBundleURLName</key>
+			<string>com.guitaripod.pixie</string>
+		</dict>
+	</array>
 </dict>
 </plist>
