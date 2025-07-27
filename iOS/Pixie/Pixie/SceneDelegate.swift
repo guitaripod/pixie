@@ -13,5 +13,25 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let rootViewController = ViewController()
         window?.rootViewController = rootViewController
         window?.makeKeyAndVisible()
+        
+        if let urlContext = connectionOptions.urlContexts.first {
+            handleUniversalLink(urlContext.url)
+        }
+    }
+    
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        guard let url = URLContexts.first?.url else { return }
+        handleUniversalLink(url)
+    }
+    
+    func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
+        if userActivity.activityType == NSUserActivityTypeBrowsingWeb,
+           let url = userActivity.webpageURL {
+            handleUniversalLink(url)
+        }
+    }
+    
+    private func handleUniversalLink(_ url: URL) {
+        _ = AuthenticationManager.shared.handleUniversalLink(url)
     }
 }
