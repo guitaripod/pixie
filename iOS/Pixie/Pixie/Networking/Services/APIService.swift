@@ -14,6 +14,9 @@ protocol APIServiceProtocol {
     func estimateCreditCost(_ request: CreditEstimateRequest) async throws -> CreditEstimateResponse
     func checkDeviceAuthStatus(deviceCode: String) async throws -> DeviceAuthStatus
     func downloadImage(from url: String) async throws -> Data
+    func authenticateGitHub(_ request: OAuthCallbackRequest) async throws -> AuthResponse
+    func authenticateGoogle(_ request: OAuthCallbackRequest) async throws -> AuthResponse
+    func authenticateApple(_ request: OAuthCallbackRequest) async throws -> AuthResponse
 }
 
 class APIService: APIServiceProtocol {
@@ -104,5 +107,17 @@ class APIService: APIServiceProtocol {
             throw NetworkError.invalidURL
         }
         return try await networkService.downloadData(from: imageURL)
+    }
+    
+    func authenticateGitHub(_ request: OAuthCallbackRequest) async throws -> AuthResponse {
+        try await networkService.post("/v1/auth/github/callback", body: request, type: AuthResponse.self)
+    }
+    
+    func authenticateGoogle(_ request: OAuthCallbackRequest) async throws -> AuthResponse {
+        try await networkService.post("/v1/auth/google/callback", body: request, type: AuthResponse.self)
+    }
+    
+    func authenticateApple(_ request: OAuthCallbackRequest) async throws -> AuthResponse {
+        try await networkService.post("/v1/auth/apple/callback/json", body: request, type: AuthResponse.self)
     }
 }
