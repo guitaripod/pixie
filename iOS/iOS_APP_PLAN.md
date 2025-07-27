@@ -27,15 +27,14 @@ Native Swift iOS app targeting iOS 16+ that replicates all functionality of the 
 - [x] Implement Codable models matching OpenAPI spec
 - [x] Create custom URLRequest builder with auth headers
 - [x] Implement comprehensive error handling with custom Error types
-- [ ] Add network reachability monitoring with NWPathMonitor
-- [ ] Create request/response logging for debug builds
+- [x] Add network reachability monitoring with NWPathMonitor
+- [x] Create request/response logging for debug builds
 
 #### 1.4 Local Storage
 - [x] Set up Keychain wrapper for secure credential storage
 - [x] Create UserDefaults wrapper with property wrappers for settings
-- [ ] Implement Core Data models for cached data with NSPersistentContainer
 - [x] Create ConfigurationManager with NotificationCenter for updates
-- [ ] Use NSCache for in-memory image caching
+- [x] Use NSCache for in-memory image caching
 
 ### Phase 2: Authentication System
 
