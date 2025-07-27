@@ -74,7 +74,6 @@ class AppContainer(private val context: Context) {
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
         
-        // Only add logging interceptor in debug builds
         if (com.guitaripod.pixie.BuildConfig.DEBUG) {
             val loggingInterceptor = HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY
@@ -175,19 +174,16 @@ class AppContainer(private val context: Context) {
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
         } catch (e: Exception) {
-            // If decryption fails, delete the corrupted preferences and recreate
             context.getSharedPreferences("pixie_secure_prefs", Context.MODE_PRIVATE)
                 .edit()
                 .clear()
                 .commit()
             
-            // Also clear the keystore preferences used by EncryptedSharedPreferences
             context.getSharedPreferences("pixie_secure_prefs_preferences_pb", Context.MODE_PRIVATE)
                 .edit()
                 .clear()
                 .commit()
             
-            // Recreate with fresh encryption
             EncryptedSharedPreferences.create(
                 context,
                 "pixie_secure_prefs",

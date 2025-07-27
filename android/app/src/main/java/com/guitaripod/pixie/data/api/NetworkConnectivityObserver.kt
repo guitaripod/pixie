@@ -62,13 +62,10 @@ class NetworkConnectivityObserver(
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             .build()
             
-        // Emit current status
         trySend(getCurrentConnectivityStatus())
         
-        // Register callback
         connectivityManager.registerNetworkCallback(request, callback)
         
-        // Unregister on flow cancellation
         awaitClose {
             connectivityManager.unregisterNetworkCallback(callback)
         }

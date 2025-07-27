@@ -35,7 +35,6 @@ class GenerationViewModel(
     
     private var generationJob: Job? = null
     
-    // Chat state
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
     val messages: StateFlow<List<ChatMessage>> = _messages.asStateFlow()
     
@@ -51,7 +50,6 @@ class GenerationViewModel(
     private val _previewImageUri = MutableStateFlow<Uri?>(null)
     val previewImageUri: StateFlow<Uri?> = _previewImageUri.asStateFlow()
     
-    // Generation options state
     private val _selectedSize = MutableStateFlow(ImageSize.AUTO)
     val selectedSize: StateFlow<ImageSize> = _selectedSize.asStateFlow()
     
@@ -71,7 +69,6 @@ class GenerationViewModel(
     private val _selectedModeration = MutableStateFlow<ModerationLevel?>(null)
     val selectedModeration: StateFlow<ModerationLevel?> = _selectedModeration.asStateFlow()
     
-    // Edit options state
     private val _editOptions = MutableStateFlow(EditOptions())
     val editOptions: StateFlow<EditOptions> = _editOptions.asStateFlow()
     

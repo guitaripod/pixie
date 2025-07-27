@@ -91,7 +91,6 @@ fun EditingToolbar(
                 }
             ) { expanded ->
                 if (!expanded) {
-                    // Collapsed state - shows preview and quick actions
                     CollapsedEditToolbar(
                         selectedImage = selectedImage,
                         editOptions = editOptions,
@@ -102,7 +101,6 @@ fun EditingToolbar(
                         }
                     )
                 } else {
-                    // Expanded state - full editing interface
                     ExpandedEditToolbar(
                         editOptions = editOptions,
                         onEditOptionsChange = onEditOptionsChange,
@@ -133,7 +131,6 @@ private fun CollapsedEditToolbar(
                 onExpand() 
             }
     ) {
-        // Handlebar at the top
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -152,13 +149,11 @@ private fun CollapsedEditToolbar(
                 .padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-        // Preview row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Image preview
             Surface(
                 modifier = Modifier.size(48.dp),
                 shape = RoundedCornerShape(12.dp),
@@ -172,7 +167,6 @@ private fun CollapsedEditToolbar(
                 )
             }
             
-            // Edit info
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Center
@@ -201,7 +195,6 @@ private fun CollapsedEditToolbar(
             )
         }
         
-        // Quick stats
         val estimatedCredits = estimateEditCredits(editOptions)
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -290,7 +283,6 @@ private fun ExpandedEditToolbar(
                 )
             }
     ) {
-        // Handlebar at the top
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -311,7 +303,6 @@ private fun ExpandedEditToolbar(
                 .padding(top = 8.dp), // Extra padding to account for handlebar
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-        // Header
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -337,7 +328,6 @@ private fun ExpandedEditToolbar(
         }
         
         
-        // Edit prompt
         OutlinedTextField(
             value = editOptions.prompt,
             onValueChange = { onEditOptionsChange(editOptions.copy(prompt = it)) },
@@ -354,13 +344,11 @@ private fun ExpandedEditToolbar(
             shape = RoundedCornerShape(16.dp)
         )
         
-        // Quick options
         QuickEditOptions(
             editOptions = editOptions,
             onEditOptionsChange = onEditOptionsChange
         )
         
-        // Advanced options toggle
         val advancedHaptic = rememberHapticFeedback()
         Card(
             modifier = Modifier
@@ -397,7 +385,6 @@ private fun ExpandedEditToolbar(
             }
         }
         
-        // Advanced options
         AnimatedVisibility(visible = editToolbarState.showAdvancedOptions) {
             AdvancedEditOptions(
                 editOptions = editOptions,
@@ -405,7 +392,6 @@ private fun ExpandedEditToolbar(
             )
         }
         
-        // Edit button
         val estimatedCredits = estimateEditCredits(editOptions)
         val editHaptic = rememberHapticFeedback()
         Button(
@@ -457,7 +443,6 @@ private fun QuickEditOptions(
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Quality selector
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -513,13 +498,11 @@ private fun AdvancedEditOptions(
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Size selector
         SizeSelector(
             selectedSize = editOptions.size,
             onSizeSelected = { onEditOptionsChange(editOptions.copy(size = it)) }
         )
         
-        // Fidelity selector
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -573,7 +556,6 @@ private fun estimateEditCredits(options: EditOptions): IntRange {
         ImageQuality.AUTO -> 66..95
     }
     
-    // Add 2-5 credits for input processing
     val inputCost = 2..5
     
     return (base.first + inputCost.first)..(base.last + inputCost.last)

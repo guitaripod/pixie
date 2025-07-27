@@ -22,7 +22,6 @@ android {
             useSupportLibrary = true
         }
         
-        // Google OAuth Web Client ID
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"720004930052-n4tdei4ua9shd2hqr1f6udmg5ijvj25j.apps.googleusercontent.com\"")
     }
 

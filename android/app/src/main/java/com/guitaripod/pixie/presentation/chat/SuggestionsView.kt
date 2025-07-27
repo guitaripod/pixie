@@ -1029,17 +1029,11 @@ private fun CompactStyleCard(
 private fun PromptModifiersSection() {
     val modifiers = remember {
         listOf(
-            // Quality modifiers
             listOf("8K", "4K", "HD", "ultra detailed", "masterpiece", "best quality"),
-            // Lighting modifiers
             listOf("studio lighting", "golden hour", "dramatic lighting", "soft light", "backlit", "rim lighting"),
-            // Camera modifiers
             listOf("DSLR", "35mm lens", "bokeh", "depth of field", "macro lens", "wide angle"),
-            // Mood modifiers
             listOf("peaceful", "dramatic", "mysterious", "energetic", "melancholic", "ethereal"),
-            // Composition modifiers
             listOf("rule of thirds", "centered", "symmetrical", "dynamic pose", "close-up", "full body"),
-            // Art modifiers
             listOf("trending on artstation", "award winning", "professional", "concept art", "photorealistic", "hyperrealistic")
         )
     }

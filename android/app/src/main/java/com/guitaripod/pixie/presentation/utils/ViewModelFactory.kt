@@ -14,15 +14,9 @@ class ViewModelFactory(
     
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        // Add ViewModel creation logic here as we create them
-        // Example:
-        // if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
-        //     return MainViewModel(appContainer.someRepository) as T
-        // }
         
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }
 
-// Extension function to create ViewModelFactory from AppContainer
 fun AppContainer.viewModelFactory() = ViewModelFactory(this)

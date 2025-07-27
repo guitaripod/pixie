@@ -20,15 +20,12 @@ class AuthInterceptor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
         
-        // Get the API token from config
         val apiToken = configManager.getApiKey()
         
-        // If no token, proceed with original request
         if (apiToken.isNullOrEmpty()) {
             return chain.proceed(originalRequest)
         }
         
-        // Add authorization header
         val authorizedRequest = originalRequest.newBuilder()
             .header(HEADER_AUTHORIZATION, "$BEARER_PREFIX$apiToken")
             .build()

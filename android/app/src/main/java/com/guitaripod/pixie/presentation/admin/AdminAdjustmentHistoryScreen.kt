@@ -48,7 +48,6 @@ fun AdminAdjustmentHistoryScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Search bar
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { 

@@ -24,7 +24,6 @@ data class OAuthState(
     val timestamp: Long = System.currentTimeMillis()
 ) {
     fun isValid(): Boolean {
-        // State is valid for 10 minutes
         return System.currentTimeMillis() - timestamp < 10 * 60 * 1000
     }
 }

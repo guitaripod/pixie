@@ -62,13 +62,11 @@ class GoogleSignInManager(
                 return@flow
             }
             
-            // Send ID token to backend
             val tokenRequest = GoogleTokenRequest(idToken = idToken)
             when (val result = networkCallAdapter.safeApiCall { apiService.googleTokenAuth(tokenRequest) }) {
                 is NetworkResult.Success -> {
                     val authResponse = result.data
                     
-                    // Save credentials
                     val config = Config(
                         apiKey = authResponse.apiKey,
                         userId = authResponse.userId,
@@ -92,7 +90,7 @@ class GoogleSignInManager(
             }
         } catch (e: ApiException) {
             when (e.statusCode) {
-                12501 -> emit(AuthResult.Cancelled) // User cancelled
+                12501 -> emit(AuthResult.Cancelled)
                 else -> emit(AuthResult.Error("Sign in failed: ${e.message}"))
             }
         } catch (e: Exception) {

@@ -41,22 +41,18 @@ class SettingsViewModel(
     
     init {
         viewModelScope.launch {
-            // Load user preferences
             preferencesRepository.userPreferencesFlow.collect { preferences ->
                 _uiState.update { it.copy(userPreferences = preferences) }
             }
         }
         
         viewModelScope.launch {
-            // Load API URL
             val apiUrl = configManager.getApiUrl() ?: "https://openai-image-proxy.guitaripod.workers.dev"
             _uiState.update { it.copy(apiUrl = apiUrl) }
             
-            // Check admin status
             val isAdmin = adminRepository.checkAdminStatus()
             _uiState.update { it.copy(isAdmin = isAdmin) }
             
-            // Calculate cache size
             updateCacheSize()
         }
     }
@@ -104,7 +100,6 @@ class SettingsViewModel(
         _uiState.update { it.copy(connectionStatus = ConnectionStatus.Testing) }
         
         try {
-            // Use the same health check approach as CLI - GET request to base URL
             val response = apiService.healthCheck()
             if (response.isSuccessful) {
                 _uiState.update { it.copy(connectionStatus = ConnectionStatus.Success) }

@@ -133,7 +133,6 @@ fun GenerationToolbar(
                         .fillMaxSize()
                         .hapticClickable { onExpandedChange(false) }
                 ) {
-                    // Handlebar at the top
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopCenter)
@@ -350,7 +349,6 @@ fun GenerationToolbar(
                         .fillMaxSize()
                         .hapticClickable { onExpandedChange(true) }
                 ) {
-                    // Handlebar at the top
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopCenter)

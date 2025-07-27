@@ -83,7 +83,6 @@ class CreditPurchaseManager @Inject constructor(
             if (response.isSuccessful) {
                 response.body()?.let { validationResponse ->
                     if (validationResponse.success) {
-                        // Refresh balance will be handled by the UI layer
                         
                         Result.success(
                             CreditPurchaseResult(
@@ -130,7 +129,6 @@ class CreditPurchaseManager @Inject constructor(
             }
             
             if (restoredPurchases.isNotEmpty()) {
-                // Balance refresh handled by UI
             }
             
             Result.success(restoredPurchases)
@@ -145,7 +143,6 @@ class CreditPurchaseManager @Inject constructor(
             val defaultOffering = revenueCatOfferings?.current ?: revenueCatOfferings?.all?.values?.firstOrNull()
             
             defaultOffering?.availablePackages?.mapNotNull { rcPackage ->
-                // Map RevenueCat package to our credit pack structure
                 val packId = rcPackage.identifier
                 val credits = when (packId) {
                     "starter" -> 299

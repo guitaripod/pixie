@@ -65,7 +65,6 @@ fun SettingsScreen(
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Appearance Section
             SettingsSection(title = "Appearance") {
                 ThemeSelector(
                     currentTheme = uiState.userPreferences.theme,
@@ -77,7 +76,6 @@ fun SettingsScreen(
                 )
             }
             
-            // Defaults Section
             SettingsSection(title = "Defaults") {
                 DefaultQualitySelector(
                     currentQuality = uiState.userPreferences.defaultQuality,
@@ -124,7 +122,6 @@ fun SettingsScreen(
                 }
             }
             
-            // Storage Section
             SettingsSection(title = "Storage") {
                 CacheManagement(
                     cacheSize = uiState.cacheSize,
@@ -134,7 +131,6 @@ fun SettingsScreen(
                 )
             }
             
-            // API Section
             SettingsSection(title = "API") {
                 ConnectionStatus(
                     connectionStatus = uiState.connectionStatus,
@@ -146,7 +142,6 @@ fun SettingsScreen(
                 )
             }
             
-            // Admin Section (only shown for admins)
             if (uiState.isAdmin) {
                 SettingsSection(title = "Admin") {
                     SettingsItem(
@@ -158,7 +153,6 @@ fun SettingsScreen(
                 }
             }
             
-            // Help & Support Section
             SettingsSection(title = "Help & Support") {
                 SettingsItem(
                     icon = Icons.AutoMirrored.Filled.HelpOutline,
@@ -176,7 +170,6 @@ fun SettingsScreen(
                 )
             }
             
-            // Account Section
             SettingsSection(title = "Account") {
                 SettingsItem(
                     icon = Icons.AutoMirrored.Filled.Logout,
@@ -191,7 +184,6 @@ fun SettingsScreen(
         }
     }
     
-    // Logout Confirmation Dialog
     if (showLogoutDialog) {
         val logoutHaptic = rememberHapticFeedback()
         AlertDialog(
@@ -223,7 +215,6 @@ fun SettingsScreen(
         )
     }
     
-    // Clear Cache Confirmation Dialog
     if (showClearCacheDialog) {
         val cacheHaptic = rememberHapticFeedback()
         AlertDialog(

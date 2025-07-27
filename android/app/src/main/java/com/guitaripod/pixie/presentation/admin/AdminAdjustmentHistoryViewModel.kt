@@ -32,9 +32,6 @@ class AdminAdjustmentHistoryViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             
-            // Note: The API doesn't have a general adjustment history endpoint,
-            // so we might need to implement this differently in a real app.
-            // For now, we'll just show an empty state.
             _uiState.update { 
                 it.copy(
                     isLoading = false,

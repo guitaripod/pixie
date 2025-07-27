@@ -109,7 +109,6 @@ fun ImageBubble(
                     contentScale = ContentScale.FillWidth
                 )
                 
-                // Fullscreen button always visible in top right
                 IconButton(
                     onClick = { showFullscreen = true },
                     modifier = Modifier

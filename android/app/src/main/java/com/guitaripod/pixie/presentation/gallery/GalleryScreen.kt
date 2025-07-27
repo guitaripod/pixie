@@ -59,14 +59,12 @@ fun GalleryScreen(
     val pagerState = rememberPagerState(pageCount = { 2 })
     val coroutineScope = rememberCoroutineScope()
     
-    // Initialize gallery type based on pager state
     LaunchedEffect(pagerState.currentPage) {
         viewModel.setGalleryType(
             if (pagerState.currentPage == 0) GalleryType.PERSONAL else GalleryType.PUBLIC
         )
     }
     
-    // Load initial data when screen is first opened
     LaunchedEffect(Unit) {
         if (!uiState.hasLoadedInitialData && uiState.images.isEmpty()) {
             viewModel.loadInitialData()
@@ -78,7 +76,6 @@ fun GalleryScreen(
             .fillMaxSize(),
         topBar = {
             val haptic = rememberHapticFeedback()
-            // Fixed compact top bar
             TopAppBar(
                 title = { 
                     Text(
@@ -143,7 +140,6 @@ fun GalleryScreen(
                 .padding(paddingValues)
         ) {
             val haptic = rememberHapticFeedback()
-            // Fixed tabs that don't scroll
             TabRow(
                 selectedTabIndex = pagerState.currentPage,
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -199,14 +195,12 @@ fun GalleryScreen(
             
             HorizontalDivider()
             
-            // Content that transitions
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize()
             ) { page ->
                 val galleryType = if (page == 0) GalleryType.PERSONAL else GalleryType.PUBLIC
                 
-                // Each page maintains its own state
                 GalleryPageContent(
                     viewModel = viewModel,
                     galleryType = galleryType,
@@ -230,15 +224,12 @@ private fun GalleryPageContent(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     
-    // Only show content relevant to this gallery type
     val isCurrentGallery = uiState.galleryType == galleryType
     
-    // Maintain separate state for each gallery page
     var hasInitialized by remember(galleryType) { mutableStateOf(false) }
     
     LaunchedEffect(galleryType) {
         if (!hasInitialized && isCurrentGallery) {
-            // Check if we need to load data for this gallery type
             val hasData = when (galleryType) {
                 GalleryType.PERSONAL -> viewModel.hasPersonalData()
                 GalleryType.PUBLIC -> viewModel.hasPublicData()
@@ -265,7 +256,6 @@ private fun GalleryPageContent(
     ) {
         when {
             !isCurrentGallery -> {
-                // Show loading while switching
                 LoadingState()
             }
             uiState.isLoading && uiState.images.isEmpty() -> {
@@ -296,12 +286,10 @@ private fun GalleryPageContent(
                     verticalItemSpacing = 8.dp,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    // Image items
                     itemsIndexed(
                         items = uiState.images,
                         key = { _, image -> image.id }
                     ) { index, image ->
-                        // Load more when reaching the end
                         if (index >= uiState.images.size - 5 && uiState.hasMore && !uiState.isLoading) {
                             LaunchedEffect(Unit) {
                                 viewModel.loadMore()
@@ -329,7 +317,6 @@ private fun GalleryPageContent(
                         }
                     }
                     
-                    // Show message when reaching paging limit (only for public gallery)
                     if (!uiState.isLoading && uiState.images.isNotEmpty() && 
                         uiState.galleryType == GalleryType.PUBLIC && 
                         uiState.totalPagesLoaded >= 5 && 
@@ -425,7 +412,6 @@ private fun GalleryImageCard(
                     )
             )
             
-            // Gradient overlay
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -487,7 +473,6 @@ private fun GalleryImageCard(
                 }
             }
             
-            // Action menu button
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
