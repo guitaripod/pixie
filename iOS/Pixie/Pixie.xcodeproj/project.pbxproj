@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2CB1092A2E37549E004A0202 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 2CB109292E37549E004A0202 /* GoogleSignInSwift */; };
 		2CB38B262E36B0C400E68202 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CB38B252E36B0C400E68202 /* StoreKit.framework */; };
 /* End PBXBuildFile section */
 
@@ -42,6 +43,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2CB38B262E36B0C400E68202 /* StoreKit.framework in Frameworks */,
+				2CB1092A2E37549E004A0202 /* GoogleSignInSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -93,6 +95,7 @@
 			);
 			name = Pixie;
 			packageProductDependencies = (
+				2CB109292E37549E004A0202 /* GoogleSignInSwift */,
 			);
 			productName = Pixie;
 			productReference = 2CB38B082E36AED800E68202 /* Pixie.app */;
@@ -122,6 +125,9 @@
 			);
 			mainGroup = 2CB38AFF2E36AED800E68202;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				2CB109282E37549E004A0202 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2CB38B092E36AED800E68202 /* Products */;
 			projectDirPath = "";
@@ -164,6 +170,8 @@
 				DEVELOPMENT_TEAM = P4DQK6SRKR;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Pixie/Resources/Info.plist;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Pixie needs permission to save generated images to your photo library";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Pixie needs access to your photo library to save generated images";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -197,6 +205,8 @@
 				DEVELOPMENT_TEAM = P4DQK6SRKR;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Pixie/Resources/Info.plist;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Pixie needs permission to save generated images to your photo library";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Pixie needs access to your photo library to save generated images";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -360,6 +370,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		2CB109282E37549E004A0202 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		2CB109292E37549E004A0202 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2CB109282E37549E004A0202 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 2CB38B002E36AED800E68202 /* Project object */;
 }
