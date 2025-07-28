@@ -2,6 +2,25 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.guitaripod.pixie</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>pixie</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>google-signin</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.720004930052-psv88ftbhaqgh4mlvaofcj864k78qcv2</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -19,20 +38,5 @@
 			</array>
 		</dict>
 	</dict>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Pixie needs access to your photo library to save generated images</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Pixie needs permission to save generated images to your photo library</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>pixie</string>
-			</array>
-			<key>CFBundleURLName</key>
-			<string>com.guitaripod.pixie</string>
-		</dict>
-	</array>
 </dict>
 </plist>
