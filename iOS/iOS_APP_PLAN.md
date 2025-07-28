@@ -62,16 +62,16 @@ Native Swift iOS app targeting iOS 16+ that replicates all functionality of the 
 ### Phase 3: Image Generation Feature
 
 #### 3.1 Generation UI
-- [ ] Create chat-based timeline interface with UITableView using UITableViewDiffableDataSource
-- [ ] Implement ChatMessage sealed class hierarchy (UserMessage, ImageResponse)
-- [ ] Create message bubble cells with purple user messages and image response cells
-- [ ] Add automatic scroll to bottom on new messages
-- [ ] Implement expandable bottom toolbar (80pt collapsed, 520pt expanded). Make sure it's constrained to screen edges (bottom and horizontal).
-- [ ] Add toolbar spring animations with corner radius (28pt → 24pt) and shadow (12pt → 24pt)
-- [ ] Create drag handle indicator for toolbar
-- [ ] Adjust content padding based on toolbar state (620pt expanded, 120pt collapsed)
-- [ ] Add haptic feedback for all interactions. Create Haptics manager centralized.
-- [ ] Create spring animations for UI elements (scale: 0.95 on press)
+- [x] Create chat-based timeline interface with UITableView using UITableViewDiffableDataSource
+- [x] Implement ChatMessage sealed class hierarchy (UserMessage, ImageResponse)
+- [x] Create message bubble cells with purple user messages and image response cells
+- [x] Add automatic scroll to bottom on new messages
+- [x] Implement expandable bottom toolbar (80pt collapsed, 520pt expanded). Make sure it's constrained to screen edges (bottom and horizontal).
+- [x] Add toolbar spring animations with corner radius (28pt → 24pt) and shadow (12pt → 24pt)
+- [x] Create drag handle indicator for toolbar
+- [x] Adjust content padding based on toolbar state (620pt expanded, 120pt collapsed)
+- [x] Add haptic feedback for all interactions. Create Haptics manager centralized.
+- [x] Create spring animations for UI elements (scale: 0.95 on press)
 
 #### 3.2 Advanced Generation Options
 - [ ] Implement size selector with visual previews
