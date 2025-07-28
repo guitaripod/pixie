@@ -30,6 +30,8 @@ cd iOS/Pixie && xcodebuild -project Pixie.xcodeproj -scheme Pixie -destination '
 ```
 - Do not add code comments.
 - Reference the CLI and the Android app when you build the iOS UI components to ensure you don't hallucinate and create the same thing, but with native iOS components and feel.
+- Use the latest iOS15 SDK UIButton APIs, not the old @objc stuff.
+- Always use UIStackViews as much as possible to build UI constraints.
 
 ## Important Notes
 
