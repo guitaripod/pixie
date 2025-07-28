@@ -10,9 +10,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     ) {
         guard let windowScene = scene as? UIWindowScene else { return }
         window = UIWindow(windowScene: windowScene)
-        let rootViewController = ViewController()
-        window?.rootViewController = rootViewController
         window?.makeKeyAndVisible()
+        
+        Task {
+            await checkAuthenticationState()
+        }
         
         if let urlContext = connectionOptions.urlContexts.first {
             handleUniversalLink(urlContext.url)
@@ -33,5 +35,31 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     private func handleUniversalLink(_ url: URL) {
         _ = AuthenticationManager.shared.handleUniversalLink(url)
+    }
+    
+    @MainActor
+    private func checkAuthenticationState() async {
+        do {
+            if try await AuthenticationManager.shared.restoreSession() != nil {
+                showMainInterface()
+            } else {
+                showAuthenticationInterface()
+            }
+        } catch {
+            showAuthenticationInterface()
+        }
+    }
+    
+    func showAuthenticationInterface() {
+        let authViewController = AuthenticationViewController()
+        let navigationController = UINavigationController(rootViewController: authViewController)
+        navigationController.navigationBar.isHidden = true
+        window?.rootViewController = navigationController
+    }
+    
+    func showMainInterface() {
+        let mainViewController = ViewController()
+        let navigationController = UINavigationController(rootViewController: mainViewController)
+        window?.rootViewController = navigationController
     }
 }
