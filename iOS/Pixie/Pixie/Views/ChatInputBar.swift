@@ -450,6 +450,7 @@ class ChatInputBar: UIView {
         
         if !expanded {
             updateSendButton()
+            promptTextView.resignFirstResponder()
         }
         
         let expandedHeight = calculateExpandedHeight()
