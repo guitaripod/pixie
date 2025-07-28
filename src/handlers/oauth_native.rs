@@ -4,6 +4,7 @@ use crate::credits::initialize_user_credits;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono::Utc;
+use base64::{Engine as _, engine::general_purpose};
 
 #[derive(Debug, Deserialize)]
 pub struct GoogleTokenRequest {
@@ -122,6 +123,107 @@ pub async fn google_token_auth(mut req: Request, ctx: RouteContext<()>) -> Resul
             .await?;
         
         // Initialize credits for new user
+        initialize_user_credits(&new_user_id, &db).await?;
+        
+        (new_user_id, new_api_key)
+    };
+    
+    let response = AuthTokenResponse {
+        api_key,
+        user_id,
+    };
+    
+    Response::from_json(&response)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AppleTokenRequest {
+    pub identity_token: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct AppleIdTokenClaims {
+    iss: String,  // Should be "https://appleid.apple.com"
+    aud: String,  // Client ID (bundle ID)
+    sub: String,  // Apple user ID
+    email: Option<String>,
+    email_verified: Option<bool>,
+}
+
+pub async fn apple_token_auth(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let token_req: AppleTokenRequest = req.json().await?;
+    
+    let id_token_parts: Vec<&str> = token_req.identity_token.split('.').collect();
+    if id_token_parts.len() != 3 {
+        return Err(AppError::BadRequest("Invalid ID token format".to_string()).into());
+    }
+    
+    let claims_base64 = id_token_parts[1];
+    let claims_json = general_purpose::URL_SAFE_NO_PAD.decode(claims_base64)
+        .map_err(|e| AppError::BadRequest(format!("Failed to decode ID token: {}", e)))?;
+    
+    let claims: AppleIdTokenClaims = serde_json::from_slice(&claims_json)
+        .map_err(|e| AppError::BadRequest(format!("Failed to parse ID token claims: {}", e)))?;
+    
+    if claims.iss != "https://appleid.apple.com" {
+        return Err(AppError::Unauthorized("Invalid token issuer".to_string()).into());
+    }
+    
+    let ios_bundle_id = match ctx.env.var("APPLE_IOS_BUNDLE_ID") {
+        Ok(id) => id.to_string(),
+        Err(_) => match ctx.env.secret("APPLE_IOS_BUNDLE_ID") {
+            Ok(secret) => secret.to_string(),
+            Err(_) => "com.guitaripod.Pixie".to_string()
+        }
+    };
+    
+    if claims.aud != ios_bundle_id {
+        console_log!("Bundle ID mismatch: expected {}, got {}", ios_bundle_id, claims.aud);
+        return Err(AppError::Unauthorized("Invalid token audience".to_string()).into());
+    }
+    
+    if claims.email.is_some() && claims.email_verified != Some(true) {
+        return Err(AppError::Unauthorized("Email not verified".to_string()).into());
+    }
+    
+    let db = ctx.env.d1("DB")?;
+    
+    let existing_user = db
+        .prepare("SELECT id, api_key FROM users WHERE provider = ?1 AND provider_id = ?2")
+        .bind(&["apple".into(), claims.sub.clone().into()])?
+        .first::<serde_json::Value>(None)
+        .await?;
+    
+    let (user_id, api_key) = if let Some(user_data) = existing_user {
+        let id = user_data.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        let key = user_data.get("api_key").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        console_log!("Found existing Apple user: {}", id);
+        (id, key)
+    } else {
+        let new_user_id = Uuid::new_v4().to_string();
+        let new_api_key = format!("pixie_{}", Uuid::new_v4().to_string().replace("-", ""));
+        let now = Utc::now().to_rfc3339();
+        
+        console_log!("Creating new Apple user: {}", new_user_id);
+        
+        let email = claims.email.clone()
+            .unwrap_or_else(|| format!("{}@privaterelay.appleid.com", &claims.sub[..8]));
+        
+        db
+            .prepare("INSERT INTO users (id, email, provider, provider_id, name, api_key, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)")
+            .bind(&[
+                new_user_id.clone().into(),
+                email.into(),
+                "apple".into(),
+                claims.sub.into(),
+                "Apple User".into(),
+                new_api_key.clone().into(),
+                now.clone().into(),
+                now.into(),
+            ])?
+            .run()
+            .await?;
+        
         initialize_user_credits(&new_user_id, &db).await?;
         
         (new_user_id, new_api_key)

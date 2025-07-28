@@ -337,6 +337,40 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /v1/auth/apple/token:
+    post:
+      operationId: appleTokenAuth
+      summary: Authenticate with Apple identity token (native apps)
+      description: |
+        Authenticate using an Apple identity token from native Sign in with Apple.
+        This endpoint accepts identity tokens from iOS apps using the bundle ID.
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [identity_token]
+              properties:
+                identity_token:
+                  type: string
+                  description: Apple identity token from native sign-in
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /v1/auth/device/code:
     post:
       operationId: deviceAuthStart
