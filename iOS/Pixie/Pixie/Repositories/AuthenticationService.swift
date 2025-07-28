@@ -73,12 +73,42 @@ class AuthenticationService: AuthenticationServiceProtocol {
     }
     
     func refreshToken() async throws {
-        guard let refreshToken = try? keychainManager.getString(forKey: KeychainKeys.refreshToken) else {
+        guard let refreshToken = try? keychainManager.getString(forKey: KeychainKeys.refreshToken),
+              !refreshToken.isEmpty else {
             throw NetworkError.unauthorized
         }
         
-        if refreshToken.isEmpty {
-            throw NetworkError.unauthorized
+        let tokenExpirationKey = "pixie.token.expiration"
+        if let expirationDate = UserDefaults.standard.object(forKey: tokenExpirationKey) as? Date {
+            if expirationDate > Date() {
+                return
+            }
+        }
+        
+        do {
+            let request = RefreshTokenRequest(refreshToken: refreshToken)
+            let response: AuthResponse = try await networkService.post("/v1/auth/refresh", body: request, type: AuthResponse.self)
+            
+            try keychainManager.setString(response.apiKey, forKey: KeychainKeys.authToken)
+            
+            ConfigurationManager.shared.apiKey = response.apiKey
+            if let networkService = networkService as? NetworkService {
+                networkService.setAPIKey(response.apiKey)
+            }
+            
+            let expirationDate = Date().addingTimeInterval(3600)
+            UserDefaults.standard.set(expirationDate, forKey: tokenExpirationKey)
+            
+            NotificationCenter.default.post(
+                name: Notification.Name("TokenDidRefresh"),
+                object: nil
+            )
+        } catch {
+            NotificationCenter.default.post(
+                name: Notification.Name("TokenRefreshDidFail"),
+                object: error
+            )
+            throw error
         }
     }
     
@@ -109,4 +139,6 @@ class AuthenticationService: AuthenticationServiceProtocol {
 extension Notification.Name {
     static let userDidAuthenticate = Notification.Name("UserDidAuthenticate")
     static let userDidLogout = Notification.Name("UserDidLogout")
+    static let tokenDidRefresh = Notification.Name("TokenDidRefresh")
+    static let tokenRefreshDidFail = Notification.Name("TokenRefreshDidFail")
 }
