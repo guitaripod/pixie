@@ -53,7 +53,7 @@ class OAuthCoordinator: NSObject {
             authPath = "/v1/auth/apple"
             redirectURI = "\(baseURL)/v1/auth/apple/callback"
         case .google:
-            // Google should only use SDK, not web OAuth
+
             delegate?.oauthCoordinator(self, didCompleteWith: .error("Google authentication requires SDK"))
             return
         }
@@ -107,8 +107,6 @@ class OAuthCoordinator: NSObject {
         
         let state = OAuthState(provider: .google)
         pendingAuthState = state
-        
-        // Try Google Sign-In SDK first
         googleSignInCoordinator.signIn(from: viewController)
     }
     
@@ -249,7 +247,7 @@ extension OAuthCoordinator: GoogleSignInCoordinatorDelegate {
     func googleSignIn(_ coordinator: GoogleSignInCoordinator, didSignInWith result: Result<(serverAuthCode: String, idToken: String), Error>) {
         switch result {
         case .success(let (_, idToken)):
-            // Google Sign-In succeeded, send ID token to backend
+
             let tokenRequest = GoogleTokenRequest(idToken: idToken)
             
             Task {
@@ -269,8 +267,6 @@ extension OAuthCoordinator: GoogleSignInCoordinatorDelegate {
             
         case .failure(let error):
             pendingAuthState = nil
-            
-            // Check if it's a cancellation
             if error is CancellationError {
                 delegate?.oauthCoordinator(self, didCompleteWith: .cancelled)
             } else {
