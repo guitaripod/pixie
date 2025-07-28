@@ -12,6 +12,7 @@ class OAuthCoordinator: NSObject {
     private var pendingAuthState: OAuthState?
     private let apiService: APIServiceProtocol
     private let configurationManager: ConfigurationManagerProtocol
+    private let googleSignInCoordinator = GoogleSignInCoordinator()
     
     weak var delegate: OAuthCoordinatorDelegate?
     
@@ -19,6 +20,7 @@ class OAuthCoordinator: NSObject {
         self.apiService = apiService
         self.configurationManager = configurationManager
         super.init()
+        googleSignInCoordinator.delegate = self
     }
     
     func authenticate(provider: AuthProvider, from viewController: UIViewController) {
@@ -28,9 +30,9 @@ class OAuthCoordinator: NSObject {
         case .apple:
             authenticateWithApple()
         case .github:
-            authenticateWithOAuth(provider: .github)
+            authenticateWithOAuth(provider: provider)
         case .google:
-            authenticateWithOAuth(provider: .google)
+            authenticateWithGoogle()
         }
     }
     
@@ -39,9 +41,24 @@ class OAuthCoordinator: NSObject {
         pendingAuthState = state
         
         let baseURL = configurationManager.baseURL
-        let redirectURI = "pixie://auth"
         
-        var components = URLComponents(string: "\(baseURL)/v1/auth/\(provider.rawValue)")!
+        let authPath: String
+        let redirectURI: String
+        
+        switch provider {
+        case .github:
+            authPath = "/v1/auth/github" 
+            redirectURI = "pixie://auth"
+        case .apple:
+            authPath = "/v1/auth/apple"
+            redirectURI = "\(baseURL)/v1/auth/apple/callback"
+        case .google:
+            // Google should only use SDK, not web OAuth
+            delegate?.oauthCoordinator(self, didCompleteWith: .error("Google authentication requires SDK"))
+            return
+        }
+        
+        var components = URLComponents(string: "\(baseURL)\(authPath)")!
         components.queryItems = [
             URLQueryItem(name: "state", value: state.state),
             URLQueryItem(name: "redirect_uri", value: redirectURI)
@@ -80,6 +97,19 @@ class OAuthCoordinator: NSObject {
         authSession?.presentationContextProvider = self
         authSession?.prefersEphemeralWebBrowserSession = true
         authSession?.start()
+    }
+    
+    private func authenticateWithGoogle() {
+        guard let viewController = presentingViewController else {
+            delegate?.oauthCoordinator(self, didCompleteWith: .error("No presenting view controller"))
+            return
+        }
+        
+        let state = OAuthState(provider: .google)
+        pendingAuthState = state
+        
+        // Try Google Sign-In SDK first
+        googleSignInCoordinator.signIn(from: viewController)
     }
     
     private func authenticateWithApple() {
@@ -185,19 +215,15 @@ extension OAuthCoordinator: ASAuthorizationControllerDelegate {
     }
     
     private func handleAppleSignIn(authorizationCode: Data, identityToken: Data, state: OAuthState) async {
-        guard let codeString = String(data: authorizationCode, encoding: .utf8) else {
-            delegate?.oauthCoordinator(self, didCompleteWith: .error("Invalid authorization code"))
+        guard let tokenString = String(data: identityToken, encoding: .utf8) else {
+            delegate?.oauthCoordinator(self, didCompleteWith: .error("Invalid identity token"))
             return
         }
         
-        let callbackRequest = OAuthCallbackRequest(
-            code: codeString,
-            state: state.state,
-            redirectUri: "pixie://auth"
-        )
+        let tokenRequest = AppleTokenRequest(identityToken: tokenString)
         
         do {
-            let authResponse = try await apiService.authenticateApple(callbackRequest)
+            let authResponse = try await apiService.authenticateAppleToken(tokenRequest)
             
             pendingAuthState = nil
             delegate?.oauthCoordinator(self, didCompleteWith: .success(
@@ -216,5 +242,40 @@ extension OAuthCoordinator: ASAuthorizationControllerDelegate {
 extension OAuthCoordinator: ASAuthorizationControllerPresentationContextProviding {
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
         return presentingViewController?.view.window ?? UIWindow()
+    }
+}
+
+extension OAuthCoordinator: GoogleSignInCoordinatorDelegate {
+    func googleSignIn(_ coordinator: GoogleSignInCoordinator, didSignInWith result: Result<(serverAuthCode: String, idToken: String), Error>) {
+        switch result {
+        case .success(let (_, idToken)):
+            // Google Sign-In succeeded, send ID token to backend
+            let tokenRequest = GoogleTokenRequest(idToken: idToken)
+            
+            Task {
+                do {
+                    let authResponse = try await apiService.authenticateGoogleToken(tokenRequest)
+                    pendingAuthState = nil
+                    delegate?.oauthCoordinator(self, didCompleteWith: .success(
+                        apiKey: authResponse.apiKey,
+                        userId: authResponse.userId,
+                        provider: .google
+                    ))
+                } catch {
+                    pendingAuthState = nil
+                    delegate?.oauthCoordinator(self, didCompleteWith: .error(error.localizedDescription))
+                }
+            }
+            
+        case .failure(let error):
+            pendingAuthState = nil
+            
+            // Check if it's a cancellation
+            if error is CancellationError {
+                delegate?.oauthCoordinator(self, didCompleteWith: .cancelled)
+            } else {
+                delegate?.oauthCoordinator(self, didCompleteWith: .error(error.localizedDescription))
+            }
+        }
     }
 }

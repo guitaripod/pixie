@@ -70,10 +70,26 @@ struct GoogleTokenRequest: Codable {
     }
 }
 
+struct AppleTokenRequest: Codable {
+    let identityToken: String
+    
+    enum CodingKeys: String, CodingKey {
+        case identityToken = "identity_token"
+    }
+}
+
 struct AppleIDCredential {
     let userID: String
     let authorizationCode: Data
     let identityToken: Data
     let email: String?
     let fullName: PersonNameComponents?
+}
+
+struct RefreshTokenRequest: Codable {
+    let refreshToken: String
+    
+    enum CodingKeys: String, CodingKey {
+        case refreshToken = "refresh_token"
+    }
 }
