@@ -88,6 +88,25 @@ class AuthenticationViewController: UIViewController {
         buttonStackView.addArrangedSubview(googleButton)
         buttonStackView.addArrangedSubview(githubButton)
         
+        if DebugUtils.isRunningInSimulator {
+            let debugButton = UIButton()
+            debugButton.translatesAutoresizingMaskIntoConstraints = false
+            var config = UIButton.Configuration.filled()
+            config.title = "Debug Login (Simulator Only)"
+            config.baseBackgroundColor = .systemPurple
+            config.cornerStyle = .medium
+            config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
+            debugButton.configuration = config
+            debugButton.addAction(UIAction { [weak self] _ in
+                self?.handleDebugSignIn()
+            }, for: .touchUpInside)
+            buttonStackView.addArrangedSubview(debugButton)
+            
+            NSLayoutConstraint.activate([
+                debugButton.heightAnchor.constraint(equalToConstant: 50)
+            ])
+        }
+        
         termsLabel.translatesAutoresizingMaskIntoConstraints = false
         termsLabel.text = "By signing in, you agree to our Terms"
         termsLabel.font = .systemFont(ofSize: 12)
@@ -207,6 +226,13 @@ class AuthenticationViewController: UIViewController {
     
     private func hideError() {
         errorCard.isHidden = true
+    }
+    
+    private func handleDebugSignIn() {
+        haptics.impact(.click)
+        showLoading(true)
+        hideError()
+        authenticationManager.authenticateDebug(from: self)
     }
 }
 
