@@ -16,7 +16,9 @@ protocol APIServiceProtocol {
     func downloadImage(from url: String) async throws -> Data
     func authenticateGitHub(_ request: OAuthCallbackRequest) async throws -> AuthResponse
     func authenticateGoogle(_ request: OAuthCallbackRequest) async throws -> AuthResponse
+    func authenticateGoogleToken(_ request: GoogleTokenRequest) async throws -> AuthResponse
     func authenticateApple(_ request: OAuthCallbackRequest) async throws -> AuthResponse
+    func authenticateAppleToken(_ request: AppleTokenRequest) async throws -> AuthResponse
 }
 
 class APIService: APIServiceProtocol {
@@ -117,7 +119,15 @@ class APIService: APIServiceProtocol {
         try await networkService.post("/v1/auth/google/callback", body: request, type: AuthResponse.self)
     }
     
+    func authenticateGoogleToken(_ request: GoogleTokenRequest) async throws -> AuthResponse {
+        try await networkService.post("/v1/auth/google/token", body: request, type: AuthResponse.self)
+    }
+    
     func authenticateApple(_ request: OAuthCallbackRequest) async throws -> AuthResponse {
         try await networkService.post("/v1/auth/apple/callback/json", body: request, type: AuthResponse.self)
+    }
+    
+    func authenticateAppleToken(_ request: AppleTokenRequest) async throws -> AuthResponse {
+        try await networkService.post("/v1/auth/apple/token", body: request, type: AuthResponse.self)
     }
 }
