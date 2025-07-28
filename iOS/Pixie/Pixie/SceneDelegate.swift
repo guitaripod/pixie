@@ -11,6 +11,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = scene as? UIWindowScene else { return }
         window = UIWindow(windowScene: windowScene)
         window?.makeKeyAndVisible()
+        let loadingVC = UIViewController()
+        loadingVC.view.backgroundColor = .systemBackground
+        let spinner = UIActivityIndicatorView(style: .large)
+        spinner.center = loadingVC.view.center
+        spinner.startAnimating()
+        loadingVC.view.addSubview(spinner)
+        window?.rootViewController = loadingVC
         
         Task {
             await checkAuthenticationState()
@@ -39,6 +46,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     @MainActor
     private func checkAuthenticationState() async {
+        #if DEBUG
+        if DebugUtils.isRunningInSimulator {
+            showMainInterface()
+            return
+        }
+        #endif
+        
         do {
             if try await AuthenticationManager.shared.restoreSession() != nil {
                 showMainInterface()
@@ -58,8 +72,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
     
     func showMainInterface() {
-        let mainViewController = ViewController()
-        let navigationController = UINavigationController(rootViewController: mainViewController)
-        window?.rootViewController = navigationController
+        print("DEBUG: Showing main interface")
+        let chatViewController = ChatGenerationViewController()
+        let navigationController = UINavigationController(rootViewController: chatViewController)
+        
+        UIView.transition(with: window!, duration: 0.3, options: .transitionCrossDissolve) {
+            self.window?.rootViewController = navigationController
+        }
+        print("DEBUG: Main interface shown")
     }
 }
