@@ -77,8 +77,19 @@ extension AuthenticationManager: OAuthCoordinatorDelegate {
     func oauthCoordinator(_ coordinator: OAuthCoordinator, didCompleteWith result: AuthResult) {
         Task { @MainActor in
             switch result {
-            case .success(let apiKey, let userId, let provider):
-                await handleAuthSuccess(apiKey: apiKey, userId: userId, provider: provider)
+            case .success(let apiKey, _, let provider):
+                do {
+                    try keychainManager.setString(apiKey, forKey: KeychainKeys.authToken)
+                    try keychainManager.setString(provider.rawValue, forKey: KeychainKeys.authProvider)
+                    
+                    ConfigurationManager.shared.apiKey = apiKey
+                    
+                    let user = try await authenticationService.authenticate(with: apiKey)
+                    
+                    delegate?.authenticationManager(self, didAuthenticate: user)
+                } catch {
+                    delegate?.authenticationManager(self, didFailWithError: error.localizedDescription)
+                }
                 
             case .error(let message):
                 delegate?.authenticationManager(self, didFailWithError: message)
@@ -92,20 +103,6 @@ extension AuthenticationManager: OAuthCoordinatorDelegate {
         }
     }
     
-    private func handleAuthSuccess(apiKey: String, userId: String, provider: AuthProvider) async {
-        do {
-            try keychainManager.setString(apiKey, forKey: KeychainKeys.authToken)
-            try keychainManager.setString(provider.rawValue, forKey: KeychainKeys.authProvider)
-            
-            ConfigurationManager.shared.apiKey = apiKey
-            
-            let user = try await authenticationService.authenticate(with: apiKey)
-            
-            delegate?.authenticationManager(self, didAuthenticate: user)
-        } catch {
-            delegate?.authenticationManager(self, didFailWithError: error.localizedDescription)
-        }
-    }
 }
 
 extension KeychainKeys {
