@@ -43,6 +43,36 @@ class AuthenticationManager: NSObject {
         oauthCoordinator.authenticate(provider: provider, from: viewController)
     }
     
+    func authenticateDebug(from viewController: UIViewController) {
+        Task { @MainActor in
+            do {
+                let debugApiKey = "debug-api-key"
+                let debugUserId = "debug-user"
+                let debugEmail = "debug@simulator.local"
+                let debugUserName = "Debug User"
+                
+                try keychainManager.setString(debugApiKey, forKey: KeychainKeys.authToken)
+                try keychainManager.setString("debug", forKey: KeychainKeys.authProvider)
+                
+                ConfigurationManager.shared.apiKey = debugApiKey
+                
+                let user = User(
+                    id: debugUserId,
+                    email: debugEmail,
+                    name: debugUserName,
+                    isAdmin: false,
+                    createdAt: Date().ISO8601Format()
+                )
+                
+                NotificationCenter.default.post(name: .userDidAuthenticate, object: user)
+                
+                delegate?.authenticationManager(self, didAuthenticate: user)
+            } catch {
+                delegate?.authenticationManager(self, didFailWithError: "Debug authentication failed: \(error.localizedDescription)")
+            }
+        }
+    }
+    
     func logout() async throws {
         try await authenticationService.logout()
     }
