@@ -424,7 +424,8 @@ class ChatInputBar: UIView {
         switch gesture.state {
         case .changed:
             let newHeight = heightConstraint.constant - translation.y
-            heightConstraint.constant = max(80, min(460, newHeight))
+            let maxHeight = calculateExpandedHeight()
+            heightConstraint.constant = max(80, min(maxHeight, newHeight))
             gesture.setTranslation(.zero, in: self)
             
         case .ended, .cancelled:
@@ -436,6 +437,14 @@ class ChatInputBar: UIView {
         }
     }
     
+    private func calculateExpandedHeight() -> CGFloat {
+        guard let window = window else { return 460 }
+        let safeAreaTop = window.safeAreaInsets.top
+        let screenHeight = window.bounds.height
+        let expandedHeight = screenHeight - safeAreaTop
+        return expandedHeight
+    }
+    
     private func setExpanded(_ expanded: Bool, animated: Bool) {
         isExpanded = expanded
         
@@ -443,8 +452,10 @@ class ChatInputBar: UIView {
             updateSendButton()
         }
         
+        let expandedHeight = calculateExpandedHeight()
+        
         let animator = UIViewPropertyAnimator(duration: animated ? 0.4 : 0, dampingRatio: 0.8) {
-            self.heightConstraint.constant = expanded ? 460 : 80
+            self.heightConstraint.constant = expanded ? expandedHeight : 80
             self.containerView.layer.cornerRadius = expanded ? 24 : 28
             self.layer.shadowRadius = expanded ? 24 : 12
             self.collapsedView.alpha = expanded ? 0 : 1
@@ -510,7 +521,6 @@ class ChatInputBar: UIView {
         showAdvancedOptions.toggle()
         
         let chevron = advancedOptionsButton.viewWithTag(100) as? UIImageView
-        let targetHeight: CGFloat = showAdvancedOptions ? 660 : 460
         
         if showAdvancedOptions {
             advancedOptionsContainer.isHidden = false
@@ -524,7 +534,6 @@ class ChatInputBar: UIView {
         UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
             self.advancedOptionsContainer.alpha = self.showAdvancedOptions ? 1 : 0
             chevron?.transform = self.showAdvancedOptions ? CGAffineTransform(rotationAngle: .pi) : .identity
-            self.heightConstraint.constant = targetHeight
             self.layoutIfNeeded()
         } completion: { _ in
             if !self.showAdvancedOptions {
