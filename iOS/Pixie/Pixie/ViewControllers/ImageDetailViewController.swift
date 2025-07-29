@@ -137,14 +137,12 @@ final class ImageDetailViewController: UIViewController {
         button.heightAnchor.constraint(equalToConstant: 60).isActive = true
         
         button.configurationUpdateHandler = { button in
-            var config = button.configuration
             switch button.state {
             case .highlighted:
                 button.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
             default:
                 button.transform = .identity
             }
-            button.configuration = config
         }
         
         return button

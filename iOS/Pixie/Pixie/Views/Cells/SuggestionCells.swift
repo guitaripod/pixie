@@ -116,7 +116,9 @@ class CreativePromptsHeaderView: UICollectionReusableView {
             button.tag = index
             button.layer.cornerRadius = 18
             button.layer.borderWidth = 1
-            button.contentEdgeInsets = UIEdgeInsets(top: 8, left: 16, bottom: 8, right: 16)
+            var config = UIButton.Configuration.plain()
+            config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
+            button.configuration = config
             updateButtonAppearance(button, isSelected: index == selectedIndex, color: category.color)
             button.addAction(UIAction { [weak self] _ in
                 self?.selectCategory(at: index)

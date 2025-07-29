@@ -129,7 +129,7 @@ class ChatGenerationViewController: UIViewController {
         inputBar.onSend = { [weak self] prompt in
             self?.handleSendPrompt(prompt)
         }
-        inputBar.onExpandedChanged = { [weak self] isExpanded in
+        inputBar.onExpandedChanged = { isExpanded in
         }
         suggestionsView.onEditImageTapped = { [weak self] in
             self?.presentPhotoPicker()
@@ -176,7 +176,7 @@ class ChatGenerationViewController: UIViewController {
             .store(in: &cancellables)
         viewModel.progressPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] progress in
+            .sink { progress in
             }
             .store(in: &cancellables)
     }

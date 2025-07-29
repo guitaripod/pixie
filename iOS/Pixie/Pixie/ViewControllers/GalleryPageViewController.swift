@@ -61,7 +61,7 @@ final class GalleryPageViewController: UIViewController {
         
         let group = NSCollectionLayoutGroup.horizontal(
             layoutSize: groupSize,
-            subitem: item,
+            repeatingSubitem: item,
             count: Int(columns)
         )
         
@@ -120,7 +120,7 @@ final class GalleryPageViewController: UIViewController {
     private func setupDataSource() {
         dataSource = UICollectionViewDiffableDataSource<Int, ImageMetadata>(
             collectionView: collectionView
-        ) { [weak self] collectionView, indexPath, image in
+        ) { collectionView, indexPath, image in
             let cell = collectionView.dequeueReusableCell(
                 withReuseIdentifier: GalleryImageCell.identifier,
                 for: indexPath
