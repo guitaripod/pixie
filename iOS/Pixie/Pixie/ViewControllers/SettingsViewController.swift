@@ -188,8 +188,6 @@ extension SettingsViewController: UITableViewDelegate {
     
     private func presentAdminDashboard() {
         let adminVC = AdminDashboardViewController()
-        let navController = UINavigationController(rootViewController: adminVC)
-        navController.modalPresentationStyle = .fullScreen
-        present(navController, animated: true)
+        navigationController?.pushViewController(adminVC, animated: true)
     }
 }
