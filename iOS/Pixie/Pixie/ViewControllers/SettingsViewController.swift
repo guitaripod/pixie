@@ -4,6 +4,28 @@ class SettingsViewController: UIViewController {
     
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private let authenticationManager = AuthenticationManager.shared
+    private let haptics = HapticManager.shared
+    
+    private enum Section: Int, CaseIterable {
+        case account
+        case admin
+        
+        var title: String {
+            switch self {
+            case .account: return "Account"
+            case .admin: return "Admin"
+            }
+        }
+    }
+    
+    private enum AccountRow: Int, CaseIterable {
+        case userId
+        case logout
+    }
+    
+    private enum AdminRow: Int, CaseIterable {
+        case dashboard
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -13,6 +35,33 @@ class SettingsViewController: UIViewController {
         
         setupTableView()
         setupConstraints()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        Task {
+            let adminRepository = AdminRepository(networkService: AppContainer.shared.networkService)
+            let isAdmin = await adminRepository.checkAdminStatus()
+            
+            if isAdmin && authenticationManager.currentUser?.isAdmin != true {
+                // Update user admin status
+                if let user = authenticationManager.currentUser {
+                    let updatedUser = User(
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        isAdmin: true,
+                        createdAt: user.createdAt
+                    )
+                    try? await AppContainer.shared.authenticationService.setCurrentUser(updatedUser)
+                }
+            }
+            
+            await MainActor.run {
+                tableView.reloadData()
+            }
+        }
     }
     
     private func setupTableView() {
@@ -69,43 +118,78 @@ class SettingsViewController: UIViewController {
 
 extension SettingsViewController: UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
+        return authenticationManager.currentUser?.isAdmin == true ? Section.allCases.count : 1
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 2
+        if section == Section.account.rawValue {
+            return AccountRow.allCases.count
+        } else if section == Section.admin.rawValue && authenticationManager.currentUser?.isAdmin == true {
+            return AdminRow.allCases.count
+        }
+        return 0
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
         
-        switch indexPath.row {
-        case 0:
-            cell.textLabel?.text = "User ID"
-            cell.detailTextLabel?.text = authenticationManager.currentUser?.id ?? "Not logged in"
-            cell.detailTextLabel?.textColor = .systemBlue
-            cell.selectionStyle = .none
-        case 1:
-            cell.textLabel?.text = "Logout"
-            cell.textLabel?.textColor = .systemRed
-        default:
-            break
+        if indexPath.section == Section.account.rawValue {
+            switch AccountRow(rawValue: indexPath.row) {
+            case .userId:
+                cell.textLabel?.text = "User ID"
+                cell.detailTextLabel?.text = authenticationManager.currentUser?.id ?? "Not logged in"
+                cell.detailTextLabel?.textColor = .systemBlue
+                cell.selectionStyle = .none
+            case .logout:
+                cell.textLabel?.text = "Logout"
+                cell.textLabel?.textColor = .systemRed
+            case .none:
+                break
+            }
+        } else if indexPath.section == Section.admin.rawValue {
+            switch AdminRow(rawValue: indexPath.row) {
+            case .dashboard:
+                cell.textLabel?.text = "Admin Dashboard"
+                cell.accessoryType = .disclosureIndicator
+            case .none:
+                break
+            }
         }
         
         return cell
     }
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        return "Account"
+        return Section(rawValue: section)?.title
     }
 }
 
 extension SettingsViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        haptics.impact(.click)
         
-        if indexPath.row == 1 {
-            handleLogout()
+        if indexPath.section == Section.account.rawValue {
+            switch AccountRow(rawValue: indexPath.row) {
+            case .logout:
+                handleLogout()
+            default:
+                break
+            }
+        } else if indexPath.section == Section.admin.rawValue {
+            switch AdminRow(rawValue: indexPath.row) {
+            case .dashboard:
+                presentAdminDashboard()
+            default:
+                break
+            }
         }
+    }
+    
+    private func presentAdminDashboard() {
+        let adminVC = AdminDashboardViewController()
+        let navController = UINavigationController(rootViewController: adminVC)
+        navController.modalPresentationStyle = .fullScreen
+        present(navController, animated: true)
     }
 }

@@ -75,9 +75,54 @@ class ChatGenerationViewController: UIViewController {
         newChatButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         newChatButton.addTarget(self, action: #selector(newChatTapped), for: .touchUpInside)
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: newChatButton)
+        
         let galleryButton = UIBarButtonItem(title: "Gallery", style: .plain, target: self, action: #selector(galleryTapped))
         let creditsButton = UIBarButtonItem(title: "Credits", style: .plain, target: self, action: #selector(creditsTapped))
-        let settingsButton = UIBarButtonItem(image: UIImage(systemName: "gearshape"), style: .plain, target: self, action: #selector(settingsTapped))
+        
+        // Check if user is admin
+        let isAdmin = AuthenticationManager.shared.currentUser?.isAdmin ?? false
+        let settingsButton: UIBarButtonItem
+        
+        if isAdmin {
+            // Create settings button with admin badge
+            let settingsView = UIView()
+            let settingsImageView = UIImageView(image: UIImage(systemName: "gearshape"))
+            settingsImageView.tintColor = self.view.tintColor
+            settingsImageView.contentMode = .scaleAspectFit
+            settingsImageView.translatesAutoresizingMaskIntoConstraints = false
+            
+            let badgeView = UIView()
+            badgeView.backgroundColor = .systemOrange
+            badgeView.layer.cornerRadius = 6
+            badgeView.translatesAutoresizingMaskIntoConstraints = false
+            
+            settingsView.addSubview(settingsImageView)
+            settingsView.addSubview(badgeView)
+            
+            NSLayoutConstraint.activate([
+                settingsImageView.centerXAnchor.constraint(equalTo: settingsView.centerXAnchor),
+                settingsImageView.centerYAnchor.constraint(equalTo: settingsView.centerYAnchor),
+                settingsImageView.widthAnchor.constraint(equalToConstant: 24),
+                settingsImageView.heightAnchor.constraint(equalToConstant: 24),
+                
+                badgeView.topAnchor.constraint(equalTo: settingsImageView.topAnchor, constant: -2),
+                badgeView.trailingAnchor.constraint(equalTo: settingsImageView.trailingAnchor, constant: 2),
+                badgeView.widthAnchor.constraint(equalToConstant: 12),
+                badgeView.heightAnchor.constraint(equalToConstant: 12),
+                
+                settingsView.widthAnchor.constraint(equalToConstant: 28),
+                settingsView.heightAnchor.constraint(equalToConstant: 28)
+            ])
+            
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(settingsTapped))
+            settingsView.addGestureRecognizer(tapGesture)
+            settingsView.isUserInteractionEnabled = true
+            
+            settingsButton = UIBarButtonItem(customView: settingsView)
+        } else {
+            settingsButton = UIBarButtonItem(image: UIImage(systemName: "gearshape"), style: .plain, target: self, action: #selector(settingsTapped))
+        }
+        
         navigationItem.rightBarButtonItems = [settingsButton, creditsButton, galleryButton]
     }
     private func setupHandlers() {
@@ -296,7 +341,51 @@ class ChatGenerationViewController: UIViewController {
         } else {
             let galleryButton = UIBarButtonItem(title: "Gallery", style: .plain, target: self, action: #selector(galleryTapped))
             let creditsButton = UIBarButtonItem(title: "Credits", style: .plain, target: self, action: #selector(creditsTapped))
-            let settingsButton = UIBarButtonItem(image: UIImage(systemName: "gearshape"), style: .plain, target: self, action: #selector(settingsTapped))
+            
+            // Check if user is admin
+            let isAdmin = AuthenticationManager.shared.currentUser?.isAdmin ?? false
+            let settingsButton: UIBarButtonItem
+            
+            if isAdmin {
+                // Create settings button with admin badge
+                let settingsView = UIView()
+                let settingsImageView = UIImageView(image: UIImage(systemName: "gearshape"))
+                settingsImageView.tintColor = self.view.tintColor
+                settingsImageView.contentMode = .scaleAspectFit
+                settingsImageView.translatesAutoresizingMaskIntoConstraints = false
+                
+                let badgeView = UIView()
+                badgeView.backgroundColor = .systemOrange
+                badgeView.layer.cornerRadius = 6
+                badgeView.translatesAutoresizingMaskIntoConstraints = false
+                
+                settingsView.addSubview(settingsImageView)
+                settingsView.addSubview(badgeView)
+                
+                NSLayoutConstraint.activate([
+                    settingsImageView.centerXAnchor.constraint(equalTo: settingsView.centerXAnchor),
+                    settingsImageView.centerYAnchor.constraint(equalTo: settingsView.centerYAnchor),
+                    settingsImageView.widthAnchor.constraint(equalToConstant: 24),
+                    settingsImageView.heightAnchor.constraint(equalToConstant: 24),
+                    
+                    badgeView.topAnchor.constraint(equalTo: settingsImageView.topAnchor, constant: -2),
+                    badgeView.trailingAnchor.constraint(equalTo: settingsImageView.trailingAnchor, constant: 2),
+                    badgeView.widthAnchor.constraint(equalToConstant: 12),
+                    badgeView.heightAnchor.constraint(equalToConstant: 12),
+                    
+                    settingsView.widthAnchor.constraint(equalToConstant: 28),
+                    settingsView.heightAnchor.constraint(equalToConstant: 28)
+                ])
+                
+                let tapGesture = UITapGestureRecognizer(target: self, action: #selector(settingsTapped))
+                settingsView.addGestureRecognizer(tapGesture)
+                settingsView.isUserInteractionEnabled = true
+                
+                settingsButton = UIBarButtonItem(customView: settingsView)
+            } else {
+                settingsButton = UIBarButtonItem(image: UIImage(systemName: "gearshape"), style: .plain, target: self, action: #selector(settingsTapped))
+            }
+            
             navigationItem.rightBarButtonItems = [settingsButton, creditsButton, galleryButton]
         }
     }
