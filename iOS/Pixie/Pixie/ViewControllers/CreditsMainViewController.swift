@@ -43,6 +43,14 @@ class CreditsMainViewController: UIViewController {
         viewModel.refresh()
     }
     
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        // Update gradient layer frame
+        if let gradientLayer = balanceCard.layer.value(forKey: "gradientLayer") as? CAGradientLayer {
+            gradientLayer.frame = balanceCard.bounds
+        }
+    }
+    
     private func setupUI() {
         title = "Credits & Usage"
         view.backgroundColor = .systemBackground
@@ -81,12 +89,27 @@ class CreditsMainViewController: UIViewController {
     
     private func setupBalanceCard() {
         balanceCard.backgroundColor = .secondarySystemBackground
-        balanceCard.layer.cornerRadius = 12
+        balanceCard.layer.cornerRadius = 20
         balanceCard.layer.shadowColor = UIColor.black.cgColor
-        balanceCard.layer.shadowOpacity = 0.1
-        balanceCard.layer.shadowOffset = CGSize(width: 0, height: 2)
-        balanceCard.layer.shadowRadius = 4
+        balanceCard.layer.shadowOpacity = 0.08
+        balanceCard.layer.shadowOffset = CGSize(width: 0, height: 4)
+        balanceCard.layer.shadowRadius = 12
         balanceCard.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Add gradient background
+        let gradientLayer = CAGradientLayer()
+        gradientLayer.colors = [
+            UIColor.systemPurple.withAlphaComponent(0.1).cgColor,
+            UIColor.systemPurple.withAlphaComponent(0.05).cgColor
+        ]
+        gradientLayer.locations = [0, 1]
+        gradientLayer.startPoint = CGPoint(x: 0, y: 0)
+        gradientLayer.endPoint = CGPoint(x: 1, y: 1)
+        gradientLayer.cornerRadius = 20
+        balanceCard.layer.insertSublayer(gradientLayer, at: 0)
+        
+        // Store gradient layer reference for layout updates
+        balanceCard.layer.setValue(gradientLayer, forKey: "gradientLayer")
         
         balanceTitleLabel.text = "Current Balance"
         balanceTitleLabel.font = .systemFont(ofSize: 16, weight: .medium)
@@ -99,7 +122,7 @@ class CreditsMainViewController: UIViewController {
         balanceAmountLabel.translatesAutoresizingMaskIntoConstraints = false
         
         creditsLabel.text = "credits"
-        creditsLabel.font = .systemFont(ofSize: 20)
+        creditsLabel.font = .systemFont(ofSize: 22, weight: .medium)
         creditsLabel.textColor = .secondaryLabel
         creditsLabel.translatesAutoresizingMaskIntoConstraints = false
         
@@ -150,14 +173,6 @@ class CreditsMainViewController: UIViewController {
         featuresStackView.spacing = 12
         featuresStackView.translatesAutoresizingMaskIntoConstraints = false
         
-        let dashboardCard = createFeatureCard(
-            icon: UIImage(systemName: "chart.pie"),
-            title: "Usage Dashboard",
-            description: "View detailed usage statistics and charts"
-        ) { [weak self] in
-            self?.navigateToDashboard()
-        }
-        
         let historyCard = createFeatureCard(
             icon: UIImage(systemName: "clock"),
             title: "Transaction History",
@@ -182,7 +197,6 @@ class CreditsMainViewController: UIViewController {
             self?.navigateToEstimator()
         }
         
-        featuresStackView.addArrangedSubview(dashboardCard)
         featuresStackView.addArrangedSubview(historyCard)
         featuresStackView.addArrangedSubview(packsCard)
         featuresStackView.addArrangedSubview(estimatorCard)
@@ -273,13 +287,13 @@ class CreditsMainViewController: UIViewController {
         contentView.addSubview(tipsCard)
         
         NSLayoutConstraint.activate([
-            balanceCard.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
+            balanceCard.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
             balanceCard.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             balanceCard.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             balanceCard.heightAnchor.constraint(equalToConstant: 140),
             
             balanceTitleLabel.centerXAnchor.constraint(equalTo: balanceCard.centerXAnchor),
-            balanceTitleLabel.topAnchor.constraint(equalTo: balanceCard.topAnchor, constant: 24),
+            balanceTitleLabel.topAnchor.constraint(equalTo: balanceCard.topAnchor, constant: 20),
             
             balanceAmountLabel.centerXAnchor.constraint(equalTo: balanceCard.centerXAnchor),
             balanceAmountLabel.topAnchor.constraint(equalTo: balanceTitleLabel.bottomAnchor, constant: 8),
@@ -331,6 +345,13 @@ class CreditsMainViewController: UIViewController {
             }
             .store(in: &cancellables)
         
+        viewModel.$lowCreditWarning
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] showWarning in
+                self?.updateLowCreditWarning(showWarning)
+            }
+            .store(in: &cancellables)
+        
         viewModel.$transactions
             .receive(on: DispatchQueue.main)
             .sink { [weak self] transactions in
@@ -370,6 +391,22 @@ class CreditsMainViewController: UIViewController {
         }
     }
     
+    private func updateLowCreditWarning(_ showWarning: Bool) {
+        guard showWarning else { return }
+        
+        // Animate the balance card to grab attention
+        UIView.animate(withDuration: 0.3, animations: {
+            self.balanceCard.transform = CGAffineTransform(scaleX: 1.02, y: 1.02)
+        }) { _ in
+            UIView.animate(withDuration: 0.3) {
+                self.balanceCard.transform = .identity
+            }
+        }
+        
+        // Add haptic feedback
+        HapticsManager.shared.notification(.warning)
+    }
+    
     private func createTransactionView(_ transaction: CreditTransaction) -> UIView {
         let container = UIView()
         container.translatesAutoresizingMaskIntoConstraints = false
@@ -407,16 +444,16 @@ class CreditsMainViewController: UIViewController {
     private func createQuickActionCard(icon: UIImage?, title: String, subtitle: String, action: @escaping () -> Void) -> UIView {
         let card = QuickActionCard(action: action)
         card.backgroundColor = .secondarySystemBackground
-        card.layer.cornerRadius = 12
+        card.layer.cornerRadius = 16
         card.layer.shadowColor = UIColor.black.cgColor
-        card.layer.shadowOpacity = 0.05
-        card.layer.shadowOffset = CGSize(width: 0, height: 1)
-        card.layer.shadowRadius = 2
+        card.layer.shadowOpacity = 0.06
+        card.layer.shadowOffset = CGSize(width: 0, height: 2)
+        card.layer.shadowRadius = 8
         card.translatesAutoresizingMaskIntoConstraints = false
         
         let iconContainer = UIView()
-        iconContainer.backgroundColor = .systemPurple.withAlphaComponent(0.1)
-        iconContainer.layer.cornerRadius = 12
+        iconContainer.backgroundColor = .systemPurple.withAlphaComponent(0.15)
+        iconContainer.layer.cornerRadius = 14
         iconContainer.translatesAutoresizingMaskIntoConstraints = false
         iconContainer.isUserInteractionEnabled = false
         
@@ -568,19 +605,18 @@ class CreditsMainViewController: UIViewController {
     }
     
     private func navigateToCreditPacks() {
-        
+        let creditPacksVC = CreditPacksViewController(viewModel: viewModel)
+        navigationController?.pushViewController(creditPacksVC, animated: true)
     }
     
     private func navigateToEstimator() {
-        
-    }
-    
-    private func navigateToDashboard() {
-        
+        let estimatorVC = CostEstimatorViewController(viewModel: viewModel)
+        navigationController?.pushViewController(estimatorVC, animated: true)
     }
     
     private func navigateToHistory() {
-        
+        let historyVC = TransactionHistoryViewController(viewModel: viewModel)
+        navigationController?.pushViewController(historyVC, animated: true)
     }
 }
 
