@@ -68,7 +68,7 @@ jobs:
       run: cargo run -- --help
 
   android:
-    name: Android Build & Test
+    name: Android Build
     runs-on: ubuntu-latest
     
     steps:
