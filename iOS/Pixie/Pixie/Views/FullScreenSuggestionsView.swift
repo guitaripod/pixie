@@ -376,6 +376,10 @@ class FullScreenSuggestionsView: UIView {
             loadRecentImages()
         }
     }
+    
+    func refreshRecentImages() {
+        checkPhotoPermissions()
+    }
     private func loadRecentImages() {
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]

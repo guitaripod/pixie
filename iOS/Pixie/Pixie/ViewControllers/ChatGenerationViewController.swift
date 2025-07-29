@@ -29,6 +29,10 @@ class ChatGenerationViewController: UIViewController {
         setupBindings()
         transitionToState(.suggestions, animated: false)
     }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
     private func setupUI() {
         view.backgroundColor = .systemBackground
         suggestionsView.translatesAutoresizingMaskIntoConstraints = false
@@ -101,6 +105,7 @@ class ChatGenerationViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(imageSelectedForEdit(_:)), name: Notification.Name("ImageSelectedForEdit"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
     }
     private func setupBindings() {
         viewModel.messagesPublisher
@@ -298,6 +303,7 @@ class ChatGenerationViewController: UIViewController {
             DispatchQueue.main.async {
                 switch status {
                 case .authorized, .limited:
+                    self?.suggestionsView.refreshRecentImages()
                     var config = PHPickerConfiguration()
                     config.selectionLimit = 1
                     config.filter = .images
@@ -396,6 +402,10 @@ class ChatGenerationViewController: UIViewController {
                 }
             }.resume()
         }
+    }
+    
+    @objc private func applicationDidBecomeActive() {
+        suggestionsView.refreshRecentImages()
     }
     @objc private func handleBackgroundTap(_ gesture: UITapGestureRecognizer) {
         let location = gesture.location(in: view)
