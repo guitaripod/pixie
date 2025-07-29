@@ -53,6 +53,16 @@ class AuthenticationService: AuthenticationServiceProtocol {
         return user
     }
     
+    func setCurrentUser(_ user: User) async throws {
+        try keychainManager.setCodable(user, forKey: KeychainKeys.userProfile)
+        currentUser = user
+        
+        NotificationCenter.default.post(
+            name: Notification.Name("UserDidAuthenticate"),
+            object: user
+        )
+    }
+    
     func logout() async throws {
         try keychainManager.delete(forKey: KeychainKeys.authToken)
         try keychainManager.delete(forKey: KeychainKeys.refreshToken)
