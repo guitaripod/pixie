@@ -52,7 +52,7 @@ class NetworkService: NetworkServiceProtocol {
     private let session: URLSession
     private let baseURL: String
     private var apiKey: String?
-    init(baseURL: String = "https:
+    init(baseURL: String = "https://openai-image-proxy.guitaripod.workers.dev") {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 300
         configuration.timeoutIntervalForResource = 300

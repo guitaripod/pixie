@@ -22,7 +22,13 @@ protocol APIServiceProtocol {
 }
 
 class APIService: APIServiceProtocol {
+    static let shared = APIService(networkService: NetworkService())
+    
     private let networkService: NetworkServiceProtocol
+    
+    var baseURL: String {
+        return ConfigurationManager.shared.baseURL
+    }
     
     init(networkService: NetworkServiceProtocol) {
         self.networkService = networkService

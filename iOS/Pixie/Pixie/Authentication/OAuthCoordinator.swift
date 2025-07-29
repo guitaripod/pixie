@@ -39,7 +39,7 @@ class OAuthCoordinator: NSObject {
         switch provider {
         case .github:
             authPath = "/v1/auth/github"
-            redirectURI = "pixie:
+            redirectURI = "pixie://auth/github"
         case .apple:
             authPath = "/v1/auth/apple"
             redirectURI = "\(baseURL)/v1/auth/apple/callback"
@@ -120,7 +120,7 @@ class OAuthCoordinator: NSObject {
         let callbackRequest = OAuthCallbackRequest(
             code: code,
             state: state,
-            redirectUri: "pixie:
+            redirectUri: "pixie://auth/github"
         )
         do {
             let authResponse: AuthResponse
