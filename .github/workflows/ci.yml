@@ -120,6 +120,6 @@ jobs:
         xcodebuild -project Pixie.xcodeproj \
           -scheme Pixie \
           -sdk iphonesimulator \
-          -destination 'platform=iOS Simulator,name=iPhone 15' \
+          -destination 'generic/platform=iOS Simulator' \
           build \
           -quiet
