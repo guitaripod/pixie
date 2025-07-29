@@ -221,7 +221,9 @@ class ChatInputBar: UIView {
         advancedOptionsButton.backgroundColor = .secondarySystemFill
         advancedOptionsButton.layer.cornerRadius = 12
         advancedOptionsButton.contentHorizontalAlignment = .left
-        advancedOptionsButton.contentEdgeInsets = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+        var advancedConfig = UIButton.Configuration.plain()
+        advancedConfig.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
+        advancedOptionsButton.configuration = advancedConfig
         advancedOptionsButton.addTarget(self, action: #selector(toggleAdvancedOptions), for: .touchUpInside)
         contentView.addSubview(advancedOptionsButton)
         let advancedButtonContent = UIStackView()
