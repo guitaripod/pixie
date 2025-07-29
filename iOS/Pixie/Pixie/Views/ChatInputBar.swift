@@ -5,6 +5,8 @@ class ChatInputBar: UIView {
     // MARK: - Properties
     var selectedSuggestionsManager: SelectedSuggestionsManager?
     private var showAdvancedOptions = false
+    private var isEditMode = false
+    private var selectedImage: UIImage?
     
     private let containerView = UIView()
     private let collapsedView = UIView()
@@ -23,10 +25,19 @@ class ChatInputBar: UIView {
     private let generateButton = UIButton(type: .system)
     private let creditsLabel = UILabel()
     
+    // Edit mode specific views
+    private let expandedImageContainer = UIView()
+    private let expandedSelectedImageView = UIImageView()
+    private let selectedImageView = UIImageView()
+    private let editPromptLabel = UILabel()
+    private let fidelitySelector = UISegmentedControl(items: ["Low", "High"])
+    
     private(set) var isExpanded = false
     private var heightConstraint: NSLayoutConstraint!
     private var creditsLabelTopToAdvancedConstraint: NSLayoutConstraint!
     private var creditsLabelTopToButtonConstraint: NSLayoutConstraint!
+    private var promptTextViewTopToHandleConstraint: NSLayoutConstraint!
+    private var promptTextViewTopToImageConstraint: NSLayoutConstraint!
     
     var onSend: ((String) -> Void)?
     var onExpandedChanged: ((Bool) -> Void)?
@@ -90,8 +101,6 @@ class ChatInputBar: UIView {
         
         containerView.translatesAutoresizingMaskIntoConstraints = false
         containerView.backgroundColor = .systemBackground
-        containerView.layer.cornerRadius = 28
-        containerView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         containerView.clipsToBounds = true
         addSubview(containerView)
         let dragHandleContainer = UIView()
@@ -178,13 +187,13 @@ class ChatInputBar: UIView {
         collapsedView.isUserInteractionEnabled = true
         NSLayoutConstraint.activate([
             stackView.centerXAnchor.constraint(equalTo: collapsedView.centerXAnchor),
-            stackView.centerYAnchor.constraint(equalTo: collapsedView.centerYAnchor, constant: -5),
+            stackView.centerYAnchor.constraint(equalTo: collapsedView.centerYAnchor, constant: -17),
             
             tapLabel.topAnchor.constraint(equalTo: stackView.bottomAnchor, constant: 4),
             tapLabel.centerXAnchor.constraint(equalTo: collapsedView.centerXAnchor),
             
             indicatorStackView.trailingAnchor.constraint(equalTo: collapsedView.trailingAnchor, constant: -20),
-            indicatorStackView.centerYAnchor.constraint(equalTo: collapsedView.centerYAnchor)
+            indicatorStackView.centerYAnchor.constraint(equalTo: collapsedView.centerYAnchor, constant: -12)
         ])
     }
     
@@ -217,11 +226,28 @@ class ChatInputBar: UIView {
             expandedDragHandleArea.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             expandedDragHandleArea.heightAnchor.constraint(equalToConstant: 32)
         ])
+        
+        // Setup expanded image container for edit mode
+        expandedImageContainer.translatesAutoresizingMaskIntoConstraints = false
+        expandedImageContainer.backgroundColor = .secondarySystemBackground
+        expandedImageContainer.layer.cornerRadius = 12
+        expandedImageContainer.clipsToBounds = true
+        expandedImageContainer.isHidden = true
+        contentView.addSubview(expandedImageContainer)
+        
+        expandedSelectedImageView.translatesAutoresizingMaskIntoConstraints = false
+        expandedSelectedImageView.contentMode = .scaleAspectFit
+        expandedSelectedImageView.backgroundColor = .clear
+        expandedImageContainer.addSubview(expandedSelectedImageView)
+        
         promptTextView.translatesAutoresizingMaskIntoConstraints = false
         promptTextView.font = .systemFont(ofSize: 16)
         promptTextView.layer.cornerRadius = 12
         promptTextView.layer.borderWidth = 1
         promptTextView.layer.borderColor = UIColor.separator.cgColor
+        
+        // Update border color when trait collection changes
+        updateBorderColors()
         promptTextView.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
         promptTextView.isScrollEnabled = false
         promptTextView.delegate = self
@@ -289,6 +315,10 @@ class ChatInputBar: UIView {
         generateButton.addTarget(self, action: #selector(generateTapped), for: .touchUpInside)
         contentView.addSubview(generateButton)
         
+        // Create dynamic constraints for prompt text view
+        promptTextViewTopToHandleConstraint = promptTextView.topAnchor.constraint(equalTo: expandedDragHandleArea.bottomAnchor, constant: 8)
+        promptTextViewTopToImageConstraint = promptTextView.topAnchor.constraint(equalTo: expandedImageContainer.bottomAnchor, constant: 12)
+        
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: expandedView.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: expandedView.leadingAnchor),
@@ -301,7 +331,17 @@ class ChatInputBar: UIView {
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             
-            promptTextView.topAnchor.constraint(equalTo: expandedDragHandleArea.bottomAnchor, constant: 8),
+            // Image container constraints
+            expandedImageContainer.topAnchor.constraint(equalTo: expandedDragHandleArea.bottomAnchor, constant: 8),
+            expandedImageContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            expandedImageContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            expandedImageContainer.heightAnchor.constraint(equalToConstant: 180),
+            
+            expandedSelectedImageView.topAnchor.constraint(equalTo: expandedImageContainer.topAnchor, constant: 8),
+            expandedSelectedImageView.leadingAnchor.constraint(equalTo: expandedImageContainer.leadingAnchor, constant: 8),
+            expandedSelectedImageView.trailingAnchor.constraint(equalTo: expandedImageContainer.trailingAnchor, constant: -8),
+            expandedSelectedImageView.bottomAnchor.constraint(equalTo: expandedImageContainer.bottomAnchor, constant: -8),
+            
             promptTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             promptTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             promptTextView.heightAnchor.constraint(greaterThanOrEqualToConstant: 100),
@@ -343,6 +383,10 @@ class ChatInputBar: UIView {
         creditsLabelTopToButtonConstraint = creditsLabel.topAnchor.constraint(equalTo: advancedOptionsButton.bottomAnchor, constant: 12)
         creditsLabelTopToButtonConstraint.isActive = true
         creditsLabelTopToAdvancedConstraint.isActive = false
+        
+        // Initially use non-image constraint
+        promptTextViewTopToHandleConstraint.isActive = true
+        promptTextViewTopToImageConstraint.isActive = false
     }
     
     private func createLabel(_ text: String) -> UILabel {
@@ -416,7 +460,7 @@ class ChatInputBar: UIView {
             containerView.trailingAnchor.constraint(equalTo: trailingAnchor),
             containerView.bottomAnchor.constraint(equalTo: bottomAnchor),
             heightConstraint,
-            collapsedView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 20),
+            collapsedView.topAnchor.constraint(equalTo: containerView.safeAreaLayoutGuide.topAnchor, constant: 20),
             collapsedView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             collapsedView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
             collapsedView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
@@ -478,7 +522,6 @@ class ChatInputBar: UIView {
         
         let animator = UIViewPropertyAnimator(duration: animated ? 0.4 : 0, dampingRatio: 0.8) {
             self.heightConstraint.constant = expanded ? expandedHeight : 80
-            self.containerView.layer.cornerRadius = expanded ? 24 : 28
             self.layer.shadowRadius = expanded ? 24 : 12
             self.collapsedView.alpha = expanded ? 0 : 1
             self.expandedView.alpha = expanded ? 1 : 0
@@ -503,9 +546,18 @@ class ChatInputBar: UIView {
         guard let text = promptTextView.text, !text.isEmpty else { return }
         HapticManager.shared.impact(.click)
         
-        onSend?(text)
+        if isEditMode {
+            // In edit mode, we handle the edit directly in the view controller
+            // Just trigger the action
+            onSend?("EDIT_MODE") // Special marker for edit mode
+        } else {
+            onSend?(text)
+        }
         setExpanded(false, animated: true)
-        clear()
+        
+        if !isEditMode {
+            clear()
+        }
     }
     
     @objc private func updateCredits() {
@@ -620,6 +672,139 @@ class ChatInputBar: UIView {
         }
         
         indicatorStackView.isHidden = colors.isEmpty
+    }
+    
+    
+    // MARK: - Edit Mode
+    
+    func setEditMode(_ editMode: Bool, selectedImage: UIImage?) {
+        isEditMode = editMode
+        self.selectedImage = selectedImage
+        
+        if editMode {
+            // Update collapsed view for edit mode
+            if let stackView = collapsedView.subviews.first(where: { $0 is UIStackView }) as? UIStackView {
+                // Update icon and text
+                if let imageView = stackView.arrangedSubviews.first as? UIImageView {
+                    imageView.image = UIImage(systemName: "wand.and.stars")
+                }
+                if stackView.arrangedSubviews.count > 1,
+                   let label = stackView.arrangedSubviews[1] as? UILabel {
+                    label.text = "Describe your edits..."
+                }
+            }
+            
+            // Update button title
+            generateButton.setTitle("Edit Image", for: .normal)
+            
+            // Show fidelity option in advanced section
+            if !advancedOptionsContainer.subviews.contains(fidelitySelector) {
+                addFidelitySection()
+            }
+            
+            // Show selected image in collapsed view
+            setupEditModeCollapsedView()
+            
+            // Update expanded view for edit mode
+            if let image = selectedImage {
+                expandedSelectedImageView.image = image
+                expandedImageContainer.isHidden = false
+                
+                // Update constraints
+                promptTextViewTopToHandleConstraint.isActive = false
+                promptTextViewTopToImageConstraint.isActive = true
+            }
+        } else {
+            // Reset to generate mode
+            if let stackView = collapsedView.subviews.first(where: { $0 is UIStackView }) as? UIStackView {
+                if let imageView = stackView.arrangedSubviews.first as? UIImageView {
+                    imageView.image = UIImage(systemName: "sparkles")
+                }
+                if stackView.arrangedSubviews.count > 1,
+                   let label = stackView.arrangedSubviews[1] as? UILabel {
+                    label.text = "What do you want to create?"
+                }
+            }
+            
+            generateButton.setTitle("Generate", for: .normal)
+            selectedImageView.removeFromSuperview()
+            
+            // Hide expanded image
+            expandedImageContainer.isHidden = true
+            expandedSelectedImageView.image = nil
+            
+            // Update constraints
+            promptTextViewTopToImageConstraint.isActive = false
+            promptTextViewTopToHandleConstraint.isActive = true
+        }
+        
+        updateCredits()
+    }
+    
+    private func setupEditModeCollapsedView() {
+        guard let image = selectedImage else { return }
+        
+        selectedImageView.translatesAutoresizingMaskIntoConstraints = false
+        selectedImageView.image = image
+        selectedImageView.contentMode = .scaleAspectFill
+        selectedImageView.clipsToBounds = true
+        selectedImageView.layer.cornerRadius = 8
+        collapsedView.addSubview(selectedImageView)
+        
+        NSLayoutConstraint.activate([
+            selectedImageView.leadingAnchor.constraint(equalTo: collapsedView.leadingAnchor, constant: 16),
+            selectedImageView.centerYAnchor.constraint(equalTo: collapsedView.centerYAnchor),
+            selectedImageView.widthAnchor.constraint(equalToConstant: 56),
+            selectedImageView.heightAnchor.constraint(equalToConstant: 56)
+        ])
+    }
+    
+    private func addFidelitySection() {
+        let fidelityLabel = createLabel("Fidelity")
+        advancedOptionsContainer.addSubview(fidelityLabel)
+        
+        fidelitySelector.translatesAutoresizingMaskIntoConstraints = false
+        fidelitySelector.selectedSegmentIndex = 0
+        advancedOptionsContainer.addSubview(fidelitySelector)
+        
+        // Position after moderation selector
+        NSLayoutConstraint.activate([
+            fidelityLabel.topAnchor.constraint(equalTo: moderationSelector.bottomAnchor, constant: 16),
+            fidelityLabel.leadingAnchor.constraint(equalTo: advancedOptionsContainer.leadingAnchor),
+            
+            fidelitySelector.topAnchor.constraint(equalTo: fidelityLabel.bottomAnchor, constant: 8),
+            fidelitySelector.leadingAnchor.constraint(equalTo: advancedOptionsContainer.leadingAnchor),
+            fidelitySelector.trailingAnchor.constraint(equalTo: advancedOptionsContainer.trailingAnchor)
+        ])
+    }
+    
+    func getEditOptions() -> EditOptions {
+        let size = [ImageSize.auto, .square, .landscape, .portrait][sizeSelector.selectedSegmentIndex]
+        let quality = [ImageQuality.auto, .low, .medium, .high][qualitySelector.selectedSegmentIndex]
+        let fidelity = [FidelityLevel.low, .high][fidelitySelector.selectedSegmentIndex]
+        
+        return EditOptions(
+            prompt: promptTextView.text ?? "",
+            variations: 1,
+            size: size,
+            quality: quality,
+            fidelity: fidelity,
+            background: selectedBackground,
+            outputFormat: selectedFormat,
+            compression: selectedFormat != "png" ? compressionLevel : nil
+        )
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        updateBorderColors()
+    }
+    
+    private func updateBorderColors() {
+        // Update border colors for dark mode support
+        promptTextView.layer.borderColor = UIColor.separator.cgColor
+        expandedImageContainer.layer.borderColor = UIColor.separator.cgColor
+        expandedImageContainer.layer.borderWidth = 0.5
     }
 }
 
