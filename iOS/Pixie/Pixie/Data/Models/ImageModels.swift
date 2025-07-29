@@ -92,20 +92,43 @@ struct UserGalleryResponse: Codable {
     }
 }
 
-struct ImageMetadata: Codable {
+struct ImageMetadata: Codable, Hashable {
     let id: String
     let url: String
     let prompt: String
     let createdAt: String
     let userId: String
-    let size: String
-    let model: String
-    let quality: String?
+    let thumbnailUrl: String?
+    let metadata: ImageMetadataDetails?
+    let isPublic: Bool?
+    let tags: [String]?
     
     enum CodingKeys: String, CodingKey {
         case id, url, prompt
         case createdAt = "created_at"
         case userId = "user_id"
-        case size, model, quality
+        case thumbnailUrl = "thumbnail_url"
+        case metadata
+        case isPublic = "is_public"
+        case tags
+    }
+}
+
+struct ImageMetadataDetails: Codable, Hashable {
+    let width: Int
+    let height: Int
+    let format: String
+    let sizeBytes: Int
+    let creditsUsed: Int
+    let quality: String?
+    let model: String?
+    let revisedPrompt: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case width, height, format
+        case sizeBytes = "size_bytes"
+        case creditsUsed = "credits_used"
+        case quality, model
+        case revisedPrompt = "revised_prompt"
     }
 }
