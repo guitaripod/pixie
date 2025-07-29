@@ -20,6 +20,8 @@ class ChatGenerationViewController: UIViewController {
     private let inputBar = ChatInputBar()
     private let selectedSuggestionsManager = SelectedSuggestionsManager()
     
+    private var toolbarMode: ToolbarMode = .generate
+    
     private let viewModel = GenerationViewModel()
     private var cancellables = Set<AnyCancellable>()
     private var currentOptions = GenerationOptions.default
@@ -103,6 +105,10 @@ class ChatGenerationViewController: UIViewController {
         }
         suggestionsView.onEditImageTapped = { [weak self] in
             self?.presentPhotoPicker()
+        }
+        
+        suggestionsView.onImageTapped = { [weak self] image in
+            self?.presentImagePreviewForEdit(image)
         }
         
         suggestionsView.onSelectionChanged = { [weak self] in
@@ -202,6 +208,13 @@ class ChatGenerationViewController: UIViewController {
     
     private func handleSendPrompt(_ prompt: String) {
         guard !prompt.isEmpty else { return }
+        
+        if prompt == "EDIT_MODE" {
+            // Handle edit mode
+            handleEditImage()
+            return
+        }
+        
         if currentState == .suggestions {
             transitionToState(.chat, animated: true)
         }
@@ -282,6 +295,12 @@ class ChatGenerationViewController: UIViewController {
     
     @objc private func newChatTapped() {
         haptics.impact(.click)
+        
+        // If in edit mode, switch back to generate mode
+        if case .edit = toolbarMode {
+            switchToGenerateMode()
+        }
+        
         viewModel.resetChat()
         // Reset options but preserve user's selected settings
         currentOptions = GenerationOptions.default
@@ -345,6 +364,65 @@ class ChatGenerationViewController: UIViewController {
         present(picker, animated: true)
     }
     
+    // MARK: - Mode Management
+    
+    private func switchToEditMode(with image: UIImage, url: URL?) {
+        haptics.impact(.click)
+        toolbarMode = .edit(selectedImage: SelectedImage(image: image, url: url, displayName: nil))
+        inputBar.setEditMode(true, selectedImage: image)
+        inputBar.clear() // Empty the prompt box
+        suggestionsView.setEditMode(true)
+        // Don't transition to suggestions - stay in current state
+    }
+    
+    private func switchToGenerateMode() {
+        haptics.impact(.click)
+        toolbarMode = .generate
+        inputBar.setEditMode(false, selectedImage: nil)
+        suggestionsView.setEditMode(false)
+    }
+    
+    private func adjustChatBottomConstraint(for height: CGFloat) {
+        UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0) {
+            self.chatBottomConstraint.constant = -height
+            self.suggestionsBottomConstraint.constant = -height
+            self.view.layoutIfNeeded()
+        }
+    }
+    
+    private func presentImagePreviewForEdit(_ image: UIImage) {
+        let previewVC = ImagePreviewViewController(image: image)
+        previewVC.modalPresentationStyle = .pageSheet
+        previewVC.onEditConfirmed = { [weak self] in
+            self?.dismiss(animated: true) {
+                self?.switchToEditMode(with: image, url: nil)
+            }
+        }
+        present(previewVC, animated: true)
+    }
+    
+    private func handleEditImage() {
+        guard case let .edit(selectedImage) = toolbarMode else { return }
+        
+        let editOptions = inputBar.getEditOptions()
+        
+        // Create edit request
+        let message = ChatMessage(
+            id: UUID().uuidString,
+            text: "Edit: \(editOptions.prompt)",
+            images: [selectedImage.image],
+            isUser: true,
+            timestamp: Date(),
+            metadata: nil
+        )
+        
+        transitionToState(.chat, animated: true)
+        chatView.addMessage(message)
+        
+        // Perform edit API call
+        viewModel.editImage(image: selectedImage.image, options: editOptions)
+    }
+    
     // MARK: - Keyboard Handling
     
     @objc private func keyboardWillShow(_ notification: Notification) {
@@ -400,10 +478,8 @@ extension ChatGenerationViewController: PHPickerViewControllerDelegate {
     }
     
     private func handleImageSelected(_ image: UIImage) {
-        transitionToState(.chat, animated: true)
-        viewModel.updateSelectedImage(image)
-        viewModel.updateToolbarMode(.edit)
-        inputBar.setText("Edit this image")
+        // Show fullscreen preview with edit confirmation for images from photo picker
+        presentImagePreviewForEdit(image)
     }
 }
 
@@ -418,15 +494,24 @@ extension ChatGenerationViewController: ChatTableViewDelegate {
         
         let image = images[index]
         
-        // Present full screen image preview
+        // Just show fullscreen preview on tap
         let previewVC = ImagePreviewViewController(image: image)
         previewVC.modalPresentationStyle = .pageSheet
-        
         present(previewVC, animated: true)
     }
     
     func chatTableView(_ chatTableView: ChatTableView, didLongPressImageAt index: Int, in message: ChatMessage) {
         // Context menu handles this now
+    }
+    
+    func chatTableView(_ chatTableView: ChatTableView, didSelectImageForEdit index: Int, in message: ChatMessage) {
+        haptics.impact(.click)
+        
+        guard let images = message.images,
+              index < images.count else { return }
+        
+        let image = images[index]
+        switchToEditMode(with: image, url: nil)
     }
     
     private func showBatchSaveSuccess(count: Int) {
