@@ -25,6 +25,7 @@ pub struct OAuthCallbackRequest {
 pub struct OAuthTokenResponse {
     pub api_key: String,
     pub user_id: String,
+    pub is_admin: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -208,7 +209,7 @@ pub async fn github_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Re
     
     let provider_id = github_user.id.to_string();
     let existing_user_stmt = db.prepare(
-        "SELECT id, api_key FROM users WHERE provider = ? AND provider_id = ?"
+        "SELECT id, api_key, is_admin FROM users WHERE provider = ? AND provider_id = ?"
     );
     
     let existing_user = existing_user_stmt
@@ -216,10 +217,11 @@ pub async fn github_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Re
         .first::<serde_json::Value>(None)
         .await?;
     
-    let (user_id, api_key) = if let Some(user_data) = existing_user {
+    let (user_id, api_key, is_admin) = if let Some(user_data) = existing_user {
         (
             user_data.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
             user_data.get("api_key").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+            user_data.get("is_admin").and_then(|v| v.as_i64()).unwrap_or(0) == 1,
         )
     } else {
         let new_user_id = Uuid::new_v4().to_string();
@@ -248,12 +250,13 @@ pub async fn github_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Re
         // Initialize credits for new user
         initialize_user_credits(&new_user_id, &db).await?;
         
-        (new_user_id, new_api_key)
+        (new_user_id, new_api_key, false)
     };
     
     let response = OAuthTokenResponse {
         api_key,
         user_id,
+        is_admin,
     };
     
     Response::from_json(&response)
@@ -359,7 +362,7 @@ pub async fn google_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Re
     
     let provider_id = google_user.id;
     let existing_user_stmt = db.prepare(
-        "SELECT id, api_key FROM users WHERE provider = ? AND provider_id = ?"
+        "SELECT id, api_key, is_admin FROM users WHERE provider = ? AND provider_id = ?"
     );
     
     let existing_user = existing_user_stmt
@@ -367,10 +370,11 @@ pub async fn google_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Re
         .first::<serde_json::Value>(None)
         .await?;
     
-    let (user_id, api_key) = if let Some(user_data) = existing_user {
+    let (user_id, api_key, is_admin) = if let Some(user_data) = existing_user {
         (
             user_data.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
             user_data.get("api_key").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+            user_data.get("is_admin").and_then(|v| v.as_i64()).unwrap_or(0) == 1,
         )
     } else {
         let new_user_id = Uuid::new_v4().to_string();
@@ -399,12 +403,13 @@ pub async fn google_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Re
         // Initialize credits for new user
         initialize_user_credits(&new_user_id, &db).await?;
         
-        (new_user_id, new_api_key)
+        (new_user_id, new_api_key, false)
     };
     
     let response = OAuthTokenResponse {
         api_key,
         user_id,
+        is_admin,
     };
     
     Response::from_json(&response)

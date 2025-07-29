@@ -1193,6 +1193,10 @@ components:
           type: string
           example: "763135bb-02dd-4bd8-a3ca-4dab2666e1e9"
           description: Unique identifier for the authenticated user
+        is_admin:
+          type: boolean
+          example: false
+          description: Whether the user has admin privileges
 
     DeviceCodeResponse:
       type: object

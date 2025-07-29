@@ -15,6 +15,7 @@ pub struct GoogleTokenRequest {
 pub struct AuthTokenResponse {
     pub api_key: String,
     pub user_id: String,
+    pub is_admin: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -89,16 +90,17 @@ pub async fn google_token_auth(mut req: Request, ctx: RouteContext<()>) -> Resul
     
     // Check if user exists with this Google ID
     let existing_user = db
-        .prepare("SELECT id, api_key FROM users WHERE provider = ?1 AND provider_id = ?2")
+        .prepare("SELECT id, api_key, is_admin FROM users WHERE provider = ?1 AND provider_id = ?2")
         .bind(&["google".into(), token_info.sub.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?;
     
-    let (user_id, api_key) = if let Some(user_data) = existing_user {
+    let (user_id, api_key, is_admin) = if let Some(user_data) = existing_user {
         let id = user_data.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
         let key = user_data.get("api_key").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        let admin = user_data.get("is_admin").and_then(|v| v.as_i64()).unwrap_or(0) == 1;
         console_log!("Found existing user: {}", id);
-        (id, key)
+        (id, key, admin)
     } else {
         // Create new user
         let new_user_id = Uuid::new_v4().to_string();
@@ -125,12 +127,13 @@ pub async fn google_token_auth(mut req: Request, ctx: RouteContext<()>) -> Resul
         // Initialize credits for new user
         initialize_user_credits(&new_user_id, &db).await?;
         
-        (new_user_id, new_api_key)
+        (new_user_id, new_api_key, false)
     };
     
     let response = AuthTokenResponse {
         api_key,
         user_id,
+        is_admin,
     };
     
     Response::from_json(&response)
@@ -189,16 +192,17 @@ pub async fn apple_token_auth(mut req: Request, ctx: RouteContext<()>) -> Result
     let db = ctx.env.d1("DB")?;
     
     let existing_user = db
-        .prepare("SELECT id, api_key FROM users WHERE provider = ?1 AND provider_id = ?2")
+        .prepare("SELECT id, api_key, is_admin FROM users WHERE provider = ?1 AND provider_id = ?2")
         .bind(&["apple".into(), claims.sub.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?;
     
-    let (user_id, api_key) = if let Some(user_data) = existing_user {
+    let (user_id, api_key, is_admin) = if let Some(user_data) = existing_user {
         let id = user_data.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
         let key = user_data.get("api_key").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        let admin = user_data.get("is_admin").and_then(|v| v.as_i64()).unwrap_or(0) == 1;
         console_log!("Found existing Apple user: {}", id);
-        (id, key)
+        (id, key, admin)
     } else {
         let new_user_id = Uuid::new_v4().to_string();
         let new_api_key = format!("pixie_{}", Uuid::new_v4().to_string().replace("-", ""));
@@ -226,12 +230,13 @@ pub async fn apple_token_auth(mut req: Request, ctx: RouteContext<()>) -> Result
         
         initialize_user_credits(&new_user_id, &db).await?;
         
-        (new_user_id, new_api_key)
+        (new_user_id, new_api_key, false)
     };
     
     let response = AuthTokenResponse {
         api_key,
         user_id,
+        is_admin,
     };
     
     Response::from_json(&response)
