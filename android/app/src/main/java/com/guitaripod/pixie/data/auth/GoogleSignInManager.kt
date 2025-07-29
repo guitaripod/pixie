@@ -71,7 +71,8 @@ class GoogleSignInManager(
                         apiKey = authResponse.apiKey,
                         userId = authResponse.userId,
                         authProvider = "google",
-                        apiUrl = configManager.getApiUrl()
+                        apiUrl = configManager.getApiUrl(),
+                        isAdmin = authResponse.isAdmin
                     )
                     configManager.saveConfig(config)
                     

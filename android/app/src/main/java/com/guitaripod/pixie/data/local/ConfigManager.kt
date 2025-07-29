@@ -14,6 +14,7 @@ class ConfigManager(
         private const val KEY_API_KEY = "api_key"
         private const val KEY_USER_ID = "user_id"
         private const val KEY_AUTH_PROVIDER = "auth_provider"
+        private const val KEY_IS_ADMIN = "is_admin"
     }
     
     /**
@@ -25,6 +26,7 @@ class ConfigManager(
             config.apiKey?.let { putString(KEY_API_KEY, it) } ?: remove(KEY_API_KEY)
             config.userId?.let { putString(KEY_USER_ID, it) } ?: remove(KEY_USER_ID)
             config.authProvider?.let { putString(KEY_AUTH_PROVIDER, it) } ?: remove(KEY_AUTH_PROVIDER)
+            putBoolean(KEY_IS_ADMIN, config.isAdmin)
             apply()
         }
     }
@@ -37,7 +39,8 @@ class ConfigManager(
             apiUrl = encryptedPreferences.getString(KEY_API_URL, null),
             apiKey = encryptedPreferences.getString(KEY_API_KEY, null),
             userId = encryptedPreferences.getString(KEY_USER_ID, null),
-            authProvider = encryptedPreferences.getString(KEY_AUTH_PROVIDER, null)
+            authProvider = encryptedPreferences.getString(KEY_AUTH_PROVIDER, null),
+            isAdmin = encryptedPreferences.getBoolean(KEY_IS_ADMIN, false)
         )
     }
     

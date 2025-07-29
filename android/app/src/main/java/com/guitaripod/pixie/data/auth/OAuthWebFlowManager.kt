@@ -138,7 +138,8 @@ class OAuthWebFlowManager(
                     apiKey = authResponse.apiKey,
                     userId = authResponse.userId,
                     authProvider = savedState.provider,
-                    apiUrl = configManager.getApiUrl()
+                    apiUrl = configManager.getApiUrl(),
+                    isAdmin = authResponse.isAdmin
                 )
                 configManager.saveConfig(config)
                 

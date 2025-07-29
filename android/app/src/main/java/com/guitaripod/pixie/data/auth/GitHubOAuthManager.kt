@@ -89,7 +89,8 @@ class GitHubOAuthManager(
                     apiKey = authResponse.apiKey,
                     userId = authResponse.userId,
                     authProvider = "github",
-                    apiUrl = configManager.getApiUrl()
+                    apiUrl = configManager.getApiUrl(),
+                    isAdmin = authResponse.isAdmin
                 )
                 configManager.saveConfig(config)
                 

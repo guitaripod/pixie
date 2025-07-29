@@ -13,7 +13,8 @@ data class OAuthCallbackRequest(
 @JsonClass(generateAdapter = true)
 data class AuthResponse(
     @Json(name = "api_key") val apiKey: String,
-    @Json(name = "user_id") val userId: String
+    @Json(name = "user_id") val userId: String,
+    @Json(name = "is_admin") val isAdmin: Boolean = false
 )
 
 @JsonClass(generateAdapter = true)
