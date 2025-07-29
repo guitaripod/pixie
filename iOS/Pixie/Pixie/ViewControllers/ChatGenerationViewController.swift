@@ -1,5 +1,6 @@
 import UIKit
 import PhotosUI
+import Combine
 
 class ChatGenerationViewController: UIViewController {
     
@@ -19,7 +20,8 @@ class ChatGenerationViewController: UIViewController {
     private let inputBar = ChatInputBar()
     private let selectedSuggestionsManager = SelectedSuggestionsManager()
     
-    private var messages: [ChatMessage] = []
+    private let viewModel = GenerationViewModel()
+    private var cancellables = Set<AnyCancellable>()
     private var currentOptions = GenerationOptions.default
     
     private let haptics = HapticManager.shared
@@ -35,6 +37,7 @@ class ChatGenerationViewController: UIViewController {
         setupConstraints()
         setupNavigationBar()
         setupHandlers()
+        setupBindings()
         transitionToState(.suggestions, animated: false)
     }
     
@@ -116,6 +119,39 @@ class ChatGenerationViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
+    private func setupBindings() {
+        viewModel.messagesPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] messages in
+                self?.chatView.setMessages(messages)
+            }
+            .store(in: &cancellables)
+        
+        viewModel.isGeneratingPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isGenerating in
+                self?.inputBar.isUserInteractionEnabled = !isGenerating
+                self?.updateNavigationForGenerating(isGenerating)
+            }
+            .store(in: &cancellables)
+        
+        viewModel.errorPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] error in
+                if let error = error {
+                    self?.showError(error)
+                }
+            }
+            .store(in: &cancellables)
+        
+        viewModel.progressPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] progress in
+                
+            }
+            .store(in: &cancellables)
+    }
+    
     // MARK: - State Management
     
     private func transitionToState(_ newState: ViewState, animated: Bool) {
@@ -170,14 +206,22 @@ class ChatGenerationViewController: UIViewController {
             transitionToState(.chat, animated: true)
         }
         
+        viewModel.prompt = prompt
         currentOptions.prompt = prompt
-        generateImage(with: currentOptions)
+        currentOptions.size = inputBar.selectedSize.value
+        currentOptions.quality = inputBar.selectedQuality.value
+        currentOptions.outputFormat = inputBar.selectedFormat
+        currentOptions.compression = inputBar.selectedFormat != "png" ? inputBar.compressionLevel : nil
+        currentOptions.background = inputBar.selectedBackground
+        currentOptions.moderation = inputBar.selectedModeration
+        viewModel.generateImages(with: currentOptions)
     }
     
     private func handleQuickAction(_ action: String) {
         switch action {
         case "Remove background":
             currentOptions.removeBackground = true
+            currentOptions.background = "transparent"
         case "Enhance quality":
             currentOptions.quality = "high"
         case "Fix lighting":
@@ -188,8 +232,8 @@ class ChatGenerationViewController: UIViewController {
         case "Upscale 2x":
             currentOptions.upscale = 2
         case "Square crop":
-            currentOptions.size = "1024x1024"
-            currentOptions.sizeDisplay = "Square"
+            // Just add square crop modifier, don't change selected size
+            currentOptions.modifiers.append("square crop")
         case "Portrait mode":
             currentOptions.modifiers.append("portrait mode, bokeh")
         case "Remove object":
@@ -216,49 +260,37 @@ class ChatGenerationViewController: UIViewController {
         inputBar.setText(action)
     }
     
-    private func generateImage(with options: GenerationOptions) {
-        let userMessage = ChatMessage(role: .user, content: options.prompt)
-        messages.append(userMessage)
-        let loadingMessage = ChatMessage(role: .loading)
-        messages.append(loadingMessage)
-        chatView.setMessages(messages)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-            guard let self = self else { return }
-            self.messages.removeAll { $0.role == .loading }
-            let mockImage = self.createMockImage()
-            let assistantMessage = ChatMessage(
-                role: .assistant,
-                content: "Here's your generated image:",
-                images: [mockImage]
-            )
-            self.messages.append(assistantMessage)
-            self.chatView.setMessages(self.messages)
-            self.currentOptions = GenerationOptions.default
+    private func showError(_ error: GenerationError) {
+        let alert = UIAlertController(
+            title: "Generation Failed",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        
+        if case .insufficientCredits = error {
+            alert.addAction(UIAlertAction(title: "Buy Credits", style: .default) { [weak self] _ in
+                self?.creditsTapped()
+            })
         }
-    }
-    
-    private func createMockImage() -> UIImage {
-        let size = CGSize(width: 512, height: 512)
-        UIGraphicsBeginImageContextWithOptions(size, false, 0)
         
-        let colors: [UIColor] = [.systemBlue, .systemPurple, .systemPink, .systemOrange]
-        let color = colors.randomElement() ?? .systemBlue
-        color.setFill()
-        UIRectFill(CGRect(origin: .zero, size: size))
-        
-        let image = UIGraphicsGetImageFromCurrentImageContext() ?? UIImage()
-        UIGraphicsEndImageContext()
-        
-        return image
+        present(alert, animated: true)
     }
     
     // MARK: - Navigation Actions
     
     @objc private func newChatTapped() {
         haptics.impact(.click)
-        messages.removeAll()
-        chatView.setMessages(messages)
+        viewModel.resetChat()
+        // Reset options but preserve user's selected settings
         currentOptions = GenerationOptions.default
+        currentOptions.size = inputBar.selectedSize.value
+        currentOptions.quality = inputBar.selectedQuality.value
+        currentOptions.outputFormat = inputBar.selectedFormat
+        currentOptions.compression = inputBar.selectedFormat != "png" ? inputBar.compressionLevel : nil
+        currentOptions.background = inputBar.selectedBackground
+        currentOptions.moderation = inputBar.selectedModeration
         selectedSuggestionsManager.clearAll()
         inputBar.updateIndicators()
         inputBar.clear()
@@ -276,6 +308,29 @@ class ChatGenerationViewController: UIViewController {
     
     @objc private func settingsTapped() {
         haptics.impact(.click)
+    }
+    
+    @objc private func cancelGeneration() {
+        haptics.impact(.click)
+        viewModel.cancelGeneration()
+    }
+    
+    private func updateNavigationForGenerating(_ isGenerating: Bool) {
+        if isGenerating {
+            let cancelButton = UIBarButtonItem(
+                title: "Cancel",
+                style: .plain,
+                target: self,
+                action: #selector(cancelGeneration)
+            )
+            cancelButton.tintColor = .systemRed
+            navigationItem.rightBarButtonItem = cancelButton
+        } else {
+            let galleryButton = UIBarButtonItem(title: "Gallery", style: .plain, target: self, action: #selector(galleryTapped))
+            let creditsButton = UIBarButtonItem(title: "Credits", style: .plain, target: self, action: #selector(creditsTapped))
+            let settingsButton = UIBarButtonItem(image: UIImage(systemName: "gearshape"), style: .plain, target: self, action: #selector(settingsTapped))
+            navigationItem.rightBarButtonItems = [settingsButton, creditsButton, galleryButton]
+        }
     }
     
     // MARK: - Photo Picker
@@ -346,9 +401,8 @@ extension ChatGenerationViewController: PHPickerViewControllerDelegate {
     
     private func handleImageSelected(_ image: UIImage) {
         transitionToState(.chat, animated: true)
-        let imageMessage = ChatMessage(role: .user, content: "Edit this image", images: [image])
-        messages.append(imageMessage)
-        chatView.setMessages(messages)
+        viewModel.updateSelectedImage(image)
+        viewModel.updateToolbarMode(.edit)
         inputBar.setText("Edit this image")
     }
 }
@@ -358,10 +412,59 @@ extension ChatGenerationViewController: PHPickerViewControllerDelegate {
 extension ChatGenerationViewController: ChatTableViewDelegate {
     func chatTableView(_ chatTableView: ChatTableView, didTapImageAt index: Int, in message: ChatMessage) {
         haptics.impact(.click)
+        
+        guard let images = message.images,
+              index < images.count else { return }
+        
+        let image = images[index]
+        
+        // Present full screen image preview
+        let previewVC = ImagePreviewViewController(image: image)
+        previewVC.modalPresentationStyle = .pageSheet
+        
+        present(previewVC, animated: true)
     }
     
     func chatTableView(_ chatTableView: ChatTableView, didLongPressImageAt index: Int, in message: ChatMessage) {
-        haptics.impact(.longPress)
+        // Context menu handles this now
+    }
+    
+    private func showBatchSaveSuccess(count: Int) {
+        haptics.impact(.success)
+        
+        let alert = UIAlertController(
+            title: "Saved!",
+            message: "\(count) image\(count > 1 ? "s" : "") saved to your Pixie album",
+            preferredStyle: .alert
+        )
+        
+        present(alert, animated: true)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            alert.dismiss(animated: true)
+        }
+    }
+    
+    private func showBatchSaveError(_ error: PhotoSavingError) {
+        haptics.impact(.error)
+        
+        let alert = UIAlertController(
+            title: "Save Failed",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        
+        if case .permissionDenied = error {
+            alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
+                if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(settingsURL)
+                }
+            })
+        }
+        
+        present(alert, animated: true)
     }
 }
 
@@ -374,11 +477,15 @@ struct GenerationOptions {
     var stylePreset: String?
     var modifiers: [String]
     var removeBackground: Bool
+    var background: String?
     var upscale: Int?
     var autoEnhance: Bool
     var variations: Bool
     var extractText: Bool
     var generateSimilar: Bool
+    var outputFormat: String?
+    var compression: Int?
+    var moderation: String?
     
     static var `default`: GenerationOptions {
         GenerationOptions(
@@ -386,15 +493,19 @@ struct GenerationOptions {
             quantity: 1,
             size: "1024x1024",
             sizeDisplay: "Square",
-            quality: "medium",
+            quality: "low",
             stylePreset: nil,
             modifiers: [],
             removeBackground: false,
+            background: nil,
             upscale: nil,
             autoEnhance: false,
             variations: false,
             extractText: false,
-            generateSimilar: false
+            generateSimilar: false,
+            outputFormat: nil,
+            compression: nil,
+            moderation: nil
         )
     }
 }
