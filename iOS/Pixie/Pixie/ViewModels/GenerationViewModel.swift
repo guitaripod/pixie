@@ -85,7 +85,7 @@ class GenerationViewModel: ObservableObject {
         }
     }
     
-    func editImage(image: UIImage, with options: EditOptions) {
+    func editImage(image: UIImage, options: EditOptions) {
         guard let imageUri = saveTemporaryImage(image) else {
             error = .invalidImage
             return
@@ -93,12 +93,25 @@ class GenerationViewModel: ObservableObject {
         
         isGenerating = true
         error = nil
-        toolbarMode = .edit
         
-        let userMessage = ChatMessage(role: .user, content: options.prompt, images: [image])
+        let userMessage = ChatMessage(
+            id: UUID().uuidString,
+            text: options.prompt,
+            images: [image],
+            isUser: true,
+            timestamp: Date(),
+            metadata: nil
+        )
         messages.append(userMessage)
         
-        let loadingMessage = ChatMessage(role: .loading)
+        let loadingMessage = ChatMessage(
+            id: UUID().uuidString,
+            text: nil,
+            images: nil,
+            isUser: false,
+            timestamp: Date(),
+            metadata: nil
+        )
         messages.append(loadingMessage)
         
         generationService.editImage(
