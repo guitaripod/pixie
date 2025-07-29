@@ -21,6 +21,10 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Pixie needs access to save generated images to your photo library</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Pixie needs access to your photo library to edit existing images and save generated images</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
