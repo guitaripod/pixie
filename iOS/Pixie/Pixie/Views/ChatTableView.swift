@@ -1,4 +1,5 @@
 import UIKit
+import Photos
 
 class ChatTableView: UIView {
     
@@ -256,28 +257,39 @@ class AssistantMessageCell: UITableViewCell {
         imageViews.removeAll()
         
         if let images = message.images, !images.isEmpty {
+            bubbleView.backgroundColor = .clear
+            
             let imageContainer = UIStackView()
             imageContainer.axis = .horizontal
             imageContainer.spacing = 8
-            imageContainer.distribution = .fillEqually
+            imageContainer.distribution = .fill
+            imageContainer.alignment = .center
             
             for (index, image) in images.enumerated() {
                 let imageView = UIImageView()
-                imageView.contentMode = .scaleAspectFill
+                imageView.contentMode = .scaleAspectFit
                 imageView.clipsToBounds = true
                 imageView.layer.cornerRadius = 12
                 imageView.backgroundColor = .tertiarySystemBackground
                 imageView.isUserInteractionEnabled = true
                 imageView.tag = index
                 
-                imageView.widthAnchor.constraint(equalToConstant: 120).isActive = true
-                imageView.heightAnchor.constraint(equalToConstant: 120).isActive = true
+                // Set width and let height be determined by aspect ratio
+                let widthConstraint = imageView.widthAnchor.constraint(equalToConstant: 240)
+                widthConstraint.isActive = true
+                
+                // Calculate aspect ratio and set height constraint
+                let aspectRatio = image.size.height / image.size.width
+                let heightConstraint = imageView.heightAnchor.constraint(equalTo: imageView.widthAnchor, multiplier: aspectRatio)
+                heightConstraint.isActive = true
                 
                 let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageTapped(_:)))
                 imageView.addGestureRecognizer(tapGesture)
                 
-                let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(imageLongPressed(_:)))
-                imageView.addGestureRecognizer(longPressGesture)
+                if #available(iOS 13.0, *) {
+                    let interaction = UIContextMenuInteraction(delegate: self)
+                    imageView.addInteraction(interaction)
+                }
                 
                 imageView.image = image
                 imageContainer.addArrangedSubview(imageView)
@@ -285,9 +297,9 @@ class AssistantMessageCell: UITableViewCell {
             }
             
             contentStackView.addArrangedSubview(imageContainer)
-        }
-        
-        if let text = message.content, !text.isEmpty {
+        } else if let text = message.content, !text.isEmpty {
+            bubbleView.backgroundColor = .secondarySystemBackground
+            
             let label = UILabel()
             label.numberOfLines = 0
             label.font = .systemFont(ofSize: 16)
@@ -306,6 +318,71 @@ class AssistantMessageCell: UITableViewCell {
         guard gesture.state == .began,
               let imageView = gesture.view else { return }
         delegate?.assistantMessageCell(self, didLongPressImageAt: imageView.tag)
+    }
+}
+
+@available(iOS 13.0, *)
+extension AssistantMessageCell: UIContextMenuInteractionDelegate {
+    func contextMenuInteraction(_ interaction: UIContextMenuInteraction, configurationForMenuAtLocation location: CGPoint) -> UIContextMenuConfiguration? {
+        guard let imageView = interaction.view as? UIImageView,
+              let image = imageView.image else { return nil }
+        
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: {
+            let previewController = UIViewController()
+            let imageView = UIImageView(image: image)
+            imageView.contentMode = .scaleAspectFit
+            imageView.translatesAutoresizingMaskIntoConstraints = false
+            
+            previewController.view.addSubview(imageView)
+            NSLayoutConstraint.activate([
+                imageView.topAnchor.constraint(equalTo: previewController.view.topAnchor),
+                imageView.leadingAnchor.constraint(equalTo: previewController.view.leadingAnchor),
+                imageView.trailingAnchor.constraint(equalTo: previewController.view.trailingAnchor),
+                imageView.bottomAnchor.constraint(equalTo: previewController.view.bottomAnchor)
+            ])
+            
+            previewController.preferredContentSize = image.size
+            return previewController
+        }) { _ in
+            let save = UIAction(title: "Save to Photos", image: UIImage(systemName: "square.and.arrow.down")) { _ in
+                PhotoSavingService.shared.saveImage(image) { result in
+                    DispatchQueue.main.async {
+                        switch result {
+                        case .success:
+                            HapticManager.shared.impact(.success)
+                        case .failure:
+                            HapticManager.shared.impact(.error)
+                        }
+                    }
+                }
+            }
+            
+            let share = UIAction(title: "Share", image: UIImage(systemName: "square.and.arrow.up")) { [weak self] _ in
+                guard let self = self,
+                      let viewController = self.window?.rootViewController else { return }
+                
+                ImageSharingService.shared.shareImage(
+                    image,
+                    from: viewController,
+                    sourceView: imageView
+                )
+            }
+            
+            let copy = UIAction(title: "Copy", image: UIImage(systemName: "doc.on.doc")) { _ in
+                UIPasteboard.general.image = image
+                HapticManager.shared.impact(.success)
+            }
+            
+            return UIMenu(title: "", children: [save, share, copy])
+        }
+    }
+    
+    func contextMenuInteraction(_ interaction: UIContextMenuInteraction, willPerformPreviewActionForMenuWith configuration: UIContextMenuConfiguration, animator: UIContextMenuInteractionCommitAnimating) {
+        guard let imageView = interaction.view as? UIImageView else { return }
+        
+        animator.addCompletion {
+            self.delegate?.assistantMessageCell(self, didTapImageAt: imageView.tag)
+        }
     }
 }
 
