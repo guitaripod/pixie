@@ -22,7 +22,10 @@ protocol APIServiceProtocol {
 }
 
 class APIService: APIServiceProtocol {
-    static let shared = APIService(networkService: NetworkService())
+    static let shared: APIService = {
+        // Use the network service from AppContainer to ensure API key is set
+        return APIService(networkService: AppContainer.shared.networkService)
+    }()
     
     private let networkService: NetworkServiceProtocol
     
