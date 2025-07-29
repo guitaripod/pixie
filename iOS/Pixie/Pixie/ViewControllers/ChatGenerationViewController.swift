@@ -271,6 +271,8 @@ class ChatGenerationViewController: UIViewController {
     }
     @objc private func creditsTapped() {
         haptics.impact(.click)
+        let creditsVC = CreditsMainViewController()
+        navigationController?.pushViewController(creditsVC, animated: true)
     }
     @objc private func settingsTapped() {
         haptics.impact(.click)

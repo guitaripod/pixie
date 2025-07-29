@@ -136,11 +136,6 @@ extension GalleryViewController: GalleryPageViewControllerDelegate {
     func galleryPageDidPerformAction(_ viewController: GalleryPageViewController, action: ImageAction, on image: ImageMetadata) {
         handleImageAction(action, for: image)
     }
-    
-    func galleryPageDidTapGenerate(_ viewController: GalleryPageViewController) {
-        HapticsManager.shared.impact(.light)
-        navigationController?.popViewController(animated: true)
-    }
 }
 
 extension GalleryViewController: ImageDetailViewControllerDelegate {
@@ -261,7 +256,6 @@ private extension GalleryViewController {
 protocol GalleryPageViewControllerDelegate: AnyObject {
     func galleryPageDidSelectImage(_ viewController: GalleryPageViewController, image: ImageMetadata)
     func galleryPageDidPerformAction(_ viewController: GalleryPageViewController, action: ImageAction, on image: ImageMetadata)
-    func galleryPageDidTapGenerate(_ viewController: GalleryPageViewController)
 }
 
 protocol ImageDetailViewControllerDelegate: AnyObject {
