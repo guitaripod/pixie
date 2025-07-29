@@ -11,6 +11,7 @@ class CreditsViewModel: ObservableObject {
     @Published var isLoadingTransactions = false
     @Published var isLoadingPacks = false
     @Published var errorMessage: String?
+    @Published var lowCreditWarning: Bool = false
     
     private let apiService: APIServiceProtocol
     private var cancellables = Set<AnyCancellable>()
@@ -34,6 +35,7 @@ class CreditsViewModel: ObservableObject {
         do {
             let balance = try await apiService.getCreditBalance()
             self.balance = balance
+            self.lowCreditWarning = balance.balance < 50
         } catch {
             self.errorMessage = error.localizedDescription
         }
@@ -67,6 +69,23 @@ class CreditsViewModel: ObservableObject {
         }
         
         isLoadingPacks = false
+    }
+    
+    func estimateCredits(quality: String, size: String, isEdit: Bool, numberOfImages: Int = 1) async {
+        let request = CreditEstimateRequest(
+            prompt: nil,
+            quality: quality,
+            size: size,
+            n: numberOfImages,
+            isEdit: isEdit
+        )
+        
+        do {
+            _ = try await apiService.estimateCreditCost(request)
+            // The cost estimator view calculates locally for instant feedback
+        } catch {
+            self.errorMessage = error.localizedDescription
+        }
     }
 }
 
