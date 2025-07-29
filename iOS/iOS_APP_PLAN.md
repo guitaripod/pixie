@@ -182,16 +182,16 @@ Native Swift iOS app targeting iOS 16+ that replicates all functionality of the 
 - [ ] Implement admin-only navigation items
 
 #### 8.2 System Dashboard
-- [ ] Create admin dashboard with system metrics
+- [x] Create admin dashboard with system metrics
 - [ ] Add user statistics with UISearchController and diffable data source filtering
 - [ ] Implement system health monitoring
 - [ ] Create usage trends with Charts framework
 - [ ] Add real-time updates with async streams
 
 #### 8.3 User Management
-- [ ] Create user search with debouncing
-- [ ] Implement credit adjustment interface
-- [ ] Add adjustment history viewer
+- [x] Create user search with debouncing
+- [x] Implement credit adjustment interface
+- [x] Add adjustment history viewer
 - [ ] Create confirmation dialogs with haptic feedback
 - [ ] Add audit logging for admin actions
 
