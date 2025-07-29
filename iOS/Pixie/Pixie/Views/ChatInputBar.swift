@@ -12,14 +12,14 @@ class ChatInputBar: UIView {
     private let indicatorStackView = UIStackView()
     private let promptTextView = UITextView()
     private let sizeSelector = UISegmentedControl(items: ["Auto", "Square", "Landscape", "Portrait"])
-    private let qualitySelector = UISegmentedControl(items: ["Low", "Medium", "High"])
+    private let qualitySelector = UISegmentedControl(items: ["Auto", "Low", "Medium", "High"])
     private let advancedOptionsButton = UIButton(type: .system)
     private let advancedOptionsContainer = UIView()
-    private let backgroundSelector = UISegmentedControl(items: ["None", "Transparent", "White", "Black"])
+    private let backgroundSelector = UISegmentedControl(items: ["Auto", "Transparent", "Opaque", "None"])
     private let formatSelector = UISegmentedControl(items: ["PNG", "JPG", "WebP"])
     private let compressionSlider = UISlider()
     private let compressionLabel = UILabel()
-    private let moderationSelector = UISegmentedControl(items: ["Safe", "Balanced", "Creative"])
+    private let moderationSelector = UISegmentedControl(items: ["Default", "Auto", "Low"])
     private let generateButton = UIButton(type: .system)
     private let creditsLabel = UILabel()
     
@@ -42,8 +42,27 @@ class ChatInputBar: UIView {
     }
     
     var selectedQuality: ImageQuality {
-        let qualities: [ImageQuality] = [.low, .medium, .high]
+        let qualities: [ImageQuality] = [.auto, .low, .medium, .high]
         return qualities[qualitySelector.selectedSegmentIndex]
+    }
+    
+    var selectedBackground: String? {
+        let backgrounds = ["auto", "transparent", "opaque", nil]
+        return backgrounds[backgroundSelector.selectedSegmentIndex]
+    }
+    
+    var selectedFormat: String {
+        let formats = ["png", "jpeg", "webp"]
+        return formats[formatSelector.selectedSegmentIndex]
+    }
+    
+    var compressionLevel: Int {
+        return Int(compressionSlider.value)
+    }
+    
+    var selectedModeration: String? {
+        let moderations = [nil, "auto", "low"]
+        return moderations[moderationSelector.selectedSegmentIndex]
     }
     
     func collapse() {
@@ -54,6 +73,7 @@ class ChatInputBar: UIView {
         super.init(frame: frame)
         setupUI()
         setupConstraints()
+        updateCredits()
     }
     
     required init?(coder: NSCoder) {
@@ -210,6 +230,7 @@ class ChatInputBar: UIView {
         contentView.addSubview(sizeLabel)
         sizeSelector.translatesAutoresizingMaskIntoConstraints = false
         sizeSelector.selectedSegmentIndex = 0
+        sizeSelector.addTarget(self, action: #selector(updateCredits), for: .valueChanged)
         contentView.addSubview(sizeSelector)
         let qualityLabel = createLabel("Quality")
         contentView.addSubview(qualityLabel)
@@ -488,17 +509,41 @@ class ChatInputBar: UIView {
     }
     
     @objc private func updateCredits() {
-        let quality = ["low", "medium", "high"][qualitySelector.selectedSegmentIndex]
-        let creditsPerImage: Int
+        let quality = selectedQuality.value
+        let size = selectedSize.value
+        
+        let creditsRange: ClosedRange<Int>
         
         switch quality {
-        case "low": creditsPerImage = 5
-        case "medium": creditsPerImage = 15
-        case "high": creditsPerImage = 50
-        default: creditsPerImage = 15
+        case "low":
+            switch size {
+            case "1024x1024": creditsRange = 4...4
+            case "1536x1024", "1024x1536": creditsRange = 6...6
+            default: creditsRange = 4...6
+            }
+        case "medium":
+            switch size {
+            case "1024x1024": creditsRange = 16...16
+            case "1536x1024", "1024x1536": creditsRange = 24...24
+            default: creditsRange = 16...24
+            }
+        case "high":
+            switch size {
+            case "1024x1024": creditsRange = 62...62
+            case "1536x1024", "1024x1536": creditsRange = 94...94
+            default: creditsRange = 62...94
+            }
+        case "auto":
+            creditsRange = 50...75
+        default:
+            creditsRange = 4...6
         }
         
-        creditsLabel.text = "Estimated cost: \(creditsPerImage) credits"
+        if creditsRange.lowerBound == creditsRange.upperBound {
+            creditsLabel.text = "\(creditsRange.lowerBound) credits"
+        } else {
+            creditsLabel.text = "\(creditsRange.lowerBound)-\(creditsRange.upperBound) credits"
+        }
     }
     
     func setText(_ text: String) {
