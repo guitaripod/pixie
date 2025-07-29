@@ -48,9 +48,8 @@ class ChatMessageTableViewCell: UITableViewCell {
         return view
     }()
     
-    private let loadingIndicator: UIActivityIndicatorView = {
-        let indicator = UIActivityIndicatorView(style: .medium)
-        indicator.hidesWhenStopped = true
+    private let loadingIndicator: AnimatedLoadingIndicator = {
+        let indicator = AnimatedLoadingIndicator()
         indicator.translatesAutoresizingMaskIntoConstraints = false
         return indicator
     }()
@@ -81,6 +80,7 @@ class ChatMessageTableViewCell: UITableViewCell {
         messageImageView.image = nil
         messageImageView.isHidden = true
         loadingIndicator.stopAnimating()
+        loadingIndicator.isHidden = true
         timestampLabel.text = nil
     }
     
@@ -153,9 +153,8 @@ class ChatMessageTableViewCell: UITableViewCell {
     }
     
     private func configureImageResponse(url: String, prompt: String) {
-        bubbleView.backgroundColor = .systemGray6
-        messageLabel.textColor = .label
-        messageLabel.text = prompt
+        bubbleView.backgroundColor = .clear
+        messageLabel.text = nil
         
         messageImageView.isHidden = false
         messageImageView.setImage(from: url)
@@ -180,6 +179,7 @@ class ChatMessageTableViewCell: UITableViewCell {
     private func configureLoading() {
         bubbleView.backgroundColor = .systemGray6
         messageLabel.text = nil
+        loadingIndicator.isHidden = false
         loadingIndicator.startAnimating()
         
         leadingConstraint.isActive = true
