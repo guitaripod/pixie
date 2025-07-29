@@ -4,7 +4,10 @@ class ImagePreviewViewController: UIViewController {
     
     private let imageView = UIImageView()
     private let scrollView = UIScrollView()
+    private let editButton = UIButton(type: .system)
     private var image: UIImage
+    
+    var onEditConfirmed: (() -> Void)?
     
     init(image: UIImage) {
         self.image = image
@@ -38,10 +41,25 @@ class ImagePreviewViewController: UIViewController {
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(imageView)
+        
+        // Setup edit button if callback is provided
+        if onEditConfirmed != nil {
+            editButton.translatesAutoresizingMaskIntoConstraints = false
+            var config = UIButton.Configuration.filled()
+            config.title = "Edit Image"
+            config.image = UIImage(systemName: "wand.and.stars")
+            config.imagePlacement = .leading
+            config.imagePadding = 8
+            config.cornerStyle = .large
+            config.baseBackgroundColor = UIColor(red: 0.404, green: 0.314, blue: 0.643, alpha: 1.0)
+            editButton.configuration = config
+            editButton.addTarget(self, action: #selector(editButtonTapped), for: .touchUpInside)
+            view.addSubview(editButton)
+        }
     }
     
     private func setupConstraints() {
-        NSLayoutConstraint.activate([
+        var constraints = [
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -53,7 +71,18 @@ class ImagePreviewViewController: UIViewController {
             imageView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             imageView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             imageView.heightAnchor.constraint(equalTo: scrollView.heightAnchor)
-        ])
+        ]
+        
+        if onEditConfirmed != nil {
+            constraints.append(contentsOf: [
+                editButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+                editButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                editButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 150),
+                editButton.heightAnchor.constraint(equalToConstant: 50)
+            ])
+        }
+        
+        NSLayoutConstraint.activate(constraints)
     }
     
     private func setupGestures() {
@@ -70,6 +99,11 @@ class ImagePreviewViewController: UIViewController {
             let rect = CGRect(x: point.x, y: point.y, width: 1, height: 1)
             scrollView.zoom(to: rect, animated: true)
         }
+    }
+    
+    @objc private func editButtonTapped() {
+        HapticManager.shared.impact(.click)
+        onEditConfirmed?()
     }
     
     private func setupModalPresentation() {
