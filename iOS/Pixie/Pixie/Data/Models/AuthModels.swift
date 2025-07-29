@@ -12,6 +12,17 @@ struct ErrorResponse: Codable {
 struct ErrorDetail: Codable {
     let message: String
     let code: String?
+    let details: ErrorDetails?
+}
+
+struct ErrorDetails: Codable {
+    let requiredCredits: Int?
+    let availableCredits: Int?
+    
+    enum CodingKeys: String, CodingKey {
+        case requiredCredits = "required_credits"
+        case availableCredits = "available_credits"
+    }
 }
 
 struct PurchaseRequest: Codable {
