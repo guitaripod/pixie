@@ -176,9 +176,9 @@ Native Swift iOS app targeting iOS 16+ that replicates all functionality of the 
 ### Phase 8: Admin Features
 
 #### 8.1 Admin Access
-- [ ] Check user admin status on authentication
-- [ ] Create admin section in settings
-- [ ] Add admin indicator badge
+- [x] Check user admin status on authentication
+- [x] Create admin section in settings
+- [x] Add admin indicator badge
 - [ ] Implement admin-only navigation items
 
 #### 8.2 System Dashboard
