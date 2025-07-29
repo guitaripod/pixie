@@ -149,18 +149,19 @@ Native Swift iOS app targeting iOS 16+ that replicates all functionality of the 
 ### Phase 7: Usage & Credits
 
 #### 7.1 Credits Main Hub
-- [ ] Create credits main screen with large balance card
-- [ ] Add skeleton loader animation for balance
-- [ ] Implement quick action cards (Buy Credits, Estimate)
-- [ ] Create feature cards with descriptions
-- [ ] Add recent transactions preview section
-- [ ] Implement tips card at bottom
+- [x] Create credits main screen with large balance card
+- [x] Add skeleton loader animation for balance
+- [x] Implement quick action cards (Buy Credits, Estimate)
+- [x] Create feature cards with descriptions
+- [x] Add recent transactions preview section
+- [x] Implement tips card at bottom
 
 #### 7.3 Credit Management
-- [ ] Add real-time credit updates with Combine
-- [ ] Create credit pack browser with enhanced purchase flow
-- [ ] Add cost estimator calculator with interactive UI
-- [ ] Implement low credit warnings
+- [x] Add real-time credit updates with Combine
+- [x] Create credit pack browser with enhanced purchase flow
+- [x] Add cost estimator calculator with interactive UI
+- [x] Implement low credit warnings
+- [x] Add transaction history view with proper alignment and icons
 - [ ] Create RevenueCat integration for purchases with the backend.
 
 #### 7.4 In-App Purchases
