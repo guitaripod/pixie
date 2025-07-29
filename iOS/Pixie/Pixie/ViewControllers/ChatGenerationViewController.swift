@@ -99,6 +99,7 @@ class ChatGenerationViewController: UIViewController {
         view.addGestureRecognizer(tapGesture)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(imageSelectedForEdit(_:)), name: Notification.Name("ImageSelectedForEdit"), object: nil)
     }
     private func setupBindings() {
         viewModel.messagesPublisher
@@ -259,12 +260,16 @@ class ChatGenerationViewController: UIViewController {
     }
     @objc private func galleryTapped() {
         haptics.impact(.click)
+        let galleryVC = GalleryViewController()
+        navigationController?.pushViewController(galleryVC, animated: true)
     }
     @objc private func creditsTapped() {
         haptics.impact(.click)
     }
     @objc private func settingsTapped() {
         haptics.impact(.click)
+        let settingsVC = SettingsViewController()
+        navigationController?.pushViewController(settingsVC, animated: true)
     }
     @objc private func cancelGeneration() {
         haptics.impact(.click)
@@ -349,6 +354,19 @@ class ChatGenerationViewController: UIViewController {
     @objc private func keyboardWillHide(_ notification: Notification) {
         guard let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval else { return }
         chatView.adjustForKeyboard(height: 0, duration: duration)
+    }
+    @objc private func imageSelectedForEdit(_ notification: Notification) {
+        guard let imageMetadata = notification.userInfo?["image"] as? ImageMetadata else { return }
+        
+        if let url = URL(string: imageMetadata.url) {
+            URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
+                guard let data = data, let image = UIImage(data: data), error == nil else { return }
+                
+                DispatchQueue.main.async {
+                    self?.presentImagePreviewForEdit(image)
+                }
+            }.resume()
+        }
     }
     @objc private func handleBackgroundTap(_ gesture: UITapGestureRecognizer) {
         let location = gesture.location(in: view)
