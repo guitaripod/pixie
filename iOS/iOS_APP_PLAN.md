@@ -236,18 +236,12 @@ Native Swift iOS app targeting iOS 16+ that replicates all functionality of the 
 #### 10.1 Settings Implementation
 - [ ] Create settings screen with card-based sections
 - [ ] Implement Appearance section: Theme selector (Light/Dark/System)
-- [ ] Add Defaults section: Quality, Size, Format, Compression (slider with haptics)
+- [ ] Add Defaults section: Quality, Size, Format, Compression and all other settings in the toolbar.
 - [ ] Create Storage section: Cache management with size display
 - [ ] Implement API section: Connection test with status indicators
-- [ ] Add conditional Admin section for admin users
+- [x] Add conditional Admin section for admin users
 - [ ] Create Help & Support section with documentation
 - [ ] Implement Account section with logout confirmation
-
-#### 10.2 Navigation & Structure
-- [ ] Implement custom navigation stack (not UINavigationController)
-- [ ] Create main screen navigation: Auth, Chat, Gallery, CreditsMain, Settings, Help
-- [ ] Add admin screens: Dashboard, Stats, Credit Adjustment, History
-- [ ] Implement screen transition animations
 
 ### Phase 11: Testing & Release
 
