@@ -7,31 +7,25 @@ struct ChatMessage: Hashable {
     let isUser: Bool
     let timestamp: Date
     let metadata: MessageMetadata?
-    
     struct MessageMetadata {
         let size: String?
         let quality: String?
         let credits: Int?
     }
-    
-    // Backward compatibility
     var role: Role {
         if text == nil && images == nil {
             return .loading
         }
         return isUser ? .user : .assistant
     }
-    
     var content: String? {
         return text
     }
-    
     enum Role {
         case user
         case assistant
         case loading
     }
-    
     init(id: String = UUID().uuidString,
          text: String? = nil,
          images: [UIImage]? = nil,
@@ -45,8 +39,6 @@ struct ChatMessage: Hashable {
         self.timestamp = timestamp
         self.metadata = metadata
     }
-    
-    // Backward compatibility initializer
     init(role: Role, content: String? = nil, images: [UIImage]? = nil) {
         self.id = UUID().uuidString
         self.text = content
@@ -55,11 +47,9 @@ struct ChatMessage: Hashable {
         self.timestamp = Date()
         self.metadata = nil
     }
-    
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
-    
     static func == (lhs: ChatMessage, rhs: ChatMessage) -> Bool {
         lhs.id == rhs.id
     }

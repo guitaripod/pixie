@@ -3,36 +3,22 @@ import PhotosUI
 import Combine
 
 class ChatGenerationViewController: UIViewController {
-    
-    // MARK: - Types
-    
     enum ViewState {
         case suggestions
         case chat
     }
-    
-    // MARK: - Properties
-    
     private var currentState: ViewState = .suggestions
-    
     private let suggestionsView = FullScreenSuggestionsView()
     private let chatView = ChatTableView()
     private let inputBar = ChatInputBar()
     private let selectedSuggestionsManager = SelectedSuggestionsManager()
-    
     private var toolbarMode: ToolbarMode = .generate
-    
     private let viewModel = GenerationViewModel()
     private var cancellables = Set<AnyCancellable>()
     private var currentOptions = GenerationOptions.default
-    
     private let haptics = HapticManager.shared
-    
-    // MARK: - Constraints
-    
     private var suggestionsBottomConstraint: NSLayoutConstraint!
     private var chatBottomConstraint: NSLayoutConstraint!
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -42,7 +28,6 @@ class ChatGenerationViewController: UIViewController {
         setupBindings()
         transitionToState(.suggestions, animated: false)
     }
-    
     private func setupUI() {
         view.backgroundColor = .systemBackground
         suggestionsView.translatesAutoresizingMaskIntoConstraints = false
@@ -57,7 +42,6 @@ class ChatGenerationViewController: UIViewController {
         inputBar.selectedSuggestionsManager = selectedSuggestionsManager
         view.addSubview(inputBar)
     }
-    
     private func setupConstraints() {
         NSLayoutConstraint.activate([
             inputBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -79,38 +63,30 @@ class ChatGenerationViewController: UIViewController {
             chatBottomConstraint
         ])
     }
-    
     private func setupNavigationBar() {
         let newChatButton = UIButton(type: .system)
         newChatButton.setImage(UIImage(systemName: "sparkles"), for: .normal)
         newChatButton.setTitle(" New", for: .normal)
         newChatButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         newChatButton.addTarget(self, action: #selector(newChatTapped), for: .touchUpInside)
-        
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: newChatButton)
-        
         let galleryButton = UIBarButtonItem(title: "Gallery", style: .plain, target: self, action: #selector(galleryTapped))
         let creditsButton = UIBarButtonItem(title: "Credits", style: .plain, target: self, action: #selector(creditsTapped))
         let settingsButton = UIBarButtonItem(image: UIImage(systemName: "gearshape"), style: .plain, target: self, action: #selector(settingsTapped))
-        
         navigationItem.rightBarButtonItems = [settingsButton, creditsButton, galleryButton]
     }
-    
     private func setupHandlers() {
         inputBar.onSend = { [weak self] prompt in
             self?.handleSendPrompt(prompt)
         }
-        
         inputBar.onExpandedChanged = { [weak self] isExpanded in
         }
         suggestionsView.onEditImageTapped = { [weak self] in
             self?.presentPhotoPicker()
         }
-        
         suggestionsView.onImageTapped = { [weak self] image in
             self?.presentImagePreviewForEdit(image)
         }
-        
         suggestionsView.onSelectionChanged = { [weak self] in
             self?.inputBar.updateIndicators()
             if let composedPrompt = self?.selectedSuggestionsManager.composePrompt(basePrompt: "") {
@@ -124,7 +100,6 @@ class ChatGenerationViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
     }
-    
     private func setupBindings() {
         viewModel.messagesPublisher
             .receive(on: DispatchQueue.main)
@@ -132,7 +107,6 @@ class ChatGenerationViewController: UIViewController {
                 self?.chatView.setMessages(messages)
             }
             .store(in: &cancellables)
-        
         viewModel.isGeneratingPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isGenerating in
@@ -140,7 +114,6 @@ class ChatGenerationViewController: UIViewController {
                 self?.updateNavigationForGenerating(isGenerating)
             }
             .store(in: &cancellables)
-        
         viewModel.errorPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] error in
@@ -149,23 +122,16 @@ class ChatGenerationViewController: UIViewController {
                 }
             }
             .store(in: &cancellables)
-        
         viewModel.progressPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] progress in
-                
             }
             .store(in: &cancellables)
     }
-    
-    // MARK: - State Management
-    
     private func transitionToState(_ newState: ViewState, animated: Bool) {
         guard newState != currentState else { return }
-        
         let fromView: UIView
         let toView: UIView
-        
         switch (currentState, newState) {
         case (.suggestions, .chat):
             fromView = suggestionsView
@@ -176,13 +142,10 @@ class ChatGenerationViewController: UIViewController {
         default:
             return
         }
-        
         currentState = newState
-        
         if animated {
             toView.alpha = 0
             toView.transform = CGAffineTransform(translationX: 0, y: 20)
-            
             UIView.animate(
                 withDuration: 0.3,
                 delay: 0,
@@ -190,7 +153,6 @@ class ChatGenerationViewController: UIViewController {
                 animations: {
                     fromView.alpha = 0
                     fromView.transform = CGAffineTransform(translationX: 0, y: -20)
-                    
                     toView.alpha = 1
                     toView.transform = .identity
                 },
@@ -203,22 +165,15 @@ class ChatGenerationViewController: UIViewController {
             toView.alpha = 1
         }
     }
-    
-    // MARK: - Actions
-    
     private func handleSendPrompt(_ prompt: String) {
         guard !prompt.isEmpty else { return }
-        
         if prompt == "EDIT_MODE" {
-            // Handle edit mode
             handleEditImage()
             return
         }
-        
         if currentState == .suggestions {
             transitionToState(.chat, animated: true)
         }
-        
         viewModel.prompt = prompt
         currentOptions.prompt = prompt
         currentOptions.size = inputBar.selectedSize.value
@@ -229,7 +184,6 @@ class ChatGenerationViewController: UIViewController {
         currentOptions.moderation = inputBar.selectedModeration
         viewModel.generateImages(with: currentOptions)
     }
-    
     private func handleQuickAction(_ action: String) {
         switch action {
         case "Remove background":
@@ -245,7 +199,6 @@ class ChatGenerationViewController: UIViewController {
         case "Upscale 2x":
             currentOptions.upscale = 2
         case "Square crop":
-            // Just add square crop modifier, don't change selected size
             currentOptions.modifiers.append("square crop")
         case "Portrait mode":
             currentOptions.modifiers.append("portrait mode, bokeh")
@@ -269,40 +222,28 @@ class ChatGenerationViewController: UIViewController {
         default:
             break
         }
-        
         inputBar.setText(action)
     }
-    
     private func showError(_ error: GenerationError) {
         let alert = UIAlertController(
             title: "Generation Failed",
             message: error.localizedDescription,
             preferredStyle: .alert
         )
-        
         alert.addAction(UIAlertAction(title: "OK", style: .default))
-        
         if case .insufficientCredits = error {
             alert.addAction(UIAlertAction(title: "Buy Credits", style: .default) { [weak self] _ in
                 self?.creditsTapped()
             })
         }
-        
         present(alert, animated: true)
     }
-    
-    // MARK: - Navigation Actions
-    
     @objc private func newChatTapped() {
         haptics.impact(.click)
-        
-        // If in edit mode, switch back to generate mode
         if case .edit = toolbarMode {
             switchToGenerateMode()
         }
-        
         viewModel.resetChat()
-        // Reset options but preserve user's selected settings
         currentOptions = GenerationOptions.default
         currentOptions.size = inputBar.selectedSize.value
         currentOptions.quality = inputBar.selectedQuality.value
@@ -316,24 +257,19 @@ class ChatGenerationViewController: UIViewController {
         suggestionsView.refreshView()
         transitionToState(.suggestions, animated: true)
     }
-    
     @objc private func galleryTapped() {
         haptics.impact(.click)
     }
-    
     @objc private func creditsTapped() {
         haptics.impact(.click)
     }
-    
     @objc private func settingsTapped() {
         haptics.impact(.click)
     }
-    
     @objc private func cancelGeneration() {
         haptics.impact(.click)
         viewModel.cancelGeneration()
     }
-    
     private func updateNavigationForGenerating(_ isGenerating: Bool) {
         if isGenerating {
             let cancelButton = UIBarButtonItem(
@@ -351,37 +287,27 @@ class ChatGenerationViewController: UIViewController {
             navigationItem.rightBarButtonItems = [settingsButton, creditsButton, galleryButton]
         }
     }
-    
-    // MARK: - Photo Picker
-    
     private func presentPhotoPicker() {
         var config = PHPickerConfiguration()
         config.selectionLimit = 1
         config.filter = .images
-        
         let picker = PHPickerViewController(configuration: config)
         picker.delegate = self
         present(picker, animated: true)
     }
-    
-    // MARK: - Mode Management
-    
     private func switchToEditMode(with image: UIImage, url: URL?) {
         haptics.impact(.click)
         toolbarMode = .edit(selectedImage: SelectedImage(image: image, url: url, displayName: nil))
         inputBar.setEditMode(true, selectedImage: image)
-        inputBar.clear() // Empty the prompt box
+        inputBar.clear()
         suggestionsView.setEditMode(true)
-        // Don't transition to suggestions - stay in current state
     }
-    
     private func switchToGenerateMode() {
         haptics.impact(.click)
         toolbarMode = .generate
         inputBar.setEditMode(false, selectedImage: nil)
         suggestionsView.setEditMode(false)
     }
-    
     private func adjustChatBottomConstraint(for height: CGFloat) {
         UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0) {
             self.chatBottomConstraint.constant = -height
@@ -389,7 +315,6 @@ class ChatGenerationViewController: UIViewController {
             self.view.layoutIfNeeded()
         }
     }
-    
     private func presentImagePreviewForEdit(_ image: UIImage) {
         let previewVC = ImagePreviewViewController(image: image)
         previewVC.modalPresentationStyle = .pageSheet
@@ -400,13 +325,9 @@ class ChatGenerationViewController: UIViewController {
         }
         present(previewVC, animated: true)
     }
-    
     private func handleEditImage() {
         guard case let .edit(selectedImage) = toolbarMode else { return }
-        
         let editOptions = inputBar.getEditOptions()
-        
-        // Create edit request
         let message = ChatMessage(
             id: UUID().uuidString,
             text: "Edit: \(editOptions.prompt)",
@@ -415,41 +336,30 @@ class ChatGenerationViewController: UIViewController {
             timestamp: Date(),
             metadata: nil
         )
-        
         transitionToState(.chat, animated: true)
         chatView.addMessage(message)
-        
-        // Perform edit API call
         viewModel.editImage(image: selectedImage.image, options: editOptions)
     }
-    
-    // MARK: - Keyboard Handling
-    
     @objc private func keyboardWillShow(_ notification: Notification) {
         guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
               let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval else { return }
-        
         let keyboardHeight = keyboardFrame.height
         chatView.adjustForKeyboard(height: keyboardHeight, duration: duration)
     }
-    
     @objc private func keyboardWillHide(_ notification: Notification) {
         guard let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval else { return }
-        
         chatView.adjustForKeyboard(height: 0, duration: duration)
     }
-    
     @objc private func handleBackgroundTap(_ gesture: UITapGestureRecognizer) {
         let location = gesture.location(in: view)
         let inputBarFrame = inputBar.convert(inputBar.bounds, to: view)
-        
         if !inputBarFrame.contains(location) && inputBar.isExpanded {
             inputBar.collapse()
         }
     }
 }
 
-// MARK: - UIGestureRecognizerDelegate
+
 
 extension ChatGenerationViewController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
@@ -460,14 +370,12 @@ extension ChatGenerationViewController: UIGestureRecognizerDelegate {
     }
 }
 
-// MARK: - PHPickerViewControllerDelegate
+
 
 extension ChatGenerationViewController: PHPickerViewControllerDelegate {
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
         picker.dismiss(animated: true)
-        
         guard let result = results.first else { return }
-        
         result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
             if let image = image as? UIImage {
                 DispatchQueue.main.async {
@@ -476,71 +384,52 @@ extension ChatGenerationViewController: PHPickerViewControllerDelegate {
             }
         }
     }
-    
     private func handleImageSelected(_ image: UIImage) {
-        // Show fullscreen preview with edit confirmation for images from photo picker
         presentImagePreviewForEdit(image)
     }
 }
 
-// MARK: - ChatTableViewDelegate
+
 
 extension ChatGenerationViewController: ChatTableViewDelegate {
     func chatTableView(_ chatTableView: ChatTableView, didTapImageAt index: Int, in message: ChatMessage) {
         haptics.impact(.click)
-        
         guard let images = message.images,
               index < images.count else { return }
-        
         let image = images[index]
-        
-        // Just show fullscreen preview on tap
         let previewVC = ImagePreviewViewController(image: image)
         previewVC.modalPresentationStyle = .pageSheet
         present(previewVC, animated: true)
     }
-    
     func chatTableView(_ chatTableView: ChatTableView, didLongPressImageAt index: Int, in message: ChatMessage) {
-        // Context menu handles this now
     }
-    
     func chatTableView(_ chatTableView: ChatTableView, didSelectImageForEdit index: Int, in message: ChatMessage) {
         haptics.impact(.click)
-        
         guard let images = message.images,
               index < images.count else { return }
-        
         let image = images[index]
         switchToEditMode(with: image, url: nil)
     }
-    
     private func showBatchSaveSuccess(count: Int) {
         haptics.impact(.success)
-        
         let alert = UIAlertController(
             title: "Saved!",
             message: "\(count) image\(count > 1 ? "s" : "") saved to your Pixie album",
             preferredStyle: .alert
         )
-        
         present(alert, animated: true)
-        
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             alert.dismiss(animated: true)
         }
     }
-    
     private func showBatchSaveError(_ error: PhotoSavingError) {
         haptics.impact(.error)
-        
         let alert = UIAlertController(
             title: "Save Failed",
             message: error.localizedDescription,
             preferredStyle: .alert
         )
-        
         alert.addAction(UIAlertAction(title: "OK", style: .default))
-        
         if case .permissionDenied = error {
             alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
                 if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
@@ -548,7 +437,6 @@ extension ChatGenerationViewController: ChatTableViewDelegate {
                 }
             })
         }
-        
         present(alert, animated: true)
     }
 }
@@ -571,7 +459,6 @@ struct GenerationOptions {
     var outputFormat: String?
     var compression: Int?
     var moderation: String?
-    
     static var `default`: GenerationOptions {
         GenerationOptions(
             prompt: "",

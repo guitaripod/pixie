@@ -9,7 +9,6 @@ protocol ConfigurationManagerProtocol {
     var defaultCompression: Int { get set }
     var enableHaptics: Bool { get set }
     var theme: AppTheme { get set }
-    
     func load()
     func save()
     func reset()
@@ -24,15 +23,12 @@ enum AppTheme: String, CaseIterable {
 class ConfigurationManager: ConfigurationManagerProtocol {
     static let shared = ConfigurationManager()
     static let configurationDidChangeNotification = Notification.Name("ConfigurationDidChange")
-    
     private let defaults = UserDefaults.standard
     private let keychain = KeychainManager()
-    
-    @UserDefaultsWrapper(key: "pixie.baseURL", defaultValue: "https://openai-image-proxy.guitaripod.workers.dev")
+    @UserDefaultsWrapper(key: "pixie.baseURL", defaultValue: "https:
     var baseURL: String {
         didSet { notifyConfigurationChanged() }
     }
-    
     var apiKey: String? {
         get {
             try? keychain.getString(forKey: KeychainKeys.apiKey)
@@ -46,50 +42,40 @@ class ConfigurationManager: ConfigurationManagerProtocol {
             notifyConfigurationChanged()
         }
     }
-    
     @UserDefaultsWrapper(key: "pixie.defaultQuality", defaultValue: "low")
     var defaultQuality: String {
         didSet { notifyConfigurationChanged() }
     }
-    
     @UserDefaultsWrapper(key: "pixie.defaultSize", defaultValue: "auto")
     var defaultSize: String {
         didSet { notifyConfigurationChanged() }
     }
-    
     @UserDefaultsWrapper(key: "pixie.defaultOutputFormat", defaultValue: "webp")
     var defaultOutputFormat: String {
         didSet { notifyConfigurationChanged() }
     }
-    
     @UserDefaultsWrapper(key: "pixie.defaultCompression", defaultValue: 90)
     var defaultCompression: Int {
         didSet { notifyConfigurationChanged() }
     }
-    
     @UserDefaultsWrapper(key: "pixie.enableHaptics", defaultValue: true)
     var enableHaptics: Bool {
         didSet { notifyConfigurationChanged() }
     }
-    
     @UserDefaultsWrapper(key: "pixie.theme", defaultValue: .system)
     var theme: AppTheme {
         didSet { notifyConfigurationChanged() }
     }
-    
     private init() {
         load()
     }
-    
     func load() {
     }
-    
     func save() {
         notifyConfigurationChanged()
     }
-    
     func reset() {
-        baseURL = "https://openai-image-proxy.guitaripod.workers.dev"
+        baseURL = "https:
         apiKey = nil
         defaultQuality = "low"
         defaultSize = "auto"
@@ -98,7 +84,6 @@ class ConfigurationManager: ConfigurationManagerProtocol {
         enableHaptics = true
         theme = .system
     }
-    
     private func notifyConfigurationChanged() {
         NotificationCenter.default.post(
             name: Self.configurationDidChangeNotification,
@@ -112,7 +97,6 @@ struct UserDefaultsWrapper<T> {
     let key: String
     let defaultValue: T
     let userDefaults: UserDefaults = .standard
-    
     var wrappedValue: T {
         get {
             userDefaults.object(forKey: key) as? T ?? defaultValue
