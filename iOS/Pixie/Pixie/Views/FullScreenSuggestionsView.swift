@@ -335,8 +335,7 @@ class FullScreenSuggestionsView: UIView {
                 let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: SectionHeaderView.reuseIdentifier, for: indexPath) as! SectionHeaderView
                 switch SuggestionsSection(rawValue: indexPath.section) {
                 case .editImage:
-                    header.configure(title: "Edit an Image", subtitle: "Transform your photos with AI", actionTitle: "Browse")
-                    header.actionButton.addTarget(self, action: #selector(self.browseTapped), for: .touchUpInside)
+                    header.configure(title: "Edit an Image", subtitle: "Transform your photos with AI")
                 case .quickActions:
                     header.configure(title: "Quick Actions", subtitle: "Start with popular templates")
                 case .stylePresets:
@@ -370,45 +369,6 @@ class FullScreenSuggestionsView: UIView {
         modifierItems.append(contentsOf: modifiers[selectedModifierCategory].map { $0 as AnyHashable })
         snapshot.appendItems(modifierItems, toSection: .promptModifiers)
         dataSource.apply(snapshot, animatingDifferences: true)
-    }
-    @objc private func browseTapped() {
-        haptics.impact(.click)
-        presentImagePicker()
-    }
-    private func presentImagePicker() {
-        PHPhotoLibrary.requestAuthorization(for: .readWrite) { [weak self] status in
-            DispatchQueue.main.async {
-                switch status {
-                case .authorized, .limited:
-                    self?.loadRecentImages()
-                    if let viewController = self?.window?.rootViewController {
-                        let picker = UIImagePickerController()
-                        picker.sourceType = .photoLibrary
-                        picker.mediaTypes = ["public.image"]
-                        picker.delegate = self
-                        viewController.present(picker, animated: true)
-                    }
-                case .denied, .restricted:
-
-                    if let viewController = self?.window?.rootViewController {
-                        let alert = UIAlertController(
-                            title: "Photo Access Required",
-                            message: "Please enable photo access in Settings to select images.",
-                            preferredStyle: .alert
-                        )
-                        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-                        alert.addAction(UIAlertAction(title: "Settings", style: .default) { _ in
-                            if let url = URL(string: UIApplication.openSettingsURLString) {
-                                UIApplication.shared.open(url)
-                            }
-                        })
-                        viewController.present(alert, animated: true)
-                    }
-                default:
-                    break
-                }
-            }
-        }
     }
     private func checkPhotoPermissions() {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
@@ -560,18 +520,6 @@ extension FullScreenSuggestionsView: UICollectionViewDelegate {
 }
 
 
-extension FullScreenSuggestionsView: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        picker.dismiss(animated: true)
-        if let image = info[.originalImage] as? UIImage {
-            haptics.notification(.success)
-            onImageTapped?(image)
-        }
-    }
-    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        picker.dismiss(animated: true)
-    }
-}
 
 
 enum SuggestionsSection: Int, CaseIterable {

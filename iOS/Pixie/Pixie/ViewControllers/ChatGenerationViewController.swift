@@ -1,5 +1,6 @@
 import UIKit
 import PhotosUI
+import Photos
 import Combine
 
 class ChatGenerationViewController: UIViewController {
@@ -293,12 +294,40 @@ class ChatGenerationViewController: UIViewController {
         }
     }
     private func presentPhotoPicker() {
-        var config = PHPickerConfiguration()
-        config.selectionLimit = 1
-        config.filter = .images
-        let picker = PHPickerViewController(configuration: config)
-        picker.delegate = self
-        present(picker, animated: true)
+        PHPhotoLibrary.requestAuthorization(for: .readWrite) { [weak self] status in
+            DispatchQueue.main.async {
+                switch status {
+                case .authorized, .limited:
+                    var config = PHPickerConfiguration()
+                    config.selectionLimit = 1
+                    config.filter = .images
+                    let picker = PHPickerViewController(configuration: config)
+                    picker.delegate = self
+                    self?.present(picker, animated: true)
+                case .denied, .restricted:
+                    self?.showPhotoPermissionAlert()
+                case .notDetermined:
+                    break
+                @unknown default:
+                    break
+                }
+            }
+        }
+    }
+    
+    private func showPhotoPermissionAlert() {
+        let alert = UIAlertController(
+            title: "Photo Access Required",
+            message: "Please allow access to your photos to select images for editing.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
+            if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(settingsURL)
+            }
+        })
+        present(alert, animated: true)
     }
     private func switchToEditMode(with image: UIImage, url: URL?) {
         haptics.impact(.click)
