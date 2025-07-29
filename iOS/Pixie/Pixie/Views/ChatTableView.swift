@@ -91,8 +91,17 @@ class ChatTableView: UIView {
         snapshot.appendSections([.messages])
         snapshot.appendItems(messages, toSection: .messages)
         dataSource.apply(snapshot, animatingDifferences: animated)
+    }
+    
+    func addMessage(_ message: ChatMessage, animated: Bool = true) {
+        var snapshot = dataSource.snapshot()
+        if !snapshot.sectionIdentifiers.contains(.messages) {
+            snapshot.appendSections([.messages])
+        }
+        snapshot.appendItems([message], toSection: .messages)
+        dataSource.apply(snapshot, animatingDifferences: animated)
         
-        if !messages.isEmpty {
+        if !snapshot.itemIdentifiers.isEmpty {
             DispatchQueue.main.async { [weak self] in
                 self?.scrollToBottom(animated: animated)
             }
@@ -134,6 +143,13 @@ extension ChatTableView: AssistantMessageCellDelegate {
         
         delegate?.chatTableView(self, didLongPressImageAt: index, in: message)
     }
+    
+    func assistantMessageCell(_ cell: AssistantMessageCell, didSelectImageForEdit index: Int) {
+        guard let indexPath = tableView.indexPath(for: cell),
+              let message = dataSource.itemIdentifier(for: indexPath) else { return }
+        
+        delegate?.chatTableView(self, didSelectImageForEdit: index, in: message)
+    }
 }
 
 // MARK: - Delegate Protocol
@@ -141,6 +157,7 @@ extension ChatTableView: AssistantMessageCellDelegate {
 protocol ChatTableViewDelegate: AnyObject {
     func chatTableView(_ chatTableView: ChatTableView, didTapImageAt index: Int, in message: ChatMessage)
     func chatTableView(_ chatTableView: ChatTableView, didLongPressImageAt index: Int, in message: ChatMessage)
+    func chatTableView(_ chatTableView: ChatTableView, didSelectImageForEdit index: Int, in message: ChatMessage)
 }
 
 // MARK: - Message Cells
@@ -373,7 +390,12 @@ extension AssistantMessageCell: UIContextMenuInteractionDelegate {
                 HapticManager.shared.impact(.success)
             }
             
-            return UIMenu(title: "", children: [save, share, copy])
+            let edit = UIAction(title: "Edit Image", image: UIImage(systemName: "wand.and.stars")) { [weak self] _ in
+                guard let self = self else { return }
+                self.delegate?.assistantMessageCell(self, didSelectImageForEdit: imageView.tag)
+            }
+            
+            return UIMenu(title: "", children: [edit, save, share, copy])
         }
     }
     
@@ -442,4 +464,5 @@ class LoadingMessageCell: UITableViewCell {
 protocol AssistantMessageCellDelegate: AnyObject {
     func assistantMessageCell(_ cell: AssistantMessageCell, didTapImageAt index: Int)
     func assistantMessageCell(_ cell: AssistantMessageCell, didLongPressImageAt index: Int)
+    func assistantMessageCell(_ cell: AssistantMessageCell, didSelectImageForEdit index: Int)
 }
