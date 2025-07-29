@@ -73,28 +73,20 @@ Native Swift iOS app targeting iOS 16+ that replicates all functionality of the 
 - [x] Add haptic feedback for all interactions. Create Haptics manager centralized.
 - [x] Create spring animations for UI elements (scale: 0.95 on press)
 
-#### 3.2 Advanced Generation Options
-- [ ] Implement size selector with visual previews
-- [ ] Create quality selector with animated credit cost display
-- [ ] Implement background style selector with gradient previews
-- [ ] Add output format picker with compression slider
-- [ ] Create moderation toggle with warning dialog
-- [ ] Add preset styles with gradient backgrounds
-
 #### 3.3 Generation Process
-- [ ] Create generation service with delegate pattern and closures
-- [ ] Implement data binding using Combine publishers and diffable data sources
-- [ ] Implement progress tracking with Combine publishers
-- [ ] Add proper error handling with user-friendly messages. Check what the backend reports.
-- [ ] Create loading states with correct singular/plural text
-- [ ] Implement animated loading indicators in chat bubbles
-- [ ] Add request cancellation support
+- [x] Create generation service with delegate pattern and closures
+- [x] Implement data binding using Combine publishers and diffable data sources
+- [x] Implement progress tracking with Combine publishers
+- [x] Add proper error handling with user-friendly messages. Check what the backend reports.
+- [x] Create loading states
+- [x] Implement animated loading indicators in chat bubbles
+- [x] Add request cancellation support
 
 #### 3.4 Image Saving & Sharing
-- [ ] Implement PHPhotoLibrary integration with proper permissions
-- [ ] Create custom "Pixie" album in Photos app
-- [ ] Add share functionality with UIActivityViewController
-- [ ] Implement contextual save/share menu on image tap
+- [x] Implement PHPhotoLibrary integration with proper permissions
+- [x] Create custom "Pixie" album in Photos app
+- [x] Add share functionality with UIActivityViewController
+- [x] Implement contextual save/share menu on image tap
 
 ### Phase 4: Suggestions & Quick Actions
 
