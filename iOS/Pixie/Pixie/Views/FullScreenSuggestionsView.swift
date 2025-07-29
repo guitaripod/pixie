@@ -28,9 +28,11 @@ class FullScreenSuggestionsView: UIView {
     var onImageSelected: ((UIImage) -> Void)?
     var onEditImageTapped: (() -> Void)?
     var onSelectionChanged: (() -> Void)?
+    var onImageTapped: ((UIImage) -> Void)?
     private var recentImages: [UIImage] = []
     private var selectedCreativeCategory = 0
     private var selectedModifierCategory = 0
+    private var isEditMode = false
     
     private let haptics = HapticManager.shared
     
@@ -50,6 +52,26 @@ class FullScreenSuggestionsView: UIView {
         QuickAction(icon: "camera.filters", title: "Retro", prompt: "80s retro style with synthwave colors, palm trees, sunset, miami vice aesthetic", color: UIColor(red: 0.86, green: 0.15, blue: 0.47, alpha: 1)),
         QuickAction(icon: "drop", title: "Underwater", prompt: "Underwater photography, coral reef, tropical fish, sun rays through water", color: UIColor(red: 0.01, green: 0.52, blue: 0.78, alpha: 1)),
         QuickAction(icon: "square.grid.3x3", title: "Miniature", prompt: "Miniature tilt-shift photography effect, looks like a tiny model world", color: UIColor(red: 0.98, green: 0.45, blue: 0.09, alpha: 1))
+    ]
+    
+    // MARK: - Edit Mode Quick Actions
+    private let editModeQuickActions = [
+        QuickAction(icon: "paintpalette", title: "Recolor", prompt: "Change the color scheme to vibrant warm tones", color: UIColor(red: 0.96, green: 0.26, blue: 0.21, alpha: 1)),
+        QuickAction(icon: "light.max", title: "Lighting", prompt: "Add dramatic lighting with strong shadows and highlights", color: UIColor(red: 0.95, green: 0.77, blue: 0.06, alpha: 1)),
+        QuickAction(icon: "paintbrush.pointed", title: "Art Style", prompt: "Transform into oil painting style with visible brush strokes", color: UIColor(red: 0.55, green: 0.27, blue: 0.07, alpha: 1)),
+        QuickAction(icon: "minus.circle", title: "Remove", prompt: "Remove all unwanted objects and distractions from the background", color: UIColor(red: 0.96, green: 0.27, blue: 0.27, alpha: 1)),
+        QuickAction(icon: "wand.and.stars", title: "Enhance", prompt: "Enhance the image quality, make it sharper and more vibrant", color: UIColor(red: 0.55, green: 0.36, blue: 0.96, alpha: 1)),
+        QuickAction(icon: "moon.stars", title: "Night", prompt: "Transform this into a beautiful nighttime scene with stars and moonlight", color: UIColor(red: 0.12, green: 0.25, blue: 0.69, alpha: 1)),
+        QuickAction(icon: "cloud.rain", title: "Weather", prompt: "Add dramatic storm clouds and rain to create a moody atmosphere", color: UIColor(red: 0.39, green: 0.45, blue: 0.52, alpha: 1)),
+        QuickAction(icon: "tree", title: "Season", prompt: "Transform this into a beautiful autumn scene with fall colors", color: UIColor(red: 0.86, green: 0.15, blue: 0.15, alpha: 1)),
+        QuickAction(icon: "face.smiling", title: "Expression", prompt: "Make the person smile naturally and look happy", color: UIColor(red: 0.96, green: 0.62, blue: 0.04, alpha: 1)),
+        QuickAction(icon: "rectangle.landscape", title: "Background", prompt: "Replace the background with a beautiful beach sunset", color: UIColor(red: 0.01, green: 0.52, blue: 0.78, alpha: 1)),
+        QuickAction(icon: "blur", title: "Blur", prompt: "Add professional bokeh blur to the background", color: UIColor(red: 0.65, green: 0.34, blue: 0.84, alpha: 1)),
+        QuickAction(icon: "sparkles", title: "Dreamy", prompt: "Add a dreamy, ethereal quality with soft light and glow", color: UIColor(red: 0.93, green: 0.51, blue: 0.93, alpha: 1)),
+        QuickAction(icon: "film", title: "Vintage", prompt: "Apply vintage film photography style with grain and faded colors", color: UIColor(red: 0.48, green: 0.31, blue: 0.24, alpha: 1)),
+        QuickAction(icon: "bolt", title: "Cyberpunk", prompt: "Transform into cyberpunk style with neon lights and futuristic elements", color: UIColor(red: 0.88, green: 0.08, blue: 0.72, alpha: 1)),
+        QuickAction(icon: "square.dashed", title: "Minimal", prompt: "Simplify to minimalist style with clean lines and reduced colors", color: UIColor(red: 0.24, green: 0.24, blue: 0.26, alpha: 1)),
+        QuickAction(icon: "theatermasks", title: "Dramatic", prompt: "Add dramatic mood with high contrast and intense emotions", color: UIColor(red: 0.64, green: 0.08, blue: 0.08, alpha: 1))
     ]
     
     // MARK: - Creative Prompts Data
@@ -307,7 +329,8 @@ class FullScreenSuggestionsView: UIView {
                 
             case .quickActions:
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: QuickActionCell.reuseIdentifier, for: indexPath) as! QuickActionCell
-                let action = self.quickActions[indexPath.item]
+                let actions = self.isEditMode ? self.editModeQuickActions : self.quickActions
+                let action = actions[indexPath.item]
                 let isSelected = self.selectedSuggestionsManager?.isSelected(action.title, type: .quickAction) ?? false
                 cell.configure(with: action, isSelected: isSelected)
                 return cell
@@ -402,7 +425,8 @@ class FullScreenSuggestionsView: UIView {
         editItems.append(contentsOf: recentImages.prefix(10).map { $0 as AnyHashable })
         snapshot.appendItems(editItems, toSection: .editImage)
         snapshot.appendSections([.quickActions])
-        snapshot.appendItems(quickActions.map { $0 as AnyHashable }, toSection: .quickActions)
+        let actions = isEditMode ? editModeQuickActions : quickActions
+        snapshot.appendItems(actions.map { $0 as AnyHashable }, toSection: .quickActions)
         snapshot.appendSections([.creativePrompts])
         let creativeItems = creativePrompts[selectedCreativeCategory].prompts.map { $0 as AnyHashable }
         snapshot.appendItems(creativeItems, toSection: .creativePrompts)
@@ -476,11 +500,14 @@ class FullScreenSuggestionsView: UIView {
         let manager = PHImageManager.default()
         let options = PHImageRequestOptions()
         options.isSynchronous = false
-        options.deliveryMode = .opportunistic
-        options.resizeMode = .exact
+        options.deliveryMode = .highQualityFormat
+        options.resizeMode = .fast
+        options.isNetworkAccessAllowed = true
         
         var images: [UIImage] = []
-        let targetSize = CGSize(width: 240, height: 240)
+        // Load at higher resolution for better quality on retina displays
+        let scale = UIScreen.main.scale
+        let targetSize = CGSize(width: 240 * scale, height: 240 * scale)
         
         fetchResult.enumerateObjects { asset, _, _ in
             manager.requestImage(for: asset, targetSize: targetSize, contentMode: .aspectFill, options: options) { image, _ in
@@ -510,13 +537,16 @@ extension FullScreenSuggestionsView: UICollectionViewDelegate {
             } else {
                 let imageIndex = indexPath.item - 1
                 if imageIndex < recentImages.count {
-                    onImageSelected?(recentImages[imageIndex])
+                    let image = recentImages[imageIndex]
+                    // Always show fullscreen preview for edit confirmation
+                    onImageTapped?(image)
                 }
             }
             
         case .quickActions:
-            if indexPath.item < quickActions.count {
-                let action = quickActions[indexPath.item]
+            let actions = isEditMode ? editModeQuickActions : quickActions
+            if indexPath.item < actions.count {
+                let action = actions[indexPath.item]
                 let suggestion = SelectedSuggestion(
                     type: .quickAction,
                     title: action.title,
@@ -614,6 +644,13 @@ extension FullScreenSuggestionsView: UICollectionViewDelegate {
     func refreshView() {
         applySnapshot()
     }
+    
+    // MARK: - Edit Mode
+    
+    func setEditMode(_ editMode: Bool) {
+        isEditMode = editMode
+        applySnapshot()
+    }
 }
 
 // MARK: - Image Picker Delegate
@@ -623,7 +660,8 @@ extension FullScreenSuggestionsView: UIImagePickerControllerDelegate, UINavigati
         
         if let image = info[.originalImage] as? UIImage {
             haptics.notification(.success)
-            onImageSelected?(image)
+            // Show fullscreen preview for edit confirmation, just like gallery images
+            onImageTapped?(image)
         }
     }
     
