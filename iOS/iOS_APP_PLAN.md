@@ -145,7 +145,6 @@ Native Swift iOS app targeting iOS 16+ that replicates all functionality of the 
 - [x] Add edit action with navigation to edit mode
 - [x] Create download with progress indicator
 - [x] Add share sheet integration
-- [ ] Implement delete with confirmation
 
 ### Phase 7: Usage & Credits
 
@@ -157,16 +156,7 @@ Native Swift iOS app targeting iOS 16+ that replicates all functionality of the 
 - [ ] Add recent transactions preview section
 - [ ] Implement tips card at bottom
 
-#### 7.2 Usage Dashboard
-- [ ] Create usage statistics view with Charts framework
-- [ ] Implement date range picker with calendar UI
-- [ ] Add daily/weekly/monthly aggregation views
-- [ ] Create animated chart transitions
-- [ ] Add usage breakdown by generation type
-- [ ] Implement CSV export with share sheet
-
 #### 7.3 Credit Management
-- [ ] Implement transaction history with UITableViewDiffableDataSource and section snapshots
 - [ ] Add real-time credit updates with Combine
 - [ ] Create credit pack browser with enhanced purchase flow
 - [ ] Add cost estimator calculator with interactive UI
