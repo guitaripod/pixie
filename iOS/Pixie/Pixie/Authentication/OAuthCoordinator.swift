@@ -136,7 +136,8 @@ class OAuthCoordinator: NSObject {
             delegate?.oauthCoordinator(self, didCompleteWith: .success(
                 apiKey: authResponse.apiKey,
                 userId: authResponse.userId,
-                provider: savedState.provider
+                provider: savedState.provider,
+                isAdmin: authResponse.isAdmin ?? false
             ))
         } catch {
             pendingAuthState = nil
@@ -191,7 +192,8 @@ extension OAuthCoordinator: ASAuthorizationControllerDelegate {
             delegate?.oauthCoordinator(self, didCompleteWith: .success(
                 apiKey: authResponse.apiKey,
                 userId: authResponse.userId,
-                provider: .apple
+                provider: .apple,
+                isAdmin: authResponse.isAdmin ?? false
             ))
         } catch {
             pendingAuthState = nil
@@ -219,7 +221,8 @@ extension OAuthCoordinator: GoogleSignInCoordinatorDelegate {
                     delegate?.oauthCoordinator(self, didCompleteWith: .success(
                         apiKey: authResponse.apiKey,
                         userId: authResponse.userId,
-                        provider: .google
+                        provider: .google,
+                        isAdmin: authResponse.isAdmin ?? false
                     ))
                 } catch {
                     pendingAuthState = nil

@@ -33,6 +33,7 @@ class AuthenticationService: AuthenticationServiceProtocol {
         if let networkService = networkService as? NetworkService {
             networkService.setAPIKey(token)
         }
+        AppContainer.shared.updateNetworkServiceAPIKey()
         
         let user = User(
             id: UUID().uuidString,
@@ -105,6 +106,7 @@ class AuthenticationService: AuthenticationServiceProtocol {
             if let networkService = networkService as? NetworkService {
                 networkService.setAPIKey(response.apiKey)
             }
+            AppContainer.shared.updateNetworkServiceAPIKey()
             
             let expirationDate = Date().addingTimeInterval(3600)
             UserDefaults.standard.set(expirationDate, forKey: tokenExpirationKey)
@@ -137,8 +139,9 @@ class AuthenticationService: AuthenticationServiceProtocol {
             if let token = try? keychainManager.getString(forKey: KeychainKeys.authToken) {
                 ConfigurationManager.shared.apiKey = token
                 if let networkService = networkService as? NetworkService {
-            networkService.setAPIKey(token)
-        }
+                    networkService.setAPIKey(token)
+                }
+                AppContainer.shared.updateNetworkServiceAPIKey()
             }
         } catch {
             currentUser = nil
