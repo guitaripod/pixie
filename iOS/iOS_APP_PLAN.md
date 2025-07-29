@@ -90,42 +90,31 @@ Native Swift iOS app targeting iOS 16+ that replicates all functionality of the 
 
 ### Phase 4: Suggestions & Quick Actions
 
-#### 4.1 Suggestions Interface
-- [ ] Create multi-section suggestion view with UICollectionViewCompositionalLayout and UICollectionViewDiffableDataSource
-- [ ] Configure horizontal scrolling sections with chunked column layout
-- [ ] Implement Edit Mode Quick Actions (17 total): Recolor, Lighting, Art Style, Remove, Enhance, Night, Weather, Season, Age, Expression, Background, Blur, Dreamy, Vintage, Cyberpunk, Minimal, Dramatic
-- [ ] Implement Generate Mode Quick Actions (14 total): Portrait, Landscape, Digital Art, Architecture, Animals, Food, Cyberpunk, Fantasy, Space, Macro, Surreal, Retro, Underwater, Miniature
-- [ ] Add Creative Prompts (5 categories × 6 prompts each): Fantasy 🐉, Nature 🌿, Abstract 🎨, Urban 🏙️, Tech 🤖
-- [ ] Create Style Presets (12 total): Cinematic, Anime, 3D Render, Oil Paint, Sketch, Watercolor, Comic, Pixel Art, Neon, Minimal, Vintage, HDR
-- [ ] Implement Prompt Modifiers (6 categories): Quality, Lighting, Camera, Mood, Composition, Artistic
-- [ ] Add section headers with subtitles
-- [ ] Add spring scale animations on selection with UICollectionViewCell configuration states
-- [ ] Create haptic feedback for all interactions
-
 #### 4.2 Recent Images Integration
-- [ ] Create horizontal scrolling recent images with UICollectionViewCompositionalLayout orthogonal scrolling
-- [ ] Implement permission-aware UI that adapts to photo access
-- [ ] Add image picker integration for quick selection
-- [ ] Create loading states for permission requests
-- [ ] Add empty state with call-to-action
+- [x] Create horizontal scrolling recent images with UICollectionViewCompositionalLayout orthogonal scrolling
+- [x] Implement permission-aware UI that adapts to photo access
+- [x] Add image picker integration for quick selection
+- [x] Create loading states for permission requests
+- [x] Add empty state with call-to-action
 
 ### Phase 5: Image Editing Feature
 
 #### 5.1 Image Selection
-- [ ] Create unified image picker with PhotosUI framework
+- [x] Create unified image picker with PhotosUI framework
 - [ ] Add gallery browser for user's images (gallery:id support)
-- [ ] Create image preview with pinch-to-zoom gesture
-- [ ] Implement image selection using PHPickerViewController for modern photo access
-- [ ] Add recent edits quick access section
+- [x] Create image preview with pinch-to-zoom gesture
+- [x] Implement image selection using PHPickerViewController for modern photo access
+- [x] Add recent edits quick access section
 
 #### 5.2 Editing Interface
-- [ ] Create edit mode UI matching generation chat interface. Use the existing Toolbar and have it display in an "Edit-mode"
-- [ ] Implement before/after comparison with swipe gesture
+- [x] Implement Edit Mode Quick Actions (17 total): Recolor, Lighting, Art Style, Remove, Enhance, Night, Weather, Season, Age, Expression, Background, Blur, Dreamy, Vintage, Cyberpunk, Minimal, Dramatic
+- [x] Implement Generate Mode Quick Actions (14 total): Portrait, Landscape, Digital Art, Architecture, Animals, Food, Cyberpunk, Fantasy, Space, Macro, Surreal, Retro, Underwater, Miniature
+- [x] Create edit mode UI matching generation chat interface. Use the existing Toolbar and have it display in an "Edit-mode"
 
 #### 5.3 Edit Options
-- [ ] Implement size preservation or custom sizing
-- [ ] Add quality selector with credit preview
-- [ ] Create fidelity toggle (low/high) with explanation
+- [x] Implement size preservation or custom sizing
+- [x] Add quality selector with credit preview
+- [x] Create fidelity toggle (low/high) with explanation
 
 ### Phase 6: Gallery Features
 
