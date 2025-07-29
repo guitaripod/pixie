@@ -96,18 +96,6 @@ class AdminDashboardViewController: UIViewController {
     private func setupNavigationBar() {
         navigationItem.title = "Admin"
         navigationItem.largeTitleDisplayMode = .never
-        
-        let closeButton = UIBarButtonItem(
-            barButtonSystemItem: .done,
-            target: self,
-            action: #selector(closeTapped)
-        )
-        navigationItem.rightBarButtonItem = closeButton
-    }
-    
-    @objc private func closeTapped() {
-        haptics.impact(.click)
-        dismiss(animated: true)
     }
     
     private func presentSystemStats() {
