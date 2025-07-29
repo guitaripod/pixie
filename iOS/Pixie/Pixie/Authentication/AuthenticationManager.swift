@@ -95,8 +95,11 @@ class AuthenticationManager: NSObject {
             return user
         }
         
-        if let token = try? keychainManager.getString(forKey: KeychainKeys.authToken) {
-            return try await authenticationService.authenticate(with: token)
+        if let token = try? keychainManager.getString(forKey: KeychainKeys.authToken),
+           let savedUser = try? keychainManager.getCodable(forKey: KeychainKeys.userProfile, type: User.self) {
+            ConfigurationManager.shared.apiKey = token
+            try await authenticationService.setCurrentUser(savedUser)
+            return savedUser
         }
         
         return nil
@@ -107,14 +110,22 @@ extension AuthenticationManager: OAuthCoordinatorDelegate {
     func oauthCoordinator(_ coordinator: OAuthCoordinator, didCompleteWith result: AuthResult) {
         Task { @MainActor in
             switch result {
-            case .success(let apiKey, _, let provider):
+            case .success(let apiKey, let userId, let provider):
                 do {
                     try keychainManager.setString(apiKey, forKey: KeychainKeys.authToken)
                     try keychainManager.setString(provider.rawValue, forKey: KeychainKeys.authProvider)
                     
                     ConfigurationManager.shared.apiKey = apiKey
                     
-                    let user = try await authenticationService.authenticate(with: apiKey)
+                    let user = User(
+                        id: userId,
+                        email: nil,
+                        name: nil,
+                        isAdmin: false,
+                        createdAt: ISO8601DateFormatter().string(from: Date())
+                    )
+                    
+                    try await authenticationService.setCurrentUser(user)
                     
                     delegate?.authenticationManager(self, didAuthenticate: user)
                 } catch {

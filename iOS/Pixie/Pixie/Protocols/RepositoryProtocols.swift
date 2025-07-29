@@ -29,6 +29,7 @@ protocol AuthenticationServiceProtocol {
     var currentUser: User? { get }
     
     func authenticate(with token: String) async throws -> User
+    func setCurrentUser(_ user: User) async throws
     func logout() async throws
     func refreshToken() async throws
     func checkDeviceAuthStatus(deviceCode: String) async throws -> DeviceAuthStatus
