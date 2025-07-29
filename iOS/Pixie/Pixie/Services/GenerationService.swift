@@ -183,12 +183,12 @@ class GenerationService {
                     mask: nil,
                     model: "gpt-image-1",
                     n: options.variations,
-                    size: options.size,
-                    quality: options.quality,
-                    background: "original",
-                    inputFidelity: options.fidelity,
-                    outputFormat: "png",
-                    outputCompression: nil,
+                    size: options.size.value,
+                    quality: options.quality.value,
+                    background: options.background ?? "auto",
+                    inputFidelity: options.fidelity.value,
+                    outputFormat: options.outputFormat,
+                    outputCompression: options.compression,
                     partialImages: 0,
                     stream: false,
                     user: nil
@@ -312,22 +312,3 @@ class GenerationService {
     }
 }
 
-struct EditOptions {
-    let prompt: String
-    let variations: Int
-    let size: String
-    let quality: String
-    let fidelity: String
-    
-    init(prompt: String = "",
-         variations: Int = 1,
-         size: String = "1024x1024",
-         quality: String = "low",
-         fidelity: String = "low") {
-        self.prompt = prompt
-        self.variations = variations
-        self.size = size
-        self.quality = quality
-        self.fidelity = fidelity
-    }
-}
