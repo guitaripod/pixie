@@ -55,14 +55,17 @@ class AuthenticationManager: NSObject {
                 try keychainManager.setString("debug", forKey: KeychainKeys.authProvider)
                 
                 ConfigurationManager.shared.apiKey = debugApiKey
+                AppContainer.shared.updateNetworkServiceAPIKey()
                 
                 let user = User(
                     id: debugUserId,
                     email: debugEmail,
                     name: debugUserName,
-                    isAdmin: false,
+                    isAdmin: true,
                     createdAt: Date().ISO8601Format()
                 )
+                
+                try await authenticationService.setCurrentUser(user)
                 
                 NotificationCenter.default.post(name: .userDidAuthenticate, object: user)
                 
@@ -98,6 +101,7 @@ class AuthenticationManager: NSObject {
         if let token = try? keychainManager.getString(forKey: KeychainKeys.authToken),
            let savedUser = try? keychainManager.getCodable(forKey: KeychainKeys.userProfile, type: User.self) {
             ConfigurationManager.shared.apiKey = token
+            AppContainer.shared.updateNetworkServiceAPIKey()
             try await authenticationService.setCurrentUser(savedUser)
             return savedUser
         }
@@ -110,18 +114,19 @@ extension AuthenticationManager: OAuthCoordinatorDelegate {
     func oauthCoordinator(_ coordinator: OAuthCoordinator, didCompleteWith result: AuthResult) {
         Task { @MainActor in
             switch result {
-            case .success(let apiKey, let userId, let provider):
+            case .success(let apiKey, let userId, let provider, let isAdmin):
                 do {
                     try keychainManager.setString(apiKey, forKey: KeychainKeys.authToken)
                     try keychainManager.setString(provider.rawValue, forKey: KeychainKeys.authProvider)
                     
                     ConfigurationManager.shared.apiKey = apiKey
+                    AppContainer.shared.updateNetworkServiceAPIKey()
                     
                     let user = User(
                         id: userId,
                         email: nil,
                         name: nil,
-                        isAdmin: false,
+                        isAdmin: isAdmin,
                         createdAt: ISO8601DateFormatter().string(from: Date())
                     )
                     

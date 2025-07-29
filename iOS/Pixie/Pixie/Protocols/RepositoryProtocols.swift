@@ -35,6 +35,14 @@ protocol AuthenticationServiceProtocol {
     func checkDeviceAuthStatus(deviceCode: String) async throws -> DeviceAuthStatus
 }
 
+protocol AdminRepositoryProtocol {
+    func checkAdminStatus() async -> Bool
+    func getSystemStats() async throws -> SystemStatsResponse
+    func searchUsers(query: String) async throws -> [UserSearchResult]
+    func adjustCredits(request: AdminCreditAdjustmentRequest) async throws -> AdminCreditAdjustmentResponse
+    func getAdjustmentHistory(userId: String?) async throws -> AdjustmentHistoryResponse
+}
+
 struct User: Codable {
     let id: String
     let email: String?

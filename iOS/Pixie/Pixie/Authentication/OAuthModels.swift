@@ -34,7 +34,7 @@ struct OAuthState {
 }
 
 enum AuthResult {
-    case success(apiKey: String, userId: String, provider: AuthProvider)
+    case success(apiKey: String, userId: String, provider: AuthProvider, isAdmin: Bool)
     case error(String)
     case cancelled
     case pending
@@ -55,10 +55,12 @@ struct OAuthCallbackRequest: Codable {
 struct AuthResponse: Codable {
     let apiKey: String
     let userId: String
+    let isAdmin: Bool?
     
     enum CodingKeys: String, CodingKey {
         case apiKey = "api_key"
         case userId = "user_id"
+        case isAdmin = "is_admin"
     }
 }
 
