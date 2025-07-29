@@ -89,6 +89,7 @@ final class GalleryPageViewController: UIViewController {
         
         emptyStateView.translatesAutoresizingMaskIntoConstraints = false
         emptyStateView.isHidden = true
+        emptyStateView.isUserInteractionEnabled = true
         view.addSubview(emptyStateView)
         
         NSLayoutConstraint.activate([
@@ -106,13 +107,11 @@ final class GalleryPageViewController: UIViewController {
             emptyStateView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -32)
         ])
         
-        emptyStateView.configure(for: type) { [weak self] in
-            self?.delegate?.galleryPageDidTapGenerate(self!)
-        }
+        emptyStateView.configure(for: type)
     }
     
     private func setupCollectionView() {
-        collectionView.backgroundColor = .white
+        collectionView.backgroundColor = .systemBackground
         collectionView.delegate = self
         collectionView.prefetchDataSource = self
         collectionView.register(GalleryImageCell.self, forCellWithReuseIdentifier: GalleryImageCell.identifier)
@@ -322,6 +321,9 @@ final class GalleryPageViewController: UIViewController {
     
     private func updateEmptyState() {
         emptyStateView.isHidden = !images.isEmpty || isLoading
+        if !emptyStateView.isHidden {
+            view.bringSubviewToFront(emptyStateView)
+        }
     }
     
     private func showError(_ error: Error) {
