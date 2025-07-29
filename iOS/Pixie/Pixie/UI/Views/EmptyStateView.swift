@@ -1,5 +1,11 @@
 import UIKit
 
+enum EmptyStateType {
+    case personal
+    case explore
+    case transactions
+}
+
 final class EmptyStateView: UIView {
     
     private let iconImageView = UIImageView()
@@ -62,6 +68,25 @@ final class EmptyStateView: UIView {
             iconImageView.image = UIImage(systemName: "globe.americas.fill")
             titleLabel.text = "Gallery is empty"
             subtitleLabel.text = "Be the first to share your creations"
+        }
+    }
+    
+    func configure(for emptyType: EmptyStateType) {
+        switch emptyType {
+        case .personal:
+            iconImageView.image = UIImage(systemName: "photo.on.rectangle.angled")
+            titleLabel.text = "No images yet"
+            subtitleLabel.text = "Your generated images will appear here"
+            
+        case .explore:
+            iconImageView.image = UIImage(systemName: "globe.americas.fill")
+            titleLabel.text = "Gallery is empty"
+            subtitleLabel.text = "Be the first to share your creations"
+            
+        case .transactions:
+            iconImageView.image = UIImage(systemName: "clock.arrow.circlepath")
+            titleLabel.text = "No transactions yet"
+            subtitleLabel.text = "Your credit usage history will appear here"
         }
     }
 }
