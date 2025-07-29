@@ -67,7 +67,7 @@ class GenerationOptionsViewController: UIViewController {
         sizeControl.selectedSegmentIndex = 0
         sizeControl.addTarget(self, action: #selector(controlChanged), for: .valueChanged)
         
-        qualityControl.selectedSegmentIndex = 1
+        qualityControl.selectedSegmentIndex = 0
         qualityControl.addTarget(self, action: #selector(controlChanged), for: .valueChanged)
         advancedToggle.addTarget(self, action: #selector(advancedToggled), for: .valueChanged)
         backgroundControl.selectedSegmentIndex = 0
@@ -250,7 +250,7 @@ class GenerationOptionsViewController: UIViewController {
     }
     
     @objc private func generateTapped() {
-        let sizes = ["auto", "1024x1024", "1024x768", "768x1024"]
+        let sizes = ["auto", "1024x1024", "1536x1024", "1024x1536"]
         let sizeDisplays = ["Auto", "Square", "Landscape", "Portrait"]
         let qualities = ["low", "medium", "high"]
         
