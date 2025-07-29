@@ -8,6 +8,10 @@ enum NetworkError: LocalizedError {
     case httpError(Int, String)
     case unauthorized
     case insufficientCredits
+    case forbidden
+    case tooManyRequests
+    case noConnection
+    case invalidResponse
     
     var errorDescription: String? {
         switch self {
@@ -25,6 +29,14 @@ enum NetworkError: LocalizedError {
             return "Authentication failed: Your API key may be invalid"
         case .insufficientCredits:
             return "Insufficient credits"
+        case .forbidden:
+            return "Access forbidden"
+        case .tooManyRequests:
+            return "Too many requests"
+        case .noConnection:
+            return "No internet connection"
+        case .invalidResponse:
+            return "Invalid response from server"
         }
     }
 }
@@ -129,8 +141,19 @@ class NetworkService: NetworkServiceProtocol {
             throw NetworkError.insufficientCredits
         }
         
+        if httpResponse.statusCode == 403 {
+            throw NetworkError.forbidden
+        }
+        
+        if httpResponse.statusCode == 429 {
+            throw NetworkError.tooManyRequests
+        }
+        
         guard 200...299 ~= httpResponse.statusCode else {
             if let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
+                if errorResponse.error.code == "insufficient_credits" {
+                    throw NetworkError.insufficientCredits
+                }
                 throw NetworkError.serverError(errorResponse.error.message)
             }
             throw NetworkError.httpError(httpResponse.statusCode, HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode))
