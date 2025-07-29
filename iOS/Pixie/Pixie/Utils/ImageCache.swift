@@ -21,8 +21,8 @@ class ImageCache: ImageCacheProtocol {
     }
     
     private func setupCache() {
-        cache.countLimit = 100
-        cache.totalCostLimit = 100 * 1024 * 1024
+        cache.countLimit = 1000
+        cache.totalCostLimit = 1024 * 1024 * 1024
         
         NotificationCenter.default.addObserver(
             self,
