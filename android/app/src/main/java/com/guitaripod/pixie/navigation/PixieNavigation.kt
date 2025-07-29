@@ -259,7 +259,9 @@ fun PixieNavigation(
         }
         
         is Screen.Settings -> {
+            val currentUserId = authViewModel.getCurrentConfig().userId ?: "none"
             val settingsViewModel: com.guitaripod.pixie.presentation.settings.SettingsViewModel = viewModel(
+                key = "settings_$currentUserId",
                 factory = com.guitaripod.pixie.presentation.settings.SettingsViewModelFactory(
                     appContainer.preferencesRepository,
                     appContainer.configManager,

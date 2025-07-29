@@ -50,8 +50,8 @@ class SettingsViewModel(
             val apiUrl = configManager.getApiUrl() ?: "https://openai-image-proxy.guitaripod.workers.dev"
             _uiState.update { it.copy(apiUrl = apiUrl) }
             
-            val isAdmin = adminRepository.checkAdminStatus()
-            _uiState.update { it.copy(isAdmin = isAdmin) }
+            val config = configManager.loadConfig()
+            _uiState.update { it.copy(isAdmin = config.isAdmin) }
             
             updateCacheSize()
         }
