@@ -804,13 +804,18 @@ extension SettingsViewController: UITableViewDelegate {
         alert.addAction(UIAlertAction(title: "Clear", style: .destructive) { _ in
             self.haptics.impact(.success)
             Task {
-                await self.cacheManager.clearCache()
-                self.cacheSize = "0 KB"
+                // Show clearing in progress
                 await MainActor.run {
+                    self.cacheSize = "Clearing..."
                     if let indexPath = self.indexPathForRow(StorageRow.cache, inSection: .storage) {
                         self.tableView.reloadRows(at: [indexPath], with: .none)
                     }
                 }
+                
+                // Clear the cache
+                await self.cacheManager.clearCache()
+                
+                // Load the actual size after clearing
                 self.loadCacheSize()
             }
         })
