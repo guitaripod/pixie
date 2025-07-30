@@ -234,14 +234,16 @@ Native Swift iOS app targeting iOS 16+ that replicates all functionality of the 
 ### Phase 10: Settings & Profile
 
 #### 10.1 Settings Implementation
-- [ ] Create settings screen with card-based sections
-- [ ] Implement Appearance section: Theme selector (Light/Dark/System)
-- [ ] Add Defaults section: Quality, Size, Format, Compression and all other settings in the toolbar.
-- [ ] Create Storage section: Cache management with size display
-- [ ] Implement API section: Connection test with status indicators
+- [x] Create settings screen with card-based sections
+- [x] Implement Appearance section: Theme selector (Light/Dark/System) with segmented control
+- [x] Add Defaults section: Quality, Size, Format, Compression, Background, Moderation with segmented controls
+- [x] Create Storage section: Cache management with size display and clear functionality
+- [x] Implement API section: Connection test with real-time status indicators
 - [x] Add conditional Admin section for admin users
-- [ ] Create Help & Support section with documentation
-- [ ] Implement Account section with logout confirmation
+- [x] Create Help & Support section with local documentation (Getting Started, Features, FAQ)
+- [x] Implement Account section with user ID display and logout confirmation
+- [x] Apply saved theme on app launch
+- [x] Sync all toolbar defaults with saved settings across the app
 
 ### Phase 11: Testing & Release
 
