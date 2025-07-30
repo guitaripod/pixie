@@ -144,7 +144,7 @@ class GenerationViewModel: ObservableObject {
         }
     }
     
-    private func startLiveActivityForGeneration(prompt: String, isEdit: Bool) {
+    private func startLiveActivityForGeneration(prompt: String, isEdit: Bool, editImage: UIImage? = nil) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
             print("❌ Live Activities are not enabled")
             return
@@ -152,11 +152,68 @@ class GenerationViewModel: ObservableObject {
         
         let taskId = UUID().uuidString
         
+        // Truncate prompt if too long to avoid size issues
+        var truncatedPrompt = prompt
+        if prompt.count > 50 {
+            truncatedPrompt = String(prompt.prefix(47)) + "..."
+        }
+        
+        // Create thumbnail data for edit image if provided
+        var thumbnailData: Data? = nil
+        if let image = editImage {
+            // Create a very small thumbnail for the Live Activity
+            let maxSize: CGFloat = 20  // Very small - 20x20 pixels
+            let scale = min(maxSize / image.size.width, maxSize / image.size.height)
+            let thumbnailSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+            
+            // Use UIGraphicsImageRenderer for better performance and quality
+            let renderer = UIGraphicsImageRenderer(size: thumbnailSize)
+            let thumbnail = renderer.image { context in
+                image.draw(in: CGRect(origin: .zero, size: thumbnailSize))
+            }
+            
+            // Try multiple compression levels to get under 2KB
+            let compressionQualities: [CGFloat] = [0.1, 0.05, 0.02, 0.01]
+            
+            for quality in compressionQualities {
+                if let data = thumbnail.jpegData(compressionQuality: quality) {
+                    if data.count < 2000 {  // Target under 2KB for the image
+                        thumbnailData = data
+                        break
+                    }
+                }
+            }
+            
+            // If still too large, make it even smaller
+            if thumbnailData == nil || (thumbnailData?.count ?? 0) > 2000 {
+                let tinySize = CGSize(width: 15, height: 15)  // Even smaller
+                let tinyRenderer = UIGraphicsImageRenderer(size: tinySize)
+                let tinyThumbnail = tinyRenderer.image { context in
+                    image.draw(in: CGRect(origin: .zero, size: tinySize))
+                }
+                
+                thumbnailData = tinyThumbnail.jpegData(compressionQuality: 0.01)
+            }
+            
+            // Calculate total size and ensure it's under limits
+            let promptSize = truncatedPrompt.data(using: .utf8)?.count ?? 0
+            let taskIdSize = 36  // UUID string size
+            let chatIdSize = 36  // UUID string size
+            let imageSize = thumbnailData?.count ?? 0
+            let estimatedTotalSize = promptSize + taskIdSize + chatIdSize + imageSize + 100  // Add buffer for encoding overhead
+            
+            // If total is still too large, skip the image
+            if estimatedTotalSize > 15000 {  // Conservative limit
+                thumbnailData = nil
+            }
+        }
+        
         let attributes = ImageGenerationAttributes(
-            prompt: prompt,
+            prompt: truncatedPrompt,
             taskId: taskId,
             chatId: currentChatId,
-            isEdit: isEdit
+            isEdit: isEdit,
+            editImageData: thumbnailData
         )
         
         let initialState = ImageGenerationAttributes.ContentState(
@@ -295,7 +352,7 @@ class GenerationViewModel: ObservableObject {
         messages.append(loadingMessage)
         
         // Start Live Activity for edit
-        startLiveActivityForGeneration(prompt: options.prompt, isEdit: true)
+        startLiveActivityForGeneration(prompt: options.prompt, isEdit: true, editImage: image)
         
         let taskId = generationService.editImage(
             imageUri: imageUri,
