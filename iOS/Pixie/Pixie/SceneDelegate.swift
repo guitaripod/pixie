@@ -72,11 +72,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         navigationController.navigationBar.isHidden = true
         
         if let splashView = window?.rootViewController?.view as? SplashView {
-            window?.insertSubview(navigationController.view, belowSubview: splashView)
-            navigationController.view.frame = window!.bounds
+            // Set the navigation controller as root first
+            window?.rootViewController = navigationController
+            
+            // Add splash view on top for animation
+            window?.addSubview(splashView)
+            splashView.frame = window!.bounds
             
             splashView.animateOut {
-                self.window?.rootViewController = navigationController
+                splashView.removeFromSuperview()
             }
         } else {
             window?.rootViewController = navigationController
@@ -89,11 +93,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let navigationController = UINavigationController(rootViewController: chatViewController)
         
         if let splashView = window?.rootViewController?.view as? SplashView {
-            window?.insertSubview(navigationController.view, belowSubview: splashView)
-            navigationController.view.frame = window!.bounds
+            // Set the navigation controller as root first
+            window?.rootViewController = navigationController
+            
+            // Add splash view on top for animation
+            window?.addSubview(splashView)
+            splashView.frame = window!.bounds
             
             splashView.animateOut {
-                self.window?.rootViewController = navigationController
+                splashView.removeFromSuperview()
             }
         } else {
             UIView.transition(with: window!, duration: 0.3, options: .transitionCrossDissolve) {
