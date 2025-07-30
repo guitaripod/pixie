@@ -126,29 +126,6 @@ class SettingsViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        Task {
-            let adminRepository = AdminRepository(networkService: AppContainer.shared.networkService)
-            let isAdmin = await adminRepository.checkAdminStatus()
-            
-            if isAdmin && authenticationManager.currentUser?.isAdmin != true {
-                // Update user admin status
-                if let user = authenticationManager.currentUser {
-                    let updatedUser = User(
-                        id: user.id,
-                        email: user.email,
-                        name: user.name,
-                        isAdmin: true,
-                        createdAt: user.createdAt
-                    )
-                    try? await AppContainer.shared.authenticationService.setCurrentUser(updatedUser)
-                }
-            }
-            
-            await MainActor.run {
-                tableView.reloadData()
-            }
-        }
-        
         // Update cache size when view appears
         loadCacheSize()
     }
