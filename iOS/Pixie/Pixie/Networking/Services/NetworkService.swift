@@ -52,15 +52,38 @@ class NetworkService: NetworkServiceProtocol {
     private let session: URLSession
     private let baseURL: String
     private var apiKey: String?
+    private let urlCache: URLCache
     init(baseURL: String = "https://openai-image-proxy.guitaripod.workers.dev") {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 300
         configuration.timeoutIntervalForResource = 300
+        
+        // Configure a larger cache
+        let memoryCapacity = 100 * 1024 * 1024 // 100 MB
+        let diskCapacity = 500 * 1024 * 1024 // 500 MB
+        self.urlCache = URLCache(memoryCapacity: memoryCapacity, diskCapacity: diskCapacity, diskPath: nil) // Use default path
+        
+        configuration.urlCache = urlCache
+        configuration.requestCachePolicy = .returnCacheDataElseLoad
+        
+        // Also update the shared cache to be larger
+        URLCache.shared.memoryCapacity = memoryCapacity
+        URLCache.shared.diskCapacity = diskCapacity
+        
         self.session = URLSession(configuration: configuration)
         self.baseURL = baseURL
     }
     func setAPIKey(_ key: String?) {
         self.apiKey = key
+    }
+    
+    func clearCache() {
+        urlCache.removeAllCachedResponses()
+        urlCache.diskCapacity = 0
+        urlCache.memoryCapacity = 0
+        Thread.sleep(forTimeInterval: 0.1)
+        urlCache.diskCapacity = 500 * 1024 * 1024 // 500 MB
+        urlCache.memoryCapacity = 100 * 1024 * 1024 // 100 MB
     }
     private func createRequest(for endpoint: String, method: String = "GET") throws -> URLRequest {
         guard let url = URL(string: "\(baseURL)\(endpoint)") else {
@@ -93,26 +116,25 @@ class NetworkService: NetworkServiceProtocol {
         _ = try await performRequest(request, type: EmptyResponse.self)
     }
     func downloadData(from url: URL) async throws -> Data {
-        let (data, response) = try await session.data(from: url)
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.noData
-        }
-        guard httpResponse.statusCode == 200 else {
-            throw NetworkError.httpError(httpResponse.statusCode, "Failed to download image")
-        }
-        return data
-    }
-    private func performRequest<T: Decodable>(_ request: URLRequest, type: T.Type) async throws -> T {
-        #if DEBUG
-        logRequest(request)
-        #endif
+        var request = URLRequest(url: url)
+        request.cachePolicy = .returnCacheDataElseLoad
+        
         let (data, response) = try await session.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.noData
         }
-        #if DEBUG
-        logResponse(httpResponse, data: data)
-        #endif
+        
+        guard httpResponse.statusCode == 200 else {
+            throw NetworkError.httpError(httpResponse.statusCode, "Failed to download image")
+        }
+        
+        return data
+    }
+    private func performRequest<T: Decodable>(_ request: URLRequest, type: T.Type) async throws -> T {
+        let (data, response) = try await session.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.noData
+        }
         if httpResponse.statusCode == 401 {
             throw NetworkError.unauthorized
         }
@@ -140,25 +162,6 @@ class NetworkService: NetworkServiceProtocol {
             throw NetworkError.decodingError(error)
         }
     }
-    #if DEBUG
-    private func logRequest(_ request: URLRequest) {
-        print("🌐 [\(request.httpMethod ?? "?")] \(request.url?.absoluteString ?? "Unknown URL")")
-        if let headers = request.allHTTPHeaderFields {
-            print("📋 Headers: \(headers)")
-        }
-        if let body = request.httpBody,
-           let bodyString = String(data: body, encoding: .utf8) {
-            print("📦 Body: \(bodyString)")
-        }
-    }
-    private func logResponse(_ response: HTTPURLResponse, data: Data) {
-        print("✅ [\(response.statusCode)] \(response.url?.absoluteString ?? "Unknown URL")")
-        if let responseString = String(data: data, encoding: .utf8) {
-            let truncated = responseString.prefix(500)
-            print("📄 Response: \(truncated)\(responseString.count > 500 ? "..." : "")")
-        }
-    }
-    #endif
 }
 
 private struct EmptyResponse: Codable {}
