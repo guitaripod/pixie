@@ -45,3 +45,6 @@ cd iOS/Pixie && xcodebuild -project Pixie.xcodeproj -scheme Pixie -destination '
 - **No warnings**: There should be no compiler warnings.
 - **No code comments**: Don't add code comments until specifically asked for, such as interface documentation.
 - **CLI is the source of truth**: All client code must consider the CLI as the source of truth.
+
+# No Code comments
+- DO NOT ADD CODE COMMENTS. THEY ARE BLOAT!!
