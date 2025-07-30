@@ -1,5 +1,5 @@
 use worker::{Request, Response, RouteContext, Result};
-use crate::models::{ImageGenerationRequest, ImageEditRequest, ImageResponse, UsageRecord};
+use crate::models::{ImageGenerationRequest, ImageEditRequest, ImageResponse, UsageRecord, ErrorResponse, ErrorDetail};
 use crate::error::AppError;
 use crate::auth::validate_api_key;
 use crate::storage::store_image_in_r2;
@@ -121,6 +121,23 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
     let mut image_response: ImageResponse = match serde_json::from_str(&resp_body) {
         Ok(resp) => resp,
         Err(_) => {
+            // Check if it's a moderation error
+            if let Ok(error_resp) = serde_json::from_str::<ErrorResponse>(&resp_body) {
+                if error_resp.error.code.as_deref() == Some("moderation_blocked") {
+                    let custom_error = ErrorResponse {
+                        error: ErrorDetail {
+                            message: "Our AI backend is being a bit too cautious with this image. Nothing wrong on your end - just the underlying service being overly protective. Try a different image and you should be good to go!".to_string(),
+                            error_type: error_resp.error.error_type,
+                            param: error_resp.error.param,
+                            code: error_resp.error.code,
+                        }
+                    };
+                    let _ = release_lock(&user_id, &db).await;
+                    return Response::from_json(&custom_error)
+                        .map(|r| r.with_status(openai_resp.status_code()));
+                }
+            }
+            
             let mut response = Response::from_bytes(resp_body.into_bytes())?;
             response.headers_mut().set("Content-Type", "application/json")?;
             let _ = release_lock(&user_id, &db).await;
@@ -465,6 +482,23 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
     let mut image_response: ImageResponse = match serde_json::from_str(&resp_body) {
         Ok(resp) => resp,
         Err(_) => {
+            // Check if it's a moderation error
+            if let Ok(error_resp) = serde_json::from_str::<ErrorResponse>(&resp_body) {
+                if error_resp.error.code.as_deref() == Some("moderation_blocked") {
+                    let custom_error = ErrorResponse {
+                        error: ErrorDetail {
+                            message: "Our AI backend is being a bit too cautious with this image. Nothing wrong on your end - just the underlying service being overly protective. Try a different image and you should be good to go!".to_string(),
+                            error_type: error_resp.error.error_type,
+                            param: error_resp.error.param,
+                            code: error_resp.error.code,
+                        }
+                    };
+                    let _ = release_lock(&user_id, &db).await;
+                    return Response::from_json(&custom_error)
+                        .map(|r| r.with_status(openai_resp.status_code()));
+                }
+            }
+            
             let mut response = Response::from_bytes(resp_body.into_bytes())?;
             response.headers_mut().set("Content-Type", "application/json")?;
             let _ = release_lock(&user_id, &db).await;
