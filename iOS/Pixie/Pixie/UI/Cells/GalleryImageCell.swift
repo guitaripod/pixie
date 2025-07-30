@@ -44,6 +44,7 @@ final class GalleryImageCell: UICollectionViewCell {
         contentView.clipsToBounds = true
         
         imageView.contentMode = .scaleAspectFill
+        imageView.backgroundColor = .systemGray6
         imageView.clipsToBounds = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(imageView)
@@ -133,14 +134,11 @@ final class GalleryImageCell: UICollectionViewCell {
             if let image = await ImageCache.shared.loadImage(from: urlString) {
                 if self.currentImageMetadata?.url == urlString || self.currentImageMetadata?.thumbnailUrl == urlString {
                     self.imageView.image = image
-                    self.updateCellHeight(for: image)
                 }
             }
         }
     }
     
-    private func updateCellHeight(for image: UIImage) {
-    }
     
     private func formatTimeAgo(_ dateString: String) -> String {
         let formatter = ISO8601DateFormatter()
