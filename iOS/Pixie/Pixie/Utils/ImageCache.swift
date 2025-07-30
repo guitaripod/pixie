@@ -80,7 +80,6 @@ class ImageCache: ImageCacheProtocol {
             setImage(image, for: urlString)
             return image
         } catch {
-            print("Failed to load image from \(urlString): \(error)")
             return nil
         }
     }
