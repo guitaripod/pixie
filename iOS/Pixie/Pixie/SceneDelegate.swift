@@ -10,6 +10,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     ) {
         guard let windowScene = scene as? UIWindowScene else { return }
         window = UIWindow(windowScene: windowScene)
+        
+        applyTheme()
+        
         window?.makeKeyAndVisible()
         let loadingVC = UIViewController()
         loadingVC.view.backgroundColor = .systemBackground
@@ -80,5 +83,21 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             self.window?.rootViewController = navigationController
         }
         print("DEBUG: Main interface shown")
+    }
+    
+    private func applyTheme() {
+        let theme = ConfigurationManager.shared.theme
+        let style: UIUserInterfaceStyle
+        
+        switch theme {
+        case .light:
+            style = .light
+        case .dark:
+            style = .dark
+        case .system:
+            style = .unspecified
+        }
+        
+        window?.overrideUserInterfaceStyle = style
     }
 }
