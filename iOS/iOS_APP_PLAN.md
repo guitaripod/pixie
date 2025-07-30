@@ -192,7 +192,7 @@ Native Swift iOS app targeting iOS 16+ that replicates all functionality of the 
 
 #### 9.1 UI/UX Enhancements
 - [x] Implement comprehensive haptic feedback system (9 types: click, longPress, toggle, error, success, warning, sliderTick, confirm, reject)
-- [ ] Add offline mode banner with expand/shrink animation
+- [x] Add offline mode banner with expand/shrink animation
 - [ ] Create loading skeletons and shimmer effects
 - [x] Implement empty states with illustrations and action buttons
 - [x] Add keyboard avoidance using UIKeyboardLayoutGuide
@@ -224,7 +224,7 @@ Native Swift iOS app targeting iOS 16+ that replicates all functionality of the 
 
 #### 9.5 Error Handling
 - [ ] Create unified error presentation
-- [ ] Add offline mode detection and UI
+- [x] Add offline mode detection and UI
 - [ ] Implement debug menu for development
 - [ ] Create crash reporting integration
 - [ ] Add user feedback mechanism
