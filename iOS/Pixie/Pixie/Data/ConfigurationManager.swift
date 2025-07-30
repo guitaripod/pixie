@@ -7,6 +7,8 @@ protocol ConfigurationManagerProtocol {
     var defaultSize: String { get set }
     var defaultOutputFormat: String { get set }
     var defaultCompression: Int { get set }
+    var defaultBackground: String { get set }
+    var defaultModeration: String { get set }
     var enableHaptics: Bool { get set }
     var theme: AppTheme { get set }
     func load()
@@ -50,7 +52,7 @@ class ConfigurationManager: ConfigurationManagerProtocol {
     var defaultSize: String {
         didSet { notifyConfigurationChanged() }
     }
-    @UserDefaultsWrapper(key: "pixie.defaultOutputFormat", defaultValue: "webp")
+    @UserDefaultsWrapper(key: "pixie.defaultOutputFormat", defaultValue: "png")
     var defaultOutputFormat: String {
         didSet { notifyConfigurationChanged() }
     }
@@ -58,13 +60,30 @@ class ConfigurationManager: ConfigurationManagerProtocol {
     var defaultCompression: Int {
         didSet { notifyConfigurationChanged() }
     }
+    @UserDefaultsWrapper(key: "pixie.defaultBackground", defaultValue: "auto")
+    var defaultBackground: String {
+        didSet { notifyConfigurationChanged() }
+    }
+    @UserDefaultsWrapper(key: "pixie.defaultModeration", defaultValue: "auto")
+    var defaultModeration: String {
+        didSet { notifyConfigurationChanged() }
+    }
     @UserDefaultsWrapper(key: "pixie.enableHaptics", defaultValue: true)
     var enableHaptics: Bool {
         didSet { notifyConfigurationChanged() }
     }
-    @UserDefaultsWrapper(key: "pixie.theme", defaultValue: .system)
     var theme: AppTheme {
-        didSet { notifyConfigurationChanged() }
+        get {
+            if let rawValue = defaults.string(forKey: "pixie.theme"),
+               let theme = AppTheme(rawValue: rawValue) {
+                return theme
+            }
+            return .system
+        }
+        set {
+            defaults.set(newValue.rawValue, forKey: "pixie.theme")
+            notifyConfigurationChanged()
+        }
     }
     private init() {
         load()
@@ -81,6 +100,8 @@ class ConfigurationManager: ConfigurationManagerProtocol {
         defaultSize = "auto"
         defaultOutputFormat = "webp"
         defaultCompression = 90
+        defaultBackground = "auto"
+        defaultModeration = "auto"
         enableHaptics = true
         theme = .system
     }
@@ -113,6 +134,21 @@ extension UserDefaultsWrapper where T == AppTheme {
             if let rawValue = userDefaults.string(forKey: key),
                let theme = AppTheme(rawValue: rawValue) {
                 return theme
+            }
+            return defaultValue
+        }
+        set {
+            userDefaults.set(newValue.rawValue, forKey: key)
+        }
+    }
+}
+
+extension UserDefaultsWrapper where T: RawRepresentable, T.RawValue == String {
+    var wrappedValue: T {
+        get {
+            if let rawValue = userDefaults.string(forKey: key),
+               let value = T(rawValue: rawValue) {
+                return value
             }
             return defaultValue
         }
