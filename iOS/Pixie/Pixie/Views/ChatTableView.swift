@@ -67,7 +67,11 @@ class ChatTableView: UIView {
         var snapshot = NSDiffableDataSourceSnapshot<Section, ChatMessage>()
         snapshot.appendSections([.messages])
         snapshot.appendItems(messages, toSection: .messages)
-        dataSource.apply(snapshot, animatingDifferences: animated)
+        dataSource.apply(snapshot, animatingDifferences: animated) { [weak self] in
+            if !messages.isEmpty {
+                self?.scrollToBottom(animated: animated)
+            }
+        }
     }
     func addMessage(_ message: ChatMessage, animated: Bool = true) {
         var snapshot = dataSource.snapshot()
@@ -75,18 +79,25 @@ class ChatTableView: UIView {
             snapshot.appendSections([.messages])
         }
         snapshot.appendItems([message], toSection: .messages)
-        dataSource.apply(snapshot, animatingDifferences: animated)
-        if !snapshot.itemIdentifiers.isEmpty {
-            DispatchQueue.main.async { [weak self] in
-                self?.scrollToBottom(animated: animated)
-            }
+        dataSource.apply(snapshot, animatingDifferences: animated) { [weak self] in
+            self?.scrollToBottom(animated: animated)
         }
     }
     func scrollToBottom(animated: Bool = true) {
         guard let lastSection = dataSource.snapshot().sectionIdentifiers.last,
               let lastItem = dataSource.snapshot().itemIdentifiers(inSection: lastSection).last,
               let indexPath = dataSource.indexPath(for: lastItem) else { return }
-        tableView.scrollToRow(at: indexPath, at: .bottom, animated: animated)
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            let contentHeight = self.tableView.contentSize.height
+            let frameHeight = self.tableView.frame.height
+            let contentInsetBottom = self.tableView.contentInset.bottom
+            
+            if contentHeight > frameHeight - contentInsetBottom {
+                self.tableView.scrollToRow(at: indexPath, at: .bottom, animated: animated)
+            }
+        }
     }
     func adjustForKeyboard(height: CGFloat, duration: TimeInterval) {
         let adjustedHeight = height > 0 ? height - 20 : 0
@@ -133,7 +144,7 @@ class UserMessageCell: UITableViewCell {
     private let bubbleView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .systemBlue
+        view.backgroundColor = UIColor(red: 103/255, green: 80/255, blue: 164/255, alpha: 1)
         view.layer.cornerRadius = 18
         return view
     }()
@@ -141,10 +152,29 @@ class UserMessageCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.numberOfLines = 0
-        label.font = .systemFont(ofSize: 16)
+        label.font = .systemFont(ofSize: 15, weight: .medium)
         label.textColor = .white
         return label
     }()
+    private let metadataStackView: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 3
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
+    private let editImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        imageView.layer.cornerRadius = 8
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.isHidden = true
+        return imageView
+    }()
+    private var editImageBottomConstraint: NSLayoutConstraint!
+    private var metadataBottomConstraint: NSLayoutConstraint!
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupViews()
@@ -157,19 +187,115 @@ class UserMessageCell: UITableViewCell {
         selectionStyle = .none
         contentView.addSubview(bubbleView)
         bubbleView.addSubview(messageLabel)
+        bubbleView.addSubview(metadataStackView)
+        bubbleView.addSubview(editImageView)
+        
+        metadataBottomConstraint = metadataStackView.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: -12)
+        editImageBottomConstraint = editImageView.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: -12)
+        
         NSLayoutConstraint.activate([
             bubbleView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
             bubbleView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             bubbleView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
             bubbleView.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.leadingAnchor, constant: 60),
+            
             messageLabel.topAnchor.constraint(equalTo: bubbleView.topAnchor, constant: 12),
             messageLabel.leadingAnchor.constraint(equalTo: bubbleView.leadingAnchor, constant: 16),
             messageLabel.trailingAnchor.constraint(equalTo: bubbleView.trailingAnchor, constant: -16),
-            messageLabel.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: -12)
+            
+            metadataStackView.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: 8),
+            metadataStackView.leadingAnchor.constraint(equalTo: bubbleView.leadingAnchor, constant: 16),
+            metadataStackView.trailingAnchor.constraint(equalTo: bubbleView.trailingAnchor, constant: -16),
+            
+            editImageView.topAnchor.constraint(equalTo: metadataStackView.bottomAnchor, constant: 8),
+            editImageView.leadingAnchor.constraint(equalTo: bubbleView.leadingAnchor, constant: 16),
+            editImageView.widthAnchor.constraint(equalToConstant: 60),
+            editImageView.heightAnchor.constraint(equalToConstant: 60)
         ])
     }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        messageLabel.text = nil
+        metadataStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        editImageView.image = nil
+        editImageView.isHidden = true
+    }
+    
     func configure(with message: ChatMessage) {
         messageLabel.text = message.content
+        
+        metadataStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        
+        metadataBottomConstraint.isActive = false
+        editImageBottomConstraint.isActive = false
+        
+        if let metadata = message.metadata {
+            let titleLabel = createMetadataLabel(text: metadata.isEditMode ? "✏️ Edit Request" : "🎨 Generation Request", isBold: true)
+            metadataStackView.addArrangedSubview(titleLabel)
+            
+            let divider = UIView()
+            divider.backgroundColor = UIColor.white.withAlphaComponent(0.3)
+            divider.heightAnchor.constraint(equalToConstant: 0.5).isActive = true
+            metadataStackView.addArrangedSubview(divider)
+            
+            addMetadataRow("Quality", value: metadata.quality?.uppercased() ?? "")
+            
+            if let sizeDisplay = metadata.sizeDisplay {
+                addMetadataRow("Size", value: sizeDisplay)
+            }
+            
+            if let background = metadata.background {
+                addMetadataRow("Background", value: background)
+            }
+            
+            if let format = metadata.format {
+                addMetadataRow("Format", value: format)
+                if let compression = metadata.compression {
+                    addMetadataRow("Compress", value: "\(compression)%")
+                }
+            }
+            
+            if let moderation = metadata.moderation {
+                addMetadataRow("Moderation", value: moderation)
+            }
+        }
+        
+        if let editImage = message.editingImage {
+            editImageView.image = editImage
+            editImageView.isHidden = false
+            editImageBottomConstraint.isActive = true
+        } else {
+            editImageView.isHidden = true
+            metadataBottomConstraint.isActive = true
+        }
+    }
+    
+    private func createMetadataLabel(text: String, isBold: Bool = false) -> UILabel {
+        let label = UILabel()
+        label.text = text
+        label.textColor = .white
+        label.font = .systemFont(ofSize: 11, weight: isBold ? .semibold : .regular)
+        return label
+    }
+    
+    private func addMetadataRow(_ label: String, value: String) {
+        let rowStack = UIStackView()
+        rowStack.axis = .horizontal
+        rowStack.distribution = .equalSpacing
+        
+        let labelView = createMetadataLabel(text: label)
+        labelView.textColor = UIColor.white.withAlphaComponent(0.7)
+        labelView.font = .systemFont(ofSize: 10, weight: .regular)
+        
+        let valueView = createMetadataLabel(text: value)
+        valueView.textColor = .white
+        valueView.font = .systemFont(ofSize: 10, weight: .medium)
+        
+        rowStack.addArrangedSubview(labelView)
+        rowStack.addArrangedSubview(valueView)
+        
+        metadataStackView.addArrangedSubview(rowStack)
     }
 }
 
