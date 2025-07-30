@@ -55,7 +55,7 @@ class GenerationService {
     
     private var currentTask: Task<Void, Never>?
     private let progressSubject = CurrentValueSubject<Float, Never>(0)
-    private let stateSubject = CurrentValueSubject<GenerationState, Never>(.idle)
+    let stateSubject = CurrentValueSubject<GenerationState, Never>(.idle)
     
     var progressPublisher: AnyPublisher<Float, Never> {
         progressSubject.eraseToAnyPublisher()
@@ -71,6 +71,7 @@ class GenerationService {
         case completed(images: [UIImage])
         case failed(error: GenerationError)
         case cancelled
+        case backgrounded(taskId: String)
     }
     
     init(apiService: APIServiceProtocol,
@@ -85,9 +86,13 @@ class GenerationService {
         prompt: String,
         options: GenerationOptions,
         completion: @escaping (Result<[UIImage], GenerationError>) -> Void
-    ) {
+    ) -> String? {
+        print("🚀 GenerationService: generateImages called")
+        print("🚀 GenerationService: Prompt: \(prompt)")
+        
         cancel()
         
+        print("🚀 GenerationService: Sending state = generating")
         stateSubject.send(.generating(prompt: prompt))
         delegate?.generationServiceDidStartGenerating(self)
         progressSubject.send(0.1)
@@ -109,16 +114,21 @@ class GenerationService {
             user: nil
         )
         
+        let taskId = UUID().uuidString
+        
         currentTask = Task { [weak self] in
             guard let self = self else { return }
             
             do {
+                print("🚀 GenerationService: Starting API call")
                 progressSubject.send(0.3)
                 delegate?.generationService(self, didUpdateProgress: 0.3)
                 
                 let response = try await apiService.generateImages(request)
+                print("🚀 GenerationService: API response received")
                 
                 guard !Task.isCancelled else {
+                    print("🚀 GenerationService: Task cancelled after API call")
                     self.handleCancellation()
                     completion(.failure(.unknown("Generation cancelled")))
                     return
@@ -127,14 +137,17 @@ class GenerationService {
                 progressSubject.send(0.6)
                 delegate?.generationService(self, didUpdateProgress: 0.6)
                 
+                print("🚀 GenerationService: Downloading \(response.data.count) images")
                 let images = try await self.downloadImages(from: response.data)
                 
                 guard !Task.isCancelled else {
+                    print("🚀 GenerationService: Task cancelled after download")
                     self.handleCancellation()
                     completion(.failure(.unknown("Generation cancelled")))
                     return
                 }
                 
+                print("🚀 GenerationService: Success - sending completed state")
                 progressSubject.send(1.0)
                 stateSubject.send(.completed(images: images))
                 
@@ -145,13 +158,17 @@ class GenerationService {
                 completion(.success(images))
                 
             } catch {
+                print("🚀 GenerationService: Error occurred: \(error)")
                 let generationError = self.mapError(error)
+                print("🚀 GenerationService: Mapped error: \(generationError)")
                 stateSubject.send(.failed(error: generationError))
                 delegate?.generationService(self, didFailWithError: generationError)
                 hapticManager.impact(.error)
                 completion(.failure(generationError))
             }
         }
+        
+        return taskId
     }
     
     func editImage(
@@ -159,12 +176,14 @@ class GenerationService {
         prompt: String,
         options: EditOptions,
         completion: @escaping (Result<[UIImage], GenerationError>) -> Void
-    ) {
+    ) -> String? {
         cancel()
         
         stateSubject.send(.generating(prompt: prompt))
         delegate?.generationServiceDidStartGenerating(self)
         progressSubject.send(0.1)
+        
+        let taskId = UUID().uuidString
         
         currentTask = Task { [weak self] in
             guard let self = self else { return }
@@ -230,9 +249,12 @@ class GenerationService {
                 completion(.failure(generationError))
             }
         }
+        
+        return taskId
     }
     
     func cancel() {
+        print("🚫 GenerationService: cancel() called")
         currentTask?.cancel()
         currentTask = nil
         progressSubject.send(0)
