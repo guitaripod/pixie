@@ -148,6 +148,9 @@ class SettingsViewController: UIViewController {
                 tableView.reloadData()
             }
         }
+        
+        // Update cache size when view appears
+        loadCacheSize()
     }
     
     private func setupTableView() {
