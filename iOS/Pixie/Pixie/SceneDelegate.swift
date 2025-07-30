@@ -14,13 +14,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         applyTheme()
         
         window?.makeKeyAndVisible()
-        let loadingVC = UIViewController()
-        loadingVC.view.backgroundColor = .systemBackground
-        let spinner = UIActivityIndicatorView(style: .large)
-        spinner.center = loadingVC.view.center
-        spinner.startAnimating()
-        loadingVC.view.addSubview(spinner)
-        window?.rootViewController = loadingVC
+        
+        let splashViewController = UIViewController()
+        splashViewController.modalPresentationStyle = .fullScreen
+        let splashView = SplashView(frame: UIScreen.main.bounds)
+        splashViewController.view = splashView
+        window?.rootViewController = splashViewController
         
         Task {
             await checkAuthenticationState()
@@ -71,7 +70,17 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let authViewController = AuthenticationViewController()
         let navigationController = UINavigationController(rootViewController: authViewController)
         navigationController.navigationBar.isHidden = true
-        window?.rootViewController = navigationController
+        
+        if let splashView = window?.rootViewController?.view as? SplashView {
+            window?.insertSubview(navigationController.view, belowSubview: splashView)
+            navigationController.view.frame = window!.bounds
+            
+            splashView.animateOut {
+                self.window?.rootViewController = navigationController
+            }
+        } else {
+            window?.rootViewController = navigationController
+        }
     }
     
     func showMainInterface() {
@@ -79,8 +88,17 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let chatViewController = ChatGenerationViewController()
         let navigationController = UINavigationController(rootViewController: chatViewController)
         
-        UIView.transition(with: window!, duration: 0.3, options: .transitionCrossDissolve) {
-            self.window?.rootViewController = navigationController
+        if let splashView = window?.rootViewController?.view as? SplashView {
+            window?.insertSubview(navigationController.view, belowSubview: splashView)
+            navigationController.view.frame = window!.bounds
+            
+            splashView.animateOut {
+                self.window?.rootViewController = navigationController
+            }
+        } else {
+            UIView.transition(with: window!, duration: 0.3, options: .transitionCrossDissolve) {
+                self.window?.rootViewController = navigationController
+            }
         }
         print("DEBUG: Main interface shown")
     }
