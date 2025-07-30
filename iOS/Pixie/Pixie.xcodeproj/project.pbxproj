@@ -7,16 +7,53 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2CAB91952E3A4E570087EBE7 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CAB91942E3A4E570087EBE7 /* WidgetKit.framework */; };
+		2CAB91972E3A4E570087EBE7 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CAB91962E3A4E570087EBE7 /* SwiftUI.framework */; };
+		2CAB91A42E3A4E580087EBE7 /* PixieWidgetExtensionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2CAB91932E3A4E570087EBE7 /* PixieWidgetExtensionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2CB1092A2E37549E004A0202 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 2CB109292E37549E004A0202 /* GoogleSignInSwift */; };
 		2CB38B262E36B0C400E68202 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CB38B252E36B0C400E68202 /* StoreKit.framework */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		2CAB91A22E3A4E580087EBE7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2CB38B002E36AED800E68202 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2CAB91922E3A4E570087EBE7;
+			remoteInfo = PixieWidgetExtensionExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		2CAB91A92E3A4E580087EBE7 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				2CAB91A42E3A4E580087EBE7 /* PixieWidgetExtensionExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		2CAB91932E3A4E570087EBE7 /* PixieWidgetExtensionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PixieWidgetExtensionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		2CAB91942E3A4E570087EBE7 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		2CAB91962E3A4E570087EBE7 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		2CB38B082E36AED800E68202 /* Pixie.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pixie.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CB38B252E36B0C400E68202 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		2CAB91A82E3A4E580087EBE7 /* Exceptions for "PixieWidgetExtension" folder in "PixieWidgetExtensionExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2CAB91922E3A4E570087EBE7 /* PixieWidgetExtensionExtension */;
+		};
 		2CB38B1A2E36AED900E68202 /* Exceptions for "Pixie" folder in "Pixie" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -27,6 +64,14 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		2CAB91982E3A4E570087EBE7 /* PixieWidgetExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				2CAB91A82E3A4E580087EBE7 /* Exceptions for "PixieWidgetExtension" folder in "PixieWidgetExtensionExtension" target */,
+			);
+			path = PixieWidgetExtension;
+			sourceTree = "<group>";
+		};
 		2CB38B0A2E36AED800E68202 /* Pixie */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -38,6 +83,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		2CAB91902E3A4E570087EBE7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2CAB91972E3A4E570087EBE7 /* SwiftUI.framework in Frameworks */,
+				2CAB91952E3A4E570087EBE7 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2CB38B052E36AED800E68202 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -54,6 +108,7 @@
 			isa = PBXGroup;
 			children = (
 				2CB38B0A2E36AED800E68202 /* Pixie */,
+				2CAB91982E3A4E570087EBE7 /* PixieWidgetExtension */,
 				2CB38B242E36B0C400E68202 /* Frameworks */,
 				2CB38B092E36AED800E68202 /* Products */,
 			);
@@ -63,6 +118,7 @@
 			isa = PBXGroup;
 			children = (
 				2CB38B082E36AED800E68202 /* Pixie.app */,
+				2CAB91932E3A4E570087EBE7 /* PixieWidgetExtensionExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -71,6 +127,8 @@
 			isa = PBXGroup;
 			children = (
 				2CB38B252E36B0C400E68202 /* StoreKit.framework */,
+				2CAB91942E3A4E570087EBE7 /* WidgetKit.framework */,
+				2CAB91962E3A4E570087EBE7 /* SwiftUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -78,6 +136,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		2CAB91922E3A4E570087EBE7 /* PixieWidgetExtensionExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2CAB91A52E3A4E580087EBE7 /* Build configuration list for PBXNativeTarget "PixieWidgetExtensionExtension" */;
+			buildPhases = (
+				2CAB918F2E3A4E570087EBE7 /* Sources */,
+				2CAB91902E3A4E570087EBE7 /* Frameworks */,
+				2CAB91912E3A4E570087EBE7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				2CAB91982E3A4E570087EBE7 /* PixieWidgetExtension */,
+			);
+			name = PixieWidgetExtensionExtension;
+			packageProductDependencies = (
+			);
+			productName = PixieWidgetExtensionExtension;
+			productReference = 2CAB91932E3A4E570087EBE7 /* PixieWidgetExtensionExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		2CB38B072E36AED800E68202 /* Pixie */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2CB38B1B2E36AED900E68202 /* Build configuration list for PBXNativeTarget "Pixie" */;
@@ -85,10 +165,12 @@
 				2CB38B042E36AED800E68202 /* Sources */,
 				2CB38B052E36AED800E68202 /* Frameworks */,
 				2CB38B062E36AED800E68202 /* Resources */,
+				2CAB91A92E3A4E580087EBE7 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				2CAB91A32E3A4E580087EBE7 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				2CB38B0A2E36AED800E68202 /* Pixie */,
@@ -111,6 +193,9 @@
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
+					2CAB91922E3A4E570087EBE7 = {
+						CreatedOnToolsVersion = 16.2;
+					};
 					2CB38B072E36AED800E68202 = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -134,11 +219,19 @@
 			projectRoot = "";
 			targets = (
 				2CB38B072E36AED800E68202 /* Pixie */,
+				2CAB91922E3A4E570087EBE7 /* PixieWidgetExtensionExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		2CAB91912E3A4E570087EBE7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2CB38B062E36AED800E68202 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -149,6 +242,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		2CAB918F2E3A4E570087EBE7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2CB38B042E36AED800E68202 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -158,7 +258,71 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		2CAB91A32E3A4E580087EBE7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2CAB91922E3A4E570087EBE7 /* PixieWidgetExtensionExtension */;
+			targetProxy = 2CAB91A22E3A4E580087EBE7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		2CAB91A62E3A4E580087EBE7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P4DQK6SRKR;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PixieWidgetExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PixieWidgetExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.guitaripod.Pixie.PixieWidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2CAB91A72E3A4E580087EBE7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P4DQK6SRKR;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PixieWidgetExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PixieWidgetExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.guitaripod.Pixie.PixieWidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		2CB38B1C2E36AED900E68202 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -170,8 +334,8 @@
 				DEVELOPMENT_TEAM = P4DQK6SRKR;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Pixie/Resources/Info.plist;
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Pixie needs permission to save generated images to your photo library";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Pixie needs access to your photo library to save generated images";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Pixie needs access to save generated images to your photo library";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Pixie needs access to your photo library to edit existing images and save generated images";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -205,8 +369,8 @@
 				DEVELOPMENT_TEAM = P4DQK6SRKR;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Pixie/Resources/Info.plist;
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Pixie needs permission to save generated images to your photo library";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Pixie needs access to your photo library to save generated images";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Pixie needs access to save generated images to your photo library";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Pixie needs access to your photo library to edit existing images and save generated images";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -351,6 +515,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		2CAB91A52E3A4E580087EBE7 /* Build configuration list for PBXNativeTarget "PixieWidgetExtensionExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2CAB91A62E3A4E580087EBE7 /* Debug */,
+				2CAB91A72E3A4E580087EBE7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		2CB38B032E36AED800E68202 /* Build configuration list for PBXProject "Pixie" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
