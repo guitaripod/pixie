@@ -210,7 +210,24 @@ class GenerationViewModel: ObservableObject {
         error = nil
         generationStartTime = Date()
         
-        let userMessage = ChatMessage(role: .user, content: prompt)
+        let metadata = ChatMessage.MessageMetadata(
+            size: options.size,
+            quality: options.quality,
+            credits: nil,
+            sizeDisplay: options.sizeDisplay,
+            background: options.background,
+            format: options.outputFormat,
+            compression: options.compression,
+            moderation: options.moderation,
+            isEditMode: false
+        )
+        
+        let userMessage = ChatMessage(
+            text: prompt,
+            images: nil,
+            isUser: true,
+            metadata: metadata
+        )
         messages.append(userMessage)
         
         let loadingMessage = ChatMessage(role: .loading)
@@ -244,13 +261,26 @@ class GenerationViewModel: ObservableObject {
         isGenerating = true
         error = nil
         
+        let metadata = ChatMessage.MessageMetadata(
+            size: options.size.value,
+            quality: options.quality.value,
+            credits: nil,
+            sizeDisplay: options.size.displayName + " (" + options.size.dimensions + ")",
+            background: options.background,
+            format: options.outputFormat,
+            compression: options.compression,
+            moderation: nil,
+            isEditMode: true
+        )
+        
         let userMessage = ChatMessage(
             id: UUID().uuidString,
-            text: options.prompt,
-            images: [image],
+            text: "Edit: " + options.prompt,
+            images: nil,
             isUser: true,
             timestamp: Date(),
-            metadata: nil
+            metadata: metadata,
+            editingImage: image
         )
         messages.append(userMessage)
         
