@@ -44,15 +44,14 @@ final class GalleryPageViewController: UIViewController {
     }
     
     private static func createLayout() -> UICollectionViewLayout {
-        let spacing: CGFloat = 0.5
+        let spacing: CGFloat = 1
         let columns: CGFloat = 3
         
         let itemSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .fractionalHeight(1.0)
+            widthDimension: .fractionalWidth(1.0 / columns),
+            heightDimension: .fractionalWidth(1.0 / columns)
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        item.contentInsets = NSDirectionalEdgeInsets(top: spacing, leading: spacing, bottom: spacing, trailing: spacing)
         
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -61,11 +60,13 @@ final class GalleryPageViewController: UIViewController {
         
         let group = NSCollectionLayoutGroup.horizontal(
             layoutSize: groupSize,
-            repeatingSubitem: item,
+            subitem: item,
             count: Int(columns)
         )
+        group.interItemSpacing = .fixed(spacing)
         
         let section = NSCollectionLayoutSection(group: group)
+        section.interGroupSpacing = spacing
         section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 80, trailing: 0)
         
         let layout = UICollectionViewCompositionalLayout(section: section)
