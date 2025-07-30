@@ -20,6 +20,7 @@ class ChatGenerationViewController: UIViewController {
     private let haptics = HapticManager.shared
     private var suggestionsBottomConstraint: NSLayoutConstraint!
     private var chatBottomConstraint: NSLayoutConstraint!
+    private let offlineBanner = OfflineBanner()
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -46,6 +47,8 @@ class ChatGenerationViewController: UIViewController {
         inputBar.translatesAutoresizingMaskIntoConstraints = false
         inputBar.selectedSuggestionsManager = selectedSuggestionsManager
         view.addSubview(inputBar)
+        offlineBanner.alpha = 0
+        view.addSubview(offlineBanner)
     }
     private func setupConstraints() {
         NSLayoutConstraint.activate([
@@ -53,16 +56,25 @@ class ChatGenerationViewController: UIViewController {
             inputBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             inputBar.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+        
+        let bannerTopConstraint = offlineBanner.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -36)
+        offlineBanner.setTopConstraint(bannerTopConstraint)
+        NSLayoutConstraint.activate([
+            offlineBanner.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            offlineBanner.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            bannerTopConstraint
+        ])
+        
         suggestionsBottomConstraint = suggestionsView.bottomAnchor.constraint(equalTo: inputBar.topAnchor)
         NSLayoutConstraint.activate([
-            suggestionsView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            suggestionsView.topAnchor.constraint(equalTo: offlineBanner.bottomAnchor),
             suggestionsView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             suggestionsView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             suggestionsBottomConstraint
         ])
         chatBottomConstraint = chatView.bottomAnchor.constraint(equalTo: inputBar.topAnchor)
         NSLayoutConstraint.activate([
-            chatView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            chatView.topAnchor.constraint(equalTo: offlineBanner.bottomAnchor),
             chatView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             chatView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             chatBottomConstraint
