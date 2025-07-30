@@ -282,33 +282,12 @@ final class GalleryPageViewController: UIViewController {
             }
         }
         
-        #if DEBUG
-        if let jsonString = String(data: data, encoding: .utf8) {
-            print("Gallery API Response: \(jsonString)")
-        }
-        #endif
-        
         let decoder = JSONDecoder()
         do {
             let response = try decoder.decode(GalleryResponse.self, from: data)
             GalleryCache.shared.setResponse(response, for: cacheKey)
             return response
         } catch {
-            print("Decoding error: \(error)")
-            if let decodingError = error as? DecodingError {
-                switch decodingError {
-                case .dataCorrupted(let context):
-                    print("Data corrupted: \(context)")
-                case .keyNotFound(let key, let context):
-                    print("Key '\(key)' not found: \(context)")
-                case .typeMismatch(let type, let context):
-                    print("Type mismatch for type \(type): \(context)")
-                case .valueNotFound(let type, let context):
-                    print("Value not found for type \(type): \(context)")
-                @unknown default:
-                    print("Unknown decoding error")
-                }
-            }
             throw error
         }
     }
