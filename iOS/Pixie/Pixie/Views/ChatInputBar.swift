@@ -707,8 +707,11 @@ class ChatInputBar: UIView {
     }
     
     @objc private func configurationChanged() {
-        if promptTextView.text.isEmpty {
-            applyDefaults()
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            if self.promptTextView.text.isEmpty {
+                self.applyDefaults()
+            }
         }
     }
     
