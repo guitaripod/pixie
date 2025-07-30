@@ -1,6 +1,7 @@
 import ActivityKit
 import WidgetKit
 import SwiftUI
+import UIKit
 
 @available(iOS 16.2, *)
 struct ImageGenerationLiveActivity: Widget {
@@ -21,10 +22,24 @@ struct ImageGenerationLiveActivity: Widget {
                 }
                 
                 DynamicIslandExpandedRegion(.trailing) {
-                    ProgressView(value: context.state.progress)
-                        .progressViewStyle(.circular)
-                        .tint(.purple)
-                        .scaleEffect(0.8)
+                    if context.attributes.isEdit, let imageData = context.attributes.editImageData,
+                       let uiImage = UIImage(data: imageData) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .interpolation(.none)  // Prevent blurring on small images
+                            .scaledToFill()
+                            .frame(width: 45, height: 45)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.purple.opacity(0.3), lineWidth: 1)
+                            )
+                    } else {
+                        ProgressView(value: context.state.progress)
+                            .progressViewStyle(.circular)
+                            .tint(.purple)
+                            .scaleEffect(0.8)
+                    }
                 }
                 
                 DynamicIslandExpandedRegion(.center) {
@@ -86,6 +101,14 @@ struct ImageGenerationLiveActivity: Widget {
                     Image(systemName: context.state.status == .completed ? "checkmark.circle.fill" : "xmark.circle.fill")
                         .foregroundColor(statusColor(for: context.state.status))
                         .font(.caption)
+                } else if context.attributes.isEdit, let imageData = context.attributes.editImageData,
+                          let uiImage = UIImage(data: imageData) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .interpolation(.none)  // Prevent blurring on small images
+                        .scaledToFill()
+                        .frame(width: 24, height: 24)
+                        .clipShape(Circle())
                 } else {
                     ProgressView(value: context.state.progress)
                         .progressViewStyle(.circular)
@@ -153,7 +176,19 @@ struct LockScreenLiveActivityView: View {
                 
                 Spacer()
                 
-                if context.state.status != .completed && context.state.status != .failed {
+                if context.attributes.isEdit, let imageData = context.attributes.editImageData,
+                   let uiImage = UIImage(data: imageData) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .interpolation(.none)  // Prevent blurring on small images
+                        .scaledToFill()
+                        .frame(width: 36, height: 36)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.purple.opacity(0.3), lineWidth: 1)
+                        )
+                } else if context.state.status != .completed && context.state.status != .failed {
                     ProgressView()
                         .progressViewStyle(.circular)
                         .scaleEffect(0.8)
