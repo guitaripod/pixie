@@ -101,7 +101,7 @@ Native Swift iOS app targeting iOS 16+ that replicates all functionality of the 
 
 #### 5.1 Image Selection
 - [x] Create unified image picker with PhotosUI framework
-- [ ] Add gallery browser for user's images (gallery:id support)
+- [x] Add gallery browser for user's images (gallery:id support)
 - [x] Create image preview with pinch-to-zoom gesture
 - [x] Implement image selection using PHPickerViewController for modern photo access
 - [x] Add recent edits quick access section
