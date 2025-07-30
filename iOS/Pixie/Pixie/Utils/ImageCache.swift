@@ -9,13 +9,13 @@ protocol ImageCacheProtocol {
 }
 
 class ImageCache: ImageCacheProtocol {
-    static let shared = ImageCache()
+    static let shared = ImageCache(networkService: AppContainer.shared.networkService)
     
     private let cache = NSCache<NSString, UIImage>()
     private let ioQueue = DispatchQueue(label: "com.guitaripod.pixie.imagecache", attributes: .concurrent)
     private let networkService: NetworkServiceProtocol
     
-    init(networkService: NetworkServiceProtocol = NetworkService()) {
+    init(networkService: NetworkServiceProtocol) {
         self.networkService = networkService
         setupCache()
     }
