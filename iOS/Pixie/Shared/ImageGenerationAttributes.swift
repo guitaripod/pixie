@@ -20,12 +20,14 @@ public struct ImageGenerationAttributes: ActivityAttributes {
     public var taskId: String
     public var chatId: String
     public var isEdit: Bool
+    public var editImageData: Data?
     
-    public init(prompt: String, taskId: String, chatId: String, isEdit: Bool) {
+    public init(prompt: String, taskId: String, chatId: String, isEdit: Bool, editImageData: Data? = nil) {
         self.prompt = prompt
         self.taskId = taskId
         self.chatId = chatId
         self.isEdit = isEdit
+        self.editImageData = editImageData
     }
 }
 
