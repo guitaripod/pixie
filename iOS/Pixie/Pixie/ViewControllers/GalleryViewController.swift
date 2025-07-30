@@ -215,19 +215,15 @@ private extension GalleryViewController {
     }
     
     func downloadImage(from urlString: String) {
-        guard let url = URL(string: urlString) else { return }
-        
-        let task = URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
-            guard let data = data, let image = UIImage(data: data), error == nil else {
-                DispatchQueue.main.async {
-                    self?.showToast("Failed to download image")
+        Task {
+            if let image = await ImageCache.shared.loadImage(from: urlString) {
+                UIImageWriteToSavedPhotosAlbum(image, self, #selector(self.image(_:didFinishSavingWithError:contextInfo:)), nil)
+            } else {
+                await MainActor.run {
+                    self.showToast("Failed to download image")
                 }
-                return
             }
-            
-            UIImageWriteToSavedPhotosAlbum(image, self, #selector(self?.image(_:didFinishSavingWithError:contextInfo:)), nil)
         }
-        task.resume()
     }
     
     @objc func image(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
@@ -241,15 +237,23 @@ private extension GalleryViewController {
     }
     
     func shareImage(from urlString: String) {
-        guard let url = URL(string: urlString) else { return }
-        
-        let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-        if let popover = activityVC.popoverPresentationController {
-            popover.sourceView = view
-            popover.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 0, height: 0)
-            popover.permittedArrowDirections = []
+        Task {
+            if let image = await ImageCache.shared.loadImage(from: urlString) {
+                await MainActor.run {
+                    let activityVC = UIActivityViewController(activityItems: [image], applicationActivities: nil)
+                    if let popover = activityVC.popoverPresentationController {
+                        popover.sourceView = self.view
+                        popover.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
+                        popover.permittedArrowDirections = []
+                    }
+                    self.present(activityVC, animated: true)
+                }
+            } else {
+                await MainActor.run {
+                    self.showToast("Failed to load image for sharing")
+                }
+            }
         }
-        present(activityVC, animated: true)
     }
 }
 
