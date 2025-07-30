@@ -79,12 +79,10 @@ class ChatGenerationViewController: UIViewController {
         let galleryButton = UIBarButtonItem(title: "Gallery", style: .plain, target: self, action: #selector(galleryTapped))
         let creditsButton = UIBarButtonItem(title: "Credits", style: .plain, target: self, action: #selector(creditsTapped))
         
-        // Check if user is admin
         let isAdmin = AuthenticationManager.shared.currentUser?.isAdmin ?? false
         let settingsButton: UIBarButtonItem
         
         if isAdmin {
-            // Create settings button with admin badge
             let settingsView = UIView()
             let settingsImageView = UIImageView(image: UIImage(systemName: "gearshape"))
             settingsImageView.tintColor = self.view.tintColor
@@ -296,6 +294,10 @@ class ChatGenerationViewController: UIViewController {
             switchToGenerateMode()
         }
         viewModel.resetChat()
+        
+        inputBar.applyDefaults()
+        inputBar.clear()
+        
         currentOptions = GenerationOptions.default
         currentOptions.size = inputBar.selectedSize.value
         currentOptions.quality = inputBar.selectedQuality.value
@@ -303,9 +305,9 @@ class ChatGenerationViewController: UIViewController {
         currentOptions.compression = inputBar.selectedFormat != "png" ? inputBar.compressionLevel : nil
         currentOptions.background = inputBar.selectedBackground
         currentOptions.moderation = inputBar.selectedModeration
+        
         selectedSuggestionsManager.clearAll()
         inputBar.updateIndicators()
-        inputBar.clear()
         suggestionsView.refreshView()
         transitionToState(.suggestions, animated: true)
     }

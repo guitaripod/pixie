@@ -40,26 +40,36 @@ class ChatInputBar: UIView {
     }
     var selectedSize: ImageSize {
         let sizes: [ImageSize] = [.auto, .square, .landscape, .portrait]
-        return sizes[sizeSelector.selectedSegmentIndex]
+        let index = sizeSelector.selectedSegmentIndex
+        guard index >= 0 && index < sizes.count else { return .auto }
+        return sizes[index]
     }
     var selectedQuality: ImageQuality {
         let qualities: [ImageQuality] = [.auto, .low, .medium, .high]
-        return qualities[qualitySelector.selectedSegmentIndex]
+        let index = qualitySelector.selectedSegmentIndex
+        guard index >= 0 && index < qualities.count else { return .low }
+        return qualities[index]
     }
     var selectedBackground: String? {
         let backgrounds = ["auto", "transparent", "opaque", nil]
-        return backgrounds[backgroundSelector.selectedSegmentIndex]
+        let index = backgroundSelector.selectedSegmentIndex
+        guard index >= 0 && index < backgrounds.count else { return "auto" }
+        return backgrounds[index]
     }
     var selectedFormat: String {
         let formats = ["png", "jpeg", "webp"]
-        return formats[formatSelector.selectedSegmentIndex]
+        let index = formatSelector.selectedSegmentIndex
+        guard index >= 0 && index < formats.count else { return "webp" }
+        return formats[index]
     }
     var compressionLevel: Int {
         return Int(compressionSlider.value)
     }
     var selectedModeration: String? {
         let moderations = [nil, "auto", "low"]
-        return moderations[moderationSelector.selectedSegmentIndex]
+        let index = moderationSelector.selectedSegmentIndex
+        guard index >= 0 && index < moderations.count else { return "auto" }
+        return moderations[index]
     }
     func collapse() {
         setExpanded(false, animated: true)
@@ -68,10 +78,23 @@ class ChatInputBar: UIView {
         super.init(frame: frame)
         setupUI()
         setupConstraints()
+        applyDefaults()
         updateCredits()
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(configurationChanged),
+            name: ConfigurationManager.configurationDidChangeNotification,
+            object: nil
+        )
     }
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     private func setupUI() {
         backgroundColor = .systemBackground
@@ -208,13 +231,11 @@ class ChatInputBar: UIView {
         let sizeLabel = createLabel("Size")
         contentView.addSubview(sizeLabel)
         sizeSelector.translatesAutoresizingMaskIntoConstraints = false
-        sizeSelector.selectedSegmentIndex = 0
         sizeSelector.addTarget(self, action: #selector(updateCredits), for: .valueChanged)
         contentView.addSubview(sizeSelector)
         let qualityLabel = createLabel("Quality")
         contentView.addSubview(qualityLabel)
         qualitySelector.translatesAutoresizingMaskIntoConstraints = false
-        qualitySelector.selectedSegmentIndex = 1
         qualitySelector.addTarget(self, action: #selector(updateCredits), for: .valueChanged)
         contentView.addSubview(qualitySelector)
         advancedOptionsButton.translatesAutoresizingMaskIntoConstraints = false
@@ -339,15 +360,13 @@ class ChatInputBar: UIView {
         let backgroundLabel = createLabel("Background")
         stackView.addArrangedSubview(backgroundLabel)
         backgroundSelector.translatesAutoresizingMaskIntoConstraints = false
-        backgroundSelector.selectedSegmentIndex = 0
         stackView.addArrangedSubview(backgroundSelector)
         let formatLabel = createLabel("Output Format")
         stackView.addArrangedSubview(formatLabel)
         formatSelector.translatesAutoresizingMaskIntoConstraints = false
-        formatSelector.selectedSegmentIndex = 0
         formatSelector.addTarget(self, action: #selector(formatChanged), for: .valueChanged)
         stackView.addArrangedSubview(formatSelector)
-        compressionLabel.text = "Compression: 80%"
+        compressionLabel.text = "Compression: \(ConfigurationManager.shared.defaultCompression)%"
         compressionLabel.font = .systemFont(ofSize: 14, weight: .medium)
         compressionLabel.textColor = .secondaryLabel
         compressionLabel.isHidden = true
@@ -355,14 +374,12 @@ class ChatInputBar: UIView {
         compressionSlider.translatesAutoresizingMaskIntoConstraints = false
         compressionSlider.minimumValue = 1
         compressionSlider.maximumValue = 100
-        compressionSlider.value = 80
         compressionSlider.isHidden = true
         compressionSlider.addTarget(self, action: #selector(compressionChanged), for: .valueChanged)
         stackView.addArrangedSubview(compressionSlider)
         let moderationLabel = createLabel("Moderation")
         stackView.addArrangedSubview(moderationLabel)
         moderationSelector.translatesAutoresizingMaskIntoConstraints = false
-        moderationSelector.selectedSegmentIndex = 1
         stackView.addArrangedSubview(moderationSelector)
         NSLayoutConstraint.activate([
             stackView.topAnchor.constraint(equalTo: advancedOptionsContainer.topAnchor),
@@ -641,6 +658,60 @@ class ChatInputBar: UIView {
             compression: selectedFormat != "png" ? compressionLevel : nil
         )
     }
+    
+    func applyDefaults() {
+        let config = ConfigurationManager.shared
+        
+        switch config.defaultSize {
+        case "auto": sizeSelector.selectedSegmentIndex = 0
+        case "1024x1024": sizeSelector.selectedSegmentIndex = 1
+        case "1792x1024": sizeSelector.selectedSegmentIndex = 2
+        case "1024x1792": sizeSelector.selectedSegmentIndex = 3
+        default: sizeSelector.selectedSegmentIndex = 0
+        }
+        
+        switch config.defaultQuality {
+        case "auto": qualitySelector.selectedSegmentIndex = 0
+        case "low": qualitySelector.selectedSegmentIndex = 1
+        case "medium": qualitySelector.selectedSegmentIndex = 2
+        case "high": qualitySelector.selectedSegmentIndex = 3
+        default: qualitySelector.selectedSegmentIndex = 1
+        }
+        
+        switch config.defaultOutputFormat {
+        case "png": formatSelector.selectedSegmentIndex = 0
+        case "jpeg": formatSelector.selectedSegmentIndex = 1
+        case "webp": formatSelector.selectedSegmentIndex = 2
+        default: formatSelector.selectedSegmentIndex = 0
+        }
+        
+        compressionSlider.value = Float(config.defaultCompression)
+        compressionChanged()
+        
+        switch config.defaultBackground {
+        case "auto": backgroundSelector.selectedSegmentIndex = 0
+        case "transparent": backgroundSelector.selectedSegmentIndex = 1
+        case "opaque": backgroundSelector.selectedSegmentIndex = 2
+        case "none": backgroundSelector.selectedSegmentIndex = 3
+        default: backgroundSelector.selectedSegmentIndex = 0
+        }
+        
+        switch config.defaultModeration {
+        case "default": moderationSelector.selectedSegmentIndex = 0
+        case "auto": moderationSelector.selectedSegmentIndex = 1
+        case "low": moderationSelector.selectedSegmentIndex = 2
+        default: moderationSelector.selectedSegmentIndex = 1
+        }
+        
+        updateCredits()
+    }
+    
+    @objc private func configurationChanged() {
+        if promptTextView.text.isEmpty {
+            applyDefaults()
+        }
+    }
+    
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         updateBorderColors()
