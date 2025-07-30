@@ -106,7 +106,9 @@ class SettingsViewController: UIViewController {
     }
     
     @objc private func configurationDidChange() {
-        tableView.reloadData()
+        DispatchQueue.main.async { [weak self] in
+            self?.tableView.reloadData()
+        }
     }
     
     private func loadCacheSize() {
