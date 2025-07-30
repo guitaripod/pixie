@@ -264,6 +264,7 @@ class ChatGenerationViewController: UIViewController {
         }
         if currentState == .suggestions {
             print("🖋️ ChatGenerationVC: Transitioning from suggestions to chat")
+            suggestionsView.alpha = 0
             transitionToState(.chat, animated: true)
         }
         print("🖋️ ChatGenerationVC: Setting up generation options")
@@ -524,6 +525,9 @@ class ChatGenerationViewController: UIViewController {
             timestamp: Date(),
             metadata: nil
         )
+        if currentState == .suggestions {
+            suggestionsView.alpha = 0
+        }
         transitionToState(.chat, animated: true)
         chatView.addMessage(message)
         viewModel.editImage(image: selectedImage.image, options: editOptions)
