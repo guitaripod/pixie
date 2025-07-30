@@ -61,7 +61,7 @@ class AuthenticationViewController: UIViewController {
         buttonStackView.translatesAutoresizingMaskIntoConstraints = false
         buttonStackView.axis = .vertical
         buttonStackView.spacing = 12
-        buttonStackView.distribution = .fillEqually
+        buttonStackView.distribution = .fill
         buttonContainerView.addSubview(buttonStackView)
         
         googleButton.addAction(UIAction { [weak self] _ in
@@ -153,7 +153,7 @@ class AuthenticationViewController: UIViewController {
             buttonStackView.topAnchor.constraint(equalTo: buttonContainerView.topAnchor),
             
             appleButton.heightAnchor.constraint(equalToConstant: 50),
-            googleButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 48),
+            googleButton.heightAnchor.constraint(equalToConstant: 48),
             githubButton.heightAnchor.constraint(equalToConstant: 50),
             
             termsLabel.topAnchor.constraint(equalTo: buttonStackView.bottomAnchor, constant: 16),
