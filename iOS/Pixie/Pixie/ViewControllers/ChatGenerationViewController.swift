@@ -14,13 +14,15 @@ class ChatGenerationViewController: UIViewController {
     private let inputBar = ChatInputBar()
     private let selectedSuggestionsManager = SelectedSuggestionsManager()
     private var toolbarMode: ToolbarMode = .generate
-    private let viewModel = GenerationViewModel()
+    private let chatId = UUID().uuidString
+    private lazy var viewModel = GenerationViewModel(chatId: self.chatId)
     private var cancellables = Set<AnyCancellable>()
     private var currentOptions = GenerationOptions.default
     private let haptics = HapticManager.shared
     private var suggestionsBottomConstraint: NSLayoutConstraint!
     private var chatBottomConstraint: NSLayoutConstraint!
     private let offlineBanner = OfflineBanner()
+    private var notificationObserver: NSObjectProtocol?
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -28,11 +30,15 @@ class ChatGenerationViewController: UIViewController {
         setupNavigationBar()
         setupHandlers()
         setupBindings()
+        setupNotificationObserver()
         transitionToState(.suggestions, animated: false)
     }
     
     deinit {
         NotificationCenter.default.removeObserver(self)
+        if let observer = notificationObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
     private func setupUI() {
         view.backgroundColor = .systemBackground
@@ -180,6 +186,7 @@ class ChatGenerationViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] error in
                 if let error = error {
+                    print("🖋️ ChatGenerationVC: Error received from viewModel: \(error)")
                     self?.showError(error)
                 }
             }
@@ -190,6 +197,23 @@ class ChatGenerationViewController: UIViewController {
             }
             .store(in: &cancellables)
     }
+    
+    private func setupNotificationObserver() {
+        notificationObserver = NotificationCenter.default.addObserver(
+            forName: .openChatFromNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let userInfo = notification.userInfo,
+                  let notificationChatId = userInfo["chatId"] as? String,
+                  notificationChatId == self?.chatId else { return }
+            
+            if self?.currentState == .suggestions {
+                self?.transitionToState(.chat, animated: true)
+            }
+        }
+    }
+    
     private func transitionToState(_ newState: ViewState, animated: Bool) {
         guard newState != currentState else { return }
         let fromView: UIView
@@ -228,14 +252,21 @@ class ChatGenerationViewController: UIViewController {
         }
     }
     private func handleSendPrompt(_ prompt: String) {
-        guard !prompt.isEmpty else { return }
+        print("🖋️ ChatGenerationVC: handleSendPrompt called with prompt: \(prompt)")
+        guard !prompt.isEmpty else {
+            print("🖋️ ChatGenerationVC: Prompt is empty, returning")
+            return
+        }
         if prompt == "EDIT_MODE" {
+            print("🖋️ ChatGenerationVC: Edit mode detected")
             handleEditImage()
             return
         }
         if currentState == .suggestions {
+            print("🖋️ ChatGenerationVC: Transitioning from suggestions to chat")
             transitionToState(.chat, animated: true)
         }
+        print("🖋️ ChatGenerationVC: Setting up generation options")
         viewModel.prompt = prompt
         currentOptions.prompt = prompt
         currentOptions.size = inputBar.selectedSize.value
@@ -244,6 +275,7 @@ class ChatGenerationViewController: UIViewController {
         currentOptions.compression = inputBar.selectedFormat != "png" ? inputBar.compressionLevel : nil
         currentOptions.background = inputBar.selectedBackground
         currentOptions.moderation = inputBar.selectedModeration
+        print("🖋️ ChatGenerationVC: Calling viewModel.generateImages")
         viewModel.generateImages(with: currentOptions)
     }
     private func handleQuickAction(_ action: String) {
@@ -287,6 +319,17 @@ class ChatGenerationViewController: UIViewController {
         inputBar.setText(action)
     }
     private func showError(_ error: GenerationError) {
+        // Dismiss any existing alert first
+        if presentedViewController is UIAlertController {
+            dismiss(animated: false) { [weak self] in
+                self?.presentErrorAlert(error)
+            }
+        } else {
+            presentErrorAlert(error)
+        }
+    }
+    
+    private func presentErrorAlert(_ error: GenerationError) {
         let alert = UIAlertController(
             title: "Generation Failed",
             message: error.localizedDescription,
