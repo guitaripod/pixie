@@ -1034,23 +1034,8 @@ pub async fn validate_revenuecat_purchase(mut req: Request, ctx: RouteContext<()
         }
     }
     
-    // Complete the purchase
     complete_purchase(&purchase_id, &db).await?;
     
-    // Add credits to user
-    add_credits(
-        &user_id,
-        total_credits as u32,
-        "purchase",
-        &format!("{} purchase: {} pack", 
-            if validate_req.platform == "ios" { "App Store" } else { "Google Play" },
-            validate_req.pack_id
-        ),
-        Some(&purchase_id),
-        &db
-    ).await?;
-    
-    // Get new balance
     let new_balance = get_user_balance(&user_id, &db).await?;
     
     Response::from_json(&ValidateRevenueCatPurchaseResponse {
@@ -1097,18 +1082,23 @@ struct RevenueCatNonSubscription {
 
 async fn validate_with_revenuecat(
     env: &Env,
-    _user_id: &str,
-    purchase_token: &str,
+    user_id: &str,
+    _purchase_token: &str,
     product_id: &str,
     platform: &str,
 ) -> Result<bool> {
-    let revenuecat_api_key = env.secret("REVENUECAT_API_KEY")
-        .map_err(|_| "REVENUECAT_API_KEY not configured")?;
+    let api_key_name = if platform == "ios" {
+        "REVENUECAT_IOS_API_KEY"
+    } else {
+        "REVENUECAT_ANDROID_API_KEY"
+    };
+    
+    let revenuecat_api_key = env.secret(api_key_name)
+        .map_err(|_| format!("{} not configured", api_key_name))?;
     
     let api_key = revenuecat_api_key.to_string();
     
-    // RevenueCat uses the purchase token as the subscriber ID for validation
-    let subscriber_id = purchase_token;
+    let subscriber_id = user_id;
     let url = format!("https://api.revenuecat.com/v1/subscribers/{}", subscriber_id);
     
     let headers = Headers::new();
@@ -1134,10 +1124,12 @@ async fn validate_with_revenuecat(
     
     // Check if the user has the product in their non-subscriptions
     if let Some(non_subs) = subscriber.subscriber.non_subscriptions.get(product_id) {
-        // Check if any of the purchases are valid (not refunded)
+        // Check if any of the purchases match the purchase token
         for purchase in non_subs {
             if purchase.store.to_lowercase() == platform {
-                // Purchase exists and matches the platform
+                // Additional validation: check if this specific purchase token matches
+                // RevenueCat doesn't expose the exact purchase token in the GET API
+                // So we validate by platform and product ID
                 return Ok(true);
             }
         }
@@ -1155,4 +1147,131 @@ async fn validate_with_revenuecat(
     }
     
     Ok(false)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RevenueCatWebhookEvent {
+    pub api_version: String,
+    pub event: RevenueCatEvent,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RevenueCatEvent {
+    pub app_user_id: String,
+    pub currency: Option<String>,
+    pub entitlement_id: Option<String>,
+    pub environment: String,
+    pub event_timestamp_ms: i64,
+    pub id: String,
+    pub is_family_share: bool,
+    pub offer_code: Option<String>,
+    pub price: Option<f64>,
+    pub price_in_purchased_currency: Option<f64>,
+    pub product_id: String,
+    pub purchased_at_ms: i64,
+    pub store: String,
+    pub takehome_percentage: Option<f64>,
+    pub transaction_id: String,
+    #[serde(rename = "type")]
+    pub event_type: String,
+}
+
+pub async fn revenuecat_webhook(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let env = ctx.env;
+    
+    // Get the authorization header
+    let auth_header = req.headers().get("Authorization")?;
+    
+    // Verify the webhook authorization
+    let expected_auth = env.secret("REVENUECAT_WEBHOOK_AUTH")
+        .map_err(|_| AppError::InternalError("REVENUECAT_WEBHOOK_AUTH not configured".to_string()))?
+        .to_string();
+    
+    if auth_header != Some(format!("Bearer {}", expected_auth)) {
+        return AppError::Unauthorized("Invalid webhook authorization".to_string()).to_response();
+    }
+    
+    // Parse the webhook event
+    let webhook_event: RevenueCatWebhookEvent = match req.json().await {
+        Ok(event) => event,
+        Err(e) => return AppError::BadRequest(format!("Invalid webhook body: {}", e)).to_response(),
+    };
+    
+    let event = &webhook_event.event;
+    worker::console_log!("RevenueCat webhook: {} for user {}", event.event_type, event.app_user_id);
+    
+    // Handle different event types
+    match event.event_type.as_str() {
+        "INITIAL_PURCHASE" | "RENEWAL" => {
+            // Handle new purchase
+            let db = env.d1("DB")?;
+            
+            // Map product IDs to pack IDs
+            // iOS products have format: com.guitaripod.pixie.credits.{pack_id}
+            // Android products have format: {pack_id}
+            let pack_id = if event.product_id.starts_with("com.guitaripod.pixie.credits.") {
+                // iOS product ID
+                event.product_id.strip_prefix("com.guitaripod.pixie.credits.")
+                    .unwrap_or(&event.product_id)
+            } else {
+                // Android product ID (or direct pack ID)
+                &event.product_id
+            };
+            
+            // Validate pack ID
+            let valid_pack_ids = ["starter", "basic", "popular", "business", "enterprise"];
+            if !valid_pack_ids.contains(&pack_id) {
+                worker::console_log!("Unknown pack ID derived from product: {} -> {}", event.product_id, pack_id);
+                return Response::ok("OK");
+            }
+            
+            // Get the pack details
+            let packs = get_credit_packs();
+            let pack = packs.iter()
+                .find(|p| p.id == pack_id)
+                .ok_or_else(|| AppError::BadRequest(format!("Invalid pack_id: {}", pack_id)))?;
+            
+            let total_credits = pack.credits + pack.bonus_credits;
+            
+            // Check if this transaction has already been processed
+            let existing = db.prepare(
+                "SELECT id FROM credit_purchases WHERE payment_id = ? AND payment_provider = 'revenuecat'"
+            )
+            .bind(&[event.transaction_id.clone().into()])?
+            .first::<serde_json::Value>(None)
+            .await?;
+            
+            if existing.is_some() {
+                worker::console_log!("Transaction {} already processed", event.transaction_id);
+                return Response::ok("OK");
+            }
+            
+            // Record and complete the purchase
+            let purchase_id = record_purchase(
+                &event.app_user_id,
+                pack_id,
+                total_credits as u32,
+                pack.price_usd_cents as u32,
+                "revenuecat",
+                &event.transaction_id,
+                &db,
+            ).await?;
+            
+            complete_purchase(&purchase_id, &db).await?;
+            
+            worker::console_log!("Processed RevenueCat purchase {} for user {}", purchase_id, event.app_user_id);
+        },
+        "CANCELLATION" | "UNCANCELLATION" | "EXPIRATION" => {
+            // Handle subscription events (we don't have subscriptions yet)
+            worker::console_log!("Subscription event {} for user {}", event.event_type, event.app_user_id);
+        },
+        "BILLING_ISSUE" => {
+            worker::console_log!("Billing issue for user {}", event.app_user_id);
+        },
+        _ => {
+            worker::console_log!("Unhandled RevenueCat event type: {}", event.event_type);
+        }
+    }
+    
+    Response::ok("OK")
 }

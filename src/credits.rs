@@ -336,7 +336,7 @@ pub async fn complete_purchase(
     
     // Get purchase details
     let purchase = db
-        .prepare("SELECT user_id, pack_id, credits FROM credit_purchases WHERE id = ? AND status = 'pending'")
+        .prepare("SELECT user_id, pack_id, credits, payment_provider FROM credit_purchases WHERE id = ? AND status = 'pending'")
         .bind(&[purchase_id.into()])?
         .first::<serde_json::Value>(None)
         .await?
@@ -345,6 +345,7 @@ pub async fn complete_purchase(
     let user_id = purchase.get("user_id").and_then(|v| v.as_str()).unwrap_or("");
     let pack_id = purchase.get("pack_id").and_then(|v| v.as_str()).unwrap_or("");
     let credits = purchase.get("credits").and_then(|v| v.as_i64()).unwrap_or(0) as u32;
+    let payment_provider = purchase.get("payment_provider").and_then(|v| v.as_str()).unwrap_or("");
     
     // Update purchase status
     db.prepare(
@@ -354,8 +355,13 @@ pub async fn complete_purchase(
     .run()
     .await?;
     
-    // Add credits to user
-    let description = format!("Purchased {} pack", pack_id);
+    // Add credits to user with proper description
+    let description = match payment_provider {
+        "revenuecat" => format!("App Store purchase: {} pack", pack_id),
+        "stripe" => format!("Card purchase: {} pack", pack_id),
+        "nowpayments" => format!("Crypto purchase: {} pack", pack_id),
+        _ => format!("Purchased {} pack", pack_id),
+    };
     add_credits(user_id, credits, "purchase", &description, Some(purchase_id), db).await?;
     
     Ok(())
