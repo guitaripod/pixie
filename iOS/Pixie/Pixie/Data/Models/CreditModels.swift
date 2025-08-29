@@ -82,3 +82,17 @@ struct CreditEstimateResponse: Codable {
         case note
     }
 }
+
+struct RevenueCatPurchaseValidationResponse: Codable {
+    let success: Bool
+    let purchaseId: String
+    let creditsAdded: Int
+    let newBalance: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case success
+        case purchaseId = "purchase_id"
+        case creditsAdded = "credits_added"
+        case newBalance = "new_balance"
+    }
+}
