@@ -1,6 +1,7 @@
 import UIKit
 import BackgroundTasks
 import UserNotifications
+import RevenueCat
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -35,6 +36,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         
         _ = BackgroundTaskManager.shared
+        
+        URLCache.shared.removeAllCachedResponses()
+        
+        _ = RevenueCatManager.shared
+        
+        let keychainManager = AppContainer.shared.keychainManager
+        if let user = try? keychainManager.getCodable(forKey: KeychainKeys.userProfile, type: User.self) {
+            Task {
+                try? await RevenueCatManager.shared.setUserId(user.id)
+            }
+        }
         
         return true
     }

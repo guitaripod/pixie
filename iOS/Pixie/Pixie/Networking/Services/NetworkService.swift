@@ -58,15 +58,13 @@ class NetworkService: NetworkServiceProtocol {
         configuration.timeoutIntervalForRequest = 300
         configuration.timeoutIntervalForResource = 300
         
-        // Configure a larger cache
-        let memoryCapacity = 100 * 1024 * 1024 // 100 MB
-        let diskCapacity = 500 * 1024 * 1024 // 500 MB
-        self.urlCache = URLCache(memoryCapacity: memoryCapacity, diskCapacity: diskCapacity, diskPath: nil) // Use default path
+        let memoryCapacity = 100 * 1024 * 1024
+        let diskCapacity = 500 * 1024 * 1024
+        self.urlCache = URLCache(memoryCapacity: memoryCapacity, diskCapacity: diskCapacity, diskPath: nil)
         
         configuration.urlCache = urlCache
-        configuration.requestCachePolicy = .returnCacheDataElseLoad
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         
-        // Also update the shared cache to be larger
         URLCache.shared.memoryCapacity = memoryCapacity
         URLCache.shared.diskCapacity = diskCapacity
         
@@ -92,6 +90,7 @@ class NetworkService: NetworkServiceProtocol {
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.cachePolicy = .reloadIgnoringLocalCacheData
         if let apiKey = apiKey {
             request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         }
