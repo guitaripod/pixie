@@ -3,6 +3,9 @@ extends:
   - recommended
 
 rules:
-  # Disable these rules for endpoints that legitimately don't need them
-  operation-4xx-response: off
+  # OAuth redirect endpoints only return 302 redirects, not 2XX responses
   operation-2xx-response: off
+  
+  # Public endpoints and health checks don't need 4XX responses
+  # OAuth redirects also don't need 4XX responses (they redirect on error)
+  operation-4xx-response: off
