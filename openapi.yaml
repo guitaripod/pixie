@@ -972,6 +972,86 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /v1/revenuecat/webhook:
+    post:
+      operationId: revenuecatWebhook
+      summary: RevenueCat webhook handler
+      description: |
+        Webhook endpoint for RevenueCat events.
+        Handles purchase events from RevenueCat to credit user accounts after successful in-app purchases.
+        Processes both iOS and Android purchases made through RevenueCat.
+      tags: [Webhooks]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [api_version, event]
+              properties:
+                api_version:
+                  type: string
+                  description: RevenueCat API version
+                  example: "1.0"
+                event:
+                  type: object
+                  required: [id, event_type, app_user_id, product_id, transaction_id]
+                  properties:
+                    id:
+                      type: string
+                      description: Unique event identifier
+                    event_type:
+                      type: string
+                      description: Type of RevenueCat event
+                      enum: 
+                        - "NON_RENEWING_PURCHASE"
+                        - "INITIAL_PURCHASE"
+                        - "RENEWAL"
+                        - "CANCELLATION"
+                        - "UNCANCELLATION"
+                        - "EXPIRATION"
+                        - "PRODUCT_CHANGE"
+                    app_user_id:
+                      type: string
+                      description: User ID in our system
+                    product_id:
+                      type: string
+                      description: Product identifier from app store
+                    price:
+                      type: number
+                      description: Purchase price
+                    currency:
+                      type: string
+                      description: Currency code
+                    transaction_id:
+                      type: string
+                      description: Transaction identifier from app store
+                    purchased_at_ms:
+                      type: integer
+                      description: Purchase timestamp in milliseconds
+                    store:
+                      type: string
+                      enum: ["APP_STORE", "PLAY_STORE"]
+                      description: The app store where the purchase was made
+      responses:
+        '200':
+          description: Webhook processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   # Webhook Endpoints
   /v1/credits/webhook:
     post:
