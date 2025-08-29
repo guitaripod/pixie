@@ -8,7 +8,8 @@
     "deploy": "wrangler deploy",
     "deploy:dev": "wrangler deploy --env development",
     "tail": "wrangler tail",
-    "secret:add": "wrangler secret put"
+    "secret:add": "wrangler secret put",
+    "validate:openapi": "npx @redocly/cli lint openapi.yaml --config .redocly.yaml"
   },
   "devDependencies": {
     "wrangler": "^4.25.0"
