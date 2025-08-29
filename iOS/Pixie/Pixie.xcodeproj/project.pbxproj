@@ -10,6 +10,7 @@
 		2CAB91952E3A4E570087EBE7 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CAB91942E3A4E570087EBE7 /* WidgetKit.framework */; };
 		2CAB91972E3A4E570087EBE7 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CAB91962E3A4E570087EBE7 /* SwiftUI.framework */; };
 		2CAB91A42E3A4E580087EBE7 /* PixieWidgetExtensionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2CAB91932E3A4E570087EBE7 /* PixieWidgetExtensionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		2CAB91B32E3AB5940087EBE7 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 2CAB91B22E3AB5940087EBE7 /* RevenueCat */; };
 		2CB1092A2E37549E004A0202 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 2CB109292E37549E004A0202 /* GoogleSignInSwift */; };
 		2CB38B262E36B0C400E68202 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CB38B252E36B0C400E68202 /* StoreKit.framework */; };
 /* End PBXBuildFile section */
@@ -98,6 +99,7 @@
 			files = (
 				2CB38B262E36B0C400E68202 /* StoreKit.framework in Frameworks */,
 				2CB1092A2E37549E004A0202 /* GoogleSignInSwift in Frameworks */,
+				2CAB91B32E3AB5940087EBE7 /* RevenueCat in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -178,6 +180,7 @@
 			name = Pixie;
 			packageProductDependencies = (
 				2CB109292E37549E004A0202 /* GoogleSignInSwift */,
+				2CAB91B22E3AB5940087EBE7 /* RevenueCat */,
 			);
 			productName = Pixie;
 			productReference = 2CB38B082E36AED800E68202 /* Pixie.app */;
@@ -212,6 +215,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				2CB109282E37549E004A0202 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				2CAB91B12E3AB5940087EBE7 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2CB38B092E36AED800E68202 /* Products */;
@@ -545,6 +549,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		2CAB91B12E3AB5940087EBE7 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.33.1;
+			};
+		};
 		2CB109282E37549E004A0202 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
@@ -556,6 +568,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		2CAB91B22E3AB5940087EBE7 /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2CAB91B12E3AB5940087EBE7 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
+		};
 		2CB109292E37549E004A0202 /* GoogleSignInSwift */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 2CB109282E37549E004A0202 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
