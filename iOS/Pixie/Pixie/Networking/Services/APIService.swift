@@ -19,6 +19,7 @@ protocol APIServiceProtocol {
     func authenticateGoogleToken(_ request: GoogleTokenRequest) async throws -> AuthResponse
     func authenticateApple(_ request: OAuthCallbackRequest) async throws -> AuthResponse
     func authenticateAppleToken(_ request: AppleTokenRequest) async throws -> AuthResponse
+    func validateRevenueCatPurchase<T: Codable>(_ request: T) async throws -> RevenueCatPurchaseValidationResponse
 }
 
 class APIService: APIServiceProtocol {
@@ -138,5 +139,9 @@ class APIService: APIServiceProtocol {
     
     func authenticateAppleToken(_ request: AppleTokenRequest) async throws -> AuthResponse {
         try await networkService.post("/v1/auth/apple/token", body: request, type: AuthResponse.self)
+    }
+    
+    func validateRevenueCatPurchase<T: Codable>(_ request: T) async throws -> RevenueCatPurchaseValidationResponse {
+        try await networkService.post("/v1/credits/purchase/revenuecat/validate", body: request, type: RevenueCatPurchaseValidationResponse.self)
     }
 }
