@@ -7,6 +7,8 @@ import com.guitaripod.pixie.data.api.model.*
 import com.guitaripod.pixie.data.repository.CreditsRepository
 import com.revenuecat.purchases.Package
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 import java.util.Date
@@ -138,46 +140,64 @@ class CreditPurchaseManager @Inject constructor(
         }
     }
     
-    fun getCreditPacksWithPricing(): Flow<List<CreditPackWithPrice>> {
-        return offerings.map { revenueCatOfferings ->
-            val defaultOffering = revenueCatOfferings?.current ?: revenueCatOfferings?.all?.values?.firstOrNull()
-            
-            defaultOffering?.availablePackages?.mapNotNull { rcPackage ->
-                val packId = rcPackage.identifier
-                val credits = when (packId) {
-                    "starter" -> 299
-                    "basic" -> 1250
-                    "popular" -> 3250
-                    "business" -> 6800
-                    "enterprise" -> 15000
-                    else -> null
-                }
-                
-                credits?.let {
-                    val (baseCredits, bonusCredits) = when (packId) {
-                        "starter" -> 299 to 0
-                        "basic" -> 1000 to 250
-                        "popular" -> 2500 to 750
-                        "business" -> 5000 to 1800
-                        "enterprise" -> 10000 to 5000
-                        else -> it to 0
+    // Backend credit packs - single source of truth
+    private val _backendCreditPacks = MutableStateFlow<List<CreditPack>>(emptyList())
+    
+    init {
+        // Fetch credit packs from backend on initialization
+        fetchBackendCreditPacks()
+    }
+    
+    private fun fetchBackendCreditPacks() {
+        // Launch in a coroutine scope
+        kotlinx.coroutines.GlobalScope.launch {
+            try {
+                val response = apiService.getCreditPacks()
+                if (response.isSuccessful) {
+                    response.body()?.let { packsResponse ->
+                        _backendCreditPacks.value = packsResponse.packs
                     }
-                    
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error fetching backend credit packs", e)
+            }
+        }
+    }
+    
+    fun getCreditPacksWithPricing(): Flow<List<CreditPackWithPrice>> {
+        // Combine backend credit packs with RevenueCat offerings
+        // Backend is the single source of truth
+        return combine(
+            _backendCreditPacks,
+            offerings
+        ) { backendPacks, revenueCatOfferings ->
+            // If backend data is not available, return empty list
+            if (backendPacks.isEmpty()) {
+                return@combine emptyList<CreditPackWithPrice>()
+            }
+            
+            val defaultOffering = revenueCatOfferings?.current ?: revenueCatOfferings?.all?.values?.firstOrNull()
+            val packages = defaultOffering?.availablePackages ?: emptyList()
+            
+            // Map backend packs to RevenueCat packages
+            backendPacks.mapNotNull { pack ->
+                // Find matching RevenueCat package
+                packages.firstOrNull { it.identifier == pack.id }?.let { rcPackage ->
                     CreditPackWithPrice(
                         creditPack = CreditPack(
-                            id = packId,
-                            name = rcPackage.product.title,
-                            credits = baseCredits,
-                            bonusCredits = bonusCredits,
-                            priceUsdCents = (rcPackage.product.price.amountMicros / 10000).toInt(),
-                            description = rcPackage.product.description,
-                            popular = packId == "popular"
+                            id = pack.id,
+                            name = pack.name,  // Use backend name
+                            credits = pack.credits,  // Use backend credits
+                            bonusCredits = pack.bonusCredits,  // Use backend bonus
+                            priceUsdCents = pack.priceUsdCents,  // Use backend price
+                            description = pack.description,  // Use backend description
+                            popular = pack.id == "popular"
                         ),
                         rcPackage = rcPackage,
                         localizedPrice = rcPackage.product.price.formatted
                     )
                 }
-            } ?: emptyList()
+            }.sortedBy { it.creditPack.priceUsdCents }
         }
     }
     
