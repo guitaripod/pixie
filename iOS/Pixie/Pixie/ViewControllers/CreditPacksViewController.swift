@@ -1,5 +1,6 @@
 import UIKit
 import Combine
+import RevenueCat
 
 class CreditPacksViewController: UIViewController {
     private let viewModel: CreditsViewModel
@@ -13,6 +14,8 @@ class CreditPacksViewController: UIViewController {
     private let balanceAmountLabel = UILabel()
     
     private var creditPacks: [CreditPack] = []
+    private var creditPacksWithPricing: [CreditPackWithPrice] = []
+    private let purchaseManager = CreditPurchaseManager.shared
     
     init(viewModel: CreditsViewModel) {
         self.viewModel = viewModel
@@ -27,6 +30,11 @@ class CreditPacksViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         bindViewModel()
+        viewModel.refresh()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
         viewModel.refresh()
     }
     
@@ -111,10 +119,11 @@ class CreditPacksViewController: UIViewController {
             }
             .store(in: &cancellables)
         
-        viewModel.$creditPacks
+        purchaseManager.getCreditPacksWithPricing()
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] packs in
-                self?.creditPacks = packs
+            .sink { [weak self] packsWithPricing in
+                self?.creditPacksWithPricing = packsWithPricing
+                self?.creditPacks = packsWithPricing.map { $0.creditPack }
                 self?.tableView.reloadData()
             }
             .store(in: &cancellables)
@@ -158,39 +167,100 @@ class CreditPacksViewController: UIViewController {
     }
     
     private func restorePurchases() {
-        // TODO: Implement RevenueCat restore
-        HapticsManager.shared.notification(.success)
-        
-        let successAlert = UIAlertController(
-            title: "Restore Complete",
-            message: "Your purchases have been restored.",
+        let loadingAlert = UIAlertController(
+            title: "Restoring Purchases",
+            message: "Please wait...",
             preferredStyle: .alert
         )
-        successAlert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(successAlert, animated: true)
+        present(loadingAlert, animated: true)
+        
+        Task {
+            let result = await purchaseManager.restorePurchases()
+            
+            await MainActor.run {
+                loadingAlert.dismiss(animated: true) {
+                    switch result {
+                    case .success(let restoredPurchases):
+                        HapticsManager.shared.notification(.success)
+                        let message = restoredPurchases.isEmpty 
+                            ? "No purchases found to restore."
+                            : "Successfully restored \(restoredPurchases.count) purchase(s)."
+                        
+                        let successAlert = UIAlertController(
+                            title: "Restore Complete",
+                            message: message,
+                            preferredStyle: .alert
+                        )
+                        successAlert.addAction(UIAlertAction(title: "OK", style: .default))
+                        self.present(successAlert, animated: true)
+                        
+                    case .failure(let error):
+                        HapticsManager.shared.notification(.error)
+                        let errorAlert = UIAlertController(
+                            title: "Restore Failed",
+                            message: error.localizedDescription,
+                            preferredStyle: .alert
+                        )
+                        errorAlert.addAction(UIAlertAction(title: "OK", style: .default))
+                        self.present(errorAlert, animated: true)
+                    }
+                }
+            }
+        }
     }
     
     private func purchasePack(_ pack: CreditPack) {
         HapticsManager.shared.impact(.medium)
         
-        // TODO: Implement RevenueCat purchase flow
-        let alert = UIAlertController(
-            title: pack.name,
-            message: "Purchase \(pack.credits + pack.bonusCredits) credits for $\(String(format: "%.2f", Double(pack.priceUsdCents) / 100.0))?",
+        guard let creditPackWithPrice = creditPacksWithPricing.first(where: { $0.creditPack.id == pack.id }) else {
+            return
+        }
+        
+        let loadingAlert = UIAlertController(
+            title: "Processing Purchase",
+            message: "Please wait...",
             preferredStyle: .alert
         )
+        present(loadingAlert, animated: true)
         
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Purchase", style: .default) { [weak self] _ in
-            self?.completePurchase(pack)
-        })
-        
-        present(alert, animated: true)
-    }
-    
-    private func completePurchase(_ pack: CreditPack) {
-        HapticsManager.shared.notification(.success)
-        viewModel.refresh()
+        Task {
+            let result = await purchaseManager.purchaseCreditPack(package: creditPackWithPrice.rcPackage)
+            
+            await MainActor.run {
+                loadingAlert.dismiss(animated: true) {
+                    switch result {
+                    case .success(let purchaseResult):
+                        HapticsManager.shared.notification(.success)
+                        
+                        Task {
+                            await self.viewModel.loadBalance()
+                        }
+                        
+                        let successAlert = UIAlertController(
+                            title: "Purchase Successful",
+                            message: "Added \(purchaseResult.credits) credits to your account.\nNew balance: \(purchaseResult.newBalance) credits",
+                            preferredStyle: .alert
+                        )
+                        successAlert.addAction(UIAlertAction(title: "OK", style: .default))
+                        self.present(successAlert, animated: true)
+                        
+                    case .failure(let error):
+                        if error is PurchaseCancelledException {
+                            return
+                        }
+                        
+                        HapticsManager.shared.notification(.error)
+                        let errorAlert = UIAlertController(
+                            title: "Purchase Failed",
+                            message: error.localizedDescription,
+                            preferredStyle: .alert
+                        )
+                        errorAlert.addAction(UIAlertAction(title: "OK", style: .default))
+                        self.present(errorAlert, animated: true)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -207,7 +277,8 @@ extension CreditPacksViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "CreditPackCell", for: indexPath) as! CreditPackCell
         let pack = creditPacks[indexPath.row]
-        cell.configure(with: pack)
+        let localizedPrice = creditPacksWithPricing.first(where: { $0.creditPack.id == pack.id })?.localizedPrice
+        cell.configure(with: pack, localizedPrice: localizedPrice)
         return cell
     }
     
@@ -300,10 +371,10 @@ class CreditPackCell: UITableViewCell {
         ])
     }
     
-    func configure(with pack: CreditPack) {
+    func configure(with pack: CreditPack, localizedPrice: String? = nil) {
         packNameLabel.text = pack.name
         creditsLabel.text = "\(pack.credits) credits"
-        priceLabel.text = "$\(String(format: "%.2f", Double(pack.priceUsdCents) / 100.0))"
+        priceLabel.text = localizedPrice ?? "$\(String(format: "%.2f", Double(pack.priceUsdCents) / 100.0))"
         
         if pack.bonusCredits > 0 {
             bonusLabel.text = "+\(pack.bonusCredits) bonus credits"
@@ -312,6 +383,6 @@ class CreditPackCell: UITableViewCell {
             bonusLabel.isHidden = true
         }
         
-        popularBadge.isHidden = pack.bonusCredits == 0  // Show popular badge for packs with bonus
+        popularBadge.isHidden = pack.id != "popular"
     }
 }

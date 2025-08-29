@@ -43,6 +43,11 @@ class CreditsMainViewController: UIViewController {
         viewModel.refresh()
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        viewModel.refresh()
+    }
+    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         // Update gradient layer frame
