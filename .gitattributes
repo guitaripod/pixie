@@ -1,0 +1,8 @@
+# Exclude HTML from language statistics
+*.html linguist-vendored
+
+# Mark documentation files
+docs/* linguist-documentation
+
+# Ensure proper line endings
+* text=auto
