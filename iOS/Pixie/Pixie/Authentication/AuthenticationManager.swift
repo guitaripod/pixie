@@ -67,6 +67,10 @@ class AuthenticationManager: NSObject {
                 
                 try await authenticationService.setCurrentUser(user)
                 
+                Task {
+                    try? await RevenueCatManager.shared.setUserId(debugUserId)
+                }
+                
                 NotificationCenter.default.post(name: .userDidAuthenticate, object: user)
                 
                 delegate?.authenticationManager(self, didAuthenticate: user)
@@ -103,6 +107,11 @@ class AuthenticationManager: NSObject {
             ConfigurationManager.shared.apiKey = token
             AppContainer.shared.updateNetworkServiceAPIKey()
             try await authenticationService.setCurrentUser(savedUser)
+            
+            Task {
+                try? await RevenueCatManager.shared.setUserId(savedUser.id)
+            }
+            
             return savedUser
         }
         
@@ -131,6 +140,10 @@ extension AuthenticationManager: OAuthCoordinatorDelegate {
                     )
                     
                     try await authenticationService.setCurrentUser(user)
+                    
+                    Task {
+                        try? await RevenueCatManager.shared.setUserId(userId)
+                    }
                     
                     delegate?.authenticationManager(self, didAuthenticate: user)
                 } catch {
