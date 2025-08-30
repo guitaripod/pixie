@@ -5,6 +5,10 @@ class MainSplitViewController: UISplitViewController {
     private var sidebarViewController: SidebarViewController!
     private var chatViewController: ChatGenerationViewController!
     private var detailNavigationController: UINavigationController!
+    private var galleryViewController: GalleryViewController?
+    private var creditsViewController: CreditsMainViewController?
+    private var settingsViewController: SettingsViewController?
+    private var adminViewController: AdminDashboardViewController?
     
     init() {
         super.init(style: .doubleColumn)
@@ -39,10 +43,8 @@ class MainSplitViewController: UISplitViewController {
         
         setViewController(sidebarViewController, for: .primary)
         setViewController(detailNavigationController, for: .secondary)
-        
-        if UIDevice.isPad {
-            setViewController(nil, for: .compact)
-        }
+
+        setViewController(detailNavigationController, for: .compact)
     }
     
     private func setupDelegate() {
@@ -67,46 +69,64 @@ class MainSplitViewController: UISplitViewController {
     
     func showViewController(_ viewController: UIViewController) {
         if isCollapsed {
-            detailNavigationController.pushViewController(viewController, animated: true)
+            if !detailNavigationController.viewControllers.contains(where: { $0 === viewController }) {
+                detailNavigationController.pushViewController(viewController, animated: true)
+            } else {
+                detailNavigationController.popToViewController(viewController, animated: true)
+            }
         } else {
-            detailNavigationController.setViewControllers([viewController], animated: false)
+            if detailNavigationController.viewControllers.first !== viewController {
+                detailNavigationController.setViewControllers([viewController], animated: false)
+            }
         }
     }
     
     func navigateToSection(_ section: SidebarSection) {
+        let viewController: UIViewController
+        
         switch section {
         case .chat:
-            showViewController(chatViewController)
+            viewController = chatViewController
+            
         case .gallery:
-            let galleryVC = GalleryViewController()
-            showViewController(galleryVC)
+            if galleryViewController == nil {
+                galleryViewController = GalleryViewController()
+            }
+            viewController = galleryViewController!
+            
         case .credits:
-            let creditsVC = CreditsMainViewController()
-            showViewController(creditsVC)
+            if creditsViewController == nil {
+                creditsViewController = CreditsMainViewController()
+            }
+            viewController = creditsViewController!
+            
         case .settings:
-            let settingsVC = SettingsViewController()
-            showViewController(settingsVC)
+            if settingsViewController == nil {
+                settingsViewController = SettingsViewController()
+            }
+            viewController = settingsViewController!
+            
         case .admin:
-            let adminVC = AdminDashboardViewController()
-            showViewController(adminVC)
+            if adminViewController == nil {
+                adminViewController = AdminDashboardViewController()
+            }
+            viewController = adminViewController!
         }
+        
+        showViewController(viewController)
     }
 }
 
 extension MainSplitViewController: UISplitViewControllerDelegate {
     
-    func splitViewController(_ splitViewController: UISplitViewController,
-                             collapseSecondary secondaryViewController: UIViewController,
-                             onto primaryViewController: UIViewController) -> Bool {
-        return false
-    }
-    
     func splitViewController(_ svc: UISplitViewController,
                              topColumnForCollapsingToProposedTopColumn proposedTopColumn: UISplitViewController.Column) -> UISplitViewController.Column {
-        if UIDevice.isPad {
-            return .primary
-        }
-        return proposedTopColumn
+        return .secondary
+    }
+
+    func splitViewController(_ splitViewController: UISplitViewController,
+                             displayModeForExpandingToProposedDisplayMode proposedDisplayMode: UISplitViewController.DisplayMode) -> UISplitViewController.DisplayMode {
+        return .oneBesideSecondary
     }
 }
 
