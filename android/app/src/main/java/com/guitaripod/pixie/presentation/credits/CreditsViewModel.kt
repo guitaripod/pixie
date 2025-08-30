@@ -48,6 +48,7 @@ class CreditsViewModel(
     private var currentTransactionLimit = 20
     
     init {
+        loadInitialData()
     }
     
     private fun loadInitialData() {
