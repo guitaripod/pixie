@@ -40,6 +40,8 @@ import android.net.Uri
 import com.guitaripod.pixie.utils.NotificationPermissionEffect
 import com.guitaripod.pixie.utils.rememberHapticFeedback
 import com.guitaripod.pixie.utils.hapticClickable
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,6 +61,11 @@ fun ChatGenerationScreen(
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    
+    val configuration = LocalConfiguration.current
+    val density = LocalDensity.current
+    val screenHeight = with(density) { configuration.screenHeightDp.dp }
+    val expandedToolbarHeight = screenHeight * 0.85f
     
     val isGenerating by viewModel.isGenerating.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -136,6 +143,7 @@ fun ChatGenerationScreen(
         topBar = {
             val haptic = rememberHapticFeedback()
             TopAppBar(
+                modifier = Modifier.height(80.dp),
                 navigationIcon = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -217,7 +225,7 @@ fun ChatGenerationScreen(
                     start = 12.dp,
                     end = 12.dp,
                     top = 12.dp,
-                    bottom = if (isToolbarExpanded) 620.dp else 120.dp
+                    bottom = if (isToolbarExpanded) expandedToolbarHeight + 40.dp else 120.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
