@@ -227,7 +227,6 @@ final class GalleryPageViewController: UIViewController {
         
         if type == .explore && images.count >= maxImagesLimit {
             hasMore = false
-            updateSnapshot()
             return
         }
         
