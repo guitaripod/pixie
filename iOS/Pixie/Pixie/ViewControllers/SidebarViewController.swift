@@ -102,8 +102,10 @@ class SidebarViewController: UIViewController {
     private func selectInitialItem() {
         let indexPath = IndexPath(item: 0, section: 0)
         collectionView.selectItem(at: indexPath, animated: false, scrollPosition: .top)
-        
-        if let section = sections.first {
+
+        if let splitVC = self.splitViewController,
+           !splitVC.isCollapsed,
+           let section = sections.first {
             delegate?.sidebarViewController(self, didSelectSection: section)
         }
     }
