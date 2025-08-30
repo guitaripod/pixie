@@ -7,6 +7,9 @@ class CreditsMainViewController: UIViewController {
     
     private let scrollView = UIScrollView()
     private let contentView = UIView()
+    private var contentWidthConstraint: NSLayoutConstraint!
+    private var contentLeadingConstraint: NSLayoutConstraint!
+    private var contentTrailingConstraint: NSLayoutConstraint!
     
     private let balanceCard = UIView()
     private let balanceSkeletonLoader = BalanceSkeletonLoaderView()
@@ -78,18 +81,56 @@ class CreditsMainViewController: UIViewController {
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         
-        NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+        let layout = AdaptiveLayout(traitCollection: traitCollection)
+        let insets = layout.contentInsets
+        
+        if UIDevice.isPad && traitCollection.horizontalSizeClass == .regular {
+            contentWidthConstraint = contentView.widthAnchor.constraint(equalToConstant: min(600, view.bounds.width - insets.left - insets.right))
+            contentLeadingConstraint = contentView.centerXAnchor.constraint(equalTo: scrollView.centerXAnchor)
+            contentTrailingConstraint = contentView.centerXAnchor.constraint(equalTo: scrollView.centerXAnchor)
             
-            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
-        ])
+            NSLayoutConstraint.activate([
+                scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+                scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+                scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+                
+                contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+                contentLeadingConstraint,
+                contentTrailingConstraint,
+                contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+                contentWidthConstraint
+            ])
+        } else {
+            NSLayoutConstraint.activate([
+                scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+                scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+                scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+                
+                contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+                contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+                contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+                contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+                contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
+            ])
+        }
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        
+        if traitCollection.horizontalSizeClass != previousTraitCollection?.horizontalSizeClass {
+            updateLayoutForSizeClass()
+        }
+    }
+    
+    private func updateLayoutForSizeClass() {
+        if UIDevice.isPad && traitCollection.horizontalSizeClass == .regular {
+            if contentWidthConstraint == nil {
+                view.setNeedsLayout()
+            }
+        }
     }
     
     private func setupBalanceCard() {
