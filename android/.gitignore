@@ -13,7 +13,11 @@
 .externalNativeBuild
 .cxx
 local.properties
-# Keystore files
+
+# Signing and keystore files
+keystore.properties
 *.keystore
 *.jks
 KEYSTORE_INFO.md
+upload_certificate.pem
+pixie-upload.jks
