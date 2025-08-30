@@ -275,15 +275,15 @@ private fun GalleryPageContent(
             }
             else -> {
                 LazyVerticalStaggeredGrid(
-                    columns = StaggeredGridCells.Adaptive(180.dp),
+                    columns = StaggeredGridCells.Fixed(3),
                     contentPadding = PaddingValues(
-                        start = 8.dp,
-                        end = 8.dp,
-                        top = 8.dp,
+                        start = 1.dp,
+                        end = 1.dp,
+                        top = 1.dp,
                         bottom = 80.dp // Account for FAB
                     ),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalItemSpacing = 8.dp,
+                    horizontalArrangement = Arrangement.spacedBy(1.dp),
+                    verticalItemSpacing = 1.dp,
                     modifier = Modifier.fillMaxSize()
                 ) {
                     itemsIndexed(
@@ -386,11 +386,16 @@ private fun GalleryImageCard(
         },
         modifier = modifier
             .scale(scale)
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+            .fillMaxWidth()
+            .aspectRatio(1f), // Make cards square for 3x3 grid
+        shape = RoundedCornerShape(0.dp), // Remove rounded corners for Instagram-style
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp,
-            pressedElevation = 8.dp
+            defaultElevation = 0.dp, // Remove elevation for flat Instagram-style
+            pressedElevation = 0.dp
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 0.5.dp,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
         )
     ) {
         Box {
