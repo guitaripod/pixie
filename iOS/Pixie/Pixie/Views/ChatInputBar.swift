@@ -8,6 +8,10 @@ class ChatInputBar: UIView {
     private let containerView = UIView()
     private let collapsedView = UIView()
     private let expandedView = UIView()
+    
+    private var contentPadding: CGFloat {
+        return UIDevice.isPad ? 60 : 20
+    }
     private let indicatorStackView = UIStackView()
     private let promptTextView = UITextView()
     private let sizeSelector = UISegmentedControl(items: ["Auto", "Square", "Landscape", "Portrait"])
@@ -179,7 +183,7 @@ class ChatInputBar: UIView {
             stackView.centerYAnchor.constraint(equalTo: collapsedView.centerYAnchor, constant: -17),
             tapLabel.topAnchor.constraint(equalTo: stackView.bottomAnchor, constant: 4),
             tapLabel.centerXAnchor.constraint(equalTo: collapsedView.centerXAnchor),
-            indicatorStackView.trailingAnchor.constraint(equalTo: collapsedView.trailingAnchor, constant: -20),
+            indicatorStackView.trailingAnchor.constraint(equalTo: collapsedView.trailingAnchor, constant: -contentPadding),
             indicatorStackView.centerYAnchor.constraint(equalTo: collapsedView.centerYAnchor, constant: -12)
         ])
     }
@@ -297,39 +301,39 @@ class ChatInputBar: UIView {
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             expandedImageContainer.topAnchor.constraint(equalTo: expandedDragHandleArea.bottomAnchor, constant: 8),
-            expandedImageContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            expandedImageContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            expandedImageContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
+            expandedImageContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
             expandedImageContainer.heightAnchor.constraint(equalToConstant: 180),
             expandedSelectedImageView.topAnchor.constraint(equalTo: expandedImageContainer.topAnchor, constant: 8),
             expandedSelectedImageView.leadingAnchor.constraint(equalTo: expandedImageContainer.leadingAnchor, constant: 8),
             expandedSelectedImageView.trailingAnchor.constraint(equalTo: expandedImageContainer.trailingAnchor, constant: -8),
             expandedSelectedImageView.bottomAnchor.constraint(equalTo: expandedImageContainer.bottomAnchor, constant: -8),
-            promptTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            promptTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            promptTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
+            promptTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
             promptTextView.heightAnchor.constraint(greaterThanOrEqualToConstant: 100),
             sizeLabel.topAnchor.constraint(equalTo: promptTextView.bottomAnchor, constant: 16),
-            sizeLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            sizeLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
             sizeSelector.topAnchor.constraint(equalTo: sizeLabel.bottomAnchor, constant: 8),
-            sizeSelector.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            sizeSelector.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            sizeSelector.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
+            sizeSelector.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
             qualityLabel.topAnchor.constraint(equalTo: sizeSelector.bottomAnchor, constant: 16),
-            qualityLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            qualityLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
             qualitySelector.topAnchor.constraint(equalTo: qualityLabel.bottomAnchor, constant: 8),
-            qualitySelector.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            qualitySelector.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            qualitySelector.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
+            qualitySelector.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
             advancedOptionsButton.topAnchor.constraint(equalTo: qualitySelector.bottomAnchor, constant: 16),
-            advancedOptionsButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            advancedOptionsButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            advancedOptionsButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
+            advancedOptionsButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
             advancedOptionsContainer.topAnchor.constraint(equalTo: advancedOptionsButton.bottomAnchor, constant: 12),
-            advancedOptionsContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            advancedOptionsContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            creditsLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            creditsLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            advancedOptionsContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
+            advancedOptionsContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
+            creditsLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
+            creditsLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
             generateButton.topAnchor.constraint(equalTo: creditsLabel.bottomAnchor, constant: 12),
-            generateButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            generateButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            generateButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
+            generateButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
             generateButton.heightAnchor.constraint(equalToConstant: 56),
-            generateButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
+            generateButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -contentPadding)
         ])
         updateCredits()
         creditsLabelTopToAdvancedConstraint = creditsLabel.topAnchor.constraint(equalTo: advancedOptionsContainer.bottomAnchor, constant: 12)
