@@ -42,6 +42,8 @@ import com.guitaripod.pixie.utils.rememberHapticFeedback
 import com.guitaripod.pixie.utils.hapticClickable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -220,7 +222,14 @@ fun ChatGenerationScreen(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
+                    .padding(paddingValues)
+                    .pointerInput(isToolbarExpanded) {
+                        if (isToolbarExpanded) {
+                            detectTapGestures {
+                                viewModel.updateToolbarExpanded(false)
+                            }
+                        }
+                    },
                 contentPadding = PaddingValues(
                     start = 12.dp,
                     end = 12.dp,
