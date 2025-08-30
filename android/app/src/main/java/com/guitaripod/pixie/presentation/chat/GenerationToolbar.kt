@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -140,7 +142,11 @@ fun GenerationToolbar(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .hapticClickable { onExpandedChange(false) }
+                        .pointerInput(Unit) {
+                            detectTapGestures { offset ->
+                                onExpandedChange(false)
+                            }
+                        }
                 ) {
                     Box(
                         modifier = Modifier
@@ -163,7 +169,13 @@ fun GenerationToolbar(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .pointerInput(Unit) {
+                                detectTapGestures {
+                                    onExpandedChange(false)
+                                }
+                            },
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
