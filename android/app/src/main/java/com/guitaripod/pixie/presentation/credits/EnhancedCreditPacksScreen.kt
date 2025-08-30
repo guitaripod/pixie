@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.LaunchedEffect
 import com.guitaripod.pixie.data.api.model.CreditBalance
 import com.guitaripod.pixie.data.purchases.CreditPackWithPrice
 import com.guitaripod.pixie.data.purchases.PurchaseState
@@ -41,6 +42,13 @@ fun EnhancedCreditPacksScreen(
     val activity = LocalContext.current as? Activity
     
     var showRestoreDialog by remember { mutableStateOf(false) }
+    
+    // Refresh data when screen is displayed
+    LaunchedEffect(Unit) {
+        creditsViewModel.loadBalance()
+        creditsViewModel.loadCreditPacks()
+        purchaseViewModel.refreshOfferings()
+    }
     
     Scaffold(
         topBar = {
@@ -94,11 +102,7 @@ fun EnhancedCreditPacksScreen(
                             textAlign = TextAlign.Center
                         )
                         Text(
-                            text = if (purchaseUiState.errorMessage?.contains("configuration") == true) {
-                                "App needs to be published to Google Play testing track first"
-                            } else {
-                                "Please check your internet connection and try again"
-                            },
+                            text = "To enable purchases, the app needs to be published to Google Play Console (at least Internal Testing track) and products need to be configured in RevenueCat",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
