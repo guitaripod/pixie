@@ -85,7 +85,7 @@ enum AdaptiveLayout {
     
     var galleryColumns: Int {
         switch self {
-        case .phonePortrait: return 2
+        case .phonePortrait: return 3
         case .phoneLandscape: return 3
         case .padCompact: return 3
         case .padRegular: return 4
