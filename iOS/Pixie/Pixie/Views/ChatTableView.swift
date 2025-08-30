@@ -107,6 +107,32 @@ class ChatTableView: UIView {
             scrollToBottom(animated: true)
         }
     }
+    
+    func setHorizontalContentInsets(left: CGFloat, right: CGFloat) {
+        // Apply padding to content but keep scroll indicators at edges
+        tableView.contentInset.left = left
+        tableView.contentInset.right = right
+        // Don't indent scroll indicators
+        tableView.scrollIndicatorInsets.left = 0
+        tableView.scrollIndicatorInsets.right = 0
+    }
+    
+    var contentInset: UIEdgeInsets {
+        get { tableView.contentInset }
+        set { 
+            tableView.contentInset = newValue
+            // Keep vertical scroll indicator insets but reset horizontal
+            tableView.scrollIndicatorInsets = UIEdgeInsets(top: tableView.scrollIndicatorInsets.top,
+                                                           left: 0,
+                                                           bottom: tableView.scrollIndicatorInsets.bottom,
+                                                           right: 0)
+        }
+    }
+    
+    var scrollIndicatorInsets: UIEdgeInsets {
+        get { tableView.scrollIndicatorInsets }
+        set { tableView.scrollIndicatorInsets = newValue }
+    }
 }
 
 
