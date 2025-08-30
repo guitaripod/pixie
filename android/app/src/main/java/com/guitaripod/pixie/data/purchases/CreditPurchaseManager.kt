@@ -149,7 +149,6 @@ class CreditPurchaseManager @Inject constructor(
     }
     
     private fun fetchBackendCreditPacks() {
-        // Launch in a coroutine scope
         kotlinx.coroutines.GlobalScope.launch {
             try {
                 val response = apiService.getCreditPacks()
@@ -157,6 +156,8 @@ class CreditPurchaseManager @Inject constructor(
                     response.body()?.let { packsResponse ->
                         _backendCreditPacks.value = packsResponse.packs
                     }
+                } else {
+                    Log.e(TAG, "Failed to fetch credit packs: ${response.code()}")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error fetching backend credit packs", e)
@@ -165,36 +166,42 @@ class CreditPurchaseManager @Inject constructor(
     }
     
     fun getCreditPacksWithPricing(): Flow<List<CreditPackWithPrice>> {
-        // Combine backend credit packs with RevenueCat offerings
-        // Backend is the single source of truth
         return combine(
             _backendCreditPacks,
             offerings
         ) { backendPacks, revenueCatOfferings ->
-            // If backend data is not available, return empty list
             if (backendPacks.isEmpty()) {
                 return@combine emptyList<CreditPackWithPrice>()
             }
             
-            val defaultOffering = revenueCatOfferings?.current ?: revenueCatOfferings?.all?.values?.firstOrNull()
+            if (revenueCatOfferings == null) {
+                // RevenueCat not available yet (app needs to be from Play Store)
+                return@combine emptyList<CreditPackWithPrice>()
+            }
+            
+            val defaultOffering = revenueCatOfferings.current ?: revenueCatOfferings.all.values.firstOrNull()
             val packages = defaultOffering?.availablePackages ?: emptyList()
             
-            // Map backend packs to RevenueCat packages
             backendPacks.mapNotNull { pack ->
-                // Find matching RevenueCat package
-                packages.firstOrNull { it.identifier == pack.id }?.let { rcPackage ->
+                val rcPackage = packages.firstOrNull { 
+                    it.identifier == pack.id || 
+                    it.product.id == pack.id ||
+                    it.product.id == "com.guitaripod.pixie.${pack.id}"
+                }
+                
+                rcPackage?.let {
                     CreditPackWithPrice(
                         creditPack = CreditPack(
                             id = pack.id,
-                            name = pack.name,  // Use backend name
-                            credits = pack.credits,  // Use backend credits
-                            bonusCredits = pack.bonusCredits,  // Use backend bonus
-                            priceUsdCents = pack.priceUsdCents,  // Use backend price
-                            description = pack.description,  // Use backend description
+                            name = pack.name,
+                            credits = pack.credits,
+                            bonusCredits = pack.bonusCredits,
+                            priceUsdCents = pack.priceUsdCents,
+                            description = pack.description,
                             popular = pack.id == "popular"
                         ),
-                        rcPackage = rcPackage,
-                        localizedPrice = rcPackage.product.price.formatted
+                        rcPackage = it,
+                        localizedPrice = it.product.price.formatted
                     )
                 }
             }.sortedBy { it.creditPack.priceUsdCents }
@@ -203,6 +210,11 @@ class CreditPurchaseManager @Inject constructor(
     
     fun resetPurchaseState() {
         revenueCatManager.resetPurchaseState()
+    }
+    
+    fun refreshOfferings() {
+        fetchBackendCreditPacks()
+        revenueCatManager.fetchOfferings()
     }
 }
 
