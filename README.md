@@ -1,6 +1,6 @@
 # Pixie - AI Image Generation Platform
 
-A high-performance monorepo containing the Pixie AI image generation service built on OpenAI's gpt-image-1 model. Includes a Rust-based Cloudflare Worker backend, command-line interface, Android app, and iOS app (coming soon).
+A high-performance monorepo containing the Pixie AI image generation service built on OpenAI's gpt-image-1 model. Includes a Rust-based Cloudflare Worker backend, command-line interface, Android app, and iOS app.
 
 ## Quick Links
 
@@ -224,23 +224,51 @@ cd android
 
 3. Update the API endpoint in build configuration if using self-hosted backend
 
-### Play Store
-Coming soon - currently in final testing phase.
+### Google Play Store
+Available on Google Play Store with full feature set.
 
 </details>
 
 <details>
 <summary><b>iOS App</b></summary>
 
-### Status: In Development
+### Overview
+Native iOS application built with UIKit and Swift, providing a mobile interface for Pixie AI image generation with feature parity to the Android app.
 
-The iOS app is currently being developed and will provide feature parity with the Android app:
-- SwiftUI interface
-- Native iOS design patterns
-- Same core features as Android
-- Universal app for iPhone and iPad
+### Features
+- **Image Generation**: Chat-based interface with batch generation (1-10 images)
+- **Image Editing**: Upload and modify existing images with AI
+- **Gallery**: Browse public and personal galleries with download/share options
+- **Credits**: Balance tracking, usage dashboard, and in-app purchases via RevenueCat
+- **Authentication**: OAuth with GitHub, Google, and Apple Sign In
+- **Admin Panel**: System statistics and user management (admin only)
+- **Offline Support**: Network monitoring and offline indicators
+- **Background Tasks**: Efficient background processing for image operations
 
-Check back soon for updates!
+### Technical Stack
+- **Language**: Swift 5.9+
+- **UI**: UIKit with programmatic constraints and UIStackViews
+- **Architecture**: MVVM with Repository pattern
+- **Networking**: URLSession with custom service layer
+- **Image Processing**: Native iOS image frameworks
+- **Payments**: RevenueCat for in-app purchases
+- **Persistence**: Keychain for secure storage
+- **Min iOS**: 15.0
+- **Target iOS**: 17.0+
+
+### Building from Source
+```bash
+cd iOS/Pixie
+xcodebuild -project Pixie.xcodeproj -scheme Pixie -destination 'platform=iOS Simulator,id=69011470-D880-44F0-A527-480A03C692CA' build
+```
+
+### Configuration
+1. Add your OAuth client IDs to the project configuration
+2. Configure RevenueCat for in-app purchases
+3. Update the API endpoint in ConfigurationManager if using self-hosted backend
+
+### App Store
+Available on the App Store with full feature set.
 
 </details>
 
@@ -273,6 +301,12 @@ cd android
 ./gradlew installDebug
 ```
 
+#### iOS
+```bash
+cd iOS/Pixie
+xcodebuild -project Pixie.xcodeproj -scheme Pixie -destination 'platform=iOS Simulator,id=69011470-D880-44F0-A527-480A03C692CA' build
+```
+
 ### Testing
 - Backend: Test with CLI (`cd cli && cargo run -- [args]`)
 - Cost optimization: Always use `--quality low` for testing (4-5 credits vs 50-80)
@@ -292,12 +326,13 @@ curl https://your-worker.workers.dev/
 
 ### Project Structure
 ```
-├── src/                # Backend source
-├── cli/                # CLI application
-├── android/            # Android app
-├── ios/                # iOS app (coming soon)
+├── src/                # Backend source (Rust/Cloudflare Workers)
+├── cli/                # CLI application (Rust)
+├── android/            # Android app (Kotlin/Jetpack Compose)
+├── iOS/                # iOS app (Swift/UIKit)
 ├── migrations/         # Database schemas
 ├── docs/               # Documentation
+├── .github/            # CI/CD workflows
 └── wrangler.toml      # Worker configuration
 ```
 
