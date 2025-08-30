@@ -25,13 +25,16 @@ class SectionHeaderView: UICollectionReusableView {
         actionButton.translatesAutoresizingMaskIntoConstraints = false
         actionButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .medium)
         addSubview(actionButton)
+
+        let horizontalPadding: CGFloat = 8
+
         NSLayoutConstraint.activate([
-            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
+            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalPadding),
             titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: 8),
-            subtitleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
+            subtitleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalPadding),
             subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
             subtitleLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12),
-            actionButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
+            actionButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -horizontalPadding),
             actionButton.centerYAnchor.constraint(equalTo: centerYAnchor)
         ])
     }
@@ -80,12 +83,16 @@ class CreativePromptsHeaderView: UICollectionReusableView {
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.axis = .horizontal
         stackView.spacing = 8
+        stackView.layoutMargins = .init(top: .zero, left: -16, bottom: .zero, right: .zero)
+        stackView.isLayoutMarginsRelativeArrangement = true
         stackView.distribution = .fill
         scrollView.addSubview(stackView)
+
+        let horizontalPadding: CGFloat = 8
         NSLayoutConstraint.activate([
-            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
+            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalPadding),
             titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: 8),
-            subtitleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
+            subtitleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalPadding),
             subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
             scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
@@ -107,7 +114,7 @@ class CreativePromptsHeaderView: UICollectionReusableView {
         subtitleLabel.text = "Tap a category, then select a prompt"
         stackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
         let leadingPadding = UIView()
-        leadingPadding.widthAnchor.constraint(equalToConstant: 8).isActive = true
+        leadingPadding.widthAnchor.constraint(equalToConstant: 16).isActive = true
         stackView.addArrangedSubview(leadingPadding)
         for (index, category) in categories.enumerated() {
             let button = UIButton(type: .custom)
@@ -126,7 +133,7 @@ class CreativePromptsHeaderView: UICollectionReusableView {
             stackView.addArrangedSubview(button)
         }
         let trailingPadding = UIView()
-        trailingPadding.widthAnchor.constraint(equalToConstant: 8).isActive = true
+        trailingPadding.widthAnchor.constraint(equalToConstant: 16).isActive = true
         stackView.addArrangedSubview(trailingPadding)
     }
     private func selectCategory(at index: Int) {
