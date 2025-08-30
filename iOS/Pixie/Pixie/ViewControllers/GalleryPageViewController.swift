@@ -1,4 +1,5 @@
 import UIKit
+import UniformTypeIdentifiers
 
 final class GalleryPageViewController: UIViewController {
     
@@ -20,11 +21,12 @@ final class GalleryPageViewController: UIViewController {
     private let loadingView = UIActivityIndicatorView(style: .large)
     
     private var dataSource: UICollectionViewDiffableDataSource<Int, ImageMetadata>!
+    private var layoutManager = AdaptiveLayoutManager(traitCollection: UITraitCollection.current)
     
     init(type: GalleryType) {
         self.type = type
         
-        let layout = Self.createLayout()
+        let layout = Self.createLayout(for: UITraitCollection.current)
         self.collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         
         super.init(nibName: nil, bundle: nil)
@@ -40,12 +42,26 @@ final class GalleryPageViewController: UIViewController {
         setupCollectionView()
         setupDataSource()
         setupRefreshControl()
+        setupDragAndDrop()
         loadInitialData()
+        layoutManager.delegate = self
     }
     
-    private static func createLayout() -> UICollectionViewLayout {
-        let spacing: CGFloat = 1
-        let columns: CGFloat = 3
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        
+        if traitCollection.horizontalSizeClass != previousTraitCollection?.horizontalSizeClass ||
+           traitCollection.verticalSizeClass != previousTraitCollection?.verticalSizeClass {
+            layoutManager.updateLayout(for: traitCollection)
+            collectionView.setCollectionViewLayout(Self.createLayout(for: traitCollection), animated: true)
+        }
+    }
+    
+    private static func createLayout(for traitCollection: UITraitCollection) -> UICollectionViewLayout {
+        let layout = AdaptiveLayout(traitCollection: traitCollection)
+        let columns = CGFloat(layout.galleryColumns)
+        let spacing: CGFloat = UIDevice.isPad ? 2 : 1
+        let insets = layout.contentInsets
         
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0 / columns),
@@ -67,15 +83,20 @@ final class GalleryPageViewController: UIViewController {
         
         let section = NSCollectionLayoutSection(group: group)
         section.interGroupSpacing = spacing
-        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 80, trailing: 0)
+        section.contentInsets = NSDirectionalEdgeInsets(
+            top: insets.top,
+            leading: insets.left,
+            bottom: 80 + insets.bottom,
+            trailing: insets.right
+        )
         
-        let layout = UICollectionViewCompositionalLayout(section: section)
+        let layoutConfig = UICollectionViewCompositionalLayout(section: section)
         
         let config = UICollectionViewCompositionalLayoutConfiguration()
         config.interSectionSpacing = 0
-        layout.configuration = config
+        layoutConfig.configuration = config
         
-        return layout
+        return layoutConfig
     }
     
     private func setupUI() {
@@ -472,6 +493,38 @@ extension GalleryPageViewController: UICollectionViewDataSourcePrefetching {
            !isLoading && hasMore {
             loadMore()
         }
+    }
+    
+    private func setupDragAndDrop() {
+        if UIDevice.isPad {
+            collectionView.dragDelegate = self
+            collectionView.dragInteractionEnabled = true
+        }
+    }
+}
+
+extension GalleryPageViewController: AdaptiveLayoutDelegate {
+    func layoutDidChange(to layout: AdaptiveLayout) {
+        collectionView.setCollectionViewLayout(Self.createLayout(for: traitCollection), animated: true)
+    }
+}
+
+extension GalleryPageViewController: UICollectionViewDragDelegate {
+    func collectionView(_ collectionView: UICollectionView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
+        guard indexPath.item < images.count else { return [] }
+        let image = images[indexPath.item]
+        
+        let itemProvider = NSItemProvider()
+        
+        itemProvider.registerDataRepresentation(forTypeIdentifier: UTType.plainText.identifier, visibility: .all) { completion in
+            let data = image.prompt.data(using: .utf8) ?? Data()
+            completion(data, nil)
+            return nil
+        }
+        
+        let dragItem = UIDragItem(itemProvider: itemProvider)
+        dragItem.localObject = image
+        return [dragItem]
     }
 }
 

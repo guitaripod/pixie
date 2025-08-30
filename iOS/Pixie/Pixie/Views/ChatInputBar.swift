@@ -724,6 +724,20 @@ class ChatInputBar: UIView {
         expandedImageContainer.layer.borderColor = UIColor.separator.cgColor
         expandedImageContainer.layer.borderWidth = 0.5
     }
+    
+    func getCurrentText() -> String? {
+        return promptTextView.text
+    }
+    
+    @discardableResult
+    override func becomeFirstResponder() -> Bool {
+        return promptTextView.becomeFirstResponder()
+    }
+    
+    @discardableResult
+    override func resignFirstResponder() -> Bool {
+        return promptTextView.resignFirstResponder()
+    }
 }
 
 extension ChatInputBar: UITextViewDelegate {

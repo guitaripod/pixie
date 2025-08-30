@@ -94,6 +94,11 @@ class SettingsViewController: UIViewController {
         setupConstraints()
         setupNotifications()
         loadCacheSize()
+        
+        if UIDevice.isPad {
+            navigationItem.largeTitleDisplayMode = .always
+            preferredContentSize = CGSize(width: 600, height: 800)
+        }
     }
     
     private func setupNotifications() {

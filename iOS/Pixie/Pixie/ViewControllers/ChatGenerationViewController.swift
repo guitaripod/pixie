@@ -2,6 +2,7 @@ import UIKit
 import PhotosUI
 import Photos
 import Combine
+import UniformTypeIdentifiers
 
 class ChatGenerationViewController: UIViewController {
     enum ViewState {
@@ -23,6 +24,9 @@ class ChatGenerationViewController: UIViewController {
     private var chatBottomConstraint: NSLayoutConstraint!
     private let offlineBanner = OfflineBanner()
     private var notificationObserver: NSObjectProtocol?
+    private var layoutManager = AdaptiveLayoutManager(traitCollection: UITraitCollection.current)
+    private var leadingConstraint: NSLayoutConstraint!
+    private var trailingConstraint: NSLayoutConstraint!
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -31,7 +35,10 @@ class ChatGenerationViewController: UIViewController {
         setupHandlers()
         setupBindings()
         setupNotificationObserver()
+        setupKeyboardCommands()
+        setupDragAndDrop()
         transitionToState(.suggestions, animated: false)
+        layoutManager.delegate = self
     }
     
     deinit {
@@ -57,32 +64,38 @@ class ChatGenerationViewController: UIViewController {
         view.addSubview(offlineBanner)
     }
     private func setupConstraints() {
+        let layout = AdaptiveLayout(traitCollection: traitCollection)
+        let insets = layout.contentInsets
+        
+        leadingConstraint = inputBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: insets.left)
+        trailingConstraint = inputBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -insets.right)
+        
         NSLayoutConstraint.activate([
-            inputBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            inputBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            leadingConstraint,
+            trailingConstraint,
             inputBar.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
         
         let bannerTopConstraint = offlineBanner.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -36)
         offlineBanner.setTopConstraint(bannerTopConstraint)
         NSLayoutConstraint.activate([
-            offlineBanner.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            offlineBanner.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            offlineBanner.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: insets.left),
+            offlineBanner.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -insets.right),
             bannerTopConstraint
         ])
         
         suggestionsBottomConstraint = suggestionsView.bottomAnchor.constraint(equalTo: inputBar.topAnchor)
         NSLayoutConstraint.activate([
             suggestionsView.topAnchor.constraint(equalTo: offlineBanner.bottomAnchor),
-            suggestionsView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            suggestionsView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            suggestionsView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: insets.left),
+            suggestionsView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -insets.right),
             suggestionsBottomConstraint
         ])
         chatBottomConstraint = chatView.bottomAnchor.constraint(equalTo: inputBar.topAnchor)
         NSLayoutConstraint.activate([
             chatView.topAnchor.constraint(equalTo: offlineBanner.bottomAnchor),
-            chatView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            chatView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            chatView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: insets.left),
+            chatView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -insets.right),
             chatBottomConstraint
         ])
     }
@@ -688,5 +701,150 @@ struct GenerationOptions {
             compression: nil,
             moderation: nil
         )
+    }
+}
+
+extension ChatGenerationViewController {
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        
+        if traitCollection.horizontalSizeClass != previousTraitCollection?.horizontalSizeClass ||
+           traitCollection.verticalSizeClass != previousTraitCollection?.verticalSizeClass {
+            layoutManager.updateLayout(for: traitCollection)
+            updateLayoutForSizeClass()
+        }
+    }
+    
+    private func updateLayoutForSizeClass() {
+        let layout = AdaptiveLayout(traitCollection: traitCollection)
+        let insets = layout.contentInsets
+        
+        leadingConstraint?.constant = insets.left
+        trailingConstraint?.constant = -insets.right
+        
+        UIView.animate(withDuration: 0.3) {
+            self.view.layoutIfNeeded()
+        }
+    }
+    
+    private func setupKeyboardCommands() {
+        addKeyCommand(UIKeyCommand(title: "New Chat",
+                                  action: #selector(newChatTapped),
+                                  input: "N",
+                                  modifierFlags: .command))
+        
+        addKeyCommand(UIKeyCommand(title: "Generate",
+                                  action: #selector(generateWithKeyboard),
+                                  input: "\r",
+                                  modifierFlags: .command))
+        
+        addKeyCommand(UIKeyCommand(title: "Open Gallery",
+                                  action: #selector(galleryTapped),
+                                  input: "G",
+                                  modifierFlags: .command))
+        
+        addKeyCommand(UIKeyCommand(title: "Save Image",
+                                  action: #selector(saveCurrentImage),
+                                  input: "S",
+                                  modifierFlags: .command))
+        
+        addKeyCommand(UIKeyCommand(title: "Focus Input",
+                                  action: #selector(focusInputField),
+                                  input: "L",
+                                  modifierFlags: .command))
+        
+        if UIDevice.isPad {
+            addKeyCommand(UIKeyCommand(title: "Toggle Sidebar",
+                                      action: #selector(toggleSidebar),
+                                      input: "\\",
+                                      modifierFlags: .command))
+        }
+    }
+    
+    @objc private func generateWithKeyboard() {
+        if let text = inputBar.getCurrentText(), !text.isEmpty {
+            handleSendPrompt(text)
+        }
+    }
+    
+    @objc private func saveCurrentImage() {
+        if let lastMessage = viewModel.messages.last,
+           !lastMessage.isUser,
+           let images = lastMessage.images,
+           let firstImage = images.first {
+            UIImageWriteToSavedPhotosAlbum(firstImage, self, #selector(image(_:didFinishSavingWithError:contextInfo:)), nil)
+        }
+    }
+    
+    @objc private func image(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
+        if error != nil {
+            haptics.notification(.error)
+        } else {
+            haptics.notification(.success)
+        }
+    }
+    
+    @objc private func focusInputField() {
+        inputBar.becomeFirstResponder()
+    }
+    
+    @objc private func toggleSidebar() {
+        if let splitVC = self.splitViewController as? MainSplitViewController {
+            if splitVC.displayMode == .oneBesideSecondary {
+                splitVC.preferredDisplayMode = .secondaryOnly
+            } else {
+                splitVC.preferredDisplayMode = .oneBesideSecondary
+            }
+        }
+    }
+    
+    private func setupDragAndDrop() {
+        if UIDevice.isPad {
+            view.addInteraction(UIDropInteraction(delegate: self))
+            chatView.addInteraction(UIDragInteraction(delegate: self))
+        }
+    }
+    
+    override var canBecomeFirstResponder: Bool {
+        return true
+    }
+}
+
+extension ChatGenerationViewController: AdaptiveLayoutDelegate {
+    func layoutDidChange(to layout: AdaptiveLayout) {
+        updateLayoutForSizeClass()
+    }
+}
+
+extension ChatGenerationViewController: UIDropInteractionDelegate {
+    func dropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool {
+        return session.hasItemsConforming(toTypeIdentifiers: [UTType.image.identifier])
+    }
+    
+    func dropInteraction(_ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession) -> UIDropProposal {
+        return UIDropProposal(operation: .copy)
+    }
+    
+    func dropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {
+        session.loadObjects(ofClass: UIImage.self) { [weak self] items in
+            guard let images = items as? [UIImage], let image = images.first else { return }
+            DispatchQueue.main.async {
+                self?.presentImagePreviewForEdit(image)
+            }
+        }
+    }
+}
+
+extension ChatGenerationViewController: UIDragInteractionDelegate {
+    func dragInteraction(_ interaction: UIDragInteraction, itemsForBeginning session: UIDragSession) -> [UIDragItem] {
+        guard let lastMessage = viewModel.messages.last,
+              !lastMessage.isUser,
+              let images = lastMessage.images,
+              let image = images.first else { return [] }
+        
+        let provider = NSItemProvider(object: image)
+        let dragItem = UIDragItem(itemProvider: provider)
+        dragItem.localObject = image
+        return [dragItem]
     }
 }
