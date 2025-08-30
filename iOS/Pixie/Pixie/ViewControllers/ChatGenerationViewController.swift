@@ -66,9 +66,9 @@ class ChatGenerationViewController: UIViewController {
     private func setupConstraints() {
         let layout = AdaptiveLayout(traitCollection: traitCollection)
         let insets = layout.contentInsets
-        
-        leadingConstraint = inputBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: insets.left)
-        trailingConstraint = inputBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -insets.right)
+
+        leadingConstraint = inputBar.leadingAnchor.constraint(equalTo: view.leadingAnchor)
+        trailingConstraint = inputBar.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         
         NSLayoutConstraint.activate([
             leadingConstraint,
@@ -79,23 +79,23 @@ class ChatGenerationViewController: UIViewController {
         let bannerTopConstraint = offlineBanner.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -36)
         offlineBanner.setTopConstraint(bannerTopConstraint)
         NSLayoutConstraint.activate([
-            offlineBanner.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: insets.left),
-            offlineBanner.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -insets.right),
+            offlineBanner.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            offlineBanner.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             bannerTopConstraint
         ])
-        
+
         suggestionsBottomConstraint = suggestionsView.bottomAnchor.constraint(equalTo: inputBar.topAnchor)
         NSLayoutConstraint.activate([
             suggestionsView.topAnchor.constraint(equalTo: offlineBanner.bottomAnchor),
-            suggestionsView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: insets.left),
-            suggestionsView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -insets.right),
+            suggestionsView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            suggestionsView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             suggestionsBottomConstraint
         ])
         chatBottomConstraint = chatView.bottomAnchor.constraint(equalTo: inputBar.topAnchor)
         NSLayoutConstraint.activate([
             chatView.topAnchor.constraint(equalTo: offlineBanner.bottomAnchor),
-            chatView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: insets.left),
-            chatView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -insets.right),
+            chatView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            chatView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             chatBottomConstraint
         ])
     }
@@ -716,12 +716,9 @@ extension ChatGenerationViewController {
     }
     
     private func updateLayoutForSizeClass() {
-        let layout = AdaptiveLayout(traitCollection: traitCollection)
-        let insets = layout.contentInsets
-        
-        leadingConstraint?.constant = insets.left
-        trailingConstraint?.constant = -insets.right
-        
+        leadingConstraint?.constant = 0
+        trailingConstraint?.constant = 0
+
         UIView.animate(withDuration: 0.3) {
             self.view.layoutIfNeeded()
         }
