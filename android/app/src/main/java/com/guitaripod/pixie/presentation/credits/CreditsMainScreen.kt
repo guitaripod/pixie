@@ -40,7 +40,6 @@ import com.guitaripod.pixie.utils.hapticClickable
 fun CreditsMainScreen(
     viewModel: CreditsViewModel,
     onNavigateBack: () -> Unit,
-    onNavigateToDashboard: () -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToPacks: () -> Unit,
     onNavigateToEstimator: () -> Unit
@@ -154,13 +153,6 @@ fun CreditsMainScreen(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 8.dp)
-            )
-            
-            FeatureCard(
-                icon = Icons.Default.DataUsage,
-                title = "Usage Dashboard",
-                description = "View detailed usage statistics and charts",
-                onClick = onNavigateToDashboard
             )
             
             FeatureCard(
