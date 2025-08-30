@@ -47,7 +47,12 @@ class PurchaseViewModel(
     private fun observeCreditPacks() {
         viewModelScope.launch {
             creditPacksWithPricing.collect { packs ->
-                _uiState.update { it.copy(creditPacksWithPricing = packs) }
+                _uiState.update { it.copy(
+                    creditPacksWithPricing = packs,
+                    errorMessage = if (packs.isEmpty()) {
+                        "RevenueCat products not configured. The app needs to be published to Google Play Console."
+                    } else null
+                ) }
             }
         }
     }
@@ -124,5 +129,9 @@ class PurchaseViewModel(
     
     fun clearError() {
         _uiState.update { it.copy(errorMessage = null) }
+    }
+    
+    fun refreshOfferings() {
+        purchaseManager.refreshOfferings()
     }
 }
