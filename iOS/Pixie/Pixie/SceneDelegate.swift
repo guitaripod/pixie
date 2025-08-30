@@ -89,14 +89,19 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     func showMainInterface() {
         print("DEBUG: Showing main interface")
-        let chatViewController = ChatGenerationViewController()
-        let navigationController = UINavigationController(rootViewController: chatViewController)
+        
+        let rootViewController: UIViewController
+        
+        if UIDevice.isPad {
+            rootViewController = MainSplitViewController()
+        } else {
+            let chatViewController = ChatGenerationViewController()
+            rootViewController = UINavigationController(rootViewController: chatViewController)
+        }
         
         if let splashView = window?.rootViewController?.view as? SplashView {
-            // Set the navigation controller as root first
-            window?.rootViewController = navigationController
+            window?.rootViewController = rootViewController
             
-            // Add splash view on top for animation
             window?.addSubview(splashView)
             splashView.frame = window!.bounds
             
@@ -105,7 +110,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             }
         } else {
             UIView.transition(with: window!, duration: 0.3, options: .transitionCrossDissolve) {
-                self.window?.rootViewController = navigationController
+                self.window?.rootViewController = rootViewController
             }
         }
         print("DEBUG: Main interface shown")

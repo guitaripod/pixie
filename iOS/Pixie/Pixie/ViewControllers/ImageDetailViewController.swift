@@ -7,9 +7,11 @@ final class ImageDetailViewController: UIViewController {
     private let image: ImageMetadata
     private let scrollView = UIScrollView()
     private let contentView = UIView()
+    private let imageScrollView = UIScrollView()
     private let imageView = UIImageView()
     private let actionsStackView = UIStackView()
     private let detailsStackView = UIStackView()
+    private var imageHeightConstraint: NSLayoutConstraint!
     
     init(image: ImageMetadata) {
         self.image = image
@@ -24,10 +26,19 @@ final class ImageDetailViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         loadImage()
+        
+        if UIDevice.isPad {
+            preferredContentSize = CGSize(width: 800, height: 900)
+            setupKeyboardCommands()
+        }
     }
     
     private func setupUI() {
         view.backgroundColor = .systemBackground
+        
+        if UIDevice.isPad {
+            navigationItem.largeTitleDisplayMode = .never
+        }
         
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(scrollView)
@@ -35,18 +46,33 @@ final class ImageDetailViewController: UIViewController {
         contentView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentView)
         
+        imageScrollView.delegate = self
+        imageScrollView.minimumZoomScale = 1.0
+        imageScrollView.maximumZoomScale = 4.0
+        imageScrollView.showsVerticalScrollIndicator = false
+        imageScrollView.showsHorizontalScrollIndicator = false
+        imageScrollView.layer.cornerRadius = 12
+        imageScrollView.clipsToBounds = true
+        imageScrollView.backgroundColor = .secondarySystemBackground
+        imageScrollView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(imageScrollView)
+        
         imageView.contentMode = .scaleAspectFit
-        imageView.clipsToBounds = true
-        imageView.layer.cornerRadius = 12
-        imageView.backgroundColor = .secondarySystemBackground
+        imageView.isUserInteractionEnabled = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(imageView)
+        imageScrollView.addSubview(imageView)
         
         setupActionButtons()
         contentView.addSubview(actionsStackView)
         
         setupDetailsSection()
         contentView.addSubview(detailsStackView)
+        
+        let layout = AdaptiveLayout(traitCollection: traitCollection)
+        let insets = layout.contentInsets
+        let maxImageHeight: CGFloat = UIDevice.isPad ? 600 : 400
+        
+        imageHeightConstraint = imageScrollView.heightAnchor.constraint(lessThanOrEqualToConstant: maxImageHeight)
         
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -60,18 +86,25 @@ final class ImageDetailViewController: UIViewController {
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             
-            imageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
-            imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            imageView.heightAnchor.constraint(lessThanOrEqualToConstant: 400),
+            imageScrollView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16 + insets.top),
+            imageScrollView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16 + insets.left),
+            imageScrollView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16 - insets.right),
+            imageHeightConstraint,
             
-            actionsStackView.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 16),
-            actionsStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            actionsStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            imageView.topAnchor.constraint(equalTo: imageScrollView.topAnchor),
+            imageView.leadingAnchor.constraint(equalTo: imageScrollView.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: imageScrollView.trailingAnchor),
+            imageView.bottomAnchor.constraint(equalTo: imageScrollView.bottomAnchor),
+            imageView.widthAnchor.constraint(equalTo: imageScrollView.widthAnchor),
+            imageView.heightAnchor.constraint(equalTo: imageScrollView.heightAnchor),
+            
+            actionsStackView.topAnchor.constraint(equalTo: imageScrollView.bottomAnchor, constant: 16),
+            actionsStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16 + insets.left),
+            actionsStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16 - insets.right),
             
             detailsStackView.topAnchor.constraint(equalTo: actionsStackView.bottomAnchor, constant: 24),
-            detailsStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            detailsStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            detailsStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16 + insets.left),
+            detailsStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16 - insets.right),
             detailsStackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16)
         ])
         
@@ -135,6 +168,10 @@ final class ImageDetailViewController: UIViewController {
         button.addTarget(self, action: action, for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.heightAnchor.constraint(equalToConstant: 60).isActive = true
+        
+        if UIDevice.isPad {
+            button.setupPointerInteraction()
+        }
         
         button.configurationUpdateHandler = { button in
             switch button.state {
@@ -287,4 +324,64 @@ final class ImageDetailViewController: UIViewController {
         return displayFormatter.string(from: date)
     }
     
+    private func setupKeyboardCommands() {
+        addKeyCommand(UIKeyCommand(title: "Close",
+                                  action: #selector(dismissDetail),
+                                  input: UIKeyCommand.inputEscape))
+        
+        addKeyCommand(UIKeyCommand(title: "Copy Prompt",
+                                  action: #selector(copyTapped),
+                                  input: "C",
+                                  modifierFlags: .command))
+        
+        addKeyCommand(UIKeyCommand(title: "Save Image",
+                                  action: #selector(downloadTapped),
+                                  input: "S",
+                                  modifierFlags: .command))
+        
+        addKeyCommand(UIKeyCommand(title: "Share",
+                                  action: #selector(shareTapped),
+                                  input: "S",
+                                  modifierFlags: [.command, .shift]))
+    }
+    
+    @objc private func dismissDetail() {
+        dismiss(animated: true)
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        
+        if traitCollection.horizontalSizeClass != previousTraitCollection?.horizontalSizeClass {
+            let maxImageHeight: CGFloat = UIDevice.isPad ? 600 : 400
+            imageHeightConstraint.constant = maxImageHeight
+        }
+    }
+}
+
+extension ImageDetailViewController: UIScrollViewDelegate {
+    func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+        return scrollView == imageScrollView ? imageView : nil
+    }
+    
+    func scrollViewDidZoom(_ scrollView: UIScrollView) {
+        if scrollView == imageScrollView {
+            centerImageInScrollView()
+        }
+    }
+    
+    private func centerImageInScrollView() {
+        let scrollViewSize = imageScrollView.bounds.size
+        let imageViewSize = imageView.frame.size
+        
+        let horizontalPadding = max(0, (scrollViewSize.width - imageViewSize.width) / 2)
+        let verticalPadding = max(0, (scrollViewSize.height - imageViewSize.height) / 2)
+        
+        imageScrollView.contentInset = UIEdgeInsets(
+            top: verticalPadding,
+            left: horizontalPadding,
+            bottom: verticalPadding,
+            right: horizontalPadding
+        )
+    }
 }
