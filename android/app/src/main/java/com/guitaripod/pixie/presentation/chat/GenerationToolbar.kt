@@ -38,6 +38,8 @@ import androidx.compose.ui.platform.LocalContext
 import coil.request.ImageRequest
 import com.guitaripod.pixie.utils.hapticClickable
 import com.guitaripod.pixie.utils.rememberHapticFeedback
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -64,6 +66,13 @@ fun GenerationToolbar(
     onSwitchToGenerate: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val configuration = LocalConfiguration.current
+    val density = LocalDensity.current
+    
+    val screenHeight = with(density) { configuration.screenHeightDp.dp }
+    val expandedHeight = screenHeight * 0.85f
+    val collapsedHeight = 80.dp
+    
     val transition = updateTransition(targetState = isExpanded, label = "toolbar")
     
     val toolbarHeight by transition.animateDp(
@@ -75,7 +84,7 @@ fun GenerationToolbar(
             )
         }
     ) { expanded ->
-        if (expanded) 520.dp else 80.dp
+        if (expanded) expandedHeight else collapsedHeight
     }
     
     val cornerRadius by transition.animateDp(
