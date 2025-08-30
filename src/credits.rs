@@ -6,6 +6,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
 const CREDIT_MULTIPLIER: f64 = 3.0;
+const NEW_USER_FREE_CREDITS: i32 = 6;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserCredits {
@@ -114,13 +115,13 @@ pub fn calculate_credits_from_cost(cost_usd: f64) -> u32 {
 pub async fn initialize_user_credits(user_id: &str, db: &D1Database) -> Result<()> {
     let now = Utc::now().to_rfc3339();
     
-    // Create user_credits entry with 0 balance
     db.prepare(
         "INSERT INTO user_credits (user_id, balance, lifetime_purchased, lifetime_spent, created_at, updated_at) 
-         VALUES (?, 0, 0, 0, ?, ?)"
+         VALUES (?, ?, 0, 0, ?, ?)"
     )
     .bind(&[
         user_id.into(),
+        NEW_USER_FREE_CREDITS.into(),
         now.clone().into(),
         now.into(),
     ])?
