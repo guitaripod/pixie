@@ -29,7 +29,6 @@ sealed class Screen {
     data class Chat(val editImage: ImageDetails? = null) : Screen()
     object Gallery : Screen()
     object CreditsMain : Screen()
-    object UsageDashboard : Screen()
     object TransactionHistory : Screen()
     object CreditPacks : Screen()
     object CostEstimator : Screen()
@@ -200,25 +199,13 @@ fun PixieNavigation(
             CreditsMainScreen(
                 viewModel = creditsViewModel,
                 onNavigateBack = { navigateBack() },
-                onNavigateToDashboard = { navigateTo(Screen.UsageDashboard) },
                 onNavigateToHistory = { navigateTo(Screen.TransactionHistory) },
                 onNavigateToPacks = { navigateTo(Screen.CreditPacks) },
                 onNavigateToEstimator = { navigateTo(Screen.CostEstimator) }
             )
         }
         
-        is Screen.UsageDashboard -> {
-            val creditsViewModel: CreditsViewModel = viewModel(
-                factory = CreditsViewModelFactory(appContainer.creditsRepository)
-            )
-            
-            UsageDashboardScreen(
-                viewModel = creditsViewModel,
-                onNavigateBack = { navigateBack() },
-                onExportCsv = {
-                }
-            )
-        }
+
         
         is Screen.TransactionHistory -> {
             val creditsViewModel: CreditsViewModel = viewModel(
