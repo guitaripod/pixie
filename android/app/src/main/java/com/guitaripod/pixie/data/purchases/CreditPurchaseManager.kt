@@ -6,6 +6,8 @@ import com.guitaripod.pixie.data.api.PixieApiService
 import com.guitaripod.pixie.data.api.model.*
 import com.guitaripod.pixie.data.repository.CreditsRepository
 import com.revenuecat.purchases.Package
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -254,16 +256,18 @@ data class CreditPurchaseResponse(
     val status: String
 )
 
+@JsonClass(generateAdapter = true)
 data class RevenueCatPurchaseValidationRequest(
-    val packId: String,
-    val purchaseToken: String,
-    val productId: String,
-    val platform: String
+    @Json(name = "pack_id") val packId: String,
+    @Json(name = "purchase_token") val purchaseToken: String,
+    @Json(name = "product_id") val productId: String,
+    @Json(name = "platform") val platform: String
 )
 
+@JsonClass(generateAdapter = true)
 data class RevenueCatPurchaseValidationResponse(
-    val success: Boolean,
-    val purchaseId: String,
-    val creditsAdded: Int,
-    val newBalance: Int
+    @Json(name = "success") val success: Boolean,
+    @Json(name = "purchase_id") val purchaseId: String,
+    @Json(name = "credits_added") val creditsAdded: Int,
+    @Json(name = "new_balance") val newBalance: Int
 )
