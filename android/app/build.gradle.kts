@@ -17,7 +17,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.guitaripod.pixie"
-    compileSdk = 34
+    compileSdk = 35
 
     signingConfigs {
         if (keystorePropertiesFile.exists()) {
@@ -33,8 +33,8 @@ android {
     defaultConfig {
         applicationId = "com.guitaripod.pixie"
         minSdk = 24
-        targetSdk = 34
-        versionCode = 4
+        targetSdk = 35
+        versionCode = 5
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -48,7 +48,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
