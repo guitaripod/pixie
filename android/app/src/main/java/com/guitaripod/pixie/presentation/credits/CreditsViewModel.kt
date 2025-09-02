@@ -88,9 +88,11 @@ class CreditsViewModel(
         }
     }
     
-    fun loadTransactions(loadMore: Boolean = false) {
+    fun loadTransactions(loadMore: Boolean = false, limit: Int? = null) {
         viewModelScope.launch {
-            if (loadMore) {
+            if (limit != null) {
+                currentTransactionLimit = limit
+            } else if (loadMore) {
                 currentTransactionLimit += 20
             } else {
                 currentTransactionLimit = 20
@@ -104,7 +106,7 @@ class CreditsViewModel(
                         it.copy(
                             transactions = response.transactions,
                             isLoadingTransactions = false,
-                            hasMoreTransactions = response.transactions.size < response.total,
+                            hasMoreTransactions = response.transactions.size == currentTransactionLimit && response.transactions.size < response.total,
                             errorMessage = null
                         )
                     }
