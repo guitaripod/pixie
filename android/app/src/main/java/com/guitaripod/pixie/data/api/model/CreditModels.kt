@@ -29,12 +29,12 @@ data class CreditHistoryResponse(
 data class CreditTransaction(
     @Json(name = "id") val id: String,
     @Json(name = "user_id") val userId: String,
-    @Json(name = "transaction_type") val transactionType: String,
+    @Json(name = "type") val transactionType: String,
     @Json(name = "amount") val amount: Int,
     @Json(name = "balance_after") val balanceAfter: Int,
     @Json(name = "description") val description: String,
     @Json(name = "created_at") val createdAt: String,
-    @Json(name = "metadata") val metadata: Map<String, Any>? = null
+    @Json(name = "reference_id") val referenceId: String? = null
 )
 
 enum class TransactionType(val value: String) {
