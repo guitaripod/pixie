@@ -141,10 +141,22 @@ pub async fn list_transactions(req: Request, ctx: RouteContext<()>) -> Result<Re
     };
     
     let db = env.d1("DB")?;
+    
+    let count_stmt = db.prepare("SELECT COUNT(*) as total FROM credit_transactions WHERE user_id = ?");
+    let count_result = count_stmt
+        .bind(&[user_id.clone().into()])?
+        .first::<serde_json::Value>(None)
+        .await?
+        .unwrap_or(json!({"total": 0}));
+    let total = count_result.get("total").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+    
     let transactions = get_user_transactions(&user_id, per_page, offset, &db).await?;
     
     Response::from_json(&json!({
         "transactions": transactions,
+        "total": total,
+        "limit": per_page,
+        "offset": offset,
         "page": page,
         "per_page": per_page,
     }))
