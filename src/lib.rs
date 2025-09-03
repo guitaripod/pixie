@@ -25,10 +25,18 @@ async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             Response::ok(r#"OpenAI Image Proxy - Ready
 
 API Documentation: /docs
-OpenAPI Specification: /openapi.yaml"#)
+OpenAPI Specification: /openapi.yaml
+Privacy Policy: /privacy-policy"#)
         })
         .get("/docs", |_, _| {
             Response::ok(include_str!("swagger-ui.html"))
+                .map(|mut r| {
+                    r.headers_mut().set("Content-Type", "text/html").unwrap();
+                    r
+                })
+        })
+        .get("/privacy-policy", |_, _| {
+            Response::ok(include_str!("privacy_policy.html"))
                 .map(|mut r| {
                     r.headers_mut().set("Content-Type", "text/html").unwrap();
                     r
