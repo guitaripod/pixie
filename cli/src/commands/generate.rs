@@ -20,6 +20,7 @@ pub async fn handle(
     format: Option<&str>,
     compress: Option<u8>,
     moderation: Option<&str>,
+    model: &str,
 ) -> Result<()> {
     let config = Config::load()?;
     if !config.is_authenticated() {
@@ -34,28 +35,39 @@ pub async fn handle(
     // Parse size alias
     let actual_size = parse_size_alias(size);
     
+    // Check if using Gemini (simpler UI)
+    let is_gemini = model.starts_with("gemini");
+    
     // Show generation summary
     println!("\n{}", "🎨 Generation Summary".bold().magenta());
     println!("  Prompt:     {}", prompt.cyan());
-    println!("  Quality:    {}", quality.to_uppercase().yellow());
-    println!("  Size:       {} {}", 
-        size.green(), 
-        if size != &actual_size { format!("({})", actual_size).dimmed() } else { "".dimmed() }
-    );
+    println!("  Model:      {}", model.yellow());
+    
+    if !is_gemini {
+        // Show OpenAI-specific options
+        println!("  Quality:    {}", quality.to_uppercase().yellow());
+        println!("  Size:       {} {}", 
+            size.green(), 
+            if size != &actual_size { format!("({})", actual_size).dimmed() } else { "".dimmed() }
+        );
+    }
+    
     println!("  Quantity:   {}", number.to_string().blue());
     
-    // Show optional parameters if set
-    if let Some(bg) = background {
-        println!("  Background: {}", bg.green());
-    }
-    if let Some(fmt) = format {
-        println!("  Format:     {}", fmt.green());
-        if let Some(c) = compress {
-            println!("  Compress:   {}%", c.to_string().green());
+    // Show optional parameters if set (OpenAI only)
+    if !is_gemini {
+        if let Some(bg) = background {
+            println!("  Background: {}", bg.green());
         }
-    }
-    if let Some(mod_level) = moderation {
-        println!("  Moderation: {}", mod_level.green());
+        if let Some(fmt) = format {
+            println!("  Format:     {}", fmt.green());
+            if let Some(c) = compress {
+                println!("  Compress:   {}%", c.to_string().green());
+            }
+        }
+        if let Some(mod_level) = moderation {
+            println!("  Moderation: {}", mod_level.green());
+        }
     }
     
     let (initial_balance, _) = check_credits_and_estimate(
@@ -65,6 +77,7 @@ pub async fn handle(
         number,
         false,
         prompt,
+        model,
     ).await?;
     
     let pb = ProgressBar::new_spinner();
@@ -75,7 +88,7 @@ pub async fn handle(
     
     let request = ImageGenerationRequest {
         prompt: prompt.to_string(),
-        model: "gpt-image-1".to_string(),
+        model: model.to_string(),
         n: number,
         size: actual_size,
         quality: quality.to_string(),

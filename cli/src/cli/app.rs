@@ -3,11 +3,11 @@ use super::{AuthProvider, GalleryAction, CreditsAction, AdminAction};
 
 #[derive(Parser)]
 #[command(name = "pixie")]
-#[command(about = "A magical CLI for AI image generation powered by gpt-image-1", long_about = "
-Pixie - OpenAI Image Proxy CLI
+#[command(about = "A magical CLI for AI image generation with Gemini and OpenAI", long_about = "
+Pixie - Multi-Model Image Generation CLI
 
-A powerful command-line tool for generating and editing images using OpenAI's gpt-image-1 model.
-Supports image generation, editing, gallery browsing, and usage tracking.
+A powerful command-line tool for generating and editing images using Google's Gemini 2.5 Flash (default)
+or OpenAI's gpt-image-1 model. Supports image generation, editing, gallery browsing, and usage tracking.
 
 QUICK START:
   1. Authenticate:     pixie auth github
@@ -84,13 +84,19 @@ Examples:
   pixie generate \"logo\" -s square -b transparent -f png
   pixie generate \"product photo\" -b white -f jpeg -c 85
   pixie generate \"wallpaper\" -s landscape --moderation low
+  pixie generate \"art\" -m gemini-2.5-flash  # Use Gemini (simpler, cheaper)
+  pixie generate \"detailed photo\" -m gpt-image-1 -q high  # Use OpenAI
 
-For more examples and detailed usage, use: pixie generate --help", long_about = "Generate stunning images from text descriptions using gpt-image-1.
+For more examples and detailed usage, use: pixie generate --help", long_about = "Generate stunning images from text descriptions using Gemini or OpenAI models.
 
 EXAMPLES:
-  # Simple generation (uses defaults)
+  # Simple generation (uses Gemini by default - cheaper, simpler)
   pixie generate \"a serene mountain landscape at sunset\"
   pixie generate \"cyberpunk cityscape\"
+  
+  # Model selection
+  pixie generate \"simple drawing\" -m gemini-2.5-flash      # Gemini: 15 credits
+  pixie generate \"detailed art\" -m gpt-image-1 -q high     # OpenAI: 50-80 credits
   
   # Multiple images
   pixie generate \"cute robot\" -n 4 -o ./images
@@ -136,10 +142,12 @@ PARAMETERS:
   --moderation    Strictness: auto (default), low
 
 CREDIT COSTS:
-  Low:    ~4-6 credits per image
-  Medium: ~16-24 credits per image
-  High:   ~62-94 credits per image (varies by size)
-  Auto:   ~50-75 credits (AI often selects high quality)")]
+  Gemini:  15 credits per image (flat rate, any prompt)
+  OpenAI:
+    Low:    ~4-6 credits per image
+    Medium: ~16-24 credits per image
+    High:   ~62-94 credits per image (varies by size)
+    Auto:   ~50-75 credits (AI often selects high quality)")]
     Generate {
         #[arg(help = "Text description of the image you want to create")]
         prompt: String,
@@ -167,6 +175,9 @@ CREDIT COSTS:
         
         #[arg(long, help = "Moderation level (auto, low)")]
         moderation: Option<String>,
+        
+        #[arg(long, default_value = "gemini-2.5-flash", help = "Model to use: gemini-2.5-flash (default), gpt-image-1")]
+        model: String,
     },
     
     #[command(about = "Edit existing images with AI
@@ -250,8 +261,6 @@ CREDIT COSTS:
         #[arg(help = "Description of how to transform the image")]
         prompt: String,
         
-        #[arg(short, long, help = "Mask image path (transparent areas will be edited)")]
-        mask: Option<String>,
         
         #[arg(short, long, default_value = "1", help = "Number of edited variations (1-10)")]
         number: u8,
@@ -267,6 +276,9 @@ CREDIT COSTS:
         
         #[arg(short, long, help = "Directory to save edited images")]
         output: Option<String>,
+        
+        #[arg(long, default_value = "gemini-2.5-flash", help = "Model to use: gemini-2.5-flash (default), gpt-image-1")]
+        model: String,
     },
     
     #[command(about = "Browse image galleries
@@ -355,6 +367,25 @@ EXAMPLES:
   pixie config                          # Show all configuration
   pixie config --api-url https://...    # Show config with custom API")]
     Config,
+    
+    #[command(about = "Configure settings
+    
+Examples:
+  pixie settings model gemini-2.5-flash
+  pixie settings model gpt-image-1", long_about = "Configure application settings.
+
+Currently supports setting your preferred image generation model.
+
+EXAMPLES:
+  pixie settings model gemini-2.5-flash  # Set Gemini as default (simpler, cheaper)
+  pixie settings model gpt-image-1       # Set OpenAI as default (more features)")]
+    Settings {
+        #[arg(help = "Setting to configure (currently only 'model' is supported)")]
+        setting: String,
+        
+        #[arg(help = "Value to set")]
+        value: String,
+    },
     
     #[command(about = "Log out and remove stored credentials", long_about = "Log out from the service and remove stored authentication tokens.
 

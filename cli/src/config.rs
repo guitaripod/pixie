@@ -9,6 +9,7 @@ pub struct Config {
     pub api_key: Option<String>,
     pub user_id: Option<String>,
     pub auth_provider: Option<String>,
+    pub preferred_model: Option<String>,
 }
 
 impl Config {
@@ -58,6 +59,10 @@ impl Config {
 pub fn show_config(config: &Config) -> Result<()> {
     println!("{}", "Current Configuration:".bold());
     println!("  API URL: {}", config.api_url.as_deref().unwrap_or("default"));
+    
+    println!("  Model: {}", 
+        config.preferred_model.as_deref().unwrap_or("gemini-2.5-flash").cyan()
+    );
     
     if let Some(provider) = &config.auth_provider {
         println!("  Auth Provider: {}", provider.green());
