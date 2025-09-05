@@ -55,12 +55,12 @@ async fn main() -> Result<()> {
             }
         }
         
-        Commands::Generate { prompt, number, size, quality, output, background, format, compress, moderation } => {
-            commands::generate::handle(&api_url, &prompt, number, &size, &quality, output.as_deref(), background.as_deref(), format.as_deref(), compress, moderation.as_deref()).await?;
+        Commands::Generate { prompt, number, size, quality, output, background, format, compress, moderation, model } => {
+            commands::generate::handle(&api_url, &prompt, number, &size, &quality, output.as_deref(), background.as_deref(), format.as_deref(), compress, moderation.as_deref(), &model).await?;
         }
         
-        Commands::Edit { image, prompt, mask, number, size, quality, fidelity, output } => {
-            commands::edit::handle(&api_url, &image, &prompt, mask.as_deref(), number, &size, &quality, &fidelity, output.as_deref()).await?;
+        Commands::Edit { image, prompt, number, size, quality, fidelity, output, model } => {
+            commands::edit::handle(&api_url, &image, &prompt, None, number, &size, &quality, &fidelity, output.as_deref(), &model).await?;
         }
         
         Commands::Gallery { action } => {
@@ -121,6 +121,21 @@ async fn main() -> Result<()> {
         
         Commands::Config => {
             config::show_config(&config)?;
+        }
+        
+        Commands::Settings { setting, value } => {
+            if setting == "model" {
+                let mut config = config::Config::load()?;
+                if value == "gemini-2.5-flash" || value == "gpt-image-1" {
+                    config.preferred_model = Some(value.clone());
+                    config.save()?;
+                    println!("{} Model set to: {}", "✓".green(), value.cyan());
+                } else {
+                    println!("{} Invalid model. Choose 'gemini-2.5-flash' or 'gpt-image-1'", "✗".red());
+                }
+            } else {
+                println!("{} Unknown setting: {}", "✗".red(), setting);
+            }
         }
         
         Commands::Health => {

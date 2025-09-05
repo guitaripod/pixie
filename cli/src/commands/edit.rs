@@ -21,6 +21,7 @@ pub async fn handle(
     quality: &str,
     fidelity: &str,
     output: Option<&str>,
+    model: &str,
 ) -> Result<()> {
     let config = Config::load()?;
     if !config.is_authenticated() {
@@ -35,21 +36,32 @@ pub async fn handle(
     // Parse size alias
     let actual_size = parse_size_alias(size);
     
+    // Check if using Gemini (simpler UI)
+    let is_gemini = model.starts_with("gemini");
+    
     // Show edit summary
     println!("\n{}", "✏️ Edit Summary".bold().magenta());
     println!("  Image:      {}", image_path.cyan());
     println!("  Prompt:     {}", prompt.cyan());
-    println!("  Quality:    {}", quality.to_uppercase().yellow());
-    println!("  Size:       {} {}", 
-        size.green(), 
-        if size != &actual_size { format!("({})", actual_size).dimmed() } else { "".dimmed() }
-    );
-    println!("  Quantity:   {}", number.to_string().blue());
-    println!("  Fidelity:   {}", fidelity.green());
+    println!("  Model:      {}", model.yellow());
     
-    // Show optional mask if provided
-    if let Some(m) = mask_path {
-        println!("  Mask:       {}", m.green());
+    if !is_gemini {
+        // Show OpenAI-specific options
+        println!("  Quality:    {}", quality.to_uppercase().yellow());
+        println!("  Size:       {} {}", 
+            size.green(), 
+            if size != &actual_size { format!("({})", actual_size).dimmed() } else { "".dimmed() }
+        );
+        println!("  Fidelity:   {}", fidelity.green());
+    }
+    
+    println!("  Quantity:   {}", number.to_string().blue());
+    
+    // Show optional mask if provided (OpenAI only)
+    if !is_gemini && mask_path.is_some() {
+        if let Some(m) = mask_path {
+            println!("  Mask:       {}", m.green());
+        }
     }
     
     let (initial_balance, _) = check_credits_and_estimate(
@@ -59,6 +71,7 @@ pub async fn handle(
         number,
         true,
         prompt,
+        model,
     ).await?;
     
     let (image_data, image_extension) = if image_path.starts_with("gallery:") {
@@ -141,7 +154,7 @@ pub async fn handle(
         image: vec![image_data_url],
         prompt: prompt.to_string(),
         mask: mask_data_url,
-        model: "gpt-image-1".to_string(),
+        model: model.to_string(),
         n: number,
         size: actual_size,
         quality: quality.to_string(),

@@ -9,6 +9,7 @@ pub async fn check_credits_and_estimate(
     number: u8,
     is_edit: bool,
     prompt: &str,
+    model: &str,
 ) -> Result<(i32, u32)> {
     let balance = client.get_credit_balance().await?;
     let estimate_request = CreditEstimateRequest {
@@ -17,6 +18,7 @@ pub async fn check_credits_and_estimate(
         size: size.to_string(),
         n: Some(number),
         is_edit: Some(is_edit),
+        model: Some(model.to_string()),
     };
     let estimate = client.estimate_credit_cost(&estimate_request).await?;
     

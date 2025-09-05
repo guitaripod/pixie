@@ -597,6 +597,7 @@ pub struct CreditEstimateRequest {
     pub size: String,
     pub n: Option<u8>,
     pub is_edit: Option<bool>,
+    pub model: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

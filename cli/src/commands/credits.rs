@@ -265,6 +265,7 @@ pub async fn estimate_cost(
         size: actual_size.clone(),
         n: Some(number),
         is_edit: Some(is_edit),
+        model: Some("gemini-2.5-flash".to_string()),  // Default to Gemini
     };
     
     let response = client.estimate_credit_cost(&request).await?;
