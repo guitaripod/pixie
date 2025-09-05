@@ -16,6 +16,7 @@ class PreferencesDataStore(
 ) {
     companion object {
         private val KEY_THEME = stringPreferencesKey("theme")
+        private val KEY_DEFAULT_MODEL = stringPreferencesKey("default_model")
         private val KEY_DEFAULT_QUALITY = stringPreferencesKey("default_quality")
         private val KEY_DEFAULT_SIZE = stringPreferencesKey("default_size")
         private val KEY_DEFAULT_OUTPUT_FORMAT = stringPreferencesKey("default_output_format")
@@ -38,6 +39,9 @@ class PreferencesDataStore(
                 theme = AppTheme.valueOf(
                     preferences[KEY_THEME] ?: AppTheme.SYSTEM.name
                 ),
+                defaultModel = ImageModel.values().firstOrNull { 
+                    it.value == preferences[KEY_DEFAULT_MODEL] 
+                } ?: ImageModel.GEMINI,
                 defaultQuality = DefaultImageQuality.valueOf(
                     preferences[KEY_DEFAULT_QUALITY] ?: DefaultImageQuality.LOW.name
                 ),
@@ -55,6 +59,15 @@ class PreferencesDataStore(
     suspend fun updateTheme(theme: AppTheme) {
         dataStore.edit { preferences ->
             preferences[KEY_THEME] = theme.name
+        }
+    }
+    
+    /**
+     * Update default model
+     */
+    suspend fun updateDefaultModel(model: ImageModel) {
+        dataStore.edit { preferences ->
+            preferences[KEY_DEFAULT_MODEL] = model.value
         }
     }
     
