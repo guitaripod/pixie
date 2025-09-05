@@ -71,6 +71,7 @@ data class CreditPack(
 
 @JsonClass(generateAdapter = true)
 data class CreditEstimateRequest(
+    @Json(name = "model") val model: String? = null,
     @Json(name = "quality") val quality: String,
     @Json(name = "size") val size: String,
     @Json(name = "n") val n: Int = 1,
@@ -121,7 +122,11 @@ fun CreditBalance.canGenerate(quality: String, size: String = "1024x1024"): Pair
     return Pair(balance >= cost, balance / cost)
 }
 
-fun getCreditCost(quality: String, size: String, isEdit: Boolean = false): Int {
+fun getCreditCost(quality: String, size: String, isEdit: Boolean = false, model: String? = null): Int {
+    if (model?.startsWith("gemini") == true) {
+        return 15
+    }
+    
     val baseCost = when (quality.lowercase()) {
         "low" -> when (size) {
             "1024x1024" -> 4
