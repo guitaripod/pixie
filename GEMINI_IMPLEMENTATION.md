@@ -2,10 +2,11 @@
 
 ## Implementation Status
 ✅ **Backend Complete**: Provider abstraction, Gemini API integration, credit calculation
-✅ **CLI Complete**: Model selection, simplified UI, settings management
+✅ **CLI Complete**: Model selection, simplified UI, settings management  
+✅ **Android Complete**: Full model support for generation and editing, simplified UI
 ✅ **Testing Complete**: Both models working, proper credit tracking, multipart fix for OpenAI
 ✅ **Deployment Complete**: Backend deployed, GEMINI_API_KEY configured
-⏳ **Mobile Apps Pending**: Android and iOS still need updates
+⏳ **iOS Pending**: Still needs implementation
 
 ## Context for AI Agents
 This document outlines the integration of Google's Gemini 2.5 Flash Image Preview model into the Pixie image generation platform. Pixie is a Cloudflare Worker-based backend with three clients (CLI, Android, iOS) that currently only supports OpenAI's GPT-Image-1 model. 
@@ -92,22 +93,24 @@ Integrate Google Gemini 2.5 Flash as the default image generation model, with Op
   - [ ] Add model selection examples
   - [ ] Document feature differences
 
-## Phase 4: Android App Updates
-- [ ] API Service (`PixieApiService.kt`)
-  - [ ] Add model parameter to API calls
-  - [ ] Update data models for optional OpenAI fields
-  - [ ] Handle provider-specific responses
-- [ ] Settings Screen
-  - [ ] Add model selector (RadioGroup/Dropdown)
-  - [ ] Store selection in SharedPreferences
-  - [ ] Default to Gemini for new installs
-- [ ] Generation UI (`GenerateFragment.kt`)
-  - [ ] Hide OpenAI options when Gemini selected
-  - [ ] Simplify UI for Gemini mode
-  - [ ] Update credit estimation display
-- [ ] Gallery/History
-  - [ ] Display which model was used
-  - [ ] Update image metadata display
+## Phase 4: Android App Updates ✅
+- [x] API Service (`PixieApiService.kt`)
+  - [x] Add model parameter to API calls
+  - [x] Update data models for optional OpenAI fields
+  - [x] Handle provider-specific responses
+- [x] Settings Screen
+  - [x] Add model selector with descriptions
+  - [x] Store selection in DataStore preferences
+  - [x] Default to Gemini for new installs
+- [x] Generation UI
+  - [x] Add model selector to both generate and edit modes
+  - [x] Hide OpenAI options when Gemini selected
+  - [x] Simplify UI for Gemini mode
+  - [x] Update credit estimation display (15 credits flat)
+- [x] Chat/Message Display
+  - [x] Show model badge in user messages
+  - [x] Conditionally display generation details
+  - [x] Update collapsed/expanded toolbar states
 
 ## Phase 5: iOS App Updates
 - [ ] API Service (`APIService.swift`)
