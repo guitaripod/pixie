@@ -1,5 +1,12 @@
 # Gemini Model Implementation Checklist
 
+## Implementation Status
+✅ **Backend Complete**: Provider abstraction, Gemini API integration, credit calculation
+✅ **CLI Complete**: Model selection, simplified UI, settings management
+✅ **Testing Complete**: Both models working, proper credit tracking, multipart fix for OpenAI
+⏳ **Mobile Apps Pending**: Android and iOS still need updates
+⚠️ **Deployment Note**: Need to set GEMINI_API_KEY in Cloudflare secrets
+
 ## Context for AI Agents
 This document outlines the integration of Google's Gemini 2.5 Flash Image Preview model into the Pixie image generation platform. Pixie is a Cloudflare Worker-based backend with three clients (CLI, Android, iOS) that currently only supports OpenAI's GPT-Image-1 model. 
 
@@ -48,11 +55,11 @@ Integrate Google Gemini 2.5 Flash as the default image generation model, with Op
   - [x] Handle base64 image responses
   - [x] Convert Gemini response format to unified format
 - [x] Update credit calculation
-  - [ ] Implement flat-rate Gemini pricing (~3 credits/image)
-  - [ ] Add provider-specific cost calculation
-  - [ ] Update estimation logic
+  - [x] Implement flat-rate Gemini pricing (15 credits/image)
+  - [x] Add provider-specific cost calculation
+  - [x] Update estimation logic
 
-## Phase 2: API Layer Updates
+## Phase 2: API Layer Updates ✅
 - [x] Modify request handlers (`/src/handlers/images_v2.rs`)
   - [x] Update validation to accept both models
   - [x] Route requests to appropriate provider
@@ -119,17 +126,17 @@ Integrate Google Gemini 2.5 Flash as the default image generation model, with Op
   - [ ] Show model used for each image
   - [ ] Update detail view
 
-## Phase 6: Testing & Validation
-- [ ] Backend Testing
-  - [ ] Test Gemini API integration
-  - [ ] Verify credit calculations
-  - [ ] Test provider switching
-  - [ ] Validate error handling
-- [ ] CLI Testing
-  - [ ] Generate images with both models
-  - [ ] Test model switching
-  - [ ] Verify settings persistence
-  - [ ] Test edit functionality (if supported)
+## Phase 6: Testing & Validation ✅
+- [x] Backend Testing
+  - [x] Test Gemini API integration
+  - [x] Verify credit calculations (15 credits for Gemini)
+  - [x] Test provider switching
+  - [x] Validate error handling
+- [x] CLI Testing
+  - [x] Generate images with both models
+  - [x] Test model switching
+  - [x] Verify settings persistence
+  - [x] Test edit functionality (OpenAI edit with multipart/form-data)
 - [ ] Android Testing
   - [ ] Test UI adaptation
   - [ ] Verify settings persistence
@@ -150,11 +157,11 @@ Integrate Google Gemini 2.5 Flash as the default image generation model, with Op
   - [ ] Document model parameter
   - [ ] List provider-specific fields
   - [ ] Add Gemini examples
-- [ ] Deployment
-  - [ ] Set `GEMINI_API_KEY` secret in Cloudflare
-  - [ ] Deploy backend with `wrangler deploy`
-  - [ ] Update database schema in production
-  - [ ] Test production endpoints
+- [x] Deployment (Partial)
+  - [ ] Set `GEMINI_API_KEY` secret in Cloudflare (still needed)
+  - [x] Deploy backend with `wrangler deploy`
+  - [x] Update database schema in production
+  - [x] Test production endpoints
 - [ ] Client Releases
   - [ ] Build and test CLI binary
   - [ ] Build Android APK
@@ -187,9 +194,10 @@ simplified_cost BOOLEAN DEFAULT true  -- Gemini uses flat rate
 ### Provider-Specific Features
 **Gemini** (Default):
 - Simple prompt input only
-- Flat-rate pricing (~3 credits)
-- Text-to-image and image editing
+- Flat-rate pricing (15 credits)
+- Text-to-image generation
 - No quality/size/style options
+- Note: Image editing not yet implemented for Gemini
 
 **OpenAI** (Optional):
 - All existing features
