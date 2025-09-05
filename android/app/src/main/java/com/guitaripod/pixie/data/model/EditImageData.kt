@@ -6,6 +6,7 @@ import com.squareup.moshi.JsonClass
 data class EditImageData(
     val imageUri: String,
     val prompt: String,
+    val model: String = "gemini-2.5-flash",
     val variations: Int = 1,
     val size: String = "1024x1024",
     val quality: String = "low",
