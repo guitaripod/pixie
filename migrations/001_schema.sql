@@ -17,6 +17,9 @@ CREATE TABLE users (
     name TEXT,
     api_key TEXT UNIQUE NOT NULL,
     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+    preferred_model TEXT NOT NULL DEFAULT 'gemini-2.5-flash',
+    gemini_api_key TEXT,
+    openai_api_key TEXT,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     UNIQUE(provider, provider_id)
@@ -32,12 +35,14 @@ CREATE TABLE stored_images (
     r2_key TEXT NOT NULL,
     prompt TEXT NOT NULL,
     model TEXT NOT NULL,
+    provider TEXT NOT NULL DEFAULT 'gemini',
     size TEXT NOT NULL,
     quality TEXT,
     created_at TIMESTAMP NOT NULL,
     expires_at TIMESTAMP NOT NULL,
     token_usage INTEGER DEFAULT 0,
     openai_cost_cents INTEGER DEFAULT 0,
+    cost_cents INTEGER DEFAULT 0,
     credits_charged INTEGER DEFAULT 0,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
@@ -51,6 +56,7 @@ CREATE TABLE usage_records (
     user_id TEXT NOT NULL,
     request_type TEXT NOT NULL,
     model TEXT NOT NULL,
+    provider TEXT NOT NULL DEFAULT 'gemini',
     prompt TEXT NOT NULL,
     image_size TEXT NOT NULL,
     image_quality TEXT NOT NULL,
@@ -63,6 +69,7 @@ CREATE TABLE usage_records (
     image_tokens INTEGER NOT NULL,
     r2_keys TEXT NOT NULL,
     response_time_ms INTEGER NOT NULL,
+    simplified_cost BOOLEAN DEFAULT 0,
     error TEXT,
     created_at TIMESTAMP NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
