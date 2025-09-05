@@ -31,55 +31,55 @@ curl -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5
 ## Overview
 Integrate Google Gemini 2.5 Flash as the default image generation model, with OpenAI GPT as an optional alternative.
 
-## Phase 1: Backend Core Infrastructure
-- [ ] Create provider abstraction layer (`/src/providers/`)
-  - [ ] Define `ImageProvider` trait in `providers/mod.rs`
-  - [ ] Implement `GeminiProvider` in `providers/gemini.rs`
-  - [ ] Refactor existing OpenAI code into `providers/openai.rs`
-  - [ ] Add provider factory/selector logic
-- [ ] Update database schema (`migrations/`)
-  - [ ] Drop and recreate tables with new schema
-  - [ ] Add `provider` column to relevant tables
-  - [ ] Add `gemini_api_key` to users table
-  - [ ] Set `preferred_model` default to 'gemini-2.5-flash'
-- [ ] Add Gemini API integration
-  - [ ] Add `GEMINI_API_KEY` to Cloudflare secrets
-  - [ ] Implement Gemini API client
-  - [ ] Handle base64 image responses
-  - [ ] Convert Gemini response format to unified format
-- [ ] Update credit calculation
+## Phase 1: Backend Core Infrastructure ✅
+- [x] Create provider abstraction layer (`/src/providers/`)
+  - [x] Define `ImageProvider` trait in `providers/mod.rs`
+  - [x] Implement `GeminiProvider` in `providers/gemini.rs`
+  - [x] Refactor existing OpenAI code into `providers/openai.rs`
+  - [x] Add provider factory/selector logic
+- [x] Update database schema (`migrations/`)
+  - [x] Drop and recreate tables with new schema
+  - [x] Add `provider` column to relevant tables
+  - [x] Add `gemini_api_key` to users table
+  - [x] Set `preferred_model` default to 'gemini-2.5-flash'
+- [x] Add Gemini API integration
+  - [ ] Add `GEMINI_API_KEY` to Cloudflare secrets (deployment step)
+  - [x] Implement Gemini API client
+  - [x] Handle base64 image responses
+  - [x] Convert Gemini response format to unified format
+- [x] Update credit calculation
   - [ ] Implement flat-rate Gemini pricing (~3 credits/image)
   - [ ] Add provider-specific cost calculation
   - [ ] Update estimation logic
 
 ## Phase 2: API Layer Updates
-- [ ] Modify request handlers (`/src/handlers/images.rs`)
-  - [ ] Update validation to accept both models
-  - [ ] Route requests to appropriate provider
-  - [ ] Make OpenAI-specific fields optional
-  - [ ] Set Gemini as default when model not specified
-- [ ] Update request/response structures
-  - [ ] Add `model` field validation
-  - [ ] Handle provider-specific parameters
-  - [ ] Ensure backwards compatibility
-- [ ] Error handling
-  - [ ] Add Gemini-specific error messages
-  - [ ] Update moderation handling for Gemini
-  - [ ] Unified error response format
+- [x] Modify request handlers (`/src/handlers/images_v2.rs`)
+  - [x] Update validation to accept both models
+  - [x] Route requests to appropriate provider
+  - [x] Make OpenAI-specific fields optional
+  - [x] Set Gemini as default when model not specified
+- [x] Update request/response structures
+  - [x] Add `model` field validation
+  - [x] Handle provider-specific parameters
+  - [x] Ensure backwards compatibility
+- [x] Error handling
+  - [x] Add Gemini-specific error messages
+  - [x] Update moderation handling for Gemini
+  - [x] Unified error response format
 
-## Phase 3: CLI Implementation
-- [ ] Update CLI argument parser (`cli/src/main.rs`)
-  - [ ] Add `--model` flag (default: gemini)
-  - [ ] Remove OpenAI-specific flags when Gemini selected
-  - [ ] Update help text to reflect Gemini as default
-- [ ] Modify API client (`cli/src/api.rs`)
-  - [ ] Include model in API requests
-  - [ ] Handle simplified Gemini responses
-  - [ ] Update progress messages
-- [ ] Settings management
-  - [ ] Add `model` to config file
-  - [ ] Create `settings model` subcommand
-  - [ ] Update config initialization with Gemini default
+## Phase 3: CLI Implementation ✅
+- [x] Update CLI argument parser (`cli/src/main.rs`)
+  - [x] Add `--model` flag (default: gemini)
+  - [x] Simplify UI when Gemini selected
+  - [x] Update help text to reflect Gemini as default
+- [x] Modify API client (`cli/src/api.rs`)
+  - [x] Include model in API requests
+  - [x] Handle provider-specific UI display
+  - [x] Update progress messages
+- [x] Settings management
+  - [x] Add `model` to config file
+  - [x] Create `settings model` subcommand
+  - [x] Update config initialization with Gemini default
 - [ ] Update CLI documentation
   - [ ] Update README examples
   - [ ] Add model selection examples
