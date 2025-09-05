@@ -73,6 +73,7 @@ fun ChatGenerationScreen(
     val error by viewModel.error.collectAsState()
     
     val prompt by viewModel.prompt.collectAsState()
+    val selectedModel by viewModel.selectedModel.collectAsState()
     val selectedSize by viewModel.selectedSize.collectAsState()
     val selectedQuality by viewModel.selectedQuality.collectAsState()
     val selectedBackground by viewModel.selectedBackground.collectAsState()
@@ -293,6 +294,8 @@ fun ChatGenerationScreen(
                         onExpandedChange = { viewModel.updateToolbarExpanded(it) },
                         prompt = prompt,
                         onPromptChange = { viewModel.updatePrompt(it) },
+                        selectedModel = selectedModel,
+                        onModelSelected = { viewModel.updateSelectedModel(it) },
                         selectedSize = selectedSize,
                         onSizeSelected = { viewModel.updateSelectedSize(it) },
                         selectedQuality = selectedQuality,
@@ -311,14 +314,15 @@ fun ChatGenerationScreen(
                             
                             val userMessage = ChatMessage.UserMessage(
                                 prompt = prompt,
-                                quality = selectedQuality.value,
-                                size = selectedSize.displayName,
-                                actualSize = actualSize,
+                                model = selectedModel.value,
+                                quality = if (selectedModel == ImageModel.OPENAI) selectedQuality.value else "standard",
+                                size = if (selectedModel == ImageModel.OPENAI) selectedSize.displayName else "Auto",
+                                actualSize = if (selectedModel == ImageModel.OPENAI) actualSize else "auto",
                                 quantity = 1,
-                                background = selectedBackground?.displayName,
-                                format = selectedFormat?.displayName,
-                                compression = if (selectedFormat?.supportsCompression == true) compressionLevel else null,
-                                moderation = selectedModeration?.displayName
+                                background = if (selectedModel == ImageModel.OPENAI) selectedBackground?.displayName else null,
+                                format = if (selectedModel == ImageModel.OPENAI) selectedFormat?.displayName else null,
+                                compression = if (selectedModel == ImageModel.OPENAI && selectedFormat?.supportsCompression == true) compressionLevel else null,
+                                moderation = if (selectedModel == ImageModel.OPENAI) selectedModeration?.displayName else null
                             )
                             viewModel.updateMessages(messages + userMessage + ChatMessage.ImageResponse(
                                 imageUrls = emptyList(),
@@ -331,6 +335,7 @@ fun ChatGenerationScreen(
                             
                             val options = GenerationOptions(
                                 prompt = prompt,
+                                model = selectedModel.value,
                                 number = 1,
                                 size = actualSize,
                                 quality = selectedQuality.value,
@@ -367,9 +372,10 @@ fun ChatGenerationScreen(
                             
                             val userMessage = ChatMessage.UserMessage(
                                 prompt = "$editModeText: ${editOptions.prompt}",
-                                quality = editOptions.quality.value,
-                                size = editOptions.size.displayName,
-                                actualSize = actualSize,
+                                model = editOptions.model.value,
+                                quality = if (editOptions.model == ImageModel.OPENAI) editOptions.quality.value else "standard",
+                                size = if (editOptions.model == ImageModel.OPENAI) editOptions.size.displayName else "Auto",
+                                actualSize = if (editOptions.model == ImageModel.OPENAI) actualSize else "auto",
                                 quantity = editOptions.variations,
                                 background = null,
                                 format = "PNG",
@@ -443,12 +449,29 @@ fun UserMessageBubble(message: ChatMessage.UserMessage) {
                 modifier = Modifier.padding(10.dp),
                 verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
-                Text(
-                    text = "🎨 Generation Request",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "🎨 Generation Request",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Text(
+                        text = if (message.model.startsWith("gemini")) "Gemini" else "OpenAI",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f),
+                        modifier = Modifier
+                            .background(
+                                MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.1f),
+                                RoundedCornerShape(4.dp)
+                            )
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
                 
                 Text(
                     text = message.prompt,
@@ -456,24 +479,28 @@ fun UserMessageBubble(message: ChatMessage.UserMessage) {
                     color = MaterialTheme.colorScheme.onPrimary
                 )
                 
-                Spacer(modifier = Modifier.height(2.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.3f))
-                Spacer(modifier = Modifier.height(2.dp))
-                
-                DetailRow("Quality", message.quality.uppercase(), MaterialTheme.colorScheme.onPrimary)
-                DetailRow("Size", message.size + if (message.size != message.actualSize) " (${message.actualSize})" else "", MaterialTheme.colorScheme.onPrimary)
-                
-                message.background?.let {
-                    DetailRow("Background", it, MaterialTheme.colorScheme.onPrimary)
-                }
-                message.format?.let {
-                    DetailRow("Format", it, MaterialTheme.colorScheme.onPrimary)
-                    message.compression?.let { comp ->
-                        DetailRow("Compress", "$comp%", MaterialTheme.colorScheme.onPrimary)
+                if (!message.model.startsWith("gemini") || message.prompt.startsWith("Edit:")) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.3f))
+                    Spacer(modifier = Modifier.height(2.dp))
+                    
+                    if (!message.model.startsWith("gemini")) {
+                        DetailRow("Quality", message.quality.uppercase(), MaterialTheme.colorScheme.onPrimary)
+                        DetailRow("Size", message.size + if (message.size != message.actualSize && message.actualSize != "auto") " (${message.actualSize})" else "", MaterialTheme.colorScheme.onPrimary)
+                        
+                        message.background?.let {
+                            DetailRow("Background", it, MaterialTheme.colorScheme.onPrimary)
+                        }
+                        message.format?.let {
+                            DetailRow("Format", it, MaterialTheme.colorScheme.onPrimary)
+                            message.compression?.let { comp ->
+                                DetailRow("Compress", "$comp%", MaterialTheme.colorScheme.onPrimary)
+                            }
+                        }
+                        message.moderation?.let {
+                            DetailRow("Moderation", it, MaterialTheme.colorScheme.onPrimary)
+                        }
                     }
-                }
-                message.moderation?.let {
-                    DetailRow("Moderation", it, MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }

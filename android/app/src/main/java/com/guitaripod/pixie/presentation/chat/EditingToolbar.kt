@@ -5,6 +5,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -53,6 +55,7 @@ fun EditingToolbar(
         label = "edit_toolbar"
     )
     
+    val expandedHeight = if (editOptions.model == ImageModel.GEMINI) 320.dp else 520.dp
     val toolbarHeight by transition.animateDp(
         label = "height",
         transitionSpec = {
@@ -62,7 +65,7 @@ fun EditingToolbar(
             )
         }
     ) { expanded ->
-        if (expanded) 520.dp else 110.dp
+        if (expanded) expandedHeight else 110.dp
     }
     
     Surface(
@@ -201,16 +204,21 @@ private fun CollapsedEditToolbar(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             EditStatChip(
-                icon = Icons.Default.HighQuality,
-                label = "${editOptions.quality.displayName} quality"
+                icon = Icons.Default.AutoAwesome,
+                label = if (editOptions.model == ImageModel.GEMINI) "Gemini" else "OpenAI"
             )
-            EditStatChip(
-                icon = painterResource(id = android.R.drawable.ic_menu_crop),
-                label = editOptions.size.displayName
-            )
+            if (editOptions.model == ImageModel.OPENAI) {
+                EditStatChip(
+                    icon = Icons.Default.HighQuality,
+                    label = "${editOptions.quality.displayName} quality"
+                )
+            }
             EditStatChip(
                 icon = Icons.Default.Token,
-                label = "${estimatedCredits.first}-${estimatedCredits.last} credits"
+                label = if (estimatedCredits.first == estimatedCredits.last) 
+                    "${estimatedCredits.first} credits" 
+                else 
+                    "${estimatedCredits.first}-${estimatedCredits.last} credits"
             )
         }
         }
@@ -344,52 +352,61 @@ private fun ExpandedEditToolbar(
             shape = RoundedCornerShape(16.dp)
         )
         
-        QuickEditOptions(
-            editOptions = editOptions,
-            onEditOptionsChange = onEditOptionsChange
+        EditModelSelector(
+            selectedModel = editOptions.model,
+            onModelSelected = { onEditOptionsChange(editOptions.copy(model = it)) }
         )
         
-        val advancedHaptic = rememberHapticFeedback()
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .clickable {
-                    advancedHaptic.toggle()
-                    onEditToolbarStateChange(
-                        editToolbarState.copy(
-                            showAdvancedOptions = !editToolbarState.showAdvancedOptions
-                        )
-                    )
-                },
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Advanced Options",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Icon(
-                    imageVector = if (editToolbarState.showAdvancedOptions)
-                        Icons.Default.ExpandLess
-                    else Icons.Default.ExpandMore,
-                    contentDescription = null
-                )
-            }
-        }
-        
-        AnimatedVisibility(visible = editToolbarState.showAdvancedOptions) {
-            AdvancedEditOptions(
+        if (editOptions.model == ImageModel.OPENAI) {
+            QuickEditOptions(
                 editOptions = editOptions,
                 onEditOptionsChange = onEditOptionsChange
             )
+        }
+        
+        if (editOptions.model == ImageModel.OPENAI) {
+            val advancedHaptic = rememberHapticFeedback()
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable {
+                        advancedHaptic.toggle()
+                        onEditToolbarStateChange(
+                            editToolbarState.copy(
+                                showAdvancedOptions = !editToolbarState.showAdvancedOptions
+                            )
+                        )
+                    },
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Advanced Options",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Icon(
+                        imageVector = if (editToolbarState.showAdvancedOptions)
+                            Icons.Default.ExpandLess
+                        else Icons.Default.ExpandMore,
+                        contentDescription = null
+                    )
+                }
+            }
+            
+            AnimatedVisibility(visible = editToolbarState.showAdvancedOptions) {
+                AdvancedEditOptions(
+                    editOptions = editOptions,
+                    onEditOptionsChange = onEditOptionsChange
+                )
+            }
         }
         
         val estimatedCredits = estimateEditCredits(editOptions)
@@ -421,8 +438,13 @@ private fun ExpandedEditToolbar(
                         contentDescription = null,
                         modifier = Modifier.size(22.dp)
                     )
+                    val creditText = if (estimatedCredits.first == estimatedCredits.last) {
+                        "${estimatedCredits.first} credits"
+                    } else {
+                        "${estimatedCredits.first}-${estimatedCredits.last} credits"
+                    }
                     Text(
-                        text = "Edit (${estimatedCredits.first}-${estimatedCredits.last} credits)",
+                        text = "Edit ($creditText)",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Medium
                     )
@@ -549,6 +571,10 @@ private fun AdvancedEditOptions(
 }
 
 private fun estimateEditCredits(options: EditOptions): IntRange {
+    if (options.model == ImageModel.GEMINI) {
+        return 15..15
+    }
+    
     val base = when (options.quality) {
         ImageQuality.LOW -> 7..9
         ImageQuality.MEDIUM -> 14..18
@@ -567,5 +593,80 @@ private fun estimateQualityCredits(quality: ImageQuality): String {
         ImageQuality.MEDIUM -> "~16"
         ImageQuality.HIGH -> "72-110"
         ImageQuality.AUTO -> "68-93"
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun EditModelSelector(
+    selectedModel: ImageModel,
+    onModelSelected: (ImageModel) -> Unit
+) {
+    val haptic = rememberHapticFeedback()
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "AI Model",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            ) {
+                Text(
+                    text = selectedModel.displayName,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+        
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ImageModel.values().forEach { model ->
+                FilterChip(
+                    selected = selectedModel == model,
+                    onClick = { 
+                        haptic.click()
+                        onModelSelected(model) 
+                    },
+                    label = { 
+                        Column {
+                            Text(
+                                text = model.displayName,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = model.description,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     }
 }

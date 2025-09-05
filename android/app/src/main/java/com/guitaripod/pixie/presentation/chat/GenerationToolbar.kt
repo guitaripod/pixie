@@ -51,6 +51,8 @@ fun GenerationToolbar(
     onExpandedChange: (Boolean) -> Unit,
     prompt: String,
     onPromptChange: (String) -> Unit,
+    selectedModel: ImageModel,
+    onModelSelected: (ImageModel) -> Unit,
     selectedSize: ImageSize,
     onSizeSelected: (ImageSize) -> Unit,
     selectedQuality: ImageQuality,
@@ -248,44 +250,52 @@ fun GenerationToolbar(
                         shape = RoundedCornerShape(16.dp)
                     )
                     
-                    SizeSelector(
-                        selectedSize = selectedSize,
-                        onSizeSelected = onSizeSelected
+                    ModelSelector(
+                        selectedModel = selectedModel,
+                        onModelSelected = onModelSelected
                     )
                     
-                    QualitySelector(
-                        selectedQuality = selectedQuality,
-                        onQualitySelected = onQualitySelected
-                    )
-                    
-                    var showAdvanced by remember { mutableStateOf(false) }
-                    
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .hapticClickable { showAdvanced = !showAdvanced },
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Advanced Options",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Icon(
-                                imageVector = if (showAdvanced) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = if (showAdvanced) "Hide" else "Show"
-                            )
-                        }
+                    if (selectedModel == ImageModel.OPENAI) {
+                        SizeSelector(
+                            selectedSize = selectedSize,
+                            onSizeSelected = onSizeSelected
+                        )
+                        
+                        QualitySelector(
+                            selectedQuality = selectedQuality,
+                            onQualitySelected = onQualitySelected
+                        )
                     }
                     
-                    AnimatedVisibility(visible = showAdvanced) {
+                    if (selectedModel == ImageModel.OPENAI) {
+                        var showAdvanced by remember { mutableStateOf(false) }
+                        
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .hapticClickable { showAdvanced = !showAdvanced },
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Advanced Options",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Icon(
+                                    imageVector = if (showAdvanced) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                    contentDescription = if (showAdvanced) "Hide" else "Show"
+                                )
+                            }
+                        }
+                        
+                        AnimatedVisibility(visible = showAdvanced) {
                         Column(
                             verticalArrangement = Arrangement.spacedBy(20.dp)
                         ) {
@@ -307,16 +317,18 @@ fun GenerationToolbar(
                             )
                         }
                     }
+                    }
                     
                     val estimatedCredits = GenerationOptions(
                         prompt = prompt,
+                        model = selectedModel.value,
                         number = 1,
-                        size = selectedSize.value,
-                        quality = selectedQuality.value,
-                        background = selectedBackground?.value,
-                        outputFormat = selectedFormat?.value,
-                        compression = if (selectedFormat?.supportsCompression == true) compressionLevel else null,
-                        moderation = selectedModeration?.value
+                        size = if (selectedModel == ImageModel.OPENAI) selectedSize.value else "auto",
+                        quality = if (selectedModel == ImageModel.OPENAI) selectedQuality.value else "low",
+                        background = if (selectedModel == ImageModel.OPENAI) selectedBackground?.value else null,
+                        outputFormat = if (selectedModel == ImageModel.OPENAI) selectedFormat?.value else null,
+                        compression = if (selectedModel == ImageModel.OPENAI && selectedFormat?.supportsCompression == true) compressionLevel else null,
+                        moderation = if (selectedModel == ImageModel.OPENAI) selectedModeration?.value else null
                     ).estimateCredits()
                     
                     val haptic = rememberHapticFeedback()
@@ -351,10 +363,15 @@ fun GenerationToolbar(
                                     contentDescription = null,
                                     modifier = Modifier.size(22.dp)
                                 )
+                                val creditText = if (estimatedCredits.first == estimatedCredits.last) {
+                                    "${estimatedCredits.first} credits"
+                                } else {
+                                    "${estimatedCredits.first}-${estimatedCredits.last} credits"
+                                }
                                 Text(
                                     text = when (mode) {
-                                        is ToolbarMode.Generate -> "Generate (${estimatedCredits.first}-${estimatedCredits.last} credits)"
-                                        is ToolbarMode.Edit -> "Edit (${estimatedCredits.first}-${estimatedCredits.last} credits)"
+                                        is ToolbarMode.Generate -> "Generate ($creditText)"
+                                        is ToolbarMode.Edit -> "Edit ($creditText)"
                                     },
                                     style = MaterialTheme.typography.labelLarge,
                                     fontWeight = FontWeight.Medium
@@ -455,7 +472,7 @@ fun GenerationToolbar(
                                     maxLines = 1
                                 )
                                 Text(
-                                    text = "Tap to customize",
+                                    text = "${if (selectedModel == ImageModel.GEMINI) "Gemini" else "OpenAI"} • Tap to customize",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                                 )
