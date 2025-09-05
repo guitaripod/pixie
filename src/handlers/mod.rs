@@ -1,4 +1,5 @@
-pub mod images;
+pub mod images_v2;
+pub use images_v2 as images;
 pub mod gallery;
 pub mod r2;
 pub mod usage;

@@ -23,6 +23,7 @@ pub struct EstimateCostRequest {
     pub size: String,
     pub n: Option<u8>,
     pub is_edit: Option<bool>,
+    pub model: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -177,17 +178,27 @@ pub async fn estimate_cost(mut req: Request, _ctx: RouteContext<()>) -> Result<R
     
     let n = estimate_req.n.unwrap_or(1);
     let is_edit = estimate_req.is_edit.unwrap_or(false);
+    let model = estimate_req.model.as_deref().unwrap_or("gemini-2.5-flash");
     
-    let credits_per_image = estimate_image_cost(&estimate_req.quality, &estimate_req.size, is_edit);
+    let credits_per_image = if model.starts_with("gemini") {
+        15
+    } else {
+        estimate_image_cost(&estimate_req.quality, &estimate_req.size, is_edit)
+    };
+    
     let total_credits = credits_per_image * n as u32;
     
     Response::from_json(&EstimateCostResponse {
         estimated_credits: total_credits,
         estimated_usd: format!("${:.2}", total_credits as f64 / 100.0),
-        note: format!(
-            "Actual cost may vary ±{} credits based on prompt complexity",
-            (total_credits as f64 * 0.15) as u32 + 1
-        ),
+        note: if model.starts_with("gemini") {
+            "Gemini flat rate: 15 credits per image".to_string()
+        } else {
+            format!(
+                "Actual cost may vary ±{} credits based on prompt complexity",
+                (total_credits as f64 * 0.15) as u32 + 1
+            )
+        },
     })
 }
 
@@ -1096,7 +1107,7 @@ async fn validate_with_revenuecat(
     env: &Env,
     user_id: &str,
     _purchase_token: &str,
-    product_id: &str,
+    _product_id: &str,
     platform: &str,
 ) -> Result<bool> {
     let api_key_name = if platform == "ios" {
@@ -1144,7 +1155,7 @@ async fn validate_with_revenuecat(
     // For now, if we get a 200 response, we consider it valid
     // The V2 API would return 404 if the customer doesn't exist
     // and 200 if they do, which is enough validation for our purposes
-    let response_text = response.text().await?;
+    let _response_text = response.text().await?;
     worker::console_log!("RevenueCat V2 response received for customer: {}", customer_id);
     
     // If we got here with a 200 status, the customer exists in RevenueCat
