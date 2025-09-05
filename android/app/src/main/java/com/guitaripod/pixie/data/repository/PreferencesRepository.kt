@@ -17,6 +17,7 @@ interface PreferencesRepository {
     fun getApiUrl(): String?
     val userPreferencesFlow: Flow<UserPreferences>
     suspend fun updateTheme(theme: AppTheme)
+    suspend fun updateDefaultModel(model: ImageModel)
     suspend fun updateDefaultQuality(quality: ImageQuality)
     suspend fun updateDefaultSize(size: String)
     suspend fun updateDefaultOutputFormat(format: OutputFormat)
@@ -39,6 +40,7 @@ class PreferencesRepositoryImpl(
     override fun getApiUrl(): String? = configManager.getApiUrl()
     override val userPreferencesFlow: Flow<UserPreferences> = preferencesDataStore.userPreferencesFlow
     override suspend fun updateTheme(theme: AppTheme) = preferencesDataStore.updateTheme(theme)
+    override suspend fun updateDefaultModel(model: ImageModel) = preferencesDataStore.updateDefaultModel(model)
     override suspend fun updateDefaultQuality(quality: ImageQuality) = preferencesDataStore.updateDefaultQuality(quality)
     override suspend fun updateDefaultSize(size: String) = preferencesDataStore.updateDefaultSize(size)
     override suspend fun updateDefaultOutputFormat(format: OutputFormat) = preferencesDataStore.updateDefaultOutputFormat(format)

@@ -109,6 +109,7 @@ class ImageRepository(
     fun editImage(
         imageUri: Uri,
         prompt: String,
+        model: String = "gemini-2.5-flash",
         mask: Bitmap? = null,
         n: Int = 1,
         size: String = "1024x1024",
@@ -148,6 +149,7 @@ class ImageRepository(
             val request = EditRequest(
                 image = listOf(imageDataUrl),
                 prompt = prompt,
+                model = model,
                 mask = maskDataUrl,
                 n = n,
                 size = size,
