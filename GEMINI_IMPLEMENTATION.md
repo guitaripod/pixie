@@ -4,8 +4,8 @@
 ✅ **Backend Complete**: Provider abstraction, Gemini API integration, credit calculation
 ✅ **CLI Complete**: Model selection, simplified UI, settings management
 ✅ **Testing Complete**: Both models working, proper credit tracking, multipart fix for OpenAI
+✅ **Deployment Complete**: Backend deployed, GEMINI_API_KEY configured
 ⏳ **Mobile Apps Pending**: Android and iOS still need updates
-⚠️ **Deployment Note**: Need to set GEMINI_API_KEY in Cloudflare secrets
 
 ## Context for AI Agents
 This document outlines the integration of Google's Gemini 2.5 Flash Image Preview model into the Pixie image generation platform. Pixie is a Cloudflare Worker-based backend with three clients (CLI, Android, iOS) that currently only supports OpenAI's GPT-Image-1 model. 
@@ -50,7 +50,7 @@ Integrate Google Gemini 2.5 Flash as the default image generation model, with Op
   - [x] Add `gemini_api_key` to users table
   - [x] Set `preferred_model` default to 'gemini-2.5-flash'
 - [x] Add Gemini API integration
-  - [ ] Add `GEMINI_API_KEY` to Cloudflare secrets (deployment step)
+  - [x] Add `GEMINI_API_KEY` to Cloudflare secrets (already set)
   - [x] Implement Gemini API client
   - [x] Handle base64 image responses
   - [x] Convert Gemini response format to unified format
@@ -157,8 +157,8 @@ Integrate Google Gemini 2.5 Flash as the default image generation model, with Op
   - [ ] Document model parameter
   - [ ] List provider-specific fields
   - [ ] Add Gemini examples
-- [x] Deployment (Partial)
-  - [ ] Set `GEMINI_API_KEY` secret in Cloudflare (still needed)
+- [x] Deployment
+  - [x] Set `GEMINI_API_KEY` secret in Cloudflare
   - [x] Deploy backend with `wrangler deploy`
   - [x] Update database schema in production
   - [x] Test production endpoints
