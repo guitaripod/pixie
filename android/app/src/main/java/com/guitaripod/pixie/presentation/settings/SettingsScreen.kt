@@ -77,8 +77,20 @@ fun SettingsScreen(
             }
             
             SettingsSection(title = "Defaults") {
+                ModelSelector(
+                    currentModel = uiState.userPreferences.defaultModel,
+                    onModelSelected = { model ->
+                        scope.launch {
+                            viewModel.updateDefaultModel(model)
+                        }
+                    }
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
                 DefaultQualitySelector(
                     currentQuality = uiState.userPreferences.defaultQuality,
+                    currentModel = uiState.userPreferences.defaultModel,
                     onQualitySelected = { quality ->
                         scope.launch {
                             viewModel.updateDefaultQuality(quality)
@@ -90,6 +102,7 @@ fun SettingsScreen(
                 
                 DefaultSizeSelector(
                     currentSize = uiState.userPreferences.defaultSize,
+                    currentModel = uiState.userPreferences.defaultModel,
                     onSizeSelected = { size ->
                         scope.launch {
                             viewModel.updateDefaultSize(size)
@@ -330,6 +343,69 @@ private fun SettingsItem(
 }
 
 @Composable
+private fun ModelSelector(
+    currentModel: com.guitaripod.pixie.data.model.ImageModel,
+    onModelSelected: (com.guitaripod.pixie.data.model.ImageModel) -> Unit
+) {
+    val haptic = rememberHapticFeedback()
+    Column {
+        Text(
+            text = "AI Model",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        com.guitaripod.pixie.data.model.ImageModel.values().forEach { model ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .hapticClickable { onModelSelected(model) },
+                colors = CardDefaults.cardColors(
+                    containerColor = if (currentModel == model) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surface
+                    }
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = model.displayName,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = if (currentModel == model) FontWeight.Bold else FontWeight.Medium
+                        )
+                        Text(
+                            text = model.description,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (currentModel == model) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Selected",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun ThemeSelector(
     currentTheme: com.guitaripod.pixie.data.model.AppTheme,
     onThemeSelected: (com.guitaripod.pixie.data.model.AppTheme) -> Unit
@@ -375,6 +451,7 @@ private fun ThemeSelector(
 @Composable
 private fun DefaultQualitySelector(
     currentQuality: com.guitaripod.pixie.data.model.DefaultImageQuality,
+    currentModel: com.guitaripod.pixie.data.model.ImageModel,
     onQualitySelected: (com.guitaripod.pixie.data.model.ImageQuality) -> Unit
 ) {
     val haptic = rememberHapticFeedback()
@@ -436,6 +513,7 @@ private fun DefaultQualitySelector(
 @Composable
 private fun DefaultSizeSelector(
     currentSize: String,
+    currentModel: com.guitaripod.pixie.data.model.ImageModel,
     onSizeSelected: (String) -> Unit
 ) {
     val haptic = rememberHapticFeedback()
