@@ -61,6 +61,10 @@ class SettingsViewModel(
         preferencesRepository.updateTheme(theme)
     }
     
+    suspend fun updateDefaultModel(model: ImageModel) {
+        preferencesRepository.updateDefaultModel(model)
+    }
+    
     suspend fun updateDefaultQuality(quality: ImageQuality) {
         preferencesRepository.updateDefaultQuality(quality)
     }
