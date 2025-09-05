@@ -357,6 +357,7 @@ class ImageGenerationForegroundService : Service() {
             repository.editImage(
                 imageUri = imageUri,
                 prompt = editData.prompt,
+                model = editData.model,
                 n = editData.variations,
                 size = editData.size,
                 quality = editData.quality,

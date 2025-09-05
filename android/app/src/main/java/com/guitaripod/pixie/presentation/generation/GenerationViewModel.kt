@@ -50,9 +50,11 @@ class GenerationViewModel(
     private val _previewImageUri = MutableStateFlow<Uri?>(null)
     val previewImageUri: StateFlow<Uri?> = _previewImageUri.asStateFlow()
     
+    private val _selectedModel = MutableStateFlow(ImageModel.GEMINI)
+    val selectedModel: StateFlow<ImageModel> = _selectedModel.asStateFlow()
+    
     private val _selectedSize = MutableStateFlow(ImageSize.AUTO)
     val selectedSize: StateFlow<ImageSize> = _selectedSize.asStateFlow()
-    
     
     private val _selectedQuality = MutableStateFlow(ImageQuality.LOW)
     val selectedQuality: StateFlow<ImageQuality> = _selectedQuality.asStateFlow()
@@ -169,10 +171,13 @@ class GenerationViewModel(
         _previewImageUri.value = uri
     }
     
+    fun updateSelectedModel(model: ImageModel) {
+        _selectedModel.value = model
+    }
+    
     fun updateSelectedSize(size: ImageSize) {
         _selectedSize.value = size
     }
-    
     
     fun updateSelectedQuality(quality: ImageQuality) {
         _selectedQuality.value = quality
@@ -203,6 +208,8 @@ class GenerationViewModel(
     }
     
     fun initializeWithUserPreferences(userPreferences: UserPreferences) {
+        _selectedModel.value = userPreferences.defaultModel
+        
         _selectedSize.value = when (userPreferences.defaultSize) {
             "square" -> ImageSize.SQUARE
             "landscape" -> ImageSize.LANDSCAPE
@@ -225,6 +232,10 @@ class GenerationViewModel(
         }
         
         _compressionLevel.value = userPreferences.defaultCompressionLevel
+        
+        _editOptions.value = EditOptions(
+            model = userPreferences.defaultModel
+        )
     }
     
     fun editImage(
@@ -237,6 +248,7 @@ class GenerationViewModel(
         val editData = com.guitaripod.pixie.data.model.EditImageData(
             imageUri = imageUri.toString(),
             prompt = editOptions.prompt,
+            model = editOptions.model.value,
             variations = editOptions.variations,
             size = if (editOptions.size.value == "auto") "1024x1024" else editOptions.size.value,
             quality = editOptions.quality.value,
