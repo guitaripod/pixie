@@ -5,6 +5,7 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class GenerationOptions(
     val prompt: String,
+    val model: String = "gemini-2.5-flash",
     val number: Int = 1,
     val size: String = "auto",
     val quality: String = "low",
@@ -16,7 +17,7 @@ data class GenerationOptions(
     fun toApiRequest(): ImageGenerationRequest {
         return ImageGenerationRequest(
             prompt = prompt,
-            model = "gpt-image-1",
+            model = model,
             n = number,
             size = size,
             quality = quality,
@@ -28,6 +29,11 @@ data class GenerationOptions(
     }
     
     fun estimateCredits(): IntRange {
+        if (model.startsWith("gemini")) {
+            val totalCredits = 15 * number
+            return totalCredits..totalCredits
+        }
+        
         val baseCredits = when (quality) {
             "low" -> when (size) {
                 "1024x1024" -> 4..4

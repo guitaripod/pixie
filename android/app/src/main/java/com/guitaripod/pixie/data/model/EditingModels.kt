@@ -18,6 +18,7 @@ sealed class EditMode {
 
 data class EditOptions(
     val prompt: String = "",
+    val model: ImageModel = ImageModel.GEMINI,
     val variations: Int = 1,
     val size: ImageSize = ImageSize.AUTO,
     val quality: ImageQuality = ImageQuality.LOW,

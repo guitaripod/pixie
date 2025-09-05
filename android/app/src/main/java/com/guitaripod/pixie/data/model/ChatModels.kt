@@ -10,6 +10,7 @@ sealed class ChatMessage {
         override val id: String = UUID.randomUUID().toString(),
         override val timestamp: Long = System.currentTimeMillis(),
         val prompt: String,
+        val model: String = "gemini-2.5-flash",
         val quality: String,
         val size: String,
         val actualSize: String,
