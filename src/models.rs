@@ -192,7 +192,7 @@ pub struct UsageRecord {
 }
 
 fn default_model() -> String {
-    "gpt-image-1".to_string()
+    "gemini-2.5-flash".to_string()
 }
 
 fn default_n() -> u8 {
