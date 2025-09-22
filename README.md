@@ -268,7 +268,7 @@ xcodebuild -project Pixie.xcodeproj -scheme Pixie -destination 'platform=iOS Sim
 3. Update the API endpoint in ConfigurationManager if using self-hosted backend
 
 ### App Store
-Available on the App Store with full feature set.
+[![Download on the App Store](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/us/app/pixiepocket/id6751730339)
 
 </details>
 
