@@ -1,5 +1,7 @@
 # Pixie - AI Image Generation Platform
 
+[![Download on the App Store](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/us/app/pixiepocket/id6751730339)
+
 A high-performance monorepo containing the Pixie AI image generation service built on OpenAI's gpt-image-1 model. Includes a Rust-based Cloudflare Worker backend, command-line interface, Android app, and iOS app.
 
 ## Quick Links
