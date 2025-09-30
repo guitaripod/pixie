@@ -200,7 +200,7 @@ class GenerationService {
                     image: [imageDataUrl],
                     prompt: prompt,
                     mask: nil,
-                    model: "gpt-image-1",
+                    model: options.model,
                     n: options.variations,
                     size: options.size.value,
                     quality: options.quality.value,
