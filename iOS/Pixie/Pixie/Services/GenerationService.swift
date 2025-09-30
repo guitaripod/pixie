@@ -101,7 +101,7 @@ class GenerationService {
         
         let request = ImageGenerationRequest(
             prompt: prompt,
-            model: "gpt-image-1",
+            model: options.model,
             n: options.quantity,
             size: options.size,
             quality: options.quality,
