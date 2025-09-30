@@ -35,6 +35,8 @@ class ChatInputBar: UIView {
     private var heightConstraint: NSLayoutConstraint!
     private var creditsLabelTopToAdvancedConstraint: NSLayoutConstraint!
     private var creditsLabelTopToButtonConstraint: NSLayoutConstraint!
+    private var creditsLabelTopToModelConstraint: NSLayoutConstraint!
+    private var openAIConstraints: [NSLayoutConstraint] = []
     private var promptTextViewTopToHandleConstraint: NSLayoutConstraint!
     private var promptTextViewTopToImageConstraint: NSLayoutConstraint!
     var onSend: ((String) -> Void)?
@@ -360,10 +362,24 @@ class ChatInputBar: UIView {
             generateButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -contentPadding)
         ])
         updateCredits()
+
+        openAIConstraints = [
+            modelLabel.topAnchor.constraint(equalTo: promptTextView.bottomAnchor, constant: 16),
+            modelSelector.topAnchor.constraint(equalTo: modelLabel.bottomAnchor, constant: 8),
+            sizeLabel.topAnchor.constraint(equalTo: modelSelector.bottomAnchor, constant: 16),
+            sizeSelector.topAnchor.constraint(equalTo: sizeLabel.bottomAnchor, constant: 8),
+            qualityLabel.topAnchor.constraint(equalTo: sizeSelector.bottomAnchor, constant: 16),
+            qualitySelector.topAnchor.constraint(equalTo: qualityLabel.bottomAnchor, constant: 8),
+            advancedOptionsButton.topAnchor.constraint(equalTo: qualitySelector.bottomAnchor, constant: 16)
+        ]
+
         creditsLabelTopToAdvancedConstraint = creditsLabel.topAnchor.constraint(equalTo: advancedOptionsContainer.bottomAnchor, constant: 12)
         creditsLabelTopToButtonConstraint = creditsLabel.topAnchor.constraint(equalTo: advancedOptionsButton.bottomAnchor, constant: 12)
+        creditsLabelTopToModelConstraint = creditsLabel.topAnchor.constraint(equalTo: modelSelector.bottomAnchor, constant: 16)
+
         creditsLabelTopToButtonConstraint.isActive = true
         creditsLabelTopToAdvancedConstraint.isActive = false
+        creditsLabelTopToModelConstraint.isActive = false
         promptTextViewTopToHandleConstraint.isActive = true
         promptTextViewTopToImageConstraint.isActive = false
     }
@@ -513,6 +529,16 @@ class ChatInputBar: UIView {
     private func updateUIForModel() {
         let isOpenAI = selectedModel == .openai
 
+        if isOpenAI {
+            creditsLabelTopToModelConstraint.isActive = false
+            creditsLabelTopToButtonConstraint.isActive = !showAdvancedOptions
+            creditsLabelTopToAdvancedConstraint.isActive = showAdvancedOptions
+        } else {
+            creditsLabelTopToButtonConstraint.isActive = false
+            creditsLabelTopToAdvancedConstraint.isActive = false
+            creditsLabelTopToModelConstraint.isActive = true
+        }
+
         UIView.animate(withDuration: 0.3) { [weak self] in
             guard let self = self else { return }
             self.expandedView.viewWithTag(902)?.isHidden = !isOpenAI
@@ -525,6 +551,7 @@ class ChatInputBar: UIView {
             self.expandedView.viewWithTag(905)?.alpha = isOpenAI ? 1.0 : 0.0
             self.expandedView.viewWithTag(906)?.isHidden = !isOpenAI
             self.expandedView.viewWithTag(906)?.alpha = isOpenAI ? 1.0 : 0.0
+            self.expandedView.layoutIfNeeded()
         }
     }
 
@@ -706,6 +733,7 @@ class ChatInputBar: UIView {
         let fidelity = [FidelityLevel.low, .high][fidelitySelector.selectedSegmentIndex]
         return EditOptions(
             prompt: promptTextView.text ?? "",
+            model: selectedModel.value,
             variations: 1,
             size: size,
             quality: quality,

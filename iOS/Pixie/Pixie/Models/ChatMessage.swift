@@ -10,6 +10,7 @@ struct ChatMessage: Hashable {
     let editingImage: UIImage?
     
     struct MessageMetadata {
+        let model: String?
         let size: String?
         let quality: String?
         let credits: Int?
