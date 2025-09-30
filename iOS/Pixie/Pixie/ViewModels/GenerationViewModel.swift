@@ -268,6 +268,7 @@ class GenerationViewModel: ObservableObject {
         generationStartTime = Date()
         
         let metadata = ChatMessage.MessageMetadata(
+            model: options.model,
             size: options.size,
             quality: options.quality,
             credits: nil,
@@ -319,6 +320,7 @@ class GenerationViewModel: ObservableObject {
         error = nil
         
         let metadata = ChatMessage.MessageMetadata(
+            model: options.model,
             size: options.size.value,
             quality: options.quality.value,
             credits: nil,

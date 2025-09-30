@@ -14,6 +14,7 @@ enum ToolbarMode {
 
 struct EditOptions {
     var prompt: String = ""
+    var model: String = "gemini-2.5-flash"
     var variations: Int = 1
     var size: ImageSize = .auto
     var quality: ImageQuality = .low
