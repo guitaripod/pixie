@@ -13,7 +13,8 @@ class GenerationToolbar: UIView {
     
     var onExpandedChange: ((Bool) -> Void)?
     var onGenerate: ((GenerationOptions) -> Void)?
-    
+
+    private var selectedModel = ImageModel.gemini
     private var selectedSize = ImageSize.auto
     private var selectedQuality = ImageQuality.low
     private var selectedBackground: BackgroundStyle?
@@ -156,13 +157,19 @@ class GenerationToolbar: UIView {
         ])
         
         let promptSection = createPromptSection()
+        let modelSection = createModelSection()
         let sizeSection = createSizeSection()
         let qualitySection = createQualitySection()
         let advancedSection = createAdvancedSection()
         let generateSection = createGenerateSection()
-        
+
+        sizeSection.tag = 9000
+        qualitySection.tag = 9001
+        advancedSection.tag = 9002
+
         expandedStackView.addArrangedSubview(headerView)
         expandedStackView.addArrangedSubview(promptSection)
+        expandedStackView.addArrangedSubview(modelSection)
         expandedStackView.addArrangedSubview(sizeSection)
         expandedStackView.addArrangedSubview(qualitySection)
         expandedStackView.addArrangedSubview(advancedSection)
@@ -215,7 +222,148 @@ class GenerationToolbar: UIView {
         
         return section
     }
-    
+
+    private func createModelSection() -> UIView {
+        let section = UIView()
+
+        let headerStack = UIStackView()
+        headerStack.translatesAutoresizingMaskIntoConstraints = false
+        headerStack.axis = .horizontal
+        headerStack.spacing = 6
+        headerStack.alignment = .center
+        section.addSubview(headerStack)
+
+        let iconView = UIImageView()
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        iconView.image = UIImage(systemName: "cpu")
+        iconView.tintColor = .systemBlue
+        iconView.contentMode = .scaleAspectFit
+
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "AI Model"
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+
+        headerStack.addArrangedSubview(iconView)
+        headerStack.addArrangedSubview(label)
+
+        let scrollView = UIScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.showsHorizontalScrollIndicator = false
+        section.addSubview(scrollView)
+
+        let stackView = UIStackView()
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.axis = .horizontal
+        stackView.spacing = 8
+        scrollView.addSubview(stackView)
+
+        for (index, model) in ImageModel.allCases.enumerated() {
+            let button = createModelButton(model: model)
+            button.tag = 8000 + index
+            button.addAction(UIAction { [weak self] _ in
+                HapticManager.shared.impact(.click)
+                stackView.arrangedSubviews.forEach { view in
+                    if let btn = view as? UIButton {
+                        btn.isSelected = btn == button
+                    }
+                }
+                self?.selectedModel = model
+                self?.updateUIForModel()
+                self?.updateGenerateButton()
+            }, for: .touchUpInside)
+
+            if model == selectedModel {
+                button.isSelected = true
+            }
+
+            stackView.addArrangedSubview(button)
+        }
+
+        NSLayoutConstraint.activate([
+            headerStack.topAnchor.constraint(equalTo: section.topAnchor),
+            headerStack.leadingAnchor.constraint(equalTo: section.leadingAnchor),
+
+            iconView.widthAnchor.constraint(equalToConstant: 18),
+            iconView.heightAnchor.constraint(equalToConstant: 18),
+
+            scrollView.topAnchor.constraint(equalTo: headerStack.bottomAnchor, constant: 12),
+            scrollView.leadingAnchor.constraint(equalTo: section.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: section.trailingAnchor),
+            scrollView.heightAnchor.constraint(equalToConstant: 80),
+            scrollView.bottomAnchor.constraint(equalTo: section.bottomAnchor),
+
+            stackView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            stackView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            stackView.heightAnchor.constraint(equalTo: scrollView.heightAnchor)
+        ])
+
+        return section
+    }
+
+    private func createModelButton(model: ImageModel) -> UIButton {
+        let button = UIButton(type: .custom)
+        button.translatesAutoresizingMaskIntoConstraints = false
+
+        let stackView = UIStackView()
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.axis = .vertical
+        stackView.spacing = 2
+        stackView.alignment = .center
+        stackView.isUserInteractionEnabled = false
+
+        let titleLabel = UILabel()
+        titleLabel.text = model.displayName
+        titleLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        titleLabel.textAlignment = .center
+
+        let descriptionLabel = UILabel()
+        descriptionLabel.text = model.description
+        descriptionLabel.font = .systemFont(ofSize: 11)
+        descriptionLabel.textAlignment = .center
+        descriptionLabel.alpha = 0.7
+        descriptionLabel.numberOfLines = 2
+
+        stackView.addArrangedSubview(titleLabel)
+        stackView.addArrangedSubview(descriptionLabel)
+
+        button.addSubview(stackView)
+
+        button.layer.cornerRadius = 12
+        button.layer.borderWidth = 2
+        button.layer.borderColor = UIColor.clear.cgColor
+        button.backgroundColor = .secondarySystemFill
+
+        button.configurationUpdateHandler = { button in
+            UIView.animate(withDuration: 0.2) {
+                if button.isSelected {
+                    button.layer.borderColor = UIColor.systemBlue.cgColor
+                    button.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.1)
+                    titleLabel.textColor = .systemBlue
+                    descriptionLabel.textColor = .systemBlue
+                } else {
+                    button.layer.borderColor = UIColor.clear.cgColor
+                    button.backgroundColor = .secondarySystemFill
+                    titleLabel.textColor = .label
+                    descriptionLabel.textColor = .secondaryLabel
+                }
+            }
+        }
+
+        NSLayoutConstraint.activate([
+            button.widthAnchor.constraint(equalToConstant: 140),
+            button.heightAnchor.constraint(equalToConstant: 80),
+            stackView.centerXAnchor.constraint(equalTo: button.centerXAnchor),
+            stackView.centerYAnchor.constraint(equalTo: button.centerYAnchor),
+            stackView.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 8),
+            stackView.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -8)
+        ])
+
+        return button
+    }
+
     private func createSizeSection() -> UIView {
         let section = UIView()
         
@@ -844,6 +992,10 @@ class GenerationToolbar: UIView {
     }
     
     private func estimateCredits() -> ClosedRange<Int> {
+        if let fixedCost = selectedModel.fixedCost {
+            return fixedCost...fixedCost
+        }
+
         let baseCredits: ClosedRange<Int>
         switch selectedQuality {
         case .low:
@@ -867,7 +1019,7 @@ class GenerationToolbar: UIView {
         case .auto:
             baseCredits = 50...75
         }
-        
+
         return baseCredits
     }
     
@@ -961,26 +1113,34 @@ class GenerationToolbar: UIView {
     
     @objc private func generateTapped() {
         HapticManager.shared.impact(.click)
-        
-        let prompt = isExpanded ? 
+
+        let prompt = isExpanded ?
             (expandedStackView.arrangedSubviews.first?.subviews.compactMap { $0 as? UITextView }.first?.text ?? "") :
             (promptTextField.text ?? "")
-        
+
         guard !prompt.isEmpty else { return }
-        
+
         var options = GenerationOptions.default
         options.prompt = prompt
+        options.model = selectedModel.value
         options.quantity = 1
-        options.size = selectedSize.value
-        options.sizeDisplay = selectedSize.displayName
-        options.quality = selectedQuality.value
-        
+
+        if selectedModel == .openai {
+            options.size = selectedSize.value
+            options.sizeDisplay = selectedSize.displayName
+            options.quality = selectedQuality.value
+        } else {
+            options.size = "auto"
+            options.sizeDisplay = "Auto"
+            options.quality = "low"
+        }
+
         onGenerate?(options)
     }
     
     @objc private func optionButtonTapped(_ sender: UIButton) {
         HapticManager.shared.impact(.click)
-        
+
         if let stackView = sender.superview as? UIStackView {
             stackView.arrangedSubviews.forEach { view in
                 if let button = view as? UIButton {
@@ -988,6 +1148,86 @@ class GenerationToolbar: UIView {
                 }
             }
         }
+    }
+
+    private func updateUIForModel() {
+        let isOpenAI = selectedModel == .openai
+
+        expandedStackView.arrangedSubviews.forEach { view in
+            switch view.tag {
+            case 9000, 9001, 9002:
+                UIView.animate(withDuration: 0.3) {
+                    view.isHidden = !isOpenAI
+                    view.alpha = isOpenAI ? 1.0 : 0.0
+                }
+            default:
+                break
+            }
+        }
+    }
+
+    private func updateGenerateButton() {
+        if let generateSection = expandedStackView.arrangedSubviews.last,
+           let button = generateSection.subviews.first as? UIButton {
+            button.setNeedsUpdateConfiguration()
+        }
+    }
+
+    func applyDefaults() {
+        let config = ConfigurationManager.shared
+
+        if let model = ImageModel(rawValue: config.defaultModel) {
+            selectedModel = model
+        } else {
+            selectedModel = .gemini
+        }
+
+        switch config.defaultSize {
+        case "auto": selectedSize = .auto
+        case "1024x1024": selectedSize = .square
+        case "1536x1024": selectedSize = .landscape
+        case "1024x1536": selectedSize = .portrait
+        default: selectedSize = .auto
+        }
+
+        switch config.defaultQuality {
+        case "low": selectedQuality = .low
+        case "medium": selectedQuality = .medium
+        case "high": selectedQuality = .high
+        case "auto": selectedQuality = .auto
+        default: selectedQuality = .low
+        }
+
+        if !config.defaultOutputFormat.isEmpty {
+            switch config.defaultOutputFormat {
+            case "png": selectedFormat = .png
+            case "jpeg": selectedFormat = .jpeg
+            case "webp": selectedFormat = .webp
+            default: selectedFormat = nil
+            }
+        }
+
+        compressionLevel = config.defaultCompression
+
+        if !config.defaultBackground.isEmpty {
+            switch config.defaultBackground {
+            case "auto": selectedBackground = .auto
+            case "transparent": selectedBackground = .transparent
+            case "white": selectedBackground = .white
+            case "black": selectedBackground = .black
+            default: selectedBackground = nil
+            }
+        }
+
+        if !config.defaultModeration.isEmpty {
+            switch config.defaultModeration {
+            case "auto": selectedModeration = .auto
+            case "low": selectedModeration = .low
+            default: selectedModeration = nil
+            }
+        }
+
+        updateUIForModel()
     }
 }
 

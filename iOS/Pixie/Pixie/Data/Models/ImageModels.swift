@@ -123,12 +123,47 @@ struct ImageMetadataDetails: Codable, Hashable {
     let quality: String?
     let model: String?
     let revisedPrompt: String?
-    
+
     enum CodingKeys: String, CodingKey {
         case width, height, format
         case sizeBytes = "size_bytes"
         case creditsUsed = "credits_used"
         case quality, model
         case revisedPrompt = "revised_prompt"
+    }
+}
+
+enum ImageModel: String, CaseIterable {
+    case gemini = "gemini-2.5-flash"
+    case openai = "gpt-image-1"
+
+    var displayName: String {
+        switch self {
+        case .gemini: return "Gemini"
+        case .openai: return "OpenAI GPT"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .gemini: return "Fast & affordable (15 credits)"
+        case .openai: return "Advanced options (5-94 credits)"
+        }
+    }
+
+    var value: String { rawValue }
+
+    var fixedCost: Int? {
+        switch self {
+        case .gemini: return 15
+        case .openai: return nil
+        }
+    }
+
+    var requiresAdvancedOptions: Bool {
+        switch self {
+        case .gemini: return false
+        case .openai: return true
+        }
     }
 }

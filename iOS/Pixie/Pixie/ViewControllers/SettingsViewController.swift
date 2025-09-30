@@ -54,6 +54,7 @@ class SettingsViewController: UIViewController {
     }
     
     private enum DefaultsRow: Int, CaseIterable {
+        case model
         case quality
         case size
         case format
@@ -329,6 +330,28 @@ extension SettingsViewController: UITableViewDataSource {
         ])
         
         switch row {
+        case .model:
+            label.text = "AI Model"
+
+            let segmentedControl = UISegmentedControl(items: ["Gemini", "OpenAI GPT"])
+            segmentedControl.translatesAutoresizingMaskIntoConstraints = false
+
+            switch configurationManager.defaultModel {
+            case "gemini-2.5-flash": segmentedControl.selectedSegmentIndex = 0
+            case "gpt-image-1": segmentedControl.selectedSegmentIndex = 1
+            default: segmentedControl.selectedSegmentIndex = 0
+            }
+
+            segmentedControl.addTarget(self, action: #selector(modelChanged(_:)), for: .valueChanged)
+            containerView.addSubview(segmentedControl)
+
+            NSLayoutConstraint.activate([
+                segmentedControl.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 8),
+                segmentedControl.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+                segmentedControl.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+                segmentedControl.bottomAnchor.constraint(equalTo: containerView.bottomAnchor)
+            ])
+
         case .quality:
             label.text = "Quality"
             
@@ -668,9 +691,9 @@ extension SettingsViewController: UITableViewDelegate {
     
     private func handleDefaultsSelection(at indexPath: IndexPath) {
         guard let row = DefaultsRow(rawValue: indexPath.row) else { return }
-        
+
         switch row {
-        case .quality, .size, .format, .background, .moderation:
+        case .model, .quality, .size, .format, .background, .moderation:
             break
         case .compression:
             if configurationManager.defaultOutputFormat != "png" {
@@ -735,7 +758,14 @@ extension SettingsViewController: UITableViewDelegate {
         updateAppearance()
         tableView.reloadData()
     }
-    
+
+    @objc private func modelChanged(_ sender: UISegmentedControl) {
+        haptics.impact(.click)
+        let models = ["gemini-2.5-flash", "gpt-image-1"]
+        configurationManager.defaultModel = models[sender.selectedSegmentIndex]
+        tableView.reloadData()
+    }
+
     @objc private func qualityChanged(_ sender: UISegmentedControl) {
         haptics.impact(.click)
         let qualities = ["low", "medium", "high", "auto"]

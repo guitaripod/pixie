@@ -14,6 +14,7 @@ class ChatInputBar: UIView {
     }
     private let indicatorStackView = UIStackView()
     private let promptTextView = UITextView()
+    private let modelSelector = UISegmentedControl(items: ["Gemini", "OpenAI GPT"])
     private let sizeSelector = UISegmentedControl(items: ["Auto", "Square", "Landscape", "Portrait"])
     private let qualitySelector = UISegmentedControl(items: ["Auto", "Low", "Medium", "High"])
     private let advancedOptionsButton = UIButton(type: .system)
@@ -41,6 +42,12 @@ class ChatInputBar: UIView {
     var currentPrompt: String? {
         let basePrompt = promptTextView.text
         return selectedSuggestionsManager?.composePrompt(basePrompt: basePrompt ?? "") ?? basePrompt
+    }
+    var selectedModel: ImageModel {
+        let models: [ImageModel] = [.gemini, .openai]
+        let index = modelSelector.selectedSegmentIndex
+        guard index >= 0 && index < models.count else { return .gemini }
+        return models[index]
     }
     var selectedSize: ImageSize {
         let sizes: [ImageSize] = [.auto, .square, .landscape, .portrait]
@@ -232,17 +239,29 @@ class ChatInputBar: UIView {
         promptTextView.isScrollEnabled = false
         promptTextView.delegate = self
         contentView.addSubview(promptTextView)
+        let modelLabel = createLabel("AI Model")
+        modelLabel.tag = 900
+        contentView.addSubview(modelLabel)
+        modelSelector.translatesAutoresizingMaskIntoConstraints = false
+        modelSelector.addTarget(self, action: #selector(modelChanged), for: .valueChanged)
+        modelSelector.tag = 901
+        contentView.addSubview(modelSelector)
         let sizeLabel = createLabel("Size")
+        sizeLabel.tag = 902
         contentView.addSubview(sizeLabel)
         sizeSelector.translatesAutoresizingMaskIntoConstraints = false
         sizeSelector.addTarget(self, action: #selector(updateCredits), for: .valueChanged)
+        sizeSelector.tag = 903
         contentView.addSubview(sizeSelector)
         let qualityLabel = createLabel("Quality")
+        qualityLabel.tag = 904
         contentView.addSubview(qualityLabel)
         qualitySelector.translatesAutoresizingMaskIntoConstraints = false
         qualitySelector.addTarget(self, action: #selector(updateCredits), for: .valueChanged)
+        qualitySelector.tag = 905
         contentView.addSubview(qualitySelector)
         advancedOptionsButton.translatesAutoresizingMaskIntoConstraints = false
+        advancedOptionsButton.tag = 906
         advancedOptionsButton.backgroundColor = .secondarySystemFill
         advancedOptionsButton.layer.cornerRadius = 12
         advancedOptionsButton.contentHorizontalAlignment = .left
@@ -311,7 +330,12 @@ class ChatInputBar: UIView {
             promptTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
             promptTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
             promptTextView.heightAnchor.constraint(greaterThanOrEqualToConstant: 100),
-            sizeLabel.topAnchor.constraint(equalTo: promptTextView.bottomAnchor, constant: 16),
+            modelLabel.topAnchor.constraint(equalTo: promptTextView.bottomAnchor, constant: 16),
+            modelLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
+            modelSelector.topAnchor.constraint(equalTo: modelLabel.bottomAnchor, constant: 8),
+            modelSelector.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
+            modelSelector.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
+            sizeLabel.topAnchor.constraint(equalTo: modelSelector.bottomAnchor, constant: 16),
             sizeLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
             sizeSelector.topAnchor.constraint(equalTo: sizeLabel.bottomAnchor, constant: 8),
             sizeSelector.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
@@ -480,7 +504,36 @@ class ChatInputBar: UIView {
             clear()
         }
     }
+    @objc private func modelChanged() {
+        HapticManager.shared.impact(.click)
+        updateUIForModel()
+        updateCredits()
+    }
+
+    private func updateUIForModel() {
+        let isOpenAI = selectedModel == .openai
+
+        UIView.animate(withDuration: 0.3) { [weak self] in
+            guard let self = self else { return }
+            self.expandedView.viewWithTag(902)?.isHidden = !isOpenAI
+            self.expandedView.viewWithTag(902)?.alpha = isOpenAI ? 1.0 : 0.0
+            self.expandedView.viewWithTag(903)?.isHidden = !isOpenAI
+            self.expandedView.viewWithTag(903)?.alpha = isOpenAI ? 1.0 : 0.0
+            self.expandedView.viewWithTag(904)?.isHidden = !isOpenAI
+            self.expandedView.viewWithTag(904)?.alpha = isOpenAI ? 1.0 : 0.0
+            self.expandedView.viewWithTag(905)?.isHidden = !isOpenAI
+            self.expandedView.viewWithTag(905)?.alpha = isOpenAI ? 1.0 : 0.0
+            self.expandedView.viewWithTag(906)?.isHidden = !isOpenAI
+            self.expandedView.viewWithTag(906)?.alpha = isOpenAI ? 1.0 : 0.0
+        }
+    }
+
     @objc private func updateCredits() {
+        if let fixedCost = selectedModel.fixedCost {
+            creditsLabel.text = "\(fixedCost) credits"
+            return
+        }
+
         let quality = selectedQuality.value
         let size = selectedSize.value
         let creditsRange: ClosedRange<Int>
@@ -665,7 +718,15 @@ class ChatInputBar: UIView {
     
     func applyDefaults() {
         let config = ConfigurationManager.shared
-        
+
+        switch config.defaultModel {
+        case "gemini-2.5-flash": modelSelector.selectedSegmentIndex = 0
+        case "gpt-image-1": modelSelector.selectedSegmentIndex = 1
+        default: modelSelector.selectedSegmentIndex = 0
+        }
+
+        updateUIForModel()
+
         switch config.defaultSize {
         case "auto": sizeSelector.selectedSegmentIndex = 0
         case "1024x1024": sizeSelector.selectedSegmentIndex = 1
