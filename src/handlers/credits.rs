@@ -179,12 +179,8 @@ pub async fn estimate_cost(mut req: Request, _ctx: RouteContext<()>) -> Result<R
     let n = estimate_req.n.unwrap_or(1);
     let is_edit = estimate_req.is_edit.unwrap_or(false);
     let model = estimate_req.model.as_deref().unwrap_or("gemini-2.5-flash");
-    
-    let credits_per_image = if model.starts_with("gemini") {
-        15
-    } else {
-        estimate_image_cost(&estimate_req.quality, &estimate_req.size, is_edit)
-    };
+
+    let credits_per_image = estimate_image_cost(model, &estimate_req.quality, &estimate_req.size, is_edit);
     
     let total_credits = credits_per_image * n as u32;
     

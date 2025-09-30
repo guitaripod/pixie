@@ -54,7 +54,8 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
     
     // Estimate credit cost and check balance
     let estimated_credits = estimate_image_cost(
-        &generation_req.quality, 
+        &generation_req.model,
+        &generation_req.quality,
         &generation_req.size,
         false
     ) * generation_req.n as u32;
@@ -341,7 +342,8 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
     
     // Estimate credit cost for edit operation and check balance
     let estimated_credits = estimate_image_cost(
-        &edit_req.quality, 
+        &edit_req.model,
+        &edit_req.quality,
         &edit_req.size,
         true // is_edit
     ) * edit_req.n as u32;
