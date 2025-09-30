@@ -286,9 +286,9 @@ impl ImageProvider for OpenAIProvider {
         let quality = request.quality.as_deref().unwrap_or("auto");
         let size = request.size.as_deref().unwrap_or("1024x1024");
         let n = request.n.unwrap_or(1) as u32;
-        
-        let credits_per_image = estimate_image_cost(quality, size, false);
-        
+
+        let credits_per_image = estimate_image_cost(&request.model, quality, size, false);
+
         CostEstimate {
             credits: credits_per_image * n,
             provider: "openai".to_string(),
@@ -299,9 +299,9 @@ impl ImageProvider for OpenAIProvider {
         let quality = request.quality.as_deref().unwrap_or("auto");
         let size = request.size.as_deref().unwrap_or("1024x1024");
         let n = request.n.unwrap_or(1) as u32;
-        
-        let credits_per_image = estimate_image_cost(quality, size, true);
-        
+
+        let credits_per_image = estimate_image_cost(&request.model, quality, size, true);
+
         CostEstimate {
             credits: credits_per_image * n,
             provider: "openai".to_string(),
