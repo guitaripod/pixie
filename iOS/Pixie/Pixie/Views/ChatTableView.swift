@@ -257,33 +257,37 @@ class UserMessageCell: UITableViewCell {
         editImageBottomConstraint.isActive = false
         
         if let metadata = message.metadata {
-            let titleLabel = createMetadataLabel(text: metadata.isEditMode ? "✏️ Edit Request" : "🎨 Generation Request", isBold: true)
-            metadataStackView.addArrangedSubview(titleLabel)
-            
-            let divider = UIView()
-            divider.backgroundColor = UIColor.white.withAlphaComponent(0.3)
-            divider.heightAnchor.constraint(equalToConstant: 0.5).isActive = true
-            metadataStackView.addArrangedSubview(divider)
-            
-            addMetadataRow("Quality", value: metadata.quality?.uppercased() ?? "")
-            
-            if let sizeDisplay = metadata.sizeDisplay {
-                addMetadataRow("Size", value: sizeDisplay)
-            }
-            
-            if let background = metadata.background {
-                addMetadataRow("Background", value: background)
-            }
-            
-            if let format = metadata.format {
-                addMetadataRow("Format", value: format)
-                if let compression = metadata.compression {
-                    addMetadataRow("Compress", value: "\(compression)%")
+            let isGemini = metadata.model?.starts(with: "gemini") ?? false
+
+            if !isGemini {
+                let titleLabel = createMetadataLabel(text: metadata.isEditMode ? "✏️ Edit Request" : "🎨 Generation Request", isBold: true)
+                metadataStackView.addArrangedSubview(titleLabel)
+
+                let divider = UIView()
+                divider.backgroundColor = UIColor.white.withAlphaComponent(0.3)
+                divider.heightAnchor.constraint(equalToConstant: 0.5).isActive = true
+                metadataStackView.addArrangedSubview(divider)
+
+                addMetadataRow("Quality", value: metadata.quality?.uppercased() ?? "")
+
+                if let sizeDisplay = metadata.sizeDisplay {
+                    addMetadataRow("Size", value: sizeDisplay)
                 }
-            }
-            
-            if let moderation = metadata.moderation {
-                addMetadataRow("Moderation", value: moderation)
+
+                if let background = metadata.background {
+                    addMetadataRow("Background", value: background)
+                }
+
+                if let format = metadata.format {
+                    addMetadataRow("Format", value: format)
+                    if let compression = metadata.compression {
+                        addMetadataRow("Compress", value: "\(compression)%")
+                    }
+                }
+
+                if let moderation = metadata.moderation {
+                    addMetadataRow("Moderation", value: moderation)
+                }
             }
         }
         
