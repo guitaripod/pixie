@@ -398,10 +398,15 @@ pub async fn get_user_transactions(
 }
 
 pub fn estimate_image_cost(
+    model: &str,
     quality: &str,
     size: &str,
     is_edit: bool,
 ) -> u32 {
+    if model.starts_with("gemini") {
+        return 15;
+    }
+
     // Based on gpt-image-1 documentation:
     // Low: 272-408 tokens, Medium: 1056-1584 tokens, High: 4160-6240 tokens
     let base_estimate = match (quality, size) {
@@ -476,24 +481,29 @@ mod tests {
     
     #[test]
     fn test_estimate_image_cost() {
-        // Test generation costs
-        assert_eq!(estimate_image_cost("low", "1024x1024", false), 4);
-        assert_eq!(estimate_image_cost("low", "1536x1024", false), 6);
-        assert_eq!(estimate_image_cost("medium", "1024x1024", false), 16);
-        assert_eq!(estimate_image_cost("medium", "1536x1024", false), 24);
-        assert_eq!(estimate_image_cost("high", "1024x1024", false), 62);
-        assert_eq!(estimate_image_cost("high", "1536x1024", false), 94);
-        assert_eq!(estimate_image_cost("high", "512x512", false), 78); // other high quality sizes
-        assert_eq!(estimate_image_cost("auto", "1024x1024", false), 50);
-        assert_eq!(estimate_image_cost("auto", "1536x1024", false), 75);
-        
-        // Test edit operations
-        assert_eq!(estimate_image_cost("low", "1024x1024", true), 7); // 4 + 3
-        assert_eq!(estimate_image_cost("medium", "1024x1024", true), 19); // 16 + 3
-        assert_eq!(estimate_image_cost("high", "1024x1024", true), 82); // 62 + 20
-        assert_eq!(estimate_image_cost("high", "1536x1024", true), 114); // 94 + 20
-        assert_eq!(estimate_image_cost("auto", "1024x1024", true), 68); // 50 + 18
-        assert_eq!(estimate_image_cost("auto", "1536x1024", true), 93); // 75 + 18
+        // Test Gemini costs (always 15)
+        assert_eq!(estimate_image_cost("gemini-2.5-flash", "low", "1024x1024", false), 15);
+        assert_eq!(estimate_image_cost("gemini-2.5-flash", "low", "1536x1024", true), 15);
+        assert_eq!(estimate_image_cost("gemini-2.5-flash", "high", "auto", false), 15);
+
+        // Test OpenAI generation costs
+        assert_eq!(estimate_image_cost("gpt-image-1", "low", "1024x1024", false), 4);
+        assert_eq!(estimate_image_cost("gpt-image-1", "low", "1536x1024", false), 6);
+        assert_eq!(estimate_image_cost("gpt-image-1", "medium", "1024x1024", false), 16);
+        assert_eq!(estimate_image_cost("gpt-image-1", "medium", "1536x1024", false), 24);
+        assert_eq!(estimate_image_cost("gpt-image-1", "high", "1024x1024", false), 62);
+        assert_eq!(estimate_image_cost("gpt-image-1", "high", "1536x1024", false), 94);
+        assert_eq!(estimate_image_cost("gpt-image-1", "high", "512x512", false), 78);
+        assert_eq!(estimate_image_cost("gpt-image-1", "auto", "1024x1024", false), 50);
+        assert_eq!(estimate_image_cost("gpt-image-1", "auto", "1536x1024", false), 75);
+
+        // Test OpenAI edit operations
+        assert_eq!(estimate_image_cost("gpt-image-1", "low", "1024x1024", true), 7); // 4 + 3
+        assert_eq!(estimate_image_cost("gpt-image-1", "medium", "1024x1024", true), 19); // 16 + 3
+        assert_eq!(estimate_image_cost("gpt-image-1", "high", "1024x1024", true), 82); // 62 + 20
+        assert_eq!(estimate_image_cost("gpt-image-1", "high", "1536x1024", true), 114); // 94 + 20
+        assert_eq!(estimate_image_cost("gpt-image-1", "auto", "1024x1024", true), 68); // 50 + 18
+        assert_eq!(estimate_image_cost("gpt-image-1", "auto", "1536x1024", true), 93); // 75 + 18
     }
     
     #[test]
