@@ -44,6 +44,10 @@ class ConfigurationManager: ConfigurationManagerProtocol {
             notifyConfigurationChanged()
         }
     }
+    @UserDefaultsWrapper(key: "pixie.defaultModel", defaultValue: "gemini-2.5-flash")
+    var defaultModel: String {
+        didSet { notifyConfigurationChanged() }
+    }
     @UserDefaultsWrapper(key: "pixie.defaultQuality", defaultValue: "low")
     var defaultQuality: String {
         didSet { notifyConfigurationChanged() }
@@ -96,6 +100,7 @@ class ConfigurationManager: ConfigurationManagerProtocol {
     func reset() {
         baseURL = "https://openai-image-proxy.guitaripod.workers.dev"
         apiKey = nil
+        defaultModel = "gemini-2.5-flash"
         defaultQuality = "low"
         defaultSize = "auto"
         defaultOutputFormat = "webp"

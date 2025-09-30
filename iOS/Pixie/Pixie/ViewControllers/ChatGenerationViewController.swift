@@ -283,12 +283,23 @@ class ChatGenerationViewController: UIViewController {
         print("🖋️ ChatGenerationVC: Setting up generation options")
         viewModel.prompt = prompt
         currentOptions.prompt = prompt
-        currentOptions.size = inputBar.selectedSize.value
-        currentOptions.quality = inputBar.selectedQuality.value
-        currentOptions.outputFormat = inputBar.selectedFormat
-        currentOptions.compression = inputBar.selectedFormat != "png" ? inputBar.compressionLevel : nil
-        currentOptions.background = inputBar.selectedBackground
-        currentOptions.moderation = inputBar.selectedModeration
+        currentOptions.model = inputBar.selectedModel.value
+
+        if inputBar.selectedModel == .openai {
+            currentOptions.size = inputBar.selectedSize.value
+            currentOptions.quality = inputBar.selectedQuality.value
+            currentOptions.outputFormat = inputBar.selectedFormat
+            currentOptions.compression = inputBar.selectedFormat != "png" ? inputBar.compressionLevel : nil
+            currentOptions.background = inputBar.selectedBackground
+            currentOptions.moderation = inputBar.selectedModeration
+        } else {
+            currentOptions.size = "auto"
+            currentOptions.quality = "low"
+            currentOptions.outputFormat = nil
+            currentOptions.compression = nil
+            currentOptions.background = nil
+            currentOptions.moderation = nil
+        }
         print("🖋️ ChatGenerationVC: Calling viewModel.generateImages")
         viewModel.generateImages(with: currentOptions)
     }
@@ -665,6 +676,7 @@ extension ChatGenerationViewController: ChatTableViewDelegate {
 
 struct GenerationOptions {
     var prompt: String
+    var model: String
     var quantity: Int
     var size: String
     var sizeDisplay: String
@@ -684,6 +696,7 @@ struct GenerationOptions {
     static var `default`: GenerationOptions {
         GenerationOptions(
             prompt: "",
+            model: "gemini-2.5-flash",
             quantity: 1,
             size: "1024x1024",
             sizeDisplay: "Square",
