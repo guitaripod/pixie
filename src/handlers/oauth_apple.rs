@@ -1,6 +1,8 @@
 use worker::{Request, Response, RouteContext, Result, console_log};
 use crate::error::AppError;
 use crate::credits::initialize_user_credits;
+#[cfg(not(target_os = "windows"))]
+use crate::auth::resolve_app_id;
 use crate::handlers::oauth::{OAuthCallbackRequest, OAuthTokenResponse, generate_api_key};
 use serde::Deserialize;
 use uuid::Uuid;
@@ -81,7 +83,9 @@ pub async fn apple_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Res
     #[cfg(not(target_os = "windows"))]
     {
     let env = ctx.env;
-    
+
+    let app_id = resolve_app_id(&req);
+
     let callback_req: OAuthCallbackRequest = match req.json().await {
         Ok(req) => req,
         Err(e) => return AppError::BadRequest(format!("Invalid request body: {}", e)).to_response(),
@@ -152,14 +156,14 @@ pub async fn apple_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Res
     
     let provider_id = claims.sub;
     let existing_user_stmt = db.prepare(
-        "SELECT id, api_key, is_admin FROM users WHERE provider = ? AND provider_id = ?"
+        "SELECT id, api_key, is_admin FROM users WHERE app_id = ? AND provider = ? AND provider_id = ?"
     );
-    
+
     let existing_user = existing_user_stmt
-        .bind(&["apple".into(), provider_id.clone().into()])?
+        .bind(&[app_id.clone().into(), "apple".into(), provider_id.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?;
-    
+
     let (user_id, api_key, is_admin) = if let Some(user_data) = existing_user {
         (
             user_data.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
@@ -170,15 +174,16 @@ pub async fn apple_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Res
         let new_user_id = Uuid::new_v4().to_string();
         let new_api_key = generate_api_key();
         let now = Utc::now().to_rfc3339();
-        
+
         let insert_stmt = db.prepare(
-            "INSERT INTO users (id, provider, provider_id, email, name, api_key, created_at, updated_at) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO users (id, app_id, provider, provider_id, email, name, api_key, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
-        
+
         insert_stmt
             .bind(&[
                 new_user_id.clone().into(),
+                app_id.clone().into(),
                 "apple".into(),
                 provider_id.into(),
                 claims.email.clone().unwrap_or_default().into(),
@@ -189,10 +194,10 @@ pub async fn apple_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Res
             ])?
             .run()
             .await?;
-        
+
         // Initialize credits for new user
-        initialize_user_credits(&new_user_id, &db).await?;
-        
+        initialize_user_credits(&app_id, &new_user_id, &db).await?;
+
         (new_user_id, new_api_key, false)
     };
     

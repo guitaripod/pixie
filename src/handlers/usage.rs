@@ -1,5 +1,6 @@
 use worker::{Request, Response, RouteContext, Result};
 use crate::error::AppError;
+use crate::auth::resolve_app_id;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
@@ -25,7 +26,8 @@ pub async fn get_user_usage(req: Request, ctx: RouteContext<()>) -> Result<Respo
     let user_id = ctx.param("user_id")
         .ok_or_else(|| AppError::BadRequest("Missing user_id parameter".to_string()))?
         .to_string();
-    
+
+    let app_id = resolve_app_id(&req);
     let env = ctx.env;
     let db = env.d1("DB")?;
     let url = req.url()?;
@@ -48,19 +50,20 @@ pub async fn get_user_usage(req: Request, ctx: RouteContext<()>) -> Result<Respo
         .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
     
     let stmt = db.prepare(
-        "SELECT 
+        "SELECT
             COUNT(*) as total_requests,
             COALESCE(SUM(total_tokens), 0) as total_tokens,
             COALESCE(SUM(image_count), 0) as total_images
-         FROM usage_records 
-         WHERE user_id = ? 
-           AND created_at >= ? 
+         FROM usage_records
+         WHERE app_id = ?
+           AND user_id = ?
+           AND created_at >= ?
            AND created_at <= ?
            AND error IS NULL"
     );
-    
+
     let result = stmt
-        .bind(&[user_id.clone().into(), period_start.clone().into(), period_end.clone().into()])?
+        .bind(&[app_id.clone().into(), user_id.clone().into(), period_start.clone().into(), period_end.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?;
     
@@ -90,7 +93,8 @@ pub async fn get_user_usage_details(req: Request, ctx: RouteContext<()>) -> Resu
     let user_id = ctx.param("user_id")
         .ok_or_else(|| AppError::BadRequest("Missing user_id parameter".to_string()))?
         .to_string();
-    
+
+    let app_id = resolve_app_id(&req);
     let env = ctx.env;
     let db = env.d1("DB")?;
     let url = req.url()?;
@@ -113,22 +117,23 @@ pub async fn get_user_usage_details(req: Request, ctx: RouteContext<()>) -> Resu
         .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
     
     let stmt = db.prepare(
-        "SELECT 
+        "SELECT
             DATE(created_at) as date,
             COUNT(*) as requests,
             COALESCE(SUM(total_tokens), 0) as tokens,
             COALESCE(SUM(image_count), 0) as images
-         FROM usage_records 
-         WHERE user_id = ? 
-           AND created_at >= ? 
+         FROM usage_records
+         WHERE app_id = ?
+           AND user_id = ?
+           AND created_at >= ?
            AND created_at <= ?
            AND error IS NULL
          GROUP BY DATE(created_at)
          ORDER BY date DESC"
     );
-    
+
     let results = stmt
-        .bind(&[user_id.clone().into(), period_start.clone().into(), period_end.clone().into()])?
+        .bind(&[app_id.clone().into(), user_id.clone().into(), period_start.clone().into(), period_end.clone().into()])?
         .all()
         .await?;
     

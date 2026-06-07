@@ -1,6 +1,6 @@
 use worker::{Request, Response, RouteContext, Result, Env, Fetch, Method, Headers};
 use crate::error::AppError;
-use crate::auth::validate_api_key;
+use crate::auth;
 use crate::credits::{
     get_user_balance, get_user_transactions, get_credit_packs, 
     record_purchase, complete_purchase, add_credits, estimate_image_cost
@@ -75,27 +75,15 @@ pub struct AdminAdjustCreditsRequest {
 
 pub async fn get_balance(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let env = ctx.env;
-    
-    let user_id = match validate_api_key(&req) {
-        Err(e) => return e.to_response(),
-        Ok(api_key) => {
-            let db = env.d1("DB")?;
-            let stmt = db.prepare("SELECT id FROM users WHERE api_key = ?");
-            let result = stmt
-                .bind(&[api_key.clone().into()])?
-                .first::<serde_json::Value>(None)
-                .await?;
-            
-            match result {
-                Some(value) => value.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                None => return AppError::Unauthorized("Invalid API key".to_string()).to_response(),
-            }
-        }
-    };
-    
+
     let db = env.d1("DB")?;
-    let balance = get_user_balance(&user_id, &db).await?;
-    
+    let auth = match auth::authenticate(&req, &db).await {
+        Ok(a) => a,
+        Err(e) => return e.to_response(),
+    };
+
+    let balance = get_user_balance(&auth.app_id, &auth.user_id, &db).await?;
+
     Response::from_json(&CreditBalanceResponse {
         balance,
         currency: "credits".to_string(),
@@ -123,35 +111,24 @@ pub async fn list_transactions(req: Request, ctx: RouteContext<()>) -> Result<Re
         .min(100);
     
     let offset = (page - 1) * per_page;
-    
-    let user_id = match validate_api_key(&req) {
-        Err(e) => return e.to_response(),
-        Ok(api_key) => {
-            let db = env.d1("DB")?;
-            let stmt = db.prepare("SELECT id FROM users WHERE api_key = ?");
-            let result = stmt
-                .bind(&[api_key.clone().into()])?
-                .first::<serde_json::Value>(None)
-                .await?;
-            
-            match result {
-                Some(value) => value.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                None => return AppError::Unauthorized("Invalid API key".to_string()).to_response(),
-            }
-        }
-    };
-    
+
     let db = env.d1("DB")?;
-    
-    let count_stmt = db.prepare("SELECT COUNT(*) as total FROM credit_transactions WHERE user_id = ?");
+    let auth = match auth::authenticate(&req, &db).await {
+        Ok(a) => a,
+        Err(e) => return e.to_response(),
+    };
+    let user_id = auth.user_id.clone();
+    let app_id = auth.app_id.clone();
+
+    let count_stmt = db.prepare("SELECT COUNT(*) as total FROM credit_transactions WHERE app_id = ? AND user_id = ?");
     let count_result = count_stmt
-        .bind(&[user_id.clone().into()])?
+        .bind(&[app_id.clone().into(), user_id.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?
         .unwrap_or(json!({"total": 0}));
     let total = count_result.get("total").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-    
-    let transactions = get_user_transactions(&user_id, per_page, offset, &db).await?;
+
+    let transactions = get_user_transactions(&app_id, &user_id, per_page, offset, &db).await?;
     
     Response::from_json(&json!({
         "transactions": transactions,
@@ -200,24 +177,17 @@ pub async fn estimate_cost(mut req: Request, _ctx: RouteContext<()>) -> Result<R
 
 pub async fn purchase_credits(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let env = ctx.env;
-    
-    let user_id = match validate_api_key(&req) {
-        Err(e) => return e.to_response(),
-        Ok(api_key) => {
-            let db = env.d1("DB")?;
-            let stmt = db.prepare("SELECT id FROM users WHERE api_key = ?");
-            let result = stmt
-                .bind(&[api_key.clone().into()])?
-                .first::<serde_json::Value>(None)
-                .await?;
-            
-            match result {
-                Some(value) => value.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                None => return AppError::Unauthorized("Invalid API key".to_string()).to_response(),
-            }
+
+    let auth = {
+        let db = env.d1("DB")?;
+        match auth::authenticate(&req, &db).await {
+            Ok(a) => a,
+            Err(e) => return e.to_response(),
         }
     };
-    
+    let user_id = auth.user_id.clone();
+    let app_id = auth.app_id.clone();
+
     let purchase_req: PurchaseRequest = match req.json().await {
         Ok(req) => req,
         Err(e) => return AppError::BadRequest(format!("Invalid request body: {}", e)).to_response(),
@@ -237,6 +207,7 @@ pub async fn purchase_credits(mut req: Request, ctx: RouteContext<()>) -> Result
     match purchase_req.payment_provider.as_str() {
         "stripe" => {
             let purchase_id = record_purchase(
+                &app_id,
                 &user_id,
                 &purchase_req.pack_id,
                 total_credits as u32,
@@ -261,6 +232,7 @@ pub async fn purchase_credits(mut req: Request, ctx: RouteContext<()>) -> Result
             }
             
             let purchase_id = record_purchase(
+                &app_id,
                 &user_id,
                 &purchase_req.pack_id,
                 total_credits as u32,
@@ -317,45 +289,42 @@ pub async fn complete_purchase_webhook(mut req: Request, ctx: RouteContext<()>) 
 // Admin endpoints
 pub async fn admin_adjust_credits(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let env = ctx.env;
-    
-    let admin_user_id = match validate_api_key(&req) {
-        Err(e) => return e.to_response(),
-        Ok(api_key) => {
-            let db = env.d1("DB")?;
-            let stmt = db.prepare("SELECT id, email, is_admin FROM users WHERE api_key = ?");
-            let result = stmt
-                .bind(&[api_key.clone().into()])?
-                .first::<serde_json::Value>(None)
-                .await?;
-            
-            match result {
-                Some(value) => {
-                    let is_admin = value.get("is_admin")
-                        .and_then(|v| v.as_i64())
-                        .map(|v| v != 0)
-                        .unwrap_or(false);
-                    if !is_admin {
-                        return AppError::Forbidden("Admin access required".to_string()).to_response();
-                    }
-                    value.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string()
-                },
-                None => return AppError::Unauthorized("Invalid API key".to_string()).to_response(),
-            }
+
+    let auth = {
+        let db = env.d1("DB")?;
+        match auth::authenticate(&req, &db).await {
+            Ok(a) => a,
+            Err(e) => return e.to_response(),
         }
     };
-    
+    if !auth.is_admin {
+        return AppError::Forbidden("Admin access required".to_string()).to_response();
+    }
+    let admin_user_id = auth.user_id.clone();
+    let app_id = auth.app_id.clone();
+
     let adjust_req: AdminAdjustCreditsRequest = match req.json().await {
         Ok(req) => req,
         Err(e) => return AppError::BadRequest(format!("Invalid request body: {}", e)).to_response(),
     };
     
     let db = env.d1("DB")?;
-    
+
+    let exists = db
+        .prepare("SELECT 1 FROM users WHERE app_id = ? AND id = ?")
+        .bind(&[app_id.clone().into(), adjust_req.user_id.clone().into()])?
+        .first::<serde_json::Value>(None)
+        .await?;
+    if exists.is_none() {
+        return AppError::NotFound("User not found in this app".to_string()).to_response();
+    }
+
     let description = format!("Admin adjustment by {}: {}", admin_user_id, adjust_req.reason);
     
     let new_balance = if adjust_req.amount > 0 {
         // Positive adjustment - add credits
         add_credits(
+            &app_id,
             &adjust_req.user_id,
             adjust_req.amount as u32,
             "admin_adjustment",
@@ -365,7 +334,7 @@ pub async fn admin_adjust_credits(mut req: Request, ctx: RouteContext<()>) -> Re
         ).await?
     } else {
         // Negative adjustment - deduct credits but ensure balance doesn't go below 0
-        let current_balance = get_user_balance(&adjust_req.user_id, &db).await?;
+        let current_balance = get_user_balance(&app_id, &adjust_req.user_id, &db).await?;
         let amount_to_deduct = adjust_req.amount.abs() as u32;
         
         // Calculate new balance, but don't go below 0
@@ -380,26 +349,28 @@ pub async fn admin_adjust_credits(mut req: Request, ctx: RouteContext<()>) -> Re
         
         // Update balance
         db.prepare(
-            "UPDATE user_credits 
-             SET balance = ?, updated_at = ? 
-             WHERE user_id = ?"
+            "UPDATE user_credits
+             SET balance = ?, updated_at = ?
+             WHERE app_id = ? AND user_id = ?"
         )
         .bind(&[
             new_balance.into(),
             Utc::now().to_rfc3339().into(),
+            app_id.clone().into(),
             adjust_req.user_id.clone().into(),
         ])?
         .run()
         .await?;
-        
+
         // Record transaction with actual amount deducted
         let transaction_id = Uuid::new_v4().to_string();
         db.prepare(
-            "INSERT INTO credit_transactions (id, user_id, type, amount, balance_after, description, reference_id, created_at) 
-             VALUES (?, ?, ?, ?, ?, ?, NULL, ?)"
+            "INSERT INTO credit_transactions (id, app_id, user_id, type, amount, balance_after, description, reference_id, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?)"
         )
         .bind(&[
             transaction_id.into(),
+            app_id.clone().into(),
             adjust_req.user_id.clone().into(),
             "admin_adjustment".into(),
             (-actual_deduction).into(), // Negative amount for deduction
@@ -423,32 +394,19 @@ pub async fn admin_adjust_credits(mut req: Request, ctx: RouteContext<()>) -> Re
 
 pub async fn admin_search_users(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let env = ctx.env;
-    
-    match validate_api_key(&req) {
-        Err(e) => return e.to_response(),
-        Ok(api_key) => {
-            let db = env.d1("DB")?;
-            let stmt = db.prepare("SELECT id, is_admin FROM users WHERE api_key = ?");
-            let result = stmt
-                .bind(&[api_key.clone().into()])?
-                .first::<serde_json::Value>(None)
-                .await?;
-            
-            match result {
-                Some(value) => {
-                    let is_admin = value.get("is_admin")
-                        .and_then(|v| v.as_i64())
-                        .map(|v| v != 0)
-                        .unwrap_or(false);
-                    if !is_admin {
-                        return AppError::Forbidden("Admin access required".to_string()).to_response();
-                    }
-                }
-                None => return AppError::Unauthorized("Invalid API key".to_string()).to_response(),
-            }
+
+    let app_id = {
+        let db = env.d1("DB")?;
+        let auth = match auth::authenticate(&req, &db).await {
+            Ok(a) => a,
+            Err(e) => return e.to_response(),
+        };
+        if !auth.is_admin {
+            return AppError::Forbidden("Admin access required".to_string()).to_response();
         }
-    }
-    
+        auth.app_id
+    };
+
     let url = req.url()?;
     let search = url.query_pairs()
         .find(|(k, _)| k == "search")
@@ -465,48 +423,51 @@ pub async fn admin_search_users(req: Request, ctx: RouteContext<()>) -> Result<R
         
         // Search by ID (exact match with trimmed spaces) or email (flexible matching)
         let query = "
-            SELECT u.id, u.email, u.is_admin, u.created_at, 
+            SELECT u.id, u.email, u.is_admin, u.created_at,
                    COALESCE(uc.balance, 0) as credits
             FROM users u
-            LEFT JOIN user_credits uc ON u.id = uc.user_id
-            WHERE u.id = ?1 
+            LEFT JOIN user_credits uc ON uc.app_id = u.app_id AND uc.user_id = u.id
+            WHERE u.app_id = ?4
+              AND (u.id = ?1
                OR LOWER(TRIM(u.email)) = LOWER(TRIM(?1))
                OR LOWER(u.email) LIKE LOWER(?2)
-               OR LOWER(u.email) LIKE LOWER(?3)
-            ORDER BY 
-                CASE 
+               OR LOWER(u.email) LIKE LOWER(?3))
+            ORDER BY
+                CASE
                     WHEN u.id = ?1 OR LOWER(TRIM(u.email)) = LOWER(TRIM(?1)) THEN 0
                     ELSE 1
                 END,
                 u.created_at DESC
             LIMIT 10
         ";
-        
+
         // Create variations for flexible email matching
         let email_prefix = format!("{}%", cleaned_search);
         let email_contains = format!("%{}%", cleaned_search);
-        
+
         let stmt = db.prepare(query);
         stmt.bind(&[
             cleaned_search.into(),
             email_prefix.into(),
-            email_contains.into()
+            email_contains.into(),
+            app_id.clone().into()
         ])?
             .all()
             .await?
     } else {
         // Return recent users if no search term
         let query = "
-            SELECT u.id, u.email, u.is_admin, u.created_at, 
+            SELECT u.id, u.email, u.is_admin, u.created_at,
                    COALESCE(uc.balance, 0) as credits
             FROM users u
-            LEFT JOIN user_credits uc ON u.id = uc.user_id
+            LEFT JOIN user_credits uc ON uc.app_id = u.app_id AND uc.user_id = u.id
+            WHERE u.app_id = ?1
             ORDER BY u.created_at DESC
             LIMIT 10
         ";
-        
+
         let stmt = db.prepare(query);
-        stmt.bind(&[])?
+        stmt.bind(&[app_id.clone().into()])?
             .all()
             .await?
     };
@@ -530,79 +491,69 @@ pub async fn admin_search_users(req: Request, ctx: RouteContext<()>) -> Result<R
 
 pub async fn admin_system_stats(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let env = ctx.env;
-    
-    match validate_api_key(&req) {
-        Err(e) => return e.to_response(),
-        Ok(api_key) => {
-            let db = env.d1("DB")?;
-            let stmt = db.prepare("SELECT id, is_admin FROM users WHERE api_key = ?");
-            let result = stmt
-                .bind(&[api_key.clone().into()])?
-                .first::<serde_json::Value>(None)
-                .await?;
-            
-            match result {
-                Some(value) => {
-                    let is_admin = value.get("is_admin")
-                        .and_then(|v| v.as_i64())
-                        .map(|v| v != 0)
-                        .unwrap_or(false);
-                    if !is_admin {
-                        return AppError::Forbidden("Admin access required".to_string()).to_response();
-                    }
-                },
-                None => return AppError::Unauthorized("Invalid API key".to_string()).to_response(),
-            }
-        }
-    };
-    
+
     let db = env.d1("DB")?;
-    
-    // Get system-wide statistics
+    let auth = match auth::authenticate(&req, &db).await {
+        Ok(a) => a,
+        Err(e) => return e.to_response(),
+    };
+    if !auth.is_admin {
+        return AppError::Forbidden("Admin access required".to_string()).to_response();
+    }
+    let app_id = auth.app_id.clone();
+
+    // Tenant-scoped statistics (per app_id)
     let total_users = db
-        .prepare("SELECT COUNT(*) as count FROM users")
+        .prepare("SELECT COUNT(*) as count FROM users WHERE app_id = ?")
+        .bind(&[app_id.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?
         .and_then(|v| v.get("count").and_then(|c| c.as_i64()))
         .unwrap_or(0);
-    
+
     let total_credits_balance = db
-        .prepare("SELECT SUM(balance) as total FROM user_credits")
+        .prepare("SELECT SUM(balance) as total FROM user_credits WHERE app_id = ?")
+        .bind(&[app_id.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?
         .and_then(|v| v.get("total").and_then(|c| c.as_i64()))
         .unwrap_or(0);
-    
+
     let total_purchased = db
-        .prepare("SELECT SUM(lifetime_purchased) as total FROM user_credits")
+        .prepare("SELECT SUM(lifetime_purchased) as total FROM user_credits WHERE app_id = ?")
+        .bind(&[app_id.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?
         .and_then(|v| v.get("total").and_then(|c| c.as_i64()))
         .unwrap_or(0);
-    
+
     let total_spent = db
-        .prepare("SELECT SUM(lifetime_spent) as total FROM user_credits")
+        .prepare("SELECT SUM(lifetime_spent) as total FROM user_credits WHERE app_id = ?")
+        .bind(&[app_id.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?
         .and_then(|v| v.get("total").and_then(|c| c.as_i64()))
         .unwrap_or(0);
-    
+
     let total_revenue = db
-        .prepare("SELECT SUM(amount_usd_cents) as total FROM credit_purchases WHERE status = 'completed'")
+        .prepare("SELECT SUM(amount_usd_cents) as total FROM credit_purchases WHERE app_id = ? AND status = 'completed'")
+        .bind(&[app_id.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?
         .and_then(|v| v.get("total").and_then(|c| c.as_i64()))
         .unwrap_or(0);
-    
+
     let total_images = db
-        .prepare("SELECT COUNT(*) as count FROM stored_images")
+        .prepare("SELECT COUNT(*) as count FROM stored_images WHERE app_id = ?")
+        .bind(&[app_id.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?
         .and_then(|v| v.get("count").and_then(|c| c.as_i64()))
         .unwrap_or(0);
-    
+
     let openai_costs = db
-        .prepare("SELECT SUM(openai_cost_cents) as total FROM stored_images")
+        .prepare("SELECT SUM(openai_cost_cents) as total FROM stored_images WHERE app_id = ?")
+        .bind(&[app_id.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?
         .and_then(|v| v.get("total").and_then(|c| c.as_i64()))
@@ -776,28 +727,24 @@ pub async fn get_purchase_status(_req: Request, ctx: RouteContext<()>) -> Result
 
 pub async fn create_stripe_checkout(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let env = ctx.env;
-    
-    let user_id = match validate_api_key(&req) {
-        Err(e) => return e.to_response(),
-        Ok(api_key) => {
-            let db = env.d1("DB")?;
-            let stmt = db.prepare("SELECT id, email FROM users WHERE api_key = ?");
-            let result = stmt
-                .bind(&[api_key.clone().into()])?
-                .first::<serde_json::Value>(None)
-                .await?;
-            
-            match result {
-                Some(value) => {
-                    let user_id = value.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                    let email = value.get("email").and_then(|v| v.as_str());
-                    (user_id, email.map(|s| s.to_string()))
-                },
-                None => return AppError::Unauthorized("Invalid API key".to_string()).to_response(),
-            }
-        }
+
+    let user_id = {
+        let db = env.d1("DB")?;
+        let auth = match auth::authenticate(&req, &db).await {
+            Ok(a) => a,
+            Err(e) => return e.to_response(),
+        };
+
+        let email = db
+            .prepare("SELECT email FROM users WHERE app_id = ? AND id = ?")
+            .bind(&[auth.app_id.clone().into(), auth.user_id.clone().into()])?
+            .first::<serde_json::Value>(None)
+            .await?
+            .and_then(|v| v.get("email").and_then(|e| e.as_str()).map(|s| s.to_string()));
+
+        (auth.user_id, auth.app_id, email)
     };
-    
+
     let checkout_req: CreateStripeCheckoutRequest = match req.json().await {
         Ok(req) => req,
         Err(e) => return AppError::BadRequest(format!("Invalid request body: {}", e)).to_response(),
@@ -822,6 +769,7 @@ pub async fn create_stripe_checkout(mut req: Request, ctx: RouteContext<()>) -> 
     
     // Record the purchase in pending state
     let purchase_id = record_purchase(
+        &user_id.1,
         &user_id.0,
         &checkout_req.pack_id,
         total_credits as u32,
@@ -841,7 +789,7 @@ pub async fn create_stripe_checkout(mut req: Request, ctx: RouteContext<()>) -> 
         &stripe_price_id,
         &checkout_req.success_url,
         &checkout_req.cancel_url,
-        user_id.1.as_deref(),
+        user_id.2.as_deref(),
     ).await?;
     
     // Update purchase with Stripe session ID
@@ -961,24 +909,17 @@ pub struct ValidateRevenueCatPurchaseResponse {
 
 pub async fn validate_revenuecat_purchase(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let env = ctx.env;
-    
-    let user_id = match validate_api_key(&req) {
-        Err(e) => return e.to_response(),
-        Ok(api_key) => {
-            let db = env.d1("DB")?;
-            let stmt = db.prepare("SELECT id FROM users WHERE api_key = ?");
-            let result = stmt
-                .bind(&[api_key.clone().into()])?
-                .first::<serde_json::Value>(None)
-                .await?;
-            
-            match result {
-                Some(value) => value.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                None => return AppError::Unauthorized("Invalid API key".to_string()).to_response(),
-            }
+
+    let auth = {
+        let db = env.d1("DB")?;
+        match auth::authenticate(&req, &db).await {
+            Ok(a) => a,
+            Err(e) => return e.to_response(),
         }
     };
-    
+    let user_id = auth.user_id.clone();
+    let app_id = auth.app_id.clone();
+
     let validate_req: ValidateRevenueCatPurchaseRequest = match req.json().await {
         Ok(req) => req,
         Err(e) => return AppError::BadRequest(format!("Invalid request body: {}", e)).to_response(),
@@ -1002,9 +943,9 @@ pub async fn validate_revenuecat_purchase(mut req: Request, ctx: RouteContext<()
     
     // Check if this purchase token has already been used
     let existing_purchase = db.prepare(
-        "SELECT id, status FROM credit_purchases WHERE payment_id = ? AND payment_provider = 'revenuecat'"
+        "SELECT id, status FROM credit_purchases WHERE app_id = ? AND payment_id = ? AND payment_provider = 'revenuecat'"
     )
-    .bind(&[validate_req.purchase_token.clone().into()])?
+    .bind(&[app_id.clone().into(), validate_req.purchase_token.clone().into()])?
     .first::<serde_json::Value>(None)
     .await?;
     
@@ -1017,6 +958,7 @@ pub async fn validate_revenuecat_purchase(mut req: Request, ctx: RouteContext<()
     
     // Record the purchase
     let purchase_id = record_purchase(
+        &app_id,
         &user_id,
         &validate_req.pack_id,
         total_credits as u32,
@@ -1054,9 +996,9 @@ pub async fn validate_revenuecat_purchase(mut req: Request, ctx: RouteContext<()
     }
     
     complete_purchase(&purchase_id, &db).await?;
-    
-    let new_balance = get_user_balance(&user_id, &db).await?;
-    
+
+    let new_balance = get_user_balance(&app_id, &user_id, &db).await?;
+
     Response::from_json(&ValidateRevenueCatPurchaseResponse {
         success: true,
         purchase_id,
@@ -1246,9 +1188,9 @@ pub async fn revenuecat_webhook(mut req: Request, ctx: RouteContext<()>) -> Resu
             
             // Check if this transaction has already been processed
             let existing = db.prepare(
-                "SELECT id FROM credit_purchases WHERE payment_id = ? AND payment_provider = 'revenuecat'"
+                "SELECT id FROM credit_purchases WHERE app_id = ? AND payment_id = ? AND payment_provider = 'revenuecat'"
             )
-            .bind(&[event.transaction_id.clone().into()])?
+            .bind(&["pixie".into(), event.transaction_id.clone().into()])?
             .first::<serde_json::Value>(None)
             .await?;
             
@@ -1259,6 +1201,7 @@ pub async fn revenuecat_webhook(mut req: Request, ctx: RouteContext<()>) -> Resu
             
             // Record and complete the purchase
             let purchase_id = record_purchase(
+                "pixie",
                 &event.app_user_id,
                 pack_id,
                 total_credits as u32,

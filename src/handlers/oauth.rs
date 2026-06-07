@@ -1,5 +1,6 @@
 use worker::{Request, Response, RouteContext, Result, console_log};
 use crate::error::AppError;
+use crate::auth::resolve_app_id;
 use crate::credits::initialize_user_credits;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -111,7 +112,9 @@ pub async fn github_auth_start(req: Request, ctx: RouteContext<()>) -> Result<Re
 
 pub async fn github_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let env = ctx.env;
-    
+
+    let app_id = resolve_app_id(&req);
+
     let callback_req: OAuthCallbackRequest = match req.json().await {
         Ok(req) => req,
         Err(e) => return AppError::BadRequest(format!("Invalid request body: {}", e)).to_response(),
@@ -209,14 +212,14 @@ pub async fn github_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Re
     
     let provider_id = github_user.id.to_string();
     let existing_user_stmt = db.prepare(
-        "SELECT id, api_key, is_admin FROM users WHERE provider = ? AND provider_id = ?"
+        "SELECT id, api_key, is_admin FROM users WHERE app_id = ? AND provider = ? AND provider_id = ?"
     );
-    
+
     let existing_user = existing_user_stmt
-        .bind(&["github".into(), provider_id.clone().into()])?
+        .bind(&[app_id.clone().into(), "github".into(), provider_id.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?;
-    
+
     let (user_id, api_key, is_admin) = if let Some(user_data) = existing_user {
         (
             user_data.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
@@ -227,15 +230,16 @@ pub async fn github_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Re
         let new_user_id = Uuid::new_v4().to_string();
         let new_api_key = generate_api_key();
         let now = Utc::now().to_rfc3339();
-        
+
         let insert_stmt = db.prepare(
-            "INSERT INTO users (id, provider, provider_id, email, name, api_key, created_at, updated_at) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO users (id, app_id, provider, provider_id, email, name, api_key, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
-        
+
         insert_stmt
             .bind(&[
                 new_user_id.clone().into(),
+                app_id.clone().into(),
                 "github".into(),
                 provider_id.into(),
                 github_user.email.clone().unwrap_or_default().into(),
@@ -246,10 +250,10 @@ pub async fn github_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Re
             ])?
             .run()
             .await?;
-        
+
         // Initialize credits for new user
-        initialize_user_credits(&new_user_id, &db).await?;
-        
+        initialize_user_credits(&app_id, &new_user_id, &db).await?;
+
         (new_user_id, new_api_key, false)
     };
     
@@ -295,7 +299,9 @@ pub async fn google_auth_start(req: Request, ctx: RouteContext<()>) -> Result<Re
 
 pub async fn google_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let env = ctx.env;
-    
+
+    let app_id = resolve_app_id(&req);
+
     let callback_req: OAuthCallbackRequest = match req.json().await {
         Ok(req) => req,
         Err(e) => return AppError::BadRequest(format!("Invalid request body: {}", e)).to_response(),
@@ -362,14 +368,14 @@ pub async fn google_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Re
     
     let provider_id = google_user.id;
     let existing_user_stmt = db.prepare(
-        "SELECT id, api_key, is_admin FROM users WHERE provider = ? AND provider_id = ?"
+        "SELECT id, api_key, is_admin FROM users WHERE app_id = ? AND provider = ? AND provider_id = ?"
     );
-    
+
     let existing_user = existing_user_stmt
-        .bind(&["google".into(), provider_id.clone().into()])?
+        .bind(&[app_id.clone().into(), "google".into(), provider_id.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?;
-    
+
     let (user_id, api_key, is_admin) = if let Some(user_data) = existing_user {
         (
             user_data.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
@@ -380,15 +386,16 @@ pub async fn google_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Re
         let new_user_id = Uuid::new_v4().to_string();
         let new_api_key = generate_api_key();
         let now = Utc::now().to_rfc3339();
-        
+
         let insert_stmt = db.prepare(
-            "INSERT INTO users (id, provider, provider_id, email, name, api_key, created_at, updated_at) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO users (id, app_id, provider, provider_id, email, name, api_key, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
-        
+
         insert_stmt
             .bind(&[
                 new_user_id.clone().into(),
+                app_id.clone().into(),
                 "google".into(),
                 provider_id.into(),
                 google_user.email.into(),
@@ -399,10 +406,10 @@ pub async fn google_auth_callback(mut req: Request, ctx: RouteContext<()>) -> Re
             ])?
             .run()
             .await?;
-        
+
         // Initialize credits for new user
-        initialize_user_credits(&new_user_id, &db).await?;
-        
+        initialize_user_credits(&app_id, &new_user_id, &db).await?;
+
         (new_user_id, new_api_key, false)
     };
     

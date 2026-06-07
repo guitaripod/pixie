@@ -1,5 +1,6 @@
 use worker::{Request, Response, RouteContext, Result};
 use crate::error::AppError;
+use crate::auth::resolve_app_id;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
@@ -44,24 +45,29 @@ pub async fn list_images(req: Request, ctx: RouteContext<()>) -> Result<Response
         .min(100);
     
     let offset = (page - 1) * per_page;
-    
+
+    let app_id = resolve_app_id(&req);
     let db = env.d1("DB")?;
-    
-    let count_stmt = db.prepare("SELECT COUNT(*) as count FROM stored_images");
-    let count_result = count_stmt.first::<serde_json::Value>(None).await?;
+
+    let count_stmt = db.prepare("SELECT COUNT(*) as count FROM stored_images WHERE app_id = ?");
+    let count_result = count_stmt
+        .bind(&[app_id.clone().into()])?
+        .first::<serde_json::Value>(None)
+        .await?;
     let total = count_result
         .and_then(|v| v.get("count").and_then(|count| count.as_i64()))
         .unwrap_or(0) as usize;
-    
+
     let images_stmt = db.prepare(
-        "SELECT id, user_id, r2_key, prompt, model, size, quality, created_at 
-         FROM stored_images 
-         ORDER BY created_at DESC 
+        "SELECT id, user_id, r2_key, prompt, model, size, quality, created_at
+         FROM stored_images
+         WHERE app_id = ?
+         ORDER BY created_at DESC
          LIMIT ? OFFSET ?"
     );
-    
+
     let images_result = images_stmt
-        .bind(&[per_page.into(), offset.into()])?
+        .bind(&[app_id.clone().into(), per_page.into(), offset.into()])?
         .all()
         .await?;
     
@@ -98,7 +104,8 @@ pub async fn list_user_images(req: Request, ctx: RouteContext<()>) -> Result<Res
     let user_id = ctx.param("user_id")
         .ok_or_else(|| AppError::BadRequest("Missing user_id parameter".to_string()))?
         .to_string();
-    
+
+    let app_id = resolve_app_id(&req);
     let env = ctx.env;
     let url = req.url()?;
     let query_params: std::collections::HashMap<String, String> = url
@@ -121,26 +128,26 @@ pub async fn list_user_images(req: Request, ctx: RouteContext<()>) -> Result<Res
     let offset = (page - 1) * per_page;
     
     let db = env.d1("DB")?;
-    
-    let count_stmt = db.prepare("SELECT COUNT(*) as count FROM stored_images WHERE user_id = ?");
+
+    let count_stmt = db.prepare("SELECT COUNT(*) as count FROM stored_images WHERE app_id = ? AND user_id = ?");
     let count_result = count_stmt
-        .bind(&[user_id.clone().into()])?
+        .bind(&[app_id.clone().into(), user_id.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?;
     let total = count_result
         .and_then(|v| v.get("count").and_then(|count| count.as_i64()))
         .unwrap_or(0) as usize;
-    
+
     let images_stmt = db.prepare(
-        "SELECT id, user_id, r2_key, prompt, model, size, quality, created_at 
-         FROM stored_images 
-         WHERE user_id = ?
-         ORDER BY created_at DESC 
+        "SELECT id, user_id, r2_key, prompt, model, size, quality, created_at
+         FROM stored_images
+         WHERE app_id = ? AND user_id = ?
+         ORDER BY created_at DESC
          LIMIT ? OFFSET ?"
     );
-    
+
     let images_result = images_stmt
-        .bind(&[user_id.clone().into(), per_page.into(), offset.into()])?
+        .bind(&[app_id.clone().into(), user_id.clone().into(), per_page.into(), offset.into()])?
         .all()
         .await?;
     
@@ -172,21 +179,22 @@ pub async fn list_user_images(req: Request, ctx: RouteContext<()>) -> Result<Res
     }))
 }
 
-pub async fn get_image(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
+pub async fn get_image(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let image_id = ctx.param("image_id")
         .ok_or_else(|| AppError::BadRequest("Missing image_id parameter".to_string()))?
         .to_string();
-    
+
+    let app_id = resolve_app_id(&req);
     let env = ctx.env;
     let db = env.d1("DB")?;
     let stmt = db.prepare(
-        "SELECT id, user_id, r2_key, prompt, model, size, quality, created_at 
-         FROM stored_images 
-         WHERE id = ?"
+        "SELECT id, user_id, r2_key, prompt, model, size, quality, created_at
+         FROM stored_images
+         WHERE app_id = ? AND id = ?"
     );
-    
+
     let result = stmt
-        .bind(&[image_id.clone().into()])?
+        .bind(&[app_id.clone().into(), image_id.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?;
     

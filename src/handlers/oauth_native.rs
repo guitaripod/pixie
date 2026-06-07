@@ -1,5 +1,6 @@
 use worker::{Request, Response, RouteContext, Result, console_log, Fetch, Method};
 use crate::error::AppError;
+use crate::auth::resolve_app_id;
 use crate::credits::initialize_user_credits;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -32,6 +33,7 @@ struct GoogleIdTokenClaims {
 
 /// Handle native Google Sign-In tokens from mobile/desktop apps
 pub async fn google_token_auth(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let app_id = resolve_app_id(&req);
     let token_req: GoogleTokenRequest = req.json().await?;
     
     // Get all valid client IDs from environment
@@ -90,11 +92,11 @@ pub async fn google_token_auth(mut req: Request, ctx: RouteContext<()>) -> Resul
     
     // Check if user exists with this Google ID
     let existing_user = db
-        .prepare("SELECT id, api_key, is_admin FROM users WHERE provider = ?1 AND provider_id = ?2")
-        .bind(&["google".into(), token_info.sub.clone().into()])?
+        .prepare("SELECT id, api_key, is_admin FROM users WHERE app_id = ?1 AND provider = ?2 AND provider_id = ?3")
+        .bind(&[app_id.clone().into(), "google".into(), token_info.sub.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?;
-    
+
     let (user_id, api_key, is_admin) = if let Some(user_data) = existing_user {
         let id = user_data.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
         let key = user_data.get("api_key").and_then(|v| v.as_str()).unwrap_or("").to_string();
@@ -106,13 +108,14 @@ pub async fn google_token_auth(mut req: Request, ctx: RouteContext<()>) -> Resul
         let new_user_id = Uuid::new_v4().to_string();
         let new_api_key = format!("pixie_{}", Uuid::new_v4().to_string().replace("-", ""));
         let now = Utc::now().to_rfc3339();
-        
+
         console_log!("Creating new user: {}", new_user_id);
-        
+
         db
-            .prepare("INSERT INTO users (id, email, provider, provider_id, name, api_key, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)")
+            .prepare("INSERT INTO users (id, app_id, email, provider, provider_id, name, api_key, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)")
             .bind(&[
                 new_user_id.clone().into(),
+                app_id.clone().into(),
                 token_info.email.clone().into(),
                 "google".into(),
                 token_info.sub.into(),
@@ -123,10 +126,10 @@ pub async fn google_token_auth(mut req: Request, ctx: RouteContext<()>) -> Resul
             ])?
             .run()
             .await?;
-        
+
         // Initialize credits for new user
-        initialize_user_credits(&new_user_id, &db).await?;
-        
+        initialize_user_credits(&app_id, &new_user_id, &db).await?;
+
         (new_user_id, new_api_key, false)
     };
     
@@ -154,6 +157,7 @@ struct AppleIdTokenClaims {
 }
 
 pub async fn apple_token_auth(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let app_id = resolve_app_id(&req);
     let token_req: AppleTokenRequest = req.json().await?;
     
     let id_token_parts: Vec<&str> = token_req.identity_token.split('.').collect();
@@ -192,11 +196,11 @@ pub async fn apple_token_auth(mut req: Request, ctx: RouteContext<()>) -> Result
     let db = ctx.env.d1("DB")?;
     
     let existing_user = db
-        .prepare("SELECT id, api_key, is_admin FROM users WHERE provider = ?1 AND provider_id = ?2")
-        .bind(&["apple".into(), claims.sub.clone().into()])?
+        .prepare("SELECT id, api_key, is_admin FROM users WHERE app_id = ?1 AND provider = ?2 AND provider_id = ?3")
+        .bind(&[app_id.clone().into(), "apple".into(), claims.sub.clone().into()])?
         .first::<serde_json::Value>(None)
         .await?;
-    
+
     let (user_id, api_key, is_admin) = if let Some(user_data) = existing_user {
         let id = user_data.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
         let key = user_data.get("api_key").and_then(|v| v.as_str()).unwrap_or("").to_string();
@@ -207,16 +211,17 @@ pub async fn apple_token_auth(mut req: Request, ctx: RouteContext<()>) -> Result
         let new_user_id = Uuid::new_v4().to_string();
         let new_api_key = format!("pixie_{}", Uuid::new_v4().to_string().replace("-", ""));
         let now = Utc::now().to_rfc3339();
-        
+
         console_log!("Creating new Apple user: {}", new_user_id);
-        
+
         let email = claims.email.clone()
             .unwrap_or_else(|| format!("{}@privaterelay.appleid.com", &claims.sub[..8]));
-        
+
         db
-            .prepare("INSERT INTO users (id, email, provider, provider_id, name, api_key, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)")
+            .prepare("INSERT INTO users (id, app_id, email, provider, provider_id, name, api_key, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)")
             .bind(&[
                 new_user_id.clone().into(),
+                app_id.clone().into(),
                 email.into(),
                 "apple".into(),
                 claims.sub.into(),
@@ -227,9 +232,9 @@ pub async fn apple_token_auth(mut req: Request, ctx: RouteContext<()>) -> Result
             ])?
             .run()
             .await?;
-        
-        initialize_user_credits(&new_user_id, &db).await?;
-        
+
+        initialize_user_credits(&app_id, &new_user_id, &db).await?;
+
         (new_user_id, new_api_key, false)
     };
     

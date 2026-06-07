@@ -112,14 +112,15 @@ pub fn calculate_credits_from_cost(cost_usd: f64) -> u32 {
     ((cost_usd * CREDIT_MULTIPLIER * 100.0).ceil() as u32).max(1)
 }
 
-pub async fn initialize_user_credits(user_id: &str, db: &D1Database) -> Result<()> {
+pub async fn initialize_user_credits(app_id: &str, user_id: &str, db: &D1Database) -> Result<()> {
     let now = Utc::now().to_rfc3339();
-    
+
     db.prepare(
-        "INSERT INTO user_credits (user_id, balance, lifetime_purchased, lifetime_spent, created_at, updated_at) 
-         VALUES (?, ?, 0, 0, ?, ?)"
+        "INSERT INTO user_credits (app_id, user_id, balance, lifetime_purchased, lifetime_spent, created_at, updated_at)
+         VALUES (?, ?, ?, 0, 0, ?, ?)"
     )
     .bind(&[
+        app_id.into(),
         user_id.into(),
         NEW_USER_FREE_CREDITS.into(),
         now.clone().into(),
@@ -127,17 +128,17 @@ pub async fn initialize_user_credits(user_id: &str, db: &D1Database) -> Result<(
     ])?
     .run()
     .await?;
-    
+
     Ok(())
 }
 
-pub async fn get_user_balance(user_id: &str, db: &D1Database) -> Result<i32> {
+pub async fn get_user_balance(app_id: &str, user_id: &str, db: &D1Database) -> Result<i32> {
     let result = db
-        .prepare("SELECT balance FROM user_credits WHERE user_id = ?")
-        .bind(&[user_id.into()])?
+        .prepare("SELECT balance FROM user_credits WHERE app_id = ? AND user_id = ?")
+        .bind(&[app_id.into(), user_id.into()])?
         .first::<serde_json::Value>(None)
         .await?;
-    
+
     match result {
         Some(value) => Ok(value.get("balance").and_then(|b| b.as_i64()).unwrap_or(0) as i32),
         None => Ok(0),
@@ -145,12 +146,13 @@ pub async fn get_user_balance(user_id: &str, db: &D1Database) -> Result<i32> {
 }
 
 pub async fn check_and_reserve_credits(
+    app_id: &str,
     user_id: &str,
     required_credits: u32,
     db: &D1Database,
 ) -> Result<()> {
     // Use a transaction to ensure atomicity
-    let balance = get_user_balance(user_id, db).await?;
+    let balance = get_user_balance(app_id, user_id, db).await?;
     
     if balance < required_credits as i32 {
         return Err(AppError::PaymentRequired(format!(
@@ -163,6 +165,7 @@ pub async fn check_and_reserve_credits(
 }
 
 pub async fn deduct_credits(
+    app_id: &str,
     user_id: &str,
     amount: u32,
     description: &str,
@@ -171,41 +174,43 @@ pub async fn deduct_credits(
 ) -> Result<i32> {
     let transaction_id = Uuid::new_v4().to_string();
     let now = Utc::now().to_rfc3339();
-    
+
     // Get current balance with lock
-    let current_balance = get_user_balance(user_id, db).await?;
-    
+    let current_balance = get_user_balance(app_id, user_id, db).await?;
+
     if current_balance < amount as i32 {
         return Err(AppError::PaymentRequired(format!(
             "Insufficient credits. Need {} credits, have {}",
             amount, current_balance
         )).into());
     }
-    
+
     let new_balance = current_balance - amount as i32;
-    
+
     // Update balance
     db.prepare(
-        "UPDATE user_credits 
-         SET balance = ?, lifetime_spent = lifetime_spent + ?, updated_at = ? 
-         WHERE user_id = ?"
+        "UPDATE user_credits
+         SET balance = ?, lifetime_spent = lifetime_spent + ?, updated_at = ?
+         WHERE app_id = ? AND user_id = ?"
     )
     .bind(&[
         new_balance.into(),
         amount.into(),
         now.clone().into(),
+        app_id.into(),
         user_id.into(),
     ])?
     .run()
     .await?;
-    
+
     // Record transaction
     db.prepare(
-        "INSERT INTO credit_transactions (id, user_id, type, amount, balance_after, description, reference_id, created_at) 
-         VALUES (?, ?, 'spend', ?, ?, ?, ?, ?)"
+        "INSERT INTO credit_transactions (id, app_id, user_id, type, amount, balance_after, description, reference_id, created_at)
+         VALUES (?, ?, ?, 'spend', ?, ?, ?, ?, ?)"
     )
     .bind(&[
         transaction_id.into(),
+        app_id.into(),
         user_id.into(),
         (-(amount as i32)).into(),
         new_balance.into(),
@@ -215,11 +220,12 @@ pub async fn deduct_credits(
     ])?
     .run()
     .await?;
-    
+
     Ok(new_balance)
 }
 
 pub async fn add_credits(
+    app_id: &str,
     user_id: &str,
     amount: u32,
     transaction_type: &str,
@@ -229,45 +235,47 @@ pub async fn add_credits(
 ) -> Result<i32> {
     let transaction_id = Uuid::new_v4().to_string();
     let now = Utc::now().to_rfc3339();
-    
+
     // Get current balance
-    let current_balance = get_user_balance(user_id, db).await?;
+    let current_balance = get_user_balance(app_id, user_id, db).await?;
     let new_balance = current_balance + amount as i32;
-    
+
     // Update balance and lifetime_purchased if it's a purchase
     let update_query = if transaction_type == "purchase" {
-        "UPDATE user_credits 
-         SET balance = ?, lifetime_purchased = lifetime_purchased + ?, updated_at = ? 
-         WHERE user_id = ?"
+        "UPDATE user_credits
+         SET balance = ?, lifetime_purchased = lifetime_purchased + ?, updated_at = ?
+         WHERE app_id = ? AND user_id = ?"
     } else {
-        "UPDATE user_credits 
-         SET balance = ?, updated_at = ? 
-         WHERE user_id = ?"
+        "UPDATE user_credits
+         SET balance = ?, updated_at = ?
+         WHERE app_id = ? AND user_id = ?"
     };
-    
+
     let mut params = vec![
         new_balance.into(),
     ];
-    
+
     if transaction_type == "purchase" {
         params.push(amount.into());
     }
-    
+
     params.push(now.clone().into());
+    params.push(app_id.into());
     params.push(user_id.into());
-    
+
     db.prepare(update_query)
         .bind(&params)?
         .run()
         .await?;
-    
+
     // Record transaction
     db.prepare(
-        "INSERT INTO credit_transactions (id, user_id, type, amount, balance_after, description, reference_id, created_at) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO credit_transactions (id, app_id, user_id, type, amount, balance_after, description, reference_id, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
     .bind(&[
         transaction_id.into(),
+        app_id.into(),
         user_id.into(),
         transaction_type.into(),
         amount.into(),
@@ -278,11 +286,12 @@ pub async fn add_credits(
     ])?
     .run()
     .await?;
-    
+
     Ok(new_balance)
 }
 
 pub async fn record_purchase(
+    app_id: &str,
     user_id: &str,
     pack_id: &str,
     credits: u32,
@@ -293,13 +302,14 @@ pub async fn record_purchase(
 ) -> Result<String> {
     let purchase_id = Uuid::new_v4().to_string();
     let now = Utc::now().to_rfc3339();
-    
+
     db.prepare(
-        "INSERT INTO credit_purchases (id, user_id, pack_id, credits, amount_usd_cents, payment_provider, payment_id, status, created_at) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)"
+        "INSERT INTO credit_purchases (id, app_id, user_id, pack_id, credits, amount_usd_cents, payment_provider, payment_id, status, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)"
     )
     .bind(&[
         purchase_id.clone().into(),
+        app_id.into(),
         user_id.into(),
         pack_id.into(),
         credits.into(),
@@ -310,7 +320,7 @@ pub async fn record_purchase(
     ])?
     .run()
     .await?;
-    
+
     Ok(purchase_id)
 }
 
@@ -337,12 +347,13 @@ pub async fn complete_purchase(
     
     // Get purchase details
     let purchase = db
-        .prepare("SELECT user_id, pack_id, credits, payment_provider FROM credit_purchases WHERE id = ? AND status = 'pending'")
+        .prepare("SELECT app_id, user_id, pack_id, credits, payment_provider FROM credit_purchases WHERE id = ? AND status = 'pending'")
         .bind(&[purchase_id.into()])?
         .first::<serde_json::Value>(None)
         .await?
         .ok_or_else(|| AppError::NotFound("Purchase not found".to_string()))?;
-    
+
+    let app_id = purchase.get("app_id").and_then(|v| v.as_str()).unwrap_or("pixie");
     let user_id = purchase.get("user_id").and_then(|v| v.as_str()).unwrap_or("");
     let pack_id = purchase.get("pack_id").and_then(|v| v.as_str()).unwrap_or("");
     let credits = purchase.get("credits").and_then(|v| v.as_i64()).unwrap_or(0) as u32;
@@ -363,12 +374,13 @@ pub async fn complete_purchase(
         "nowpayments" => format!("Crypto purchase: {} pack", pack_id),
         _ => format!("Purchased {} pack", pack_id),
     };
-    add_credits(user_id, credits, "purchase", &description, Some(purchase_id), db).await?;
-    
+    add_credits(app_id, user_id, credits, "purchase", &description, Some(purchase_id), db).await?;
+
     Ok(())
 }
 
 pub async fn get_user_transactions(
+    app_id: &str,
     user_id: &str,
     limit: i32,
     offset: i32,
@@ -376,12 +388,12 @@ pub async fn get_user_transactions(
 ) -> Result<Vec<CreditTransaction>> {
     let results = db
         .prepare(
-            "SELECT * FROM credit_transactions 
-             WHERE user_id = ? 
-             ORDER BY created_at DESC 
+            "SELECT * FROM credit_transactions
+             WHERE app_id = ? AND user_id = ?
+             ORDER BY created_at DESC
              LIMIT ? OFFSET ?"
         )
-        .bind(&[user_id.into(), limit.into(), offset.into()])?
+        .bind(&[app_id.into(), user_id.into(), limit.into(), offset.into()])?
         .all()
         .await?;
     

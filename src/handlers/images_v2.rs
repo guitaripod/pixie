@@ -1,7 +1,7 @@
 use worker::{Request, Response, RouteContext, Result};
 use crate::models::{ImageGenerationRequest, ImageEditRequest, ImageResponse, ImageData, UsageRecord, ErrorResponse, ErrorDetail};
 use crate::error::AppError;
-use crate::auth::validate_api_key;
+use crate::auth;
 use crate::storage::store_image_from_bytes;
 use crate::credits::{check_and_reserve_credits, deduct_credits};
 use crate::rate_limit::{check_and_acquire_lock, release_lock};
@@ -15,23 +15,16 @@ use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let start_time = worker::Date::now().as_millis();
     let env = ctx.env;
-    
-    let user_id = match validate_api_key(&req) {
-        Err(e) => return e.to_response(),
-        Ok(api_key) => {
-            let db = env.d1("DB")?;
-            let stmt = db.prepare("SELECT id, preferred_model, openai_api_key, gemini_api_key FROM users WHERE api_key = ?");
-            let result = stmt
-                .bind(&[api_key.clone().into()])?
-                .first::<serde_json::Value>(None)
-                .await?;
-            
-            match result {
-                Some(value) => value.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                None => return AppError::Unauthorized("Invalid API key".to_string()).to_response(),
-            }
+
+    let auth = {
+        let db = env.d1("DB")?;
+        match auth::authenticate(&req, &db).await {
+            Ok(a) => a,
+            Err(e) => return e.to_response(),
         }
     };
+    let user_id = auth.user_id.clone();
+    let app_id = auth.app_id.clone();
 
     let generation_req: ImageGenerationRequest = match req.json().await {
         Ok(req) => req,
@@ -43,15 +36,15 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
     }
     
     let db = env.d1("DB")?;
-    
-    if let Err(_) = check_and_acquire_lock(&user_id, &db).await {
+
+    if let Err(_) = check_and_acquire_lock(&app_id, &user_id, &db).await {
         return Ok(Response::error("Another request is already in progress", 429)?);
     }
-    
+
     let provider = match providers::get_provider(&generation_req.model, &env) {
         Ok(p) => p,
         Err(e) => {
-            let _ = release_lock(&user_id, &db).await;
+            let _ = release_lock(&app_id, &user_id, &db).await;
             return Err(e);
         }
     };
@@ -72,9 +65,9 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
     };
 
     let cost_estimate = provider.estimate_cost(&unified_request);
-    
-    if let Err(e) = check_and_reserve_credits(&user_id, cost_estimate.credits, &db).await {
-        let _ = release_lock(&user_id, &db).await;
+
+    if let Err(e) = check_and_reserve_credits(&app_id, &user_id, cost_estimate.credits, &db).await {
+        let _ = release_lock(&app_id, &user_id, &db).await;
         return AppError::from(e).to_response();
     }
 
@@ -88,8 +81,8 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
     let provider_response = match provider.generate_image(&unified_request).await {
         Ok(resp) => resp,
         Err(e) => {
-            let _ = release_lock(&user_id, &db).await;
-            
+            let _ = release_lock(&app_id, &user_id, &db).await;
+
             let error_msg = e.to_string();
             if error_msg.contains("content_policy_violation") || error_msg.contains("moderation") {
                 let custom_error = ErrorResponse {
@@ -132,13 +125,14 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
                 let cost_cents = (cost_estimate.credits as f32 / 3.0) as i32;
                 
                 let stmt = db.prepare(
-                    "INSERT INTO stored_images (id, user_id, r2_key, prompt, provider, model, size, quality, created_at, expires_at, cost_cents, credits_charged) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    "INSERT INTO stored_images (id, app_id, user_id, r2_key, prompt, provider, model, size, quality, created_at, expires_at, cost_cents, credits_charged)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 );
-                
+
                 let _ = stmt
                     .bind(&[
                         stored_image.id.clone().into(),
+                        app_id.clone().into(),
                         stored_image.user_id.clone().into(),
                         stored_image.r2_key.clone().into(),
                         stored_image.prompt.clone().into(),
@@ -183,6 +177,7 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
         let description = format!("Generated {} image(s) using {}", images_stored, generation_req.model);
         
         if let Err(e) = deduct_credits(
+            &app_id,
             &user_id,
             actual_credits_to_charge,
             &description,
@@ -200,7 +195,7 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
 
     let response_time_ms = (worker::Date::now().as_millis() - start_time) as u32;
     let usage = provider_response.usage.as_ref();
-    
+
     let _usage_record = UsageRecord {
         id: Uuid::new_v4().to_string(),
         user_id: user_id.clone(),
@@ -224,17 +219,18 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
 
     let db = env.d1("DB")?;
     let stmt = db.prepare(
-        "INSERT INTO usage_records (id, user_id, request_type, provider, model, prompt, image_size, image_quality, 
-         image_count, input_images_count, total_tokens, input_tokens, output_tokens, text_tokens, 
-         image_tokens, r2_keys, response_time_ms, simplified_cost, error, created_at) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO usage_records (id, app_id, user_id, request_type, provider, model, prompt, image_size, image_quality,
+         image_count, input_images_count, total_tokens, input_tokens, output_tokens, text_tokens,
+         image_tokens, r2_keys, response_time_ms, simplified_cost, error, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
-    
+
     let simplified_cost = provider.get_name() == "gemini";
-    
+
     let _ = stmt
         .bind(&[
             _usage_record.id.into(),
+            app_id.clone().into(),
             _usage_record.user_id.into(),
             _usage_record.request_type.into(),
             provider.get_name().into(),
@@ -258,8 +254,8 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
         .run()
         .await?;
 
-    let _ = release_lock(&user_id, &db).await;
-    
+    let _ = release_lock(&app_id, &user_id, &db).await;
+
     let response = ImageResponse {
         created: Utc::now().timestamp() as u64,
         data: image_data_list,
@@ -276,23 +272,16 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
 pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let start_time = worker::Date::now().as_millis();
     let env = ctx.env;
-    
-    let user_id = match validate_api_key(&req) {
-        Err(e) => return e.to_response(),
-        Ok(api_key) => {
-            let db = env.d1("DB")?;
-            let stmt = db.prepare("SELECT id, preferred_model, openai_api_key, gemini_api_key FROM users WHERE api_key = ?");
-            let result = stmt
-                .bind(&[api_key.clone().into()])?
-                .first::<serde_json::Value>(None)
-                .await?;
-            
-            match result {
-                Some(value) => value.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                None => return AppError::Unauthorized("Invalid API key".to_string()).to_response(),
-            }
+
+    let auth = {
+        let db = env.d1("DB")?;
+        match auth::authenticate(&req, &db).await {
+            Ok(a) => a,
+            Err(e) => return e.to_response(),
         }
     };
+    let user_id = auth.user_id.clone();
+    let app_id = auth.app_id.clone();
 
     let edit_req: ImageEditRequest = match req.json().await {
         Ok(req) => req,
@@ -304,21 +293,21 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
     }
     
     let db = env.d1("DB")?;
-    
-    if let Err(_) = check_and_acquire_lock(&user_id, &db).await {
+
+    if let Err(_) = check_and_acquire_lock(&app_id, &user_id, &db).await {
         return Ok(Response::error("Another request is already in progress", 429)?);
     }
-    
+
     let provider = match providers::get_provider(&edit_req.model, &env) {
         Ok(p) => p,
         Err(e) => {
-            let _ = release_lock(&user_id, &db).await;
+            let _ = release_lock(&app_id, &user_id, &db).await;
             return Err(e);
         }
     };
 
     if !provider.get_supported_features().supports_edit {
-        let _ = release_lock(&user_id, &db).await;
+        let _ = release_lock(&app_id, &user_id, &db).await;
         return AppError::BadRequest(format!("Model {} does not support image editing", edit_req.model)).to_response();
     }
 
@@ -340,9 +329,9 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
     };
 
     let cost_estimate = provider.estimate_edit_cost(&unified_request);
-    
-    if let Err(e) = check_and_reserve_credits(&user_id, cost_estimate.credits, &db).await {
-        let _ = release_lock(&user_id, &db).await;
+
+    if let Err(e) = check_and_reserve_credits(&app_id, &user_id, cost_estimate.credits, &db).await {
+        let _ = release_lock(&app_id, &user_id, &db).await;
         return AppError::from(e).to_response();
     }
 
@@ -356,8 +345,8 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
     let provider_response = match provider.edit_image(&unified_request).await {
         Ok(resp) => resp,
         Err(e) => {
-            let _ = release_lock(&user_id, &db).await;
-            
+            let _ = release_lock(&app_id, &user_id, &db).await;
+
             let error_msg = e.to_string();
             if error_msg.contains("content_policy_violation") || error_msg.contains("moderation") {
                 let custom_error = ErrorResponse {
@@ -398,13 +387,14 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
                 let cost_cents = (cost_estimate.credits as f32 / 3.0) as i32;
                 
                 let stmt = db.prepare(
-                    "INSERT INTO stored_images (id, user_id, r2_key, prompt, provider, model, size, quality, created_at, expires_at, cost_cents, credits_charged) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    "INSERT INTO stored_images (id, app_id, user_id, r2_key, prompt, provider, model, size, quality, created_at, expires_at, cost_cents, credits_charged)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 );
-                
+
                 let _ = stmt
                     .bind(&[
                         stored_image.id.clone().into(),
+                        app_id.clone().into(),
                         stored_image.user_id.clone().into(),
                         stored_image.r2_key.clone().into(),
                         stored_image.prompt.clone().into(),
@@ -449,6 +439,7 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
         let description = format!("Edited {} image(s) using {}", images_stored, edit_req.model);
         
         if let Err(e) = deduct_credits(
+            &app_id,
             &user_id,
             actual_credits_to_charge,
             &description,
@@ -466,7 +457,7 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
 
     let response_time_ms = (worker::Date::now().as_millis() - start_time) as u32;
     let usage = provider_response.usage.as_ref();
-    
+
     let _usage_record = UsageRecord {
         id: Uuid::new_v4().to_string(),
         user_id: user_id.clone(),
@@ -490,17 +481,18 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
 
     let db = env.d1("DB")?;
     let stmt = db.prepare(
-        "INSERT INTO usage_records (id, user_id, request_type, provider, model, prompt, image_size, image_quality, 
-         image_count, input_images_count, total_tokens, input_tokens, output_tokens, text_tokens, 
-         image_tokens, r2_keys, response_time_ms, simplified_cost, error, created_at) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO usage_records (id, app_id, user_id, request_type, provider, model, prompt, image_size, image_quality,
+         image_count, input_images_count, total_tokens, input_tokens, output_tokens, text_tokens,
+         image_tokens, r2_keys, response_time_ms, simplified_cost, error, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
-    
+
     let simplified_cost = provider.get_name() == "gemini";
-    
+
     let _ = stmt
         .bind(&[
             _usage_record.id.into(),
+            app_id.clone().into(),
             _usage_record.user_id.into(),
             _usage_record.request_type.into(),
             provider.get_name().into(),
@@ -524,8 +516,8 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
         .run()
         .await?;
 
-    let _ = release_lock(&user_id, &db).await;
-    
+    let _ = release_lock(&app_id, &user_id, &db).await;
+
     let response = ImageResponse {
         created: Utc::now().timestamp() as u64,
         data: image_data_list,
