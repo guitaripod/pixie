@@ -4,7 +4,7 @@ use serde_json::{json, Value};
 use uuid::Uuid;
 use crate::error::AppError;
 use crate::auth::authenticate;
-use crate::credits::{check_and_reserve_credits, deduct_credits};
+use crate::credits::{check_and_reserve_credits, deduct_credits, get_flat_capability_cost};
 use crate::rate_limit::{check_and_acquire_lock, release_lock};
 
 const GEMINI_BASE: &str = "https://generativelanguage.googleapis.com/v1beta/models";
@@ -84,11 +84,14 @@ async fn chat_completion_inner(
     }
     let model = body.model.clone().unwrap_or_else(|| DEFAULT_CHAT_MODEL.to_string());
 
+    let flat_cost = get_flat_capability_cost(&auth.app_id, "chat.completion", &db).await;
+
     check_and_acquire_lock(&auth.app_id, &auth.user_id, &db)
         .await
         .map_err(|_| AppError::RateLimitExceeded)?;
 
-    if let Err(e) = check_and_reserve_credits(&auth.app_id, &auth.user_id, MIN_BALANCE_GUARD, &db).await {
+    let guard = flat_cost.unwrap_or(MIN_BALANCE_GUARD);
+    if let Err(e) = check_and_reserve_credits(&auth.app_id, &auth.user_id, guard, &db).await {
         let _ = release_lock(&auth.app_id, &auth.user_id, &db).await;
         return Err(AppError::from(e));
     }
@@ -109,11 +112,13 @@ async fn chat_completion_inner(
         }
     };
 
-    let credits = credits_from_tokens(&model, prompt_tokens, output_tokens);
-    let reference = format!("chat:{}", Uuid::new_v4());
-    if let Err(e) = deduct_credits(&auth.app_id, &auth.user_id, credits, "chat.completion", &reference, &db).await {
-        let _ = release_lock(&auth.app_id, &auth.user_id, &db).await;
-        return Err(AppError::from(e));
+    let credits = flat_cost.unwrap_or_else(|| credits_from_tokens(&model, prompt_tokens, output_tokens));
+    if credits > 0 {
+        let reference = format!("chat:{}", Uuid::new_v4());
+        if let Err(e) = deduct_credits(&auth.app_id, &auth.user_id, credits, "chat.completion", &reference, &db).await {
+            let _ = release_lock(&auth.app_id, &auth.user_id, &db).await;
+            return Err(AppError::from(e));
+        }
     }
 
     let _ = release_lock(&auth.app_id, &auth.user_id, &db).await;

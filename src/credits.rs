@@ -125,6 +125,23 @@ pub async fn get_credit_packs_for_app(app_id: &str, db: &D1Database) -> Vec<Cred
     }
 }
 
+/// Per-app, per-capability flat credit cost override from the `capability_costs`
+/// table. When set, a capability charges this fixed amount instead of its
+/// token/usage-based cost (e.g. Dream Eater bills a flat 1 credit per "dream").
+/// Returns None when no override exists (use the built-in cost).
+pub async fn get_flat_capability_cost(app_id: &str, capability: &str, db: &D1Database) -> Option<u32> {
+    let row = db
+        .prepare("SELECT flat_credits FROM capability_costs WHERE app_id = ?1 AND capability = ?2")
+        .bind(&[app_id.into(), capability.into()])
+        .ok()?
+        .first::<serde_json::Value>(None)
+        .await
+        .ok()??;
+    row.get("flat_credits")
+        .and_then(|v| v.as_i64())
+        .map(|n| n.max(0) as u32)
+}
+
 fn parse_pack_row(v: &serde_json::Value) -> Option<CreditPack> {
     Some(CreditPack {
         id: v.get("pack_id")?.as_str()?.to_string(),

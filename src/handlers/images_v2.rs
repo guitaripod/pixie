@@ -3,7 +3,7 @@ use crate::models::{ImageGenerationRequest, ImageEditRequest, ImageResponse, Ima
 use crate::error::AppError;
 use crate::auth;
 use crate::storage::store_image_from_bytes;
-use crate::credits::{check_and_reserve_credits, deduct_credits};
+use crate::credits::{check_and_reserve_credits, deduct_credits, get_flat_capability_cost};
 use crate::rate_limit::{check_and_acquire_lock, release_lock};
 use crate::providers::{self, UnifiedImageRequest, UnifiedEditRequest};
 use crate::{log_debug, log_error};
@@ -64,7 +64,10 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
         api_key: generation_req.openai_api_key.clone(),
     };
 
-    let cost_estimate = provider.estimate_cost(&unified_request);
+    let mut cost_estimate = provider.estimate_cost(&unified_request);
+    if let Some(flat) = get_flat_capability_cost(&app_id, "image.generate", &db).await {
+        cost_estimate.credits = flat;
+    }
 
     if let Err(e) = check_and_reserve_credits(&app_id, &user_id, cost_estimate.credits, &db).await {
         let _ = release_lock(&app_id, &user_id, &db).await;
