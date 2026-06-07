@@ -1,6 +1,15 @@
 {
-  "originHash" : "32cf7d5dca167ec00f57f020621105458391c4ca219a2d62db7ce77bb52b0cef",
+  "originHash" : "670733f58dd45d1408df399997a16e013791debd3bc8d3557d75a8d04d8e357e",
   "pins" : [
+    {
+      "identity" : "aicredits",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:guitaripod/AICredits.git",
+      "state" : {
+        "revision" : "e94ad1c9665de942eefec750c1c76b85aa85e14e",
+        "version" : "1.0.0"
+      }
+    },
     {
       "identity" : "app-check",
       "kind" : "remoteSourceControl",

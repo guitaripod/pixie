@@ -1,4 +1,5 @@
 import UIKit
+import AICreditsCore
 
 protocol AuthenticationManagerDelegate: AnyObject {
     func authenticationManager(_ manager: AuthenticationManager, didAuthenticate user: User)
@@ -38,7 +39,11 @@ class AuthenticationManager: NSObject {
     var currentUser: User? {
         authenticationService.currentUser
     }
-    
+
+    var isAnonymous: Bool {
+        (try? keychainManager.getString(forKey: KeychainKeys.authProvider)) == "anonymous"
+    }
+
     func authenticate(with provider: AuthProvider, from viewController: UIViewController) {
         oauthCoordinator.authenticate(provider: provider, from: viewController)
     }
@@ -114,9 +119,74 @@ class AuthenticationManager: NSObject {
             
             return savedUser
         }
-        
+
         return nil
     }
+
+    @discardableResult
+    func bootstrapAnonymous() async throws -> User {
+        let identity = try await AICreditsService.shared.bootstrap()
+
+        try keychainManager.setString(identity.apiKey, forKey: KeychainKeys.authToken)
+        try keychainManager.setString("anonymous", forKey: KeychainKeys.authProvider)
+
+        let user = User(
+            id: identity.userID,
+            email: nil,
+            name: nil,
+            isAdmin: false,
+            createdAt: ISO8601DateFormatter().string(from: Date())
+        )
+        try keychainManager.setCodable(user, forKey: KeychainKeys.userProfile)
+
+        ConfigurationManager.shared.apiKey = identity.apiKey
+        AppContainer.shared.updateNetworkServiceAPIKey()
+        try await authenticationService.setCurrentUser(user)
+
+        Task {
+            try? await RevenueCatManager.shared.setUserId(identity.userID)
+        }
+
+        return user
+    }
+
+    @discardableResult
+    func linkApple(identityToken: String) async throws -> User {
+        let identity = try await AICreditsService.shared.link(appleIdentityToken: identityToken)
+
+        try keychainManager.setString(identity.apiKey, forKey: KeychainKeys.authToken)
+        try keychainManager.setString("apple", forKey: KeychainKeys.authProvider)
+
+        let user = User(
+            id: identity.userID,
+            email: nil,
+            name: nil,
+            isAdmin: false,
+            createdAt: ISO8601DateFormatter().string(from: Date())
+        )
+        try keychainManager.setCodable(user, forKey: KeychainKeys.userProfile)
+
+        ConfigurationManager.shared.apiKey = identity.apiKey
+        AppContainer.shared.updateNetworkServiceAPIKey()
+        try await authenticationService.setCurrentUser(user)
+
+        Task {
+            try? await RevenueCatManager.shared.setUserId(identity.userID)
+        }
+
+        return user
+    }
+
+    #if DEBUG
+    func signOutForTesting() async {
+        for key in [KeychainKeys.authToken, KeychainKeys.userProfile, KeychainKeys.authProvider, KeychainKeys.apiKey] {
+            try? keychainManager.delete(forKey: key)
+        }
+        ConfigurationManager.shared.apiKey = nil
+        await AICreditsService.shared.signOut()
+        try? await authenticationService.logout()
+    }
+    #endif
 }
 
 extension AuthenticationManager: OAuthCoordinatorDelegate {

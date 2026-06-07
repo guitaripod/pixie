@@ -53,17 +53,22 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             showMainInterface()
             return
         }
-        #endif
-        
-        do {
-            if try await AuthenticationManager.shared.restoreSession() != nil {
-                showMainInterface()
-            } else {
-                showAuthenticationInterface()
-            }
-        } catch {
-            showAuthenticationInterface()
+        if CommandLine.arguments.contains("--aicredits-reset") {
+            await AuthenticationManager.shared.signOutForTesting()
         }
+        #endif
+
+        if (try? await AuthenticationManager.shared.restoreSession()) != nil {
+            showMainInterface()
+            return
+        }
+
+        if (try? await AuthenticationManager.shared.bootstrapAnonymous()) != nil {
+            showMainInterface()
+            return
+        }
+
+        showAuthenticationInterface()
     }
     
     func showAuthenticationInterface() {
