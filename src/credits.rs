@@ -181,8 +181,16 @@ pub async fn initialize_user_credits(app_id: &str, user_id: &str, db: &D1Databas
     .run()
     .await?;
 
-    if NEW_USER_FREE_CREDITS > 0 {
-        add_credits(app_id, user_id, NEW_USER_FREE_CREDITS as u32, "bonus", "Welcome bonus", None, db).await?;
+    let free_credits = db
+        .prepare("SELECT new_user_free_credits FROM apps WHERE app_id = ?1")
+        .bind(&[app_id.into()])?
+        .first::<serde_json::Value>(None)
+        .await?
+        .and_then(|v| v.get("new_user_free_credits").and_then(|n| n.as_i64()))
+        .unwrap_or(NEW_USER_FREE_CREDITS as i64);
+
+    if free_credits > 0 {
+        add_credits(app_id, user_id, free_credits as u32, "bonus", "Welcome bonus", None, db).await?;
     }
 
     Ok(())
