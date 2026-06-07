@@ -963,6 +963,8 @@ pub async fn validate_revenuecat_purchase(mut req: Request, ctx: RouteContext<()
     // client path is a fast-track that must never grant on an unverified or failed check.
     let validation_result = validate_with_revenuecat(
         &env,
+        &db,
+        &app_id,
         &user_id,
         &validate_req.purchase_token,
         &validate_req.product_id,
@@ -1113,24 +1115,27 @@ pub async fn is_premium_user(
 
 async fn validate_with_revenuecat(
     env: &Env,
+    db: &worker::D1Database,
+    app_id: &str,
     user_id: &str,
     _purchase_token: &str,
     _product_id: &str,
     platform: &str,
 ) -> Result<bool> {
-    let api_key_name = if platform == "ios" {
-        "REVENUECAT_IOS_API_KEY"
-    } else {
-        "REVENUECAT_ANDROID_API_KEY"
-    };
-    
-    let revenuecat_api_key = env.secret(api_key_name)
-        .map_err(|_| format!("{} not configured", api_key_name))?;
-    
-    let api_key = revenuecat_api_key.to_string();
-    
-    // RevenueCat V2 API
-    let project_id = "proj44fd2c32";
+    let key_name = format!("REVENUECAT_IOS_API_KEY_{}", app_id.to_uppercase());
+    let api_key = env
+        .secret(&key_name)
+        .or_else(|_| env.secret("REVENUECAT_IOS_API_KEY"))
+        .map_err(|_| format!("RevenueCat API key not configured for {}", app_id))?
+        .to_string();
+
+    let project_id = db
+        .prepare("SELECT rc_project_id FROM apps WHERE app_id = ?1")
+        .bind(&[app_id.into()])?
+        .first::<serde_json::Value>(None)
+        .await?
+        .and_then(|v| v.get("rc_project_id").and_then(|p| p.as_str()).map(|s| s.to_string()))
+        .ok_or_else(|| format!("rc_project_id not configured for {}", app_id))?;
     let customer_id = user_id;
     let url = format!("https://api.revenuecat.com/v2/projects/{}/customers/{}", project_id, customer_id);
     
