@@ -102,8 +102,8 @@ pub fn get_credit_packs() -> Vec<CreditPack> {
 
 pub fn calculate_openai_cost_usd(usage: &ImageUsage) -> f64 {
     let text_cost = (usage.input_tokens_details.text_tokens as f64 / 1_000_000.0) * 5.0;
-    let image_input_cost = (usage.input_tokens_details.image_tokens as f64 / 1_000_000.0) * 10.0;
-    let output_cost = (usage.output_tokens as f64 / 1_000_000.0) * 40.0;
+    let image_input_cost = (usage.input_tokens_details.image_tokens as f64 / 1_000_000.0) * 8.0;
+    let output_cost = (usage.output_tokens as f64 / 1_000_000.0) * 30.0;
     
     text_cost + image_input_cost + output_cost
 }
@@ -404,7 +404,7 @@ pub fn estimate_image_cost(
     is_edit: bool,
 ) -> u32 {
     if model.starts_with("gemini") {
-        return 15;
+        return 21;
     }
 
     // Based on gpt-image-1 documentation:
@@ -482,9 +482,9 @@ mod tests {
     #[test]
     fn test_estimate_image_cost() {
         // Test Gemini costs (always 15)
-        assert_eq!(estimate_image_cost("gemini-2.5-flash", "low", "1024x1024", false), 15);
-        assert_eq!(estimate_image_cost("gemini-2.5-flash", "low", "1536x1024", true), 15);
-        assert_eq!(estimate_image_cost("gemini-2.5-flash", "high", "auto", false), 15);
+        assert_eq!(estimate_image_cost("gemini-2.5-flash", "low", "1024x1024", false), 21);
+        assert_eq!(estimate_image_cost("gemini-2.5-flash", "low", "1536x1024", true), 21);
+        assert_eq!(estimate_image_cost("gemini-2.5-flash", "high", "auto", false), 21);
 
         // Test OpenAI generation costs
         assert_eq!(estimate_image_cost("gpt-image-1", "low", "1024x1024", false), 4);

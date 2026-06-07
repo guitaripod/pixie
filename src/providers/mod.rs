@@ -88,12 +88,13 @@ pub trait ImageProvider {
 
 pub fn get_provider(model: &str, env: &worker::Env) -> Result<Box<dyn ImageProvider>> {
     match model {
-        "gpt-image-1" => Ok(Box::new(openai::OpenAIProvider::new(env)?)),
-        "gemini-2.5-flash" | "gemini-2.5-flash-image-preview" => Ok(Box::new(gemini::GeminiProvider::new(env)?)),
+        "gpt-image-1" | "gpt-image-2" => Ok(Box::new(openai::OpenAIProvider::new(env)?)),
+        "gemini-2.5-flash" | "gemini-2.5-flash-image-preview" | "gemini-2.5-flash-image"
+        | "gemini-3.1-flash" | "gemini-3.1-flash-image" => Ok(Box::new(gemini::GeminiProvider::new(env)?)),
         _ => Err(AppError::BadRequest(format!("Unsupported model: {}", model)).into()),
     }
 }
 
 pub fn get_default_model() -> String {
-    "gemini-2.5-flash".to_string()
+    "gemini-3.1-flash-image".to_string()
 }

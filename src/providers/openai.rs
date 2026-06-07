@@ -95,7 +95,7 @@ impl ImageProvider for OpenAIProvider {
         let api_key = self.get_api_key(request.api_key.clone())?;
 
         let request_body = json!({
-            "model": "gpt-image-1",
+            "model": "gpt-image-2",
             "prompt": request.prompt,
             "n": request.n.unwrap_or(1),
             "size": request.size.clone().unwrap_or_else(|| "1024x1024".to_string()),
@@ -184,7 +184,7 @@ impl ImageProvider for OpenAIProvider {
         let n_str = request.n.unwrap_or(1).to_string();
         let text_fields = vec![
             ("prompt", request.prompt.as_str()),
-            ("model", "gpt-image-1"),
+            ("model", "gpt-image-2"),
             ("n", n_str.as_str()),
             ("size", request.size.as_deref().unwrap_or("1024x1024")),
             ("quality", request.quality.as_deref().unwrap_or("auto")),

@@ -7,8 +7,8 @@ use crate::deployment::{DeploymentConfig, DeploymentMode};
 use super::{ImageProvider, UnifiedImageRequest, UnifiedEditRequest, ProviderResponse, ImageBytes, CostEstimate, ProviderFeatures};
 use crate::models::ImageUsage;
 
-const GEMINI_API_URL: &str = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent";
-const GEMINI_CREDITS_PER_IMAGE: u32 = 15;
+const GEMINI_API_URL: &str = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent";
+const GEMINI_CREDITS_PER_IMAGE: u32 = 21;
 const CREDIT_MULTIPLIER: f64 = 3.0;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -188,7 +188,7 @@ pub async fn estimate_cost(mut req: Request, _ctx: RouteContext<()>) -> Result<R
         estimated_credits: total_credits,
         estimated_usd: format!("${:.2}", total_credits as f64 / 100.0),
         note: if model.starts_with("gemini") {
-            "Gemini flat rate: 15 credits per image".to_string()
+            format!("Gemini flat rate: {} credits per image", credits_per_image)
         } else {
             format!(
                 "Actual cost may vary ±{} credits based on prompt complexity",
