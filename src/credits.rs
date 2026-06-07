@@ -117,17 +117,20 @@ pub async fn initialize_user_credits(app_id: &str, user_id: &str, db: &D1Databas
 
     db.prepare(
         "INSERT INTO user_credits (app_id, user_id, balance, lifetime_purchased, lifetime_spent, created_at, updated_at)
-         VALUES (?, ?, ?, 0, 0, ?, ?)"
+         VALUES (?, ?, 0, 0, 0, ?, ?)"
     )
     .bind(&[
         app_id.into(),
         user_id.into(),
-        NEW_USER_FREE_CREDITS.into(),
         now.clone().into(),
         now.into(),
     ])?
     .run()
     .await?;
+
+    if NEW_USER_FREE_CREDITS > 0 {
+        add_credits(app_id, user_id, NEW_USER_FREE_CREDITS as u32, "bonus", "Welcome bonus", None, db).await?;
+    }
 
     Ok(())
 }

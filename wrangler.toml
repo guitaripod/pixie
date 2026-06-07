@@ -60,6 +60,16 @@ database_id = "e77acafe-2e95-41e7-97a4-df05de7a5f9b"
 binding = "IMAGES"
 bucket_name = "openai-image-proxy-images"
 
+# Per-IP rate limit for the unauthenticated anonymous-registration endpoint.
+# Native Workers Rate Limiting binding (counters cached on-machine, no DB
+# round-trip). The handler fails OPEN if this binding is absent, so a legit user
+# is never blocked by an infra/config fault. Requires wrangler >= 4.36.0 to
+# deploy. period must be 10 or 60.
+[[ratelimits]]
+name = "ANON_REGISTER_LIMITER"
+namespace_id = "1001"
+simple = { limit = 10, period = 60 }
+
 # Development configuration
 [env.development]
 vars = { ENVIRONMENT = "development" }

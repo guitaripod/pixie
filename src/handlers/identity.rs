@@ -1,4 +1,4 @@
-use worker::{Request, Response, RouteContext, Result, console_log, D1Database, Fetch, Method, Headers, RequestInit};
+use worker::{Request, Response, RouteContext, Result, console_log, D1Database, Fetch, Method, Headers, RequestInit, RateLimiter};
 use crate::error::AppError;
 use crate::auth::{resolve_app_id, authenticate};
 use crate::credits::{initialize_user_credits, add_credits, get_user_balance};
@@ -44,10 +44,44 @@ pub async fn anonymous_register(req: Request, ctx: RouteContext<()>) -> Result<R
     }
 }
 
+/// Per-IP rate gate for anonymous registration, backed by the native Workers
+/// Rate Limiting binding `ANON_REGISTER_LIMITER`. Fails OPEN: a missing binding,
+/// missing `CF-Connecting-IP`, or any `.limit()` error allows the request (logged,
+/// never silent) so an infra/config fault cannot hard-block legitimate users.
+/// Only an explicit `success == false` rejects with HTTP 429.
+async fn enforce_anon_register_rate_limit(
+    req: &Request,
+    ctx: &RouteContext<()>,
+) -> std::result::Result<(), AppError> {
+    let limiter = match ctx.env.get_binding::<RateLimiter>("ANON_REGISTER_LIMITER") {
+        Ok(limiter) => limiter,
+        Err(e) => {
+            console_log!("anon rate-limit binding unavailable (failing open): {:?}", e);
+            return Ok(());
+        }
+    };
+
+    let ip = match req.headers().get("CF-Connecting-IP") {
+        Ok(Some(ip)) if !ip.is_empty() => ip,
+        _ => return Ok(()),
+    };
+
+    match limiter.limit(format!("anon_register:{}", ip)).await {
+        Ok(outcome) if !outcome.success => Err(AppError::RateLimitExceeded),
+        Ok(_) => Ok(()),
+        Err(e) => {
+            console_log!("anon rate-limit check errored (failing open): {:?}", e);
+            Ok(())
+        }
+    }
+}
+
 async fn anonymous_register_inner(
     mut req: Request,
     ctx: RouteContext<()>,
 ) -> std::result::Result<Response, AppError> {
+    enforce_anon_register_rate_limit(&req, &ctx).await?;
+
     let app_id = resolve_app_id(&req);
     let body: AnonymousRegisterRequest = req
         .json()
@@ -109,7 +143,7 @@ async fn register_with_devicecheck(
 
 #[cfg(not(target_os = "windows"))]
 struct DeviceCheckConfig {
-    base: String,
+    bases: Vec<&'static str>,
     team_id: String,
     key_id: String,
     private_key: String,
@@ -137,31 +171,29 @@ impl DeviceCheckConfig {
             .map(|v| v.to_string())
             .map_err(|_| AppError::InternalError("DEVICECHECK_PRIVATE_KEY not configured".to_string()))?;
 
-        let base = Self::resolve_base(ctx).to_string();
+        let bases = Self::ordered_bases(ctx);
 
-        Ok(Self { base, team_id, key_id, private_key })
+        Ok(Self { bases, team_id, key_id, private_key })
     }
 
-    /// Pick the DeviceCheck host. Dev-signed app tokens only validate against the
-    /// development host, so we default to development unless the deployment is
-    /// explicitly production. Production is selected only when `ENVIRONMENT` is
-    /// "production" AND `DEVICECHECK_ENV` is not "development".
-    fn resolve_base(ctx: &RouteContext<()>) -> &'static str {
+    /// Both DeviceCheck hosts to try, ordered by likely match. A DCDevice token
+    /// validates against exactly one Apple environment — development for
+    /// Xcode/TestFlight-internal builds, production for App Store builds — and the
+    /// server cannot tell which from the token. So we ALWAYS try both hosts;
+    /// `ENVIRONMENT` only chooses which to try first to save a round-trip in the
+    /// common case. Correctness is order-independent. This removes the need to
+    /// flip a `DEVICECHECK_ENV` flag when shipping.
+    fn ordered_bases(ctx: &RouteContext<()>) -> Vec<&'static str> {
         let environment = ctx
             .env
             .var("ENVIRONMENT")
             .map(|v| v.to_string())
             .unwrap_or_else(|_| "development".to_string());
-        let devicecheck_env = ctx
-            .env
-            .var("DEVICECHECK_ENV")
-            .map(|v| v.to_string())
-            .unwrap_or_default();
 
-        if environment != "production" || devicecheck_env == "development" {
-            DEVICECHECK_HOST_DEV
+        if environment == "production" {
+            vec![DEVICECHECK_HOST_PROD, DEVICECHECK_HOST_DEV]
         } else {
-            DEVICECHECK_HOST_PROD
+            vec![DEVICECHECK_HOST_DEV, DEVICECHECK_HOST_PROD]
         }
     }
 
@@ -185,8 +217,8 @@ impl DeviceCheckConfig {
         })
     }
 
-    async fn post(&self, jwt: &str, path: &str, body: &Value) -> std::result::Result<Response, AppError> {
-        let url = format!("{}{}", self.base, path);
+    async fn post(&self, base: &str, jwt: &str, path: &str, body: &Value) -> std::result::Result<Response, AppError> {
+        let url = format!("{}{}", base, path);
         let headers = Headers::new();
         headers.set("Authorization", &format!("Bearer {}", jwt))?;
         headers.set("Content-Type", "application/json")?;
@@ -206,18 +238,46 @@ impl DeviceCheckConfig {
             .map_err(AppError::from)
     }
 
-    /// Confirm the DeviceCheck token is a genuine, current Apple-issued device
-    /// token. Any non-2xx => reject (no user created, no grant).
+    /// Confirm the DeviceCheck token is genuine by trying BOTH Apple environments.
+    /// A token is valid for exactly one environment, so the wrong host returns a
+    /// non-2xx while the right host returns 2xx. Success = any host returns 2xx.
+    /// A forged/expired token gets a non-2xx from BOTH hosts => 400 (reject, no
+    /// grant). If Apple is never reached on any host (transport error or 429
+    /// throttle), the device is NOT at fault => 500 so the client retries, rather
+    /// than a permanent 400 deny of a legitimate paying device.
     async fn validate_device(&self, jwt: &str, device_token: &str) -> std::result::Result<(), AppError> {
-        let body = self.request_body(device_token);
-        let mut resp = self.post(jwt, "/v1/validate_device_token", &body).await?;
-        let status = resp.status_code();
-        if !(200..300).contains(&status) {
+        let mut saw_http_response = false;
+        let mut last_status = 0u16;
+
+        for base in &self.bases {
+            let body = self.request_body(device_token);
+            let mut resp = match self.post(base, jwt, "/v1/validate_device_token", &body).await {
+                Ok(resp) => resp,
+                Err(e) => {
+                    console_log!("DeviceCheck transport error on {}: {:?}", base, e);
+                    continue;
+                }
+            };
+
+            let status = resp.status_code();
+            if (200..300).contains(&status) {
+                return Ok(());
+            }
+            if status == 429 {
+                console_log!("DeviceCheck throttled (429) on {}", base);
+                continue;
+            }
+
+            saw_http_response = true;
+            last_status = status;
             let detail = resp.text().await.unwrap_or_default();
-            console_log!("DeviceCheck validate_device_token failed: {} {}", status, detail);
-            return Err(AppError::BadRequest("device validation failed".to_string()));
+            console_log!("DeviceCheck non-2xx on {}: {} {}", base, status, detail);
         }
-        Ok(())
+
+        if !saw_http_response {
+            return Err(AppError::InternalError("device validation unavailable".to_string()));
+        }
+        Err(AppError::BadRequest(format!("device validation failed (last status {})", last_status)))
     }
 }
 

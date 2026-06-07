@@ -33,8 +33,11 @@ impl AppError {
             },
         };
 
-        Response::from_json(&error_response)
-            .map(|r| r.with_status(status))
+        let mut resp = Response::from_json(&error_response)?.with_status(status);
+        if let AppError::RateLimitExceeded = self {
+            resp.headers_mut().set("Retry-After", "60")?;
+        }
+        Ok(resp)
     }
 }
 
