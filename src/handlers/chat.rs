@@ -85,15 +85,18 @@ async fn chat_completion_inner(
     let model = body.model.clone().unwrap_or_else(|| DEFAULT_CHAT_MODEL.to_string());
 
     let flat_cost = get_flat_capability_cost(&auth.app_id, "chat.completion", &db).await;
+    let premium = crate::handlers::credits::is_premium_user(&ctx.env, &db, &auth.app_id, &auth.user_id).await;
 
     check_and_acquire_lock(&auth.app_id, &auth.user_id, &db)
         .await
         .map_err(|_| AppError::RateLimitExceeded)?;
 
-    let guard = flat_cost.unwrap_or(MIN_BALANCE_GUARD);
-    if let Err(e) = check_and_reserve_credits(&auth.app_id, &auth.user_id, guard, &db).await {
-        let _ = release_lock(&auth.app_id, &auth.user_id, &db).await;
-        return Err(AppError::from(e));
+    if !premium {
+        let guard = flat_cost.unwrap_or(MIN_BALANCE_GUARD);
+        if let Err(e) = check_and_reserve_credits(&auth.app_id, &auth.user_id, guard, &db).await {
+            let _ = release_lock(&auth.app_id, &auth.user_id, &db).await;
+            return Err(AppError::from(e));
+        }
     }
 
     let api_key = match ctx.env.secret("GEMINI_API_KEY") {
@@ -112,7 +115,11 @@ async fn chat_completion_inner(
         }
     };
 
-    let credits = flat_cost.unwrap_or_else(|| credits_from_tokens(&model, prompt_tokens, output_tokens));
+    let credits = if premium {
+        0
+    } else {
+        flat_cost.unwrap_or_else(|| credits_from_tokens(&model, prompt_tokens, output_tokens))
+    };
     if credits > 0 {
         let reference = format!("chat:{}", Uuid::new_v4());
         if let Err(e) = deduct_credits(&auth.app_id, &auth.user_id, credits, "chat.completion", &reference, &db).await {

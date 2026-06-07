@@ -1039,6 +1039,78 @@ struct RevenueCatNonSubscription {
     store: String,
 }
 
+/// True if `user_id` holds the app's configured premium entitlement, verified
+/// against the RevenueCat REST API (non-spoofable). Only apps with a non-null
+/// `premium_entitlement` incur the RC call; everyone else returns false with a
+/// single indexed D1 read. Fail-safe: any error/404 => false (charge normally),
+/// so a transient RC issue never silently hands out free unlimited usage.
+pub async fn is_premium_user(
+    env: &Env,
+    db: &worker::D1Database,
+    app_id: &str,
+    user_id: &str,
+) -> bool {
+    let row = match db
+        .prepare("SELECT premium_entitlement, rc_project_id FROM apps WHERE app_id = ?1")
+        .bind(&[app_id.into()])
+    {
+        Ok(stmt) => stmt.first::<serde_json::Value>(None).await.ok().flatten(),
+        Err(_) => None,
+    };
+    let row = match row {
+        Some(r) => r,
+        None => return false,
+    };
+    let configured = row
+        .get("premium_entitlement")
+        .and_then(|v| v.as_str())
+        .map(|s| !s.is_empty())
+        .unwrap_or(false);
+    let project_id = row.get("rc_project_id").and_then(|v| v.as_str()).unwrap_or("");
+    if !configured || project_id.is_empty() {
+        return false;
+    }
+
+    let key_name = format!("REVENUECAT_IOS_API_KEY_{}", app_id.to_uppercase());
+    let api_key = match env
+        .secret(&key_name)
+        .or_else(|_| env.secret("REVENUECAT_IOS_API_KEY"))
+    {
+        Ok(k) => k.to_string(),
+        Err(_) => return false,
+    };
+
+    let url = format!(
+        "https://api.revenuecat.com/v2/projects/{}/customers/{}/active_entitlements",
+        project_id, user_id
+    );
+    let headers = Headers::new();
+    if headers.set("Authorization", &format!("Bearer {}", api_key)).is_err() {
+        return false;
+    }
+    let mut init = worker::RequestInit::new();
+    init.with_method(Method::Get).with_headers(headers);
+    let request = match Request::new_with_init(&url, &init) {
+        Ok(r) => r,
+        Err(_) => return false,
+    };
+    let mut resp = match Fetch::Request(request).send().await {
+        Ok(r) => r,
+        Err(_) => return false,
+    };
+    if resp.status_code() != 200 {
+        return false;
+    }
+    match resp.json::<serde_json::Value>().await {
+        Ok(v) => v
+            .get("items")
+            .and_then(|i| i.as_array())
+            .map(|a| !a.is_empty())
+            .unwrap_or(false),
+        Err(_) => false,
+    }
+}
+
 async fn validate_with_revenuecat(
     env: &Env,
     user_id: &str,
