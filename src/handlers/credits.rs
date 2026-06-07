@@ -2,7 +2,7 @@ use worker::{Request, Response, RouteContext, Result, Env, Fetch, Method, Header
 use crate::error::AppError;
 use crate::auth;
 use crate::credits::{
-    get_user_balance, get_user_transactions, get_credit_packs, 
+    get_user_balance, get_user_transactions, get_credit_packs, get_credit_packs_for_app,
     record_purchase, complete_purchase, add_credits, estimate_image_cost
 };
 use serde::{Deserialize, Serialize};
@@ -140,8 +140,10 @@ pub async fn list_transactions(req: Request, ctx: RouteContext<()>) -> Result<Re
     }))
 }
 
-pub async fn list_packs(_req: Request, _ctx: RouteContext<()>) -> Result<Response> {
-    let packs = get_credit_packs();
+pub async fn list_packs(req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let app_id = auth::resolve_app_id(&req);
+    let db = ctx.env.d1("DB")?;
+    let packs = get_credit_packs_for_app(&app_id, &db).await;
     Response::from_json(&json!({
         "packs": packs,
     }))
@@ -930,17 +932,17 @@ pub async fn validate_revenuecat_purchase(mut req: Request, ctx: RouteContext<()
         return AppError::BadRequest("Invalid platform. Must be 'ios' or 'android'".to_string()).to_response();
     }
     
-    // Find the pack
-    let packs = get_credit_packs();
+    let db = env.d1("DB")?;
+
+    // Find the pack (per-app catalog)
+    let packs = get_credit_packs_for_app(&app_id, &db).await;
     let pack = packs
         .iter()
         .find(|p| p.id == validate_req.pack_id)
         .ok_or_else(|| AppError::BadRequest("Invalid pack_id".to_string()))?;
-    
+
     let total_credits = pack.credits + pack.bonus_credits;
-    
-    let db = env.d1("DB")?;
-    
+
     // Check if this purchase token has already been used
     let existing_purchase = db.prepare(
         "SELECT id, status FROM credit_purchases WHERE app_id = ? AND payment_id = ? AND payment_provider = 'revenuecat'"
@@ -1126,6 +1128,27 @@ pub struct RevenueCatEvent {
     pub event_type: String,
 }
 
+/// Resolve which tenant a RevenueCat product belongs to by matching the product
+/// id against each app's `rc_product_prefix`. Longest matching prefix wins (most
+/// specific tenant). Returns (app_id, matched_prefix).
+async fn resolve_tenant_by_product(db: &worker::D1Database, product_id: &str) -> Option<(String, String)> {
+    let row = db
+        .prepare(
+            "SELECT app_id, rc_product_prefix FROM apps
+             WHERE rc_product_prefix IS NOT NULL AND rc_product_prefix != ''
+               AND instr(?1, rc_product_prefix) = 1
+             ORDER BY length(rc_product_prefix) DESC LIMIT 1",
+        )
+        .bind(&[product_id.into()])
+        .ok()?
+        .first::<serde_json::Value>(None)
+        .await
+        .ok()??;
+    let app_id = row.get("app_id")?.as_str()?.to_string();
+    let prefix = row.get("rc_product_prefix")?.as_str()?.to_string();
+    Some((app_id, prefix))
+}
+
 pub async fn revenuecat_webhook(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let env = ctx.env;
     
@@ -1153,64 +1176,60 @@ pub async fn revenuecat_webhook(mut req: Request, ctx: RouteContext<()>) -> Resu
     // Handle different event types
     match event.event_type.as_str() {
         "INITIAL_PURCHASE" | "RENEWAL" => {
-            // Handle new purchase
             let db = env.d1("DB")?;
-            
-            // Map product IDs to pack IDs
-            // iOS products have format: com.guitaripod.pixie.credits.{pack_id}
-            // Android products have format: {pack_id}
-            let pack_id = if event.product_id.starts_with("com.guitaripod.pixie.credits.") {
-                // iOS product ID
-                event.product_id.strip_prefix("com.guitaripod.pixie.credits.")
-                    .unwrap_or(&event.product_id)
-            } else {
-                // Android product ID (or direct pack ID)
-                &event.product_id
+
+            // Resolve the tenant from the product id via apps.rc_product_prefix.
+            let (app_id, prefix) = match resolve_tenant_by_product(&db, &event.product_id).await {
+                Some(t) => t,
+                None => {
+                    worker::console_log!("No tenant matched product {}", event.product_id);
+                    return Response::ok("OK");
+                }
             };
-            
-            // Validate pack ID
-            let valid_pack_ids = ["starter", "basic", "popular", "business", "enterprise"];
-            if !valid_pack_ids.contains(&pack_id) {
-                worker::console_log!("Unknown pack ID derived from product: {} -> {}", event.product_id, pack_id);
-                return Response::ok("OK");
-            }
-            
-            // Get the pack details
-            let packs = get_credit_packs();
-            let pack = packs.iter()
-                .find(|p| p.id == pack_id)
-                .ok_or_else(|| AppError::BadRequest(format!("Invalid pack_id: {}", pack_id)))?;
-            
+
+            let pack_id = event
+                .product_id
+                .strip_prefix(prefix.as_str())
+                .unwrap_or(&event.product_id)
+                .to_string();
+
+            let packs = get_credit_packs_for_app(&app_id, &db).await;
+            let pack = match packs.iter().find(|p| p.id == pack_id) {
+                Some(p) => p,
+                None => {
+                    worker::console_log!("Unknown pack {} for app {} (product {})", pack_id, app_id, event.product_id);
+                    return Response::ok("OK");
+                }
+            };
+
             let total_credits = pack.credits + pack.bonus_credits;
-            
-            // Check if this transaction has already been processed
+
             let existing = db.prepare(
                 "SELECT id FROM credit_purchases WHERE app_id = ? AND payment_id = ? AND payment_provider = 'revenuecat'"
             )
-            .bind(&["pixie".into(), event.transaction_id.clone().into()])?
+            .bind(&[app_id.clone().into(), event.transaction_id.clone().into()])?
             .first::<serde_json::Value>(None)
             .await?;
-            
+
             if existing.is_some() {
                 worker::console_log!("Transaction {} already processed", event.transaction_id);
                 return Response::ok("OK");
             }
-            
-            // Record and complete the purchase
+
             let purchase_id = record_purchase(
-                "pixie",
+                &app_id,
                 &event.app_user_id,
-                pack_id,
+                &pack_id,
                 total_credits as u32,
                 pack.price_usd_cents as u32,
                 "revenuecat",
                 &event.transaction_id,
                 &db,
             ).await?;
-            
+
             complete_purchase(&purchase_id, &db).await?;
-            
-            worker::console_log!("Processed RevenueCat purchase {} for user {}", purchase_id, event.app_user_id);
+
+            worker::console_log!("Processed RevenueCat purchase {} for app {} user {}", purchase_id, app_id, event.app_user_id);
         },
         "CANCELLATION" | "UNCANCELLATION" | "EXPIRATION" => {
             // Handle subscription events (we don't have subscriptions yet)
