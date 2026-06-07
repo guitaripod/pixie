@@ -956,7 +956,30 @@ pub async fn validate_revenuecat_purchase(mut req: Request, ctx: RouteContext<()
         }
     }
     
-    // Record the purchase
+    // Verify with RevenueCat BEFORE granting anything. The authenticated webhook
+    // (revenuecat_webhook) is the authoritative, idempotent source of truth; this
+    // client path is a fast-track that must never grant on an unverified or failed check.
+    let validation_result = validate_with_revenuecat(
+        &env,
+        &user_id,
+        &validate_req.purchase_token,
+        &validate_req.product_id,
+        &validate_req.platform,
+    ).await;
+
+    match validation_result {
+        Ok(true) => {}
+        Ok(false) => {
+            return AppError::BadRequest("Purchase could not be verified with RevenueCat".to_string()).to_response();
+        }
+        Err(e) => {
+            // RevenueCat unreachable: do NOT grant. The webhook will reconcile this purchase.
+            worker::console_log!("RevenueCat validation unavailable, deferring to webhook: {}", e);
+            return AppError::InternalError("Could not verify the purchase right now; it will be credited shortly.".to_string()).to_response();
+        }
+    }
+
+    // Verified. Record + complete (idempotent; the dedup check above prevents double-grant).
     let purchase_id = record_purchase(
         &app_id,
         &user_id,
@@ -967,34 +990,7 @@ pub async fn validate_revenuecat_purchase(mut req: Request, ctx: RouteContext<()
         &validate_req.purchase_token,
         &db,
     ).await?;
-    
-    // Validate with RevenueCat REST API
-    let validation_result = validate_with_revenuecat(
-        &env,
-        &user_id,
-        &validate_req.purchase_token,
-        &validate_req.product_id,
-        &validate_req.platform,
-    ).await;
-    
-    match validation_result {
-        Ok(is_valid) => {
-            if !is_valid {
-                // Delete the invalid purchase record
-                db.prepare("DELETE FROM credit_purchases WHERE id = ?")
-                    .bind(&[purchase_id.clone().into()])?
-                    .run()
-                    .await?;
-                
-                return AppError::BadRequest("Purchase validation failed with RevenueCat".to_string()).to_response();
-            }
-        }
-        Err(e) => {
-            // Log the error but continue - we don't want to block purchases if RevenueCat API is down
-            worker::console_log!("RevenueCat validation error (continuing anyway): {}", e);
-        }
-    }
-    
+
     complete_purchase(&purchase_id, &db).await?;
 
     let new_balance = get_user_balance(&app_id, &user_id, &db).await?;
@@ -1078,9 +1074,10 @@ async fn validate_with_revenuecat(
     
     let status_code = response.status_code();
     if status_code == 404 {
-        // Customer doesn't exist yet in RevenueCat - this is fine for new users
-        worker::console_log!("RevenueCat customer not found (new user) - continuing");
-        return Ok(true);
+        // Customer/purchase not known to RevenueCat yet — cannot confirm here.
+        // Return false so the client path does not grant; the webhook reconciles.
+        worker::console_log!("RevenueCat customer not found; deferring grant to webhook");
+        return Ok(false);
     }
     
     if status_code < 200 || status_code >= 300 {
