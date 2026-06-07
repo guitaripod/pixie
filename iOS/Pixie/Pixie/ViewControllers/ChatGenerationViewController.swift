@@ -765,7 +765,7 @@ extension ChatGenerationViewController {
         
         if UIDevice.isPad {
             addKeyCommand(UIKeyCommand(title: "Toggle Sidebar",
-                                      action: #selector(toggleSidebar),
+                                      action: #selector(toggleSidebarShortcut),
                                       input: "\\",
                                       modifierFlags: .command))
         }
@@ -798,7 +798,7 @@ extension ChatGenerationViewController {
         inputBar.becomeFirstResponder()
     }
     
-    @objc private func toggleSidebar() {
+    @objc private func toggleSidebarShortcut() {
         if let splitVC = self.splitViewController as? MainSplitViewController {
             if splitVC.displayMode == .oneBesideSecondary {
                 splitVC.preferredDisplayMode = .secondaryOnly
