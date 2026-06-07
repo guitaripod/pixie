@@ -1,3 +1,4 @@
+import AuthenticationServices
 import UIKit
 
 class SettingsViewController: UIViewController {
@@ -586,10 +587,18 @@ extension SettingsViewController: UITableViewDataSource {
         
         switch row {
         case .userId:
-            cell.textLabel?.text = "User ID"
-            cell.detailTextLabel?.text = authenticationManager.currentUser?.id ?? "Not logged in"
-            cell.detailTextLabel?.textColor = .systemBlue
-            cell.selectionStyle = .none
+            if authenticationManager.isAnonymous {
+                cell.textLabel?.text = "Sign in with Apple"
+                cell.detailTextLabel?.text = "Sync & keep your credits"
+                cell.detailTextLabel?.textColor = .secondaryLabel
+                cell.accessoryType = .disclosureIndicator
+                cell.selectionStyle = .default
+            } else {
+                cell.textLabel?.text = "User ID"
+                cell.detailTextLabel?.text = authenticationManager.currentUser?.id ?? "Not logged in"
+                cell.detailTextLabel?.textColor = .systemBlue
+                cell.selectionStyle = .none
+            }
         case .logout:
             cell.textLabel?.text = "Log Out"
             cell.textLabel?.textColor = .systemRed
@@ -740,10 +749,35 @@ extension SettingsViewController: UITableViewDelegate {
         
         switch row {
         case .userId:
-            break
+            if authenticationManager.isAnonymous { startAppleLink() }
         case .logout:
             handleLogout()
         }
+    }
+
+    private func startAppleLink() {
+        haptics.impact(.click)
+        AppleLinkCoordinator.shared.start(from: self) { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success:
+                self.haptics.notification(.success)
+                self.tableView.reloadData()
+            case .failure(let error):
+                if (error as NSError).code == ASAuthorizationError.canceled.rawValue { return }
+                self.presentAppleLinkError(error)
+            }
+        }
+    }
+
+    private func presentAppleLinkError(_ error: Error) {
+        let alert = UIAlertController(
+            title: "Sign in failed",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
     
     private func presentAdminDashboard() {
