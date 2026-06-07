@@ -6,6 +6,13 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono::Utc;
 use base64::{Engine as _, engine::general_purpose};
+use std::collections::HashSet;
+
+#[cfg(not(target_os = "windows"))]
+use jwt_simple::prelude::*;
+
+const APPLE_ISSUER: &str = "https://appleid.apple.com";
+const APPLE_JWKS_URL: &str = "https://appleid.apple.com/auth/keys";
 
 #[derive(Debug, Deserialize)]
 pub struct GoogleTokenRequest {
@@ -147,35 +154,160 @@ pub struct AppleTokenRequest {
     pub identity_token: String,
 }
 
-#[derive(Debug, Deserialize)]
-struct AppleIdTokenClaims {
-    iss: String,  // Should be "https://appleid.apple.com"
-    aud: String,  // Client ID (bundle ID)
-    sub: String,  // Apple user ID
+#[derive(Debug)]
+pub struct AppleIdTokenClaims {
+    pub sub: String,
+    pub email: Option<String>,
+    #[allow(dead_code)]
+    pub email_verified: Option<bool>,
+}
+
+#[cfg(not(target_os = "windows"))]
+#[derive(Debug, Serialize, Deserialize)]
+struct AppleCustomClaims {
     email: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_apple_bool")]
     email_verified: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+struct AppleJwk {
+    kty: String,
+    kid: String,
+    n: String,
+    e: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct AppleJwks {
+    keys: Vec<AppleJwk>,
+}
+
+/// Apple encodes `email_verified` inconsistently as either a JSON boolean or a
+/// `"true"`/`"false"` string, so both shapes are normalized to `Option<bool>`.
+#[cfg(not(target_os = "windows"))]
+fn deserialize_apple_bool<'de, D>(deserializer: D) -> std::result::Result<Option<bool>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::Deserialize as _;
+    let value = serde_json::Value::deserialize(deserializer)?;
+    Ok(match value {
+        serde_json::Value::Bool(b) => Some(b),
+        serde_json::Value::String(s) => Some(s == "true"),
+        _ => None,
+    })
+}
+
+/// Cryptographically verify an Apple Sign-In identity token.
+///
+/// Confirms the JWT is RS256-signed by a key currently published in Apple's
+/// JWKS, enforces issuer/audience/expiry via the verifier, and only then
+/// returns the decoded claims. Fails closed: any parse, network, key-lookup, or
+/// signature error yields `Err`.
+#[cfg(target_os = "windows")]
+pub async fn validate_apple_identity_token(
+    _identity_token: &str,
+    _expected_bundle_id: &str,
+) -> std::result::Result<AppleIdTokenClaims, AppError> {
+    Err(AppError::InternalError("Apple Sign-In is not supported on Windows servers".to_string()))
+}
+
+#[cfg(not(target_os = "windows"))]
+pub async fn validate_apple_identity_token(
+    identity_token: &str,
+    expected_bundle_id: &str,
+) -> std::result::Result<AppleIdTokenClaims, AppError> {
+    let metadata = Token::decode_metadata(identity_token)
+        .map_err(|_| AppError::Unauthorized("Invalid ID token".to_string()))?;
+
+    if metadata.algorithm() != "RS256" {
+        return Err(AppError::Unauthorized("Unsupported token algorithm".to_string()));
+    }
+
+    let kid = metadata
+        .key_id()
+        .ok_or_else(|| AppError::Unauthorized("Token missing key id".to_string()))?
+        .to_string();
+
+    let jwk = fetch_apple_signing_key(&kid).await?;
+    let public_key = apple_jwk_to_public_key(&jwk)?;
+
+    let mut allowed_issuers = HashSet::new();
+    allowed_issuers.insert(APPLE_ISSUER.to_string());
+    let mut allowed_audiences = HashSet::new();
+    allowed_audiences.insert(expected_bundle_id.to_string());
+
+    let options = VerificationOptions {
+        allowed_issuers: Some(allowed_issuers),
+        allowed_audiences: Some(allowed_audiences),
+        ..Default::default()
+    };
+
+    let claims = public_key
+        .verify_token::<AppleCustomClaims>(identity_token, Some(options))
+        .map_err(|_| AppError::Unauthorized("Invalid ID token".to_string()))?;
+
+    let sub = claims
+        .subject
+        .ok_or_else(|| AppError::Unauthorized("Token missing subject".to_string()))?;
+
+    let email = claims.custom.email;
+    let email_verified = claims.custom.email_verified;
+
+    if email.is_some() && email_verified != Some(true) {
+        return Err(AppError::Unauthorized("Email not verified".to_string()));
+    }
+
+    Ok(AppleIdTokenClaims {
+        sub,
+        email,
+        email_verified,
+    })
+}
+
+#[cfg(not(target_os = "windows"))]
+async fn fetch_apple_signing_key(kid: &str) -> std::result::Result<AppleJwk, AppError> {
+    let request = Request::new(APPLE_JWKS_URL, Method::Get)
+        .map_err(|_| AppError::Unauthorized("Unable to verify token".to_string()))?;
+    let mut response = Fetch::Request(request)
+        .send()
+        .await
+        .map_err(|_| AppError::Unauthorized("Unable to verify token".to_string()))?;
+
+    if response.status_code() != 200 {
+        return Err(AppError::Unauthorized("Unable to verify token".to_string()));
+    }
+
+    let jwks: AppleJwks = response
+        .json()
+        .await
+        .map_err(|_| AppError::Unauthorized("Unable to verify token".to_string()))?;
+
+    jwks
+        .keys
+        .into_iter()
+        .find(|k| k.kid == kid && k.kty == "RSA")
+        .ok_or_else(|| AppError::Unauthorized("Unknown signing key".to_string()))
+}
+
+#[cfg(not(target_os = "windows"))]
+fn apple_jwk_to_public_key(jwk: &AppleJwk) -> std::result::Result<RS256PublicKey, AppError> {
+    let n = general_purpose::URL_SAFE_NO_PAD
+        .decode(&jwk.n)
+        .map_err(|_| AppError::Unauthorized("Invalid signing key".to_string()))?;
+    let e = general_purpose::URL_SAFE_NO_PAD
+        .decode(&jwk.e)
+        .map_err(|_| AppError::Unauthorized("Invalid signing key".to_string()))?;
+
+    RS256PublicKey::from_components(&n, &e)
+        .map_err(|_| AppError::Unauthorized("Invalid signing key".to_string()))
 }
 
 pub async fn apple_token_auth(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let app_id = resolve_app_id(&req);
     let token_req: AppleTokenRequest = req.json().await?;
-    
-    let id_token_parts: Vec<&str> = token_req.identity_token.split('.').collect();
-    if id_token_parts.len() != 3 {
-        return Err(AppError::BadRequest("Invalid ID token format".to_string()).into());
-    }
-    
-    let claims_base64 = id_token_parts[1];
-    let claims_json = general_purpose::URL_SAFE_NO_PAD.decode(claims_base64)
-        .map_err(|e| AppError::BadRequest(format!("Failed to decode ID token: {}", e)))?;
-    
-    let claims: AppleIdTokenClaims = serde_json::from_slice(&claims_json)
-        .map_err(|e| AppError::BadRequest(format!("Failed to parse ID token claims: {}", e)))?;
-    
-    if claims.iss != "https://appleid.apple.com" {
-        return Err(AppError::Unauthorized("Invalid token issuer".to_string()).into());
-    }
-    
+
     let ios_bundle_id = match ctx.env.var("APPLE_IOS_BUNDLE_ID") {
         Ok(id) => id.to_string(),
         Err(_) => match ctx.env.secret("APPLE_IOS_BUNDLE_ID") {
@@ -183,16 +315,9 @@ pub async fn apple_token_auth(mut req: Request, ctx: RouteContext<()>) -> Result
             Err(_) => "com.guitaripod.Pixie".to_string()
         }
     };
-    
-    if claims.aud != ios_bundle_id {
-        console_log!("Bundle ID mismatch: expected {}, got {}", ios_bundle_id, claims.aud);
-        return Err(AppError::Unauthorized("Invalid token audience".to_string()).into());
-    }
-    
-    if claims.email.is_some() && claims.email_verified != Some(true) {
-        return Err(AppError::Unauthorized("Email not verified".to_string()).into());
-    }
-    
+
+    let claims = validate_apple_identity_token(&token_req.identity_token, &ios_bundle_id).await?;
+
     let db = ctx.env.d1("DB")?;
     
     let existing_user = db
@@ -215,7 +340,7 @@ pub async fn apple_token_auth(mut req: Request, ctx: RouteContext<()>) -> Result
         console_log!("Creating new Apple user: {}", new_user_id);
 
         let email = claims.email.clone()
-            .unwrap_or_else(|| format!("{}@privaterelay.appleid.com", &claims.sub[..8]));
+            .unwrap_or_else(|| format!("{}@privaterelay.appleid.com", claims.sub.chars().take(8).collect::<String>()));
 
         db
             .prepare("INSERT INTO users (id, app_id, email, provider, provider_id, name, api_key, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)")

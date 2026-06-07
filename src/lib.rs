@@ -13,7 +13,7 @@ mod rate_limit;
 mod logger;
 mod providers;
 
-use handlers::{images, gallery, r2, usage, oauth, oauth_apple, oauth_apple_callback, oauth_native, device_auth};
+use handlers::{images, gallery, r2, usage, oauth, oauth_apple, oauth_apple_callback, oauth_native, device_auth, identity};
 
 #[event(fetch)]
 async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
@@ -76,6 +76,8 @@ Privacy Policy: /privacy-policy"#)
         .post_async("/v1/auth/device/code", device_auth::start_device_flow)
         .post_async("/v1/auth/device/token", device_auth::poll_device_token)
         .get_async("/v1/auth/device/:device_code/status", device_auth::device_auth_status)
+        .post_async("/v1/identity/anonymous", identity::anonymous_register)
+        .post_async("/v1/identity/link", identity::link)
         .get_async("/v1/credits/balance", handlers::credits::get_balance)
         .get_async("/v1/credits/transactions", handlers::credits::list_transactions)
         .get_async("/v1/credits/packs", handlers::credits::list_packs)
