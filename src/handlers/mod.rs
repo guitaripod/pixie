@@ -11,3 +11,4 @@ pub mod device_auth;
 pub mod identity;
 pub mod credits;
 pub mod chat;
+pub mod realtime;
