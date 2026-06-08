@@ -9,9 +9,10 @@ use crate::credits::{get_user_balance, get_flat_capability_cost, deduct_credits,
 
 const CAPABILITY: &str = "realtime.translate";
 const DEFAULT_RATE_CREDITS: u32 = 1; // 1 credit per minute
-/// Whole-session reservation cap (minutes). Bounds the credits any single
-/// session can lock; the unused remainder is refunded on settle.
-const MAX_RESERVED_MINUTES: i32 = 30;
+/// Up-front affordability guard (minutes). The client keeps two call legs warm
+/// at once, so each session reserves only this tiny guard rather than the whole
+/// balance; the real cost is billed from the reported minutes at settle.
+const RESERVE_GUARD_MINUTES: i32 = 1;
 const OPENAI_MINT_URL: &str = "https://api.openai.com/v1/realtime/translations/client_secrets";
 const OPENAI_SDP_URL: &str = "https://api.openai.com/v1/realtime/translations/calls";
 const DEFAULT_MODEL: &str = "gpt-realtime-translate";
@@ -90,7 +91,7 @@ async fn start_inner(mut req: Request, ctx: RouteContext<()>) -> std::result::Re
             rate, balance
         )));
     }
-    let reserved_minutes = affordable_minutes.min(MAX_RESERVED_MINUTES);
+    let reserved_minutes = RESERVE_GUARD_MINUTES.min(affordable_minutes);
     let reserved_credits = reserved_minutes as u32 * rate;
     let session_id = Uuid::new_v4().to_string();
 
@@ -179,7 +180,6 @@ async fn settle_inner(mut req: Request, ctx: RouteContext<()>) -> std::result::R
         .ok_or_else(|| AppError::NotFound("session not found".to_string()))?;
 
     let already_settled = row.get("settled").and_then(|v| v.as_i64()).unwrap_or(0) != 0;
-    let reserved_minutes = row.get("reserved_minutes").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
     let reserved_credits = row.get("reserved_credits").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
     let rate = row.get("rate_credits").and_then(|v| v.as_i64()).unwrap_or(1).max(1) as i32;
 
@@ -195,23 +195,42 @@ async fn settle_inner(mut req: Request, ctx: RouteContext<()>) -> std::result::R
         .map_err(AppError::from);
     }
 
-    let actual = body.minutes_used.clamp(0, reserved_minutes);
+    // Bill the actual reported minutes (the guard already covered the first
+    // minute). Deduct the remainder beyond the guard, floored at the available
+    // balance; refund the unused guard if the session ran under a minute.
+    let actual = body.minutes_used.max(0);
     let charged = actual * rate;
-    let refund = (reserved_credits - charged).max(0);
-
     let mut balance = get_user_balance(&auth.app_id, &auth.user_id, &db).await?;
-    if refund > 0 {
-        balance = add_credits(
-            &auth.app_id,
-            &auth.user_id,
-            refund as u32,
-            "refund",
-            "realtime.translate unused",
-            Some(&body.session_id),
-            &db,
-        )
-        .await
-        .map_err(AppError::from)?;
+    let mut refund: i32 = 0;
+    if charged > reserved_credits {
+        let extra = (charged - reserved_credits).min(balance.max(0)) as u32;
+        if extra > 0 {
+            balance = deduct_credits(
+                &auth.app_id,
+                &auth.user_id,
+                extra,
+                "realtime.translate",
+                &body.session_id,
+                &db,
+            )
+            .await
+            .map_err(AppError::from)?;
+        }
+    } else {
+        refund = (reserved_credits - charged).max(0);
+        if refund > 0 {
+            balance = add_credits(
+                &auth.app_id,
+                &auth.user_id,
+                refund as u32,
+                "refund",
+                "realtime.translate unused",
+                Some(&body.session_id),
+                &db,
+            )
+            .await
+            .map_err(AppError::from)?;
+        }
     }
 
     let now = Utc::now().to_rfc3339();
