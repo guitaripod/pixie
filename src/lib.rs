@@ -12,6 +12,7 @@ mod stripe_payments;
 mod rate_limit;
 mod logger;
 mod providers;
+mod privacy;
 
 use handlers::{images, gallery, r2, usage, oauth, oauth_apple, oauth_apple_callback, oauth_native, device_auth, identity};
 
@@ -43,6 +44,7 @@ Privacy Policy: /privacy-policy"#)
                     r
                 })
         })
+        .get("/privacy/:app", privacy::privacy_handler)
         .get("/docs/", |req, _| {
             let url = req.url().unwrap();
             let base = format!("{}://{}", url.scheme(), url.host().unwrap());
