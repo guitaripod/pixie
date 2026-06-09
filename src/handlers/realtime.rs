@@ -211,6 +211,10 @@ async fn settle_inner(mut req: Request, ctx: RouteContext<()>) -> std::result::R
 
     match bill_settlement(&auth.app_id, &auth.user_id, actual, rate, reserved_credits, &body.session_id, &db).await {
         Ok((balance, refund)) => {
+            console_log!(
+                "realtime settle app={} minutes={} refund={} balance={}",
+                auth.app_id, actual, refund, balance
+            );
             let _ = db
                 .prepare("UPDATE realtime_sessions SET refunded_credits = ? WHERE id = ?")
                 .bind(&[refund.into(), body.session_id.clone().into()])?
