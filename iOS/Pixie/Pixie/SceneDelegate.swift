@@ -10,11 +10,18 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     ) {
         guard let windowScene = scene as? UIWindowScene else { return }
         window = UIWindow(windowScene: windowScene)
-        
+
         applyTheme()
-        
+
         window?.makeKeyAndVisible()
-        
+
+        #if DEBUG
+        if let demoMode = DemoMode.current {
+            window?.rootViewController = DemoRootBuilder.makeRootViewController(for: demoMode)
+            return
+        }
+        #endif
+
         let splashViewController = UIViewController()
         splashViewController.modalPresentationStyle = .fullScreen
         let splashView = SplashView(frame: UIScreen.main.bounds)

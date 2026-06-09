@@ -40,6 +40,9 @@ class BackgroundTaskManager: NSObject {
     }
     
     private func requestNotificationPermission() {
+        #if DEBUG
+        if DemoMode.isActive { return }
+        #endif
         UNUserNotificationCenter.current().requestAuthorization(
             options: [.alert, .badge, .sound]
         ) { _, _ in }

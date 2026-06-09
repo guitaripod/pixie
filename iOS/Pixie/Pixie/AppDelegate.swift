@@ -22,16 +22,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let categories = createNotificationCategories()
         UNUserNotificationCenter.current().setNotificationCategories(categories)
         
-        // Request notification permission
-        UNUserNotificationCenter.current().requestAuthorization(
-            options: [.alert, .badge, .sound]
-        ) { granted, error in
-            if granted {
-                print("✅ Notification permission granted")
-            } else if let error = error {
-                print("❌ Notification permission error: \(error)")
-            } else {
-                print("❌ Notification permission denied")
+        #if DEBUG
+        let skipNotificationPrompt = DemoMode.isActive
+        #else
+        let skipNotificationPrompt = false
+        #endif
+
+        if !skipNotificationPrompt {
+            UNUserNotificationCenter.current().requestAuthorization(
+                options: [.alert, .badge, .sound]
+            ) { granted, error in
+                if granted {
+                    print("✅ Notification permission granted")
+                } else if let error = error {
+                    print("❌ Notification permission error: \(error)")
+                } else {
+                    print("❌ Notification permission denied")
+                }
             }
         }
         
