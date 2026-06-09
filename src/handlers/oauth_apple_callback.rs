@@ -31,7 +31,7 @@ pub async fn apple_auth_callback_page(mut req: Request, _ctx: RouteContext<()>) 
     let html = format!(r#"<!DOCTYPE html>
 <html>
 <head>
-    <title>Apple Sign In - OpenAI Image Proxy</title>
+    <title>Apple Sign In - mako</title>
     <style>
         body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;

@@ -24,7 +24,7 @@ async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     
     router
         .get("/", |_, _| {
-            Response::ok(r#"OpenAI Image Proxy - Ready
+            Response::ok(r#"mako — the reactor that powers Midgar Corp's apps
 
 API Documentation: /docs
 OpenAPI Specification: /openapi.yaml

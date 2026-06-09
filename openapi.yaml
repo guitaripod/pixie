@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: OpenAI Image Proxy API
+  title: mako API
   description: |
     A Cloudflare Worker-based proxy for OpenAI's GPT Image (gpt-image-1) API with additional features:
     - Credit-based billing system
@@ -25,7 +25,7 @@ externalDocs:
   url: https://github.com/guitaripod/pixie
 
 servers:
-  - url: https://openai-image-proxy.guitaripod.workers.dev
+  - url: https://mako.midgarcorp.cc
     description: Production server
 
 security:
@@ -62,7 +62,7 @@ paths:
             text/plain:
               schema:
                 type: string
-                example: "OpenAI Image Proxy - Ready"
+                example: "mako - Ready"
 
   # Authentication Endpoints
   /v1/auth/github:
@@ -1396,7 +1396,7 @@ components:
               url:
                 type: string
                 description: URL of the generated image
-                example: "https://openai-image-proxy.guitaripod.workers.dev/r2/user_123456/img_abc123def456.png"
+                example: "https://mako.midgarcorp.cc/r2/user_123456/img_abc123def456.png"
               b64_json:
                 type: string
                 description: Base64-encoded image data (if requested)
