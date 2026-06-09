@@ -9,11 +9,19 @@ use crate::models::ImageUsage;
 
 const GEMINI_API_URL: &str = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent";
 const GEMINI_CREDITS_PER_IMAGE: u32 = 21;
-const CREDIT_MULTIPLIER: f64 = 3.0;
+const MAX_IMAGE_ATTEMPTS: usize = 3;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct GeminiRequest {
     contents: Vec<GeminiContent>,
+    #[serde(rename = "generationConfig", skip_serializing_if = "Option::is_none")]
+    generation_config: Option<GenerationConfig>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct GenerationConfig {
+    #[serde(rename = "responseModalities")]
+    response_modalities: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -25,9 +33,9 @@ struct GeminiContent {
 #[serde(untagged)]
 enum GeminiPart {
     Text { text: String },
-    Image { 
+    Image {
         #[serde(rename = "inlineData")]
-        inline_data: InlineData 
+        inline_data: InlineData
     },
 }
 
@@ -40,12 +48,24 @@ struct InlineData {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct GeminiResponse {
+    #[serde(default)]
     candidates: Vec<GeminiCandidate>,
+    #[serde(rename = "promptFeedback", default)]
+    prompt_feedback: Option<PromptFeedback>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct GeminiCandidate {
-    content: GeminiContent,
+    #[serde(default)]
+    content: Option<GeminiContent>,
+    #[serde(rename = "finishReason", default)]
+    finish_reason: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct PromptFeedback {
+    #[serde(rename = "blockReason", default)]
+    block_reason: Option<String>,
 }
 
 pub struct GeminiProvider {
@@ -75,7 +95,13 @@ impl GeminiProvider {
         Self { api_key }
     }
 
-    async fn call_gemini_api(&self, request_body: GeminiRequest) -> Result<GeminiResponse> {
+    fn image_generation_config() -> Option<GenerationConfig> {
+        Some(GenerationConfig {
+            response_modalities: vec!["TEXT".to_string(), "IMAGE".to_string()],
+        })
+    }
+
+    async fn call_gemini_api(&self, request_body: &GeminiRequest) -> Result<GeminiResponse> {
         let headers = Headers::new();
         headers.set("x-goog-api-key", &self.api_key)?;
         headers.set("Content-Type", "application/json")?;
@@ -83,7 +109,7 @@ impl GeminiProvider {
         let mut init = worker::RequestInit::new();
         init.with_method(Method::Post)
             .with_headers(headers)
-            .with_body(Some(worker::wasm_bindgen::JsValue::from_str(&serde_json::to_string(&request_body)?)));
+            .with_body(Some(worker::wasm_bindgen::JsValue::from_str(&serde_json::to_string(request_body)?)));
 
         let request = WorkerRequest::new_with_init(GEMINI_API_URL, &init)?;
         let mut response = Fetch::Request(request).send().await?;
@@ -98,6 +124,70 @@ impl GeminiProvider {
 
         Ok(gemini_response)
     }
+
+    async fn generate_images(&self, parts: Vec<GeminiPart>) -> Result<Vec<ImageBytes>> {
+        let request_body = GeminiRequest {
+            contents: vec![GeminiContent { parts }],
+            generation_config: Self::image_generation_config(),
+        };
+
+        let mut diagnostics = "no response".to_string();
+        for attempt in 1..=MAX_IMAGE_ATTEMPTS {
+            match self.call_gemini_api(&request_body).await {
+                Ok(response) => {
+                    let images = Self::collect_images(&response);
+                    if !images.is_empty() {
+                        return Ok(images);
+                    }
+                    diagnostics = Self::diagnose(&response);
+                }
+                Err(e) => {
+                    diagnostics = format!("{:?}", e);
+                }
+            }
+            worker::console_log!(
+                "Gemini image empty (attempt {}/{}): {}",
+                attempt, MAX_IMAGE_ATTEMPTS, diagnostics
+            );
+        }
+
+        Err(AppError::InternalError(format!(
+            "No images returned by Gemini after {} attempts ({})",
+            MAX_IMAGE_ATTEMPTS, diagnostics
+        )).into())
+    }
+
+    fn collect_images(response: &GeminiResponse) -> Vec<ImageBytes> {
+        let mut images = Vec::new();
+        for candidate in &response.candidates {
+            let Some(content) = &candidate.content else { continue };
+            for part in &content.parts {
+                if let GeminiPart::Image { inline_data } = part {
+                    if let Ok(data) = BASE64.decode(&inline_data.data) {
+                        let format = match inline_data.mime_type.as_str() {
+                            "image/jpeg" => "jpeg",
+                            _ => "png",
+                        };
+                        images.push(ImageBytes { data, format: format.to_string() });
+                    }
+                }
+            }
+        }
+        images
+    }
+
+    fn diagnose(response: &GeminiResponse) -> String {
+        let finish = response.candidates.first()
+            .and_then(|c| c.finish_reason.clone())
+            .unwrap_or_else(|| "none".to_string());
+        let block = response.prompt_feedback.as_ref()
+            .and_then(|f| f.block_reason.clone())
+            .unwrap_or_else(|| "none".to_string());
+        format!(
+            "candidates={}, finishReason={}, blockReason={}",
+            response.candidates.len(), finish, block
+        )
+    }
 }
 
 #[async_trait(?Send)]
@@ -108,47 +198,12 @@ impl ImageProvider for GeminiProvider {
         let mut all_prompts = Vec::new();
 
         for _ in 0..n {
-            let gemini_request = GeminiRequest {
-                contents: vec![GeminiContent {
-                    parts: vec![GeminiPart::Text { text: request.prompt.clone() }],
-                }],
-            };
-
-            let response = self.call_gemini_api(gemini_request).await?;
-
-            if response.candidates.is_empty() {
-                return Err(AppError::InternalError("No image generated by Gemini".to_string()).into());
+            let parts = vec![GeminiPart::Text { text: request.prompt.clone() }];
+            let images = self.generate_images(parts).await?;
+            for image in images {
+                all_images.push(image);
+                all_prompts.push(Some(request.prompt.clone()));
             }
-
-            for candidate in response.candidates {
-                for part in candidate.content.parts {
-                    match part {
-                        GeminiPart::Image { inline_data } => {
-                            let image_data = BASE64.decode(&inline_data.data)
-                                .map_err(|e| AppError::InternalError(format!("Failed to decode image: {}", e)))?;
-                            
-                            let format = match inline_data.mime_type.as_str() {
-                                "image/png" => "png",
-                                "image/jpeg" => "jpeg",
-                                _ => "png",
-                            };
-
-                            all_images.push(ImageBytes {
-                                data: image_data,
-                                format: format.to_string(),
-                            });
-                            all_prompts.push(Some(request.prompt.clone()));
-                        }
-                        GeminiPart::Text { .. } => {
-                            // Skip text parts in the response
-                        }
-                    }
-                }
-            }
-        }
-
-        if all_images.is_empty() {
-            return Err(AppError::InternalError("No images returned by Gemini".to_string()).into());
         }
 
         let usage = Some(ImageUsage {
@@ -188,55 +243,20 @@ impl ImageProvider for GeminiProvider {
         };
 
         for _ in 0..n {
-            let gemini_request = GeminiRequest {
-                contents: vec![GeminiContent {
-                    parts: vec![
-                        GeminiPart::Text { text: request.prompt.clone() },
-                        GeminiPart::Image {
-                            inline_data: InlineData {
-                                mime_type: "image/jpeg".to_string(),
-                                data: input_image_data.clone(),
-                            },
-                        },
-                    ],
-                }],
-            };
-
-            let response = self.call_gemini_api(gemini_request).await?;
-
-            if response.candidates.is_empty() {
-                return Err(AppError::InternalError("No image generated by Gemini".to_string()).into());
+            let parts = vec![
+                GeminiPart::Text { text: request.prompt.clone() },
+                GeminiPart::Image {
+                    inline_data: InlineData {
+                        mime_type: "image/jpeg".to_string(),
+                        data: input_image_data.clone(),
+                    },
+                },
+            ];
+            let images = self.generate_images(parts).await?;
+            for image in images {
+                all_images.push(image);
+                all_prompts.push(Some(request.prompt.clone()));
             }
-
-            for candidate in response.candidates {
-                for part in candidate.content.parts {
-                    match part {
-                        GeminiPart::Image { inline_data } => {
-                            let image_data = BASE64.decode(&inline_data.data)
-                                .map_err(|e| AppError::InternalError(format!("Failed to decode image: {}", e)))?;
-                            
-                            let format = match inline_data.mime_type.as_str() {
-                                "image/png" => "png",
-                                "image/jpeg" => "jpeg",
-                                _ => "png",
-                            };
-
-                            all_images.push(ImageBytes {
-                                data: image_data,
-                                format: format.to_string(),
-                            });
-                            all_prompts.push(Some(request.prompt.clone()));
-                        }
-                        GeminiPart::Text { .. } => {
-                            // Skip text parts in the response
-                        }
-                    }
-                }
-            }
-        }
-
-        if all_images.is_empty() {
-            return Err(AppError::InternalError("No images returned by Gemini".to_string()).into());
         }
 
         let usage = Some(ImageUsage {

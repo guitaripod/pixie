@@ -167,7 +167,7 @@ async fn settle_inner(mut req: Request, ctx: RouteContext<()>) -> std::result::R
 
     let row = db
         .prepare(
-            "SELECT rate_credits, reserved_minutes, reserved_credits, settled
+            "SELECT rate_credits, reserved_credits, settled
              FROM realtime_sessions WHERE id = ?1 AND app_id = ?2 AND user_id = ?3",
         )
         .bind(&[
@@ -183,71 +183,106 @@ async fn settle_inner(mut req: Request, ctx: RouteContext<()>) -> std::result::R
     let reserved_credits = row.get("reserved_credits").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
     let rate = row.get("rate_credits").and_then(|v| v.as_i64()).unwrap_or(1).max(1) as i32;
 
-    // Idempotent: re-settling (e.g. retry, or settle-on-next-launch) is a no-op.
     if already_settled {
-        let balance = get_user_balance(&auth.app_id, &auth.user_id, &db).await?;
-        return Response::from_json(&SettleResponse {
-            settled: true,
-            minutes_charged: 0,
-            refunded_credits: 0,
-            balance,
-        })
-        .map_err(AppError::from);
+        return settled_noop(&auth.app_id, &auth.user_id, &db).await;
     }
 
-    // Bill the actual reported minutes (the guard already covered the first
-    // minute). Deduct the remainder beyond the guard, floored at the available
-    // balance; refund the unused guard if the session ran under a minute.
     let actual = body.minutes_used.max(0);
+    let now = Utc::now().to_rfc3339();
+
+    let claim = db
+        .prepare(
+            "UPDATE realtime_sessions SET settled = 1, settled_at = ?, actual_minutes = ?
+             WHERE id = ? AND app_id = ? AND user_id = ? AND settled = 0",
+        )
+        .bind(&[
+            now.into(),
+            actual.into(),
+            body.session_id.clone().into(),
+            auth.app_id.clone().into(),
+            auth.user_id.clone().into(),
+        ])?
+        .run()
+        .await?;
+    let won = claim.meta().ok().flatten().and_then(|m| m.changes).unwrap_or(0) > 0;
+    if !won {
+        return settled_noop(&auth.app_id, &auth.user_id, &db).await;
+    }
+
+    match bill_settlement(&auth.app_id, &auth.user_id, actual, rate, reserved_credits, &body.session_id, &db).await {
+        Ok((balance, refund)) => {
+            let _ = db
+                .prepare("UPDATE realtime_sessions SET refunded_credits = ? WHERE id = ?")
+                .bind(&[refund.into(), body.session_id.clone().into()])?
+                .run()
+                .await;
+            Response::from_json(&SettleResponse {
+                settled: true,
+                minutes_charged: actual,
+                refunded_credits: refund,
+                balance,
+            })
+            .map_err(AppError::from)
+        }
+        Err(e) => {
+            if let Ok(stmt) = db
+                .prepare("UPDATE realtime_sessions SET settled = 0, settled_at = NULL, actual_minutes = NULL WHERE id = ?")
+                .bind(&[body.session_id.clone().into()])
+            {
+                let _ = stmt.run().await;
+            }
+            Err(e)
+        }
+    }
+}
+
+async fn settled_noop(
+    app_id: &str,
+    user_id: &str,
+    db: &worker::D1Database,
+) -> std::result::Result<Response, AppError> {
+    let balance = get_user_balance(app_id, user_id, db).await?;
+    Response::from_json(&SettleResponse {
+        settled: true,
+        minutes_charged: 0,
+        refunded_credits: 0,
+        balance,
+    })
+    .map_err(AppError::from)
+}
+
+/// Bills the reported minutes against the up-front reservation: deducts the
+/// remainder beyond the guard (floored at the available balance) when the
+/// session ran over, or refunds the unused guard when it ran under. Returns the
+/// resulting balance and the refunded amount.
+async fn bill_settlement(
+    app_id: &str,
+    user_id: &str,
+    actual: i32,
+    rate: i32,
+    reserved_credits: i32,
+    session_id: &str,
+    db: &worker::D1Database,
+) -> std::result::Result<(i32, i32), AppError> {
     let charged = actual * rate;
-    let mut balance = get_user_balance(&auth.app_id, &auth.user_id, &db).await?;
+    let mut balance = get_user_balance(app_id, user_id, db).await?;
     let mut refund: i32 = 0;
     if charged > reserved_credits {
         let extra = (charged - reserved_credits).min(balance.max(0)) as u32;
         if extra > 0 {
-            balance = deduct_credits(
-                &auth.app_id,
-                &auth.user_id,
-                extra,
-                "realtime.translate",
-                &body.session_id,
-                &db,
-            )
-            .await
-            .map_err(AppError::from)?;
+            balance = deduct_credits(app_id, user_id, extra, "realtime.translate", session_id, db)
+                .await
+                .map_err(AppError::from)?;
         }
     } else {
         refund = (reserved_credits - charged).max(0);
         if refund > 0 {
-            balance = add_credits(
-                &auth.app_id,
-                &auth.user_id,
-                refund as u32,
-                "refund",
-                "realtime.translate unused",
-                Some(&body.session_id),
-                &db,
-            )
-            .await
-            .map_err(AppError::from)?;
+            balance = add_credits(app_id, user_id, refund as u32, "refund", "realtime.translate unused", Some(session_id), db)
+                .await
+                .map_err(AppError::from)?;
         }
     }
-
-    let now = Utc::now().to_rfc3339();
-    db.prepare(
-        "UPDATE realtime_sessions SET actual_minutes = ?, refunded_credits = ?, settled = 1, settled_at = ? WHERE id = ?",
-    )
-    .bind(&[actual.into(), refund.into(), now.into(), body.session_id.clone().into()])?
-    .run()
-    .await?;
-
-    Response::from_json(&SettleResponse {
-        settled: true,
-        minutes_charged: actual,
-        refunded_credits: refund,
-        balance,
-    })
-    .map_err(AppError::from)
+    Ok((balance, refund))
 }
 
 /// Mints the ephemeral OpenAI realtime-translations client secret. The audio
