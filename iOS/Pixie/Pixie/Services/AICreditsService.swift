@@ -8,7 +8,7 @@ final class AICreditsService {
 
     private init() {
         let base = URL(string: ConfigurationManager.shared.baseURL)
-            ?? URL(string: "https://openai-image-proxy.guitaripod.workers.dev")!
+            ?? URL(string: "https://mako.midgarcorp.cc")!
         let config = AICreditsConfig(baseURL: base, appID: "pixie")
         client = AICreditsClient(config: config, purchaseProvider: HostManagedPurchaseProvider())
     }

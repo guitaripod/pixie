@@ -20,7 +20,7 @@ async fn main() -> Result<()> {
     let api_url = cli.api_url.unwrap_or_else(|| {
         config.api_url.clone().unwrap_or_else(|| {
             env::var("PIXIE_API_URL")
-                .unwrap_or_else(|_| "https://openai-image-proxy.guitaripod.workers.dev".to_string())
+                .unwrap_or_else(|_| "https://mako.midgarcorp.cc".to_string())
         })
     });
     
