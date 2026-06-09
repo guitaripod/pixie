@@ -142,11 +142,19 @@ pub async fn list_transactions(req: Request, ctx: RouteContext<()>) -> Result<Re
 
 pub async fn list_packs(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let app_id = auth::resolve_app_id(&req);
+    let cache_key = format!("https://mako.midgarcorp.cc/__cache/credits/packs/{}", app_id);
+    let cache = worker::Cache::default();
+    if let Ok(Some(cached)) = cache.get(&cache_key, false).await {
+        return Ok(cached);
+    }
     let db = ctx.env.d1("DB")?;
     let packs = get_credit_packs_for_app(&app_id, &db).await;
-    Response::from_json(&json!({
-        "packs": packs,
-    }))
+    let mut resp = Response::from_json(&json!({ "packs": packs }))?;
+    resp.headers_mut().set("Cache-Control", "public, max-age=60")?;
+    if let Ok(copy) = resp.cloned() {
+        let _ = cache.put(&cache_key, copy).await;
+    }
+    Ok(resp)
 }
 
 pub async fn estimate_cost(mut req: Request, _ctx: RouteContext<()>) -> Result<Response> {
