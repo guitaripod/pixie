@@ -254,6 +254,13 @@ final class GalleryPageViewController: UIViewController {
     }
     
     private func fetchImages(page: Int) async throws -> GalleryResponse {
+        #if DEBUG
+        if DemoMode.isActive {
+            let images = page == 1 ? DemoContent.mockMetadata() : []
+            return GalleryResponse(images: images, total: images.count, page: page, perPage: pageSize)
+        }
+        #endif
+
         guard let apiKey = ConfigurationManager.shared.apiKey, !apiKey.isEmpty else {
             print("No API key available")
             throw URLError(.userAuthenticationRequired)

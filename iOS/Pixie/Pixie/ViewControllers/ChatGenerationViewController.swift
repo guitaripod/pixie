@@ -27,6 +27,10 @@ class ChatGenerationViewController: UIViewController {
     private var layoutManager = AdaptiveLayoutManager(traitCollection: UITraitCollection.current)
     private var leadingConstraint: NSLayoutConstraint!
     private var trailingConstraint: NSLayoutConstraint!
+    #if DEBUG
+    enum DemoScenario { case edit, create }
+    var demoMode: DemoScenario?
+    #endif
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -40,6 +44,30 @@ class ChatGenerationViewController: UIViewController {
         transitionToState(.suggestions, animated: false)
         layoutManager.delegate = self
     }
+
+    #if DEBUG
+    private var demoApplied = false
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        guard let demoMode = demoMode, !demoApplied else { return }
+        demoApplied = true
+        applyDemoScenario(demoMode)
+    }
+
+    private func applyDemoScenario(_ scenario: DemoScenario) {
+        suggestionsView.alpha = 0
+        chatView.alpha = 1
+        currentState = .chat
+        let messages: [ChatMessage]
+        switch scenario {
+        case .edit:
+            messages = DemoChatBuilder.editConversation()
+        case .create:
+            messages = DemoChatBuilder.createConversation()
+        }
+        chatView.setMessages(messages, animated: false)
+    }
+    #endif
     
     deinit {
         NotificationCenter.default.removeObserver(self)
