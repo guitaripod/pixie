@@ -53,7 +53,7 @@ class NetworkService: NetworkServiceProtocol {
     private let baseURL: String
     private var apiKey: String?
     private let urlCache: URLCache
-    init(baseURL: String = "https://openai-image-proxy.guitaripod.workers.dev") {
+    init(baseURL: String = "https://mako.midgarcorp.cc") {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 300
         configuration.timeoutIntervalForResource = 300

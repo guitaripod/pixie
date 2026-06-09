@@ -27,7 +27,7 @@ class ConfigurationManager: ConfigurationManagerProtocol {
     static let configurationDidChangeNotification = Notification.Name("ConfigurationDidChange")
     private let defaults = UserDefaults.standard
     private let keychain = KeychainManager()
-    @UserDefaultsWrapper(key: "pixie.baseURL", defaultValue: "https://openai-image-proxy.guitaripod.workers.dev")
+    @UserDefaultsWrapper(key: "pixie.baseURL", defaultValue: "https://mako.midgarcorp.cc")
     var baseURL: String {
         didSet { notifyConfigurationChanged() }
     }
@@ -98,7 +98,7 @@ class ConfigurationManager: ConfigurationManagerProtocol {
         notifyConfigurationChanged()
     }
     func reset() {
-        baseURL = "https://openai-image-proxy.guitaripod.workers.dev"
+        baseURL = "https://mako.midgarcorp.cc"
         apiKey = nil
         defaultModel = "gemini-2.5-flash"
         defaultQuality = "low"
