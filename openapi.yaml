@@ -2,20 +2,40 @@ openapi: 3.0.3
 info:
   title: mako API
   description: |
-    A Cloudflare Worker-based proxy for OpenAI's GPT Image (gpt-image-1) API with additional features:
-    - Credit-based billing system
-    - OAuth authentication (GitHub, Google, Apple)
-    - Device flow authentication
-    - Image gallery and storage
-    - Usage tracking and analytics
-    - Support for both official and self-hosted deployment modes
-    
-    This API exclusively supports the gpt-image-1 model for image generation.
+    mako is the shared Cloudflare Worker backend that powers Midgar Corp's iOS apps
+    (PixiePocket, Dream Eater, Double Kick, Psywave, Psybeam). It is a metered
+    AI credits + AI-capability service: a server-authoritative wallet pays for
+    image, chat, and realtime-voice capabilities that proxy OpenAI and Gemini.
+
+    ## Multi-tenancy
+    Every request carries an `X-App-ID` header that scopes the tenant — each app
+    has its own wallet, credit packs, config, and set of enabled capabilities.
+    When the header is absent it defaults to `pixie` for backward compatibility.
+    Tenants are isolated: a leaked `api_key` cannot cross app boundaries.
+
+    ## Anonymous-first identity
+    Apps work with no account. On first launch the app registers an anonymous,
+    device-based identity (Apple App Attest / DeviceCheck, with a dev fallback)
+    via `POST /v1/identity/anonymous` and receives a per-app `api_key` plus a
+    small free credit grant. Sign in with Apple is optional and only links/syncs
+    the wallet (`POST /v1/identity/link`) — it is never a gate to using the app.
+
+    ## Credits
+    Each capability costs a flat number of credits per app. The wallet is
+    server-authoritative; clients never compute their own balance.
+
+    ## Capabilities
+    - Image generation and editing (gpt-image-1).
+    - Chat completion — text and vision — via Gemini.
+    - Realtime voice translation over OpenAI realtime, using a
+      reserve-at-start / settle-at-end credit flow.
+
+    ## Purchases
+    RevenueCat (primary), Stripe, and crypto (NOWPayments).
   version: 1.0.0
   contact:
-    name: API Support
+    name: mako (Midgar Corp)
     url: https://github.com/guitaripod/pixie
-    email: support@openai-image-proxy.guitaripod.workers.dev
   license:
     name: GPL-3.0
     url: https://github.com/guitaripod/pixie/blob/master/LICENSE
@@ -34,6 +54,12 @@ security:
 tags:
   - name: Authentication
     description: OAuth and device authentication endpoints
+  - name: Identity
+    description: Anonymous device-based identity and Sign in with Apple linking
+  - name: Capabilities
+    description: Metered AI capabilities (image, chat) that draw from the wallet
+  - name: Realtime
+    description: Realtime voice translation with reserve-at-start / settle-at-end credit flow
   - name: Images
     description: Image generation and editing endpoints
   - name: Gallery
@@ -456,6 +482,183 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  # Identity Endpoints
+  /v1/identity/anonymous:
+    post:
+      operationId: registerAnonymousIdentity
+      summary: Register an anonymous device-based identity
+      description: |
+        Creates (or idempotently reuses) an anonymous, device-scoped identity for
+        the tenant resolved from `X-App-ID` and returns a per-app `api_key`. On
+        first creation the wallet receives a small free credit grant.
+
+        Provide an Apple DeviceCheck `device_token` together with a stable
+        `client_device_id` (the per-app idempotency key) to prove a genuine
+        device. In non-production environments only, an `unverified` registration
+        with a raw `device_id` is accepted as a simulator/dev fallback.
+      tags: [Identity]
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/AppId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnonymousRegisterRequest'
+      responses:
+        '200':
+          description: Anonymous identity created or reused
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/identity/link:
+    post:
+      operationId: linkAppleIdentity
+      summary: Link the current anonymous identity to Sign in with Apple
+      description: |
+        Links the authenticated anonymous identity to an Apple account using an
+        Apple identity token. If an Apple-backed user already exists for this
+        tenant, the anonymous wallet is merged into it; otherwise the anonymous
+        user is upgraded in place. Returns the resulting `api_key` and `user_id`.
+        Requires the anonymous `api_key` as a Bearer token.
+      tags: [Identity]
+      parameters:
+        - $ref: '#/components/parameters/AppId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkRequest'
+      responses:
+        '200':
+          description: Identity linked or merged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Capability Endpoints
+  /v1/run/chat.completion:
+    post:
+      operationId: runChatCompletion
+      summary: Run a chat completion (text + vision via Gemini)
+      description: |
+        Runs a chat completion against Gemini, optionally with vision images, and
+        charges the tenant wallet. Cost is a flat per-app capability price when
+        configured, otherwise derived from actual token usage. Images may be
+        passed as base64 strings or data URLs.
+      tags: [Capabilities]
+      parameters:
+        - $ref: '#/components/parameters/AppId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatCompletionRequest'
+      responses:
+        '200':
+          description: Chat completion result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatCompletionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/InsufficientCredits'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Realtime Endpoints
+  /v1/run/realtime.translate/start:
+    post:
+      operationId: startRealtimeTranslate
+      summary: Start a realtime voice translation session
+      description: |
+        Reserves a small credit guard and mints an ephemeral OpenAI realtime
+        client secret. The device exchanges audio directly with OpenAI over WebRTC
+        using the returned `client_secret` and `sdp_url`; the worker only mints and
+        meters. The real cost is billed at settle from the reported minutes.
+      tags: [Realtime]
+      parameters:
+        - $ref: '#/components/parameters/AppId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RealtimeStartRequest'
+      responses:
+        '200':
+          description: Session started and reservation made
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealtimeStartResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/InsufficientCredits'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/run/realtime.translate/settle:
+    post:
+      operationId: settleRealtimeTranslate
+      summary: Settle a realtime voice translation session
+      description: |
+        Finalizes a session by billing the reported `minutes_used` against the
+        up-front reservation: charges any overage (capped at the available
+        balance) or refunds the unused guard. Idempotent — re-settling an already
+        settled session is a no-op that returns the current balance.
+      tags: [Realtime]
+      parameters:
+        - $ref: '#/components/parameters/AppId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RealtimeSettleRequest'
+      responses:
+        '200':
+          description: Session settled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealtimeSettleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   # Image Generation Endpoints
   /v1/images/generations:
     post:
@@ -743,6 +946,8 @@ paths:
       operationId: getCreditBalance
       summary: Get user credit balance
       tags: [Credits]
+      parameters:
+        - $ref: '#/components/parameters/AppId'
       responses:
         '200':
           description: Credit balance
@@ -785,6 +990,8 @@ paths:
       summary: List available credit packs
       tags: [Credits]
       security: []
+      parameters:
+        - $ref: '#/components/parameters/AppId'
       responses:
         '200':
           description: Available credit packs
@@ -800,6 +1007,8 @@ paths:
       operationId: estimateCost
       summary: Estimate cost for image generation
       tags: [Credits]
+      parameters:
+        - $ref: '#/components/parameters/AppId'
       requestBody:
         required: true
         content:
@@ -1260,7 +1469,184 @@ components:
         2. The API key will be returned in the authentication response
         3. Store this key securely and include it in all API requests
 
+  parameters:
+    AppId:
+      name: X-App-ID
+      in: header
+      required: false
+      description: Tenant app id — scopes the wallet, packs, and config. Defaults to 'pixie' when omitted.
+      schema:
+        type: string
+      example: psybeam
+
   schemas:
+    AnonymousRegisterRequest:
+      type: object
+      description: |
+        Provide either DeviceCheck fields (`device_token` + `client_device_id`)
+        or, in non-production only, `unverified: true` with a `device_id`.
+      properties:
+        device_token:
+          type: string
+          description: Apple DeviceCheck token (DCDevice.generateToken) proving a genuine device.
+        client_device_id:
+          type: string
+          description: Stable per-app device id from the Keychain — the per-app idempotency key.
+        device_id:
+          type: string
+          description: Raw device id used only for the non-production unverified fallback.
+        unverified:
+          type: boolean
+          description: When true (non-production only), registers using device_id without DeviceCheck.
+
+    IdentityResponse:
+      type: object
+      required: [api_key, user_id]
+      properties:
+        api_key:
+          type: string
+          example: "pixie_abc123def456..."
+          description: Per-app API key for authenticating subsequent requests.
+        user_id:
+          type: string
+          example: "763135bb-02dd-4bd8-a3ca-4dab2666e1e9"
+          description: Unique identifier for the identity within this tenant.
+
+    LinkRequest:
+      type: object
+      required: [identity_token]
+      properties:
+        identity_token:
+          type: string
+          description: Apple identity token from native Sign in with Apple.
+
+    ChatCompletionRequest:
+      type: object
+      required: [messages]
+      properties:
+        messages:
+          type: array
+          description: Conversation turns. Must not be empty.
+          items:
+            type: object
+            required: [role, content]
+            properties:
+              role:
+                type: string
+                example: user
+              content:
+                type: string
+          minItems: 1
+        images:
+          type: array
+          description: Optional vision images as base64 strings or data URLs.
+          items:
+            type: string
+        response_json:
+          type: boolean
+          default: false
+          description: When true, requests a JSON-formatted response from the model.
+        model:
+          type: string
+          description: Optional Gemini model id. Defaults to the app's chat model when omitted.
+          example: gemini-3-flash-preview
+
+    ChatCompletionResponse:
+      type: object
+      required: [content, model, credits_charged, usage]
+      properties:
+        content:
+          type: string
+          description: The model's text output.
+        model:
+          type: string
+          description: The model that produced the response.
+        credits_charged:
+          type: integer
+          description: Credits deducted from the wallet for this call (0 for premium users).
+        usage:
+          type: object
+          required: [prompt_tokens, output_tokens, total_tokens]
+          properties:
+            prompt_tokens:
+              type: integer
+            output_tokens:
+              type: integer
+            total_tokens:
+              type: integer
+
+    RealtimeStartRequest:
+      type: object
+      required: [language]
+      properties:
+        language:
+          type: string
+          description: BCP-47 language the speech is translated INTO (source is auto-detected).
+          example: ja
+        model:
+          type: string
+          description: Optional realtime model id. Defaults to gpt-realtime-translate.
+          example: gpt-realtime-translate
+
+    RealtimeStartResponse:
+      type: object
+      required: [session_id, client_secret, sdp_url, model, reserved_minutes, rate_credits, balance]
+      properties:
+        session_id:
+          type: string
+          description: Identifier used to settle the session.
+        client_secret:
+          type: string
+          description: Ephemeral OpenAI realtime client secret for the device's WebRTC connection.
+        expires_at:
+          type: integer
+          format: int64
+          nullable: true
+          description: Unix timestamp when the client secret expires, if provided by OpenAI.
+        sdp_url:
+          type: string
+          description: OpenAI SDP endpoint the device posts its WebRTC offer to.
+        model:
+          type: string
+          description: The realtime model used for the session.
+        reserved_minutes:
+          type: integer
+          description: Minutes reserved up-front as the affordability guard.
+        rate_credits:
+          type: integer
+          description: Credits charged per minute for this app's capability.
+        balance:
+          type: integer
+          description: Wallet balance after the up-front reservation.
+
+    RealtimeSettleRequest:
+      type: object
+      required: [session_id, minutes_used]
+      properties:
+        session_id:
+          type: string
+          description: The session id returned by start.
+        minutes_used:
+          type: integer
+          description: Minutes actually consumed, used to bill against the reservation.
+
+    RealtimeSettleResponse:
+      type: object
+      required: [settled, minutes_charged, refunded_credits, balance]
+      properties:
+        settled:
+          type: boolean
+          description: Whether the session is now settled.
+        minutes_charged:
+          type: integer
+          description: Minutes billed for this settlement.
+        refunded_credits:
+          type: integer
+          description: Credits refunded from the unused portion of the reservation.
+        balance:
+          type: integer
+          description: Wallet balance after settlement.
+
     AuthResponse:
       type: object
       required: [api_key, user_id]
