@@ -69,6 +69,7 @@ pub async fn settle(req: Request, ctx: RouteContext<()>) -> Result<Response> {
 async fn start_inner(mut req: Request, ctx: RouteContext<()>) -> std::result::Result<Response, AppError> {
     let db = ctx.env.d1("DB")?;
     let auth = authenticate(&req, &db).await?;
+    crate::rate_limit::enforce_write_rate_limit(&ctx.env, &auth.app_id, &auth.user_id, "realtime.start").await?;
 
     let body: StartRequest = req
         .json()

@@ -26,6 +26,10 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
     let user_id = auth.user_id.clone();
     let app_id = auth.app_id.clone();
 
+    if let Err(e) = crate::rate_limit::enforce_write_rate_limit(&env, &app_id, &user_id, "image.generate").await {
+        return e.to_response();
+    }
+
     let generation_req: ImageGenerationRequest = match req.json().await {
         Ok(req) => req,
         Err(e) => return AppError::BadRequest(format!("Invalid request body: {}", e)).to_response(),
@@ -285,6 +289,10 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
     };
     let user_id = auth.user_id.clone();
     let app_id = auth.app_id.clone();
+
+    if let Err(e) = crate::rate_limit::enforce_write_rate_limit(&env, &app_id, &user_id, "image.edit").await {
+        return e.to_response();
+    }
 
     let edit_req: ImageEditRequest = match req.json().await {
         Ok(req) => req,

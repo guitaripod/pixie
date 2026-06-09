@@ -33,6 +33,11 @@ API_BASE_URL = "https://openai-image-proxy.guitaripod.workers.dev"
 # Environment
 ENVIRONMENT = "production"
 
+# Rate-limit enforcement switch. "false" = shadow (log would-be-limits, never
+# block); "true" = enforce. Kept off until shadow logs confirm no legit traffic
+# trips the generous per-user thresholds.
+RL_ENFORCE = "false"
+
 # Stripe Configuration
 STRIPE_PUBLISHABLE_KEY = "pk_test_51QfJU6CLnJ2fO2EeJfP04Z5vnX4hxyUNFCGrxmCCT2K3jOXCsyDBGgRIcfzZJsUrNcgkUnuQBXGu0FWgTxbXHuOb00hNnE5yfO"
 
@@ -74,6 +79,15 @@ bucket_name = "openai-image-proxy-images"
 name = "ANON_REGISTER_LIMITER"
 namespace_id = "1001"
 simple = { limit = 10, period = 60 }
+
+# Per-(app,user) cap on the expensive metered POSTs (chat.completion, realtime
+# start, image generation). Generous — no human reaches 60/min; a stolen key or
+# runaway client is what this catches. Counted in-worker so it protects every
+# hostname; fails open if the binding is absent. Enforced only when RL_ENFORCE.
+[[ratelimits]]
+name = "TENANT_WRITE_LIMITER"
+namespace_id = "1002"
+simple = { limit = 60, period = 60 }
 
 # Development configuration
 [env.development]

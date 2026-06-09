@@ -74,6 +74,7 @@ async fn chat_completion_inner(
 ) -> std::result::Result<Response, AppError> {
     let db = ctx.env.d1("DB")?;
     let auth = authenticate(&req, &db).await?;
+    crate::rate_limit::enforce_write_rate_limit(&ctx.env, &auth.app_id, &auth.user_id, "chat.completion").await?;
 
     let body: ChatRequest = req
         .json()
