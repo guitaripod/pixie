@@ -36,7 +36,7 @@ ENVIRONMENT = "production"
 # Rate-limit enforcement switch. "false" = shadow (log would-be-limits, never
 # block); "true" = enforce. Kept off until shadow logs confirm no legit traffic
 # trips the generous per-user thresholds.
-RL_ENFORCE = "false"
+RL_ENFORCE = "true"
 
 # Stripe Configuration
 STRIPE_PUBLISHABLE_KEY = "pk_test_51QfJU6CLnJ2fO2EeJfP04Z5vnX4hxyUNFCGrxmCCT2K3jOXCsyDBGgRIcfzZJsUrNcgkUnuQBXGu0FWgTxbXHuOb00hNnE5yfO"
@@ -88,6 +88,14 @@ simple = { limit = 10, period = 60 }
 name = "TENANT_WRITE_LIMITER"
 namespace_id = "1002"
 simple = { limit = 60, period = 60 }
+
+# Per-(app,user) cap on the authenticated reads (balance, transactions). A client
+# polls a few times a second at most, so 240/min is far above legit use; shields
+# single-threaded D1 from a tight read loop. Fails open; enforced when RL_ENFORCE.
+[[ratelimits]]
+name = "READ_LIMITER"
+namespace_id = "1003"
+simple = { limit = 240, period = 60 }
 
 # Development configuration
 [env.development]

@@ -81,6 +81,9 @@ pub async fn get_balance(req: Request, ctx: RouteContext<()>) -> Result<Response
         Ok(a) => a,
         Err(e) => return e.to_response(),
     };
+    if let Err(e) = crate::rate_limit::enforce_read_rate_limit(&env, &auth.app_id, &auth.user_id, "balance").await {
+        return e.to_response();
+    }
 
     let balance = get_user_balance(&auth.app_id, &auth.user_id, &db).await?;
 
@@ -119,6 +122,9 @@ pub async fn list_transactions(req: Request, ctx: RouteContext<()>) -> Result<Re
     };
     let user_id = auth.user_id.clone();
     let app_id = auth.app_id.clone();
+    if let Err(e) = crate::rate_limit::enforce_read_rate_limit(&env, &app_id, &user_id, "transactions").await {
+        return e.to_response();
+    }
 
     let count_stmt = db.prepare("SELECT COUNT(*) as total FROM credit_transactions WHERE app_id = ? AND user_id = ?");
     let count_result = count_stmt
