@@ -7,6 +7,7 @@ pub enum AppError {
     Unauthorized(String),
     Forbidden(String),
     NotFound(String),
+    Conflict(String),
     PaymentRequired(String),
     InternalError(String),
     RateLimitExceeded,
@@ -19,6 +20,7 @@ impl AppError {
             AppError::Unauthorized(msg) => (401, "authentication_error", msg.clone(), "unauthorized"),
             AppError::Forbidden(msg) => (403, "permission_denied", msg.clone(), "forbidden"),
             AppError::NotFound(msg) => (404, "not_found", msg.clone(), "not_found"),
+            AppError::Conflict(msg) => (409, "conflict", msg.clone(), "conflict"),
             AppError::PaymentRequired(msg) => (402, "insufficient_credits", msg.clone(), "insufficient_credits"),
             AppError::InternalError(_) => (500, "internal_error", "An internal error occurred. Please try again later.".to_string(), "internal_error"),
             AppError::RateLimitExceeded => (429, "rate_limit_exceeded", "Rate limit exceeded. Please try again later.".to_string(), "rate_limit_exceeded"),
@@ -60,6 +62,9 @@ impl From<worker::Error> for AppError {
         if let Some(msg) = error_str.strip_prefix("AppError::NotFound::") {
             return AppError::NotFound(msg.to_string());
         }
+        if let Some(msg) = error_str.strip_prefix("AppError::Conflict::") {
+            return AppError::Conflict(msg.to_string());
+        }
         if error_str.starts_with("AppError::RateLimitExceeded::") {
             return AppError::RateLimitExceeded;
         }
@@ -78,6 +83,7 @@ impl From<AppError> for worker::Error {
             AppError::Unauthorized(msg) => format!("AppError::Unauthorized::{}", msg),
             AppError::Forbidden(msg) => format!("AppError::Forbidden::{}", msg),
             AppError::NotFound(msg) => format!("AppError::NotFound::{}", msg),
+            AppError::Conflict(msg) => format!("AppError::Conflict::{}", msg),
             AppError::PaymentRequired(msg) => format!("AppError::PaymentRequired::{}", msg),
             AppError::InternalError(msg) => format!("AppError::InternalError::{}", msg),
             AppError::RateLimitExceeded => "AppError::RateLimitExceeded::".to_string(),

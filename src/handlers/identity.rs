@@ -474,7 +474,8 @@ async fn relink_anonymous_to_apple(
         .clone()
         .unwrap_or_else(|| format!("{}@privaterelay.appleid.com", claims.sub.chars().take(8).collect::<String>()));
 
-    db.prepare("UPDATE users SET provider = ?, provider_id = ?, email = ?, name = ?, updated_at = ? WHERE app_id = ? AND id = ? AND provider = ?")
+    let result = db
+        .prepare("UPDATE users SET provider = ?, provider_id = ?, email = ?, name = ?, updated_at = ? WHERE app_id = ? AND id = ? AND provider = ?")
         .bind(&[
             "apple".into(),
             claims.sub.clone().into(),
@@ -487,6 +488,13 @@ async fn relink_anonymous_to_apple(
         ])?
         .run()
         .await?;
+
+    let relinked = result.meta().ok().flatten().and_then(|m| m.changes).unwrap_or(0) > 0;
+    if !relinked {
+        return Err(AppError::Conflict(
+            "This account is already linked to a different Apple ID.".to_string(),
+        ));
+    }
 
     Ok(())
 }
