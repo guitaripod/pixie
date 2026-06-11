@@ -651,8 +651,11 @@ class CreditsMainViewController: UIViewController {
     }
     
     private func navigateToCreditPacks() {
-        let creditPacksVC = CreditPacksViewController(viewModel: viewModel)
-        navigationController?.pushViewController(creditPacksVC, animated: true)
+        if navigationController?.viewControllers.first is CreditStoreViewController {
+            navigationController?.popToRootViewController(animated: true)
+            return
+        }
+        CreditStoreViewController.present(from: self)
     }
     
     private func navigateToEstimator() {

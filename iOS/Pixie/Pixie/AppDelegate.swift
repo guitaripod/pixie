@@ -10,6 +10,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        warmUpLaunchServicesReceiptPath()
+
         BGTaskScheduler.shared.register(
             forTaskWithIdentifier: "com.guitaripod.Pixie.image-generation",
             using: nil
@@ -58,6 +60,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
     
+    /// RevenueCat ≤5.78.0 reads `Bundle.main.appStoreReceiptURL` from its background
+    /// "RC Backend Queue" during configure, which crashes deterministically at launch on
+    /// iOS 26.5 devices (purchases-ios#6886). A main-thread access first makes the later
+    /// background read safe. Remove only after RevenueCat ships a real fix.
+    private func warmUpLaunchServicesReceiptPath() {
+        _ = Bundle.main.appStoreReceiptURL
+    }
+
     private func createNotificationCategories() -> Set<UNNotificationCategory> {
         let viewAction = UNNotificationAction(
             identifier: "VIEW_ACTION",

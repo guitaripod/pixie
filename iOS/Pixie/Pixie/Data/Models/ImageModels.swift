@@ -146,7 +146,7 @@ enum ImageModel: String, CaseIterable {
 
     var description: String {
         switch self {
-        case .gemini: return "Fast & affordable (15 credits)"
+        case .gemini: return "Fast & affordable (21 credits)"
         case .openai: return "Advanced options (5-94 credits)"
         }
     }
@@ -155,7 +155,7 @@ enum ImageModel: String, CaseIterable {
 
     var fixedCost: Int? {
         switch self {
-        case .gemini: return 15
+        case .gemini: return 21
         case .openai: return nil
         }
     }

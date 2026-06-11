@@ -23,6 +23,20 @@ class ChatGenerationViewController: UIViewController {
     private var suggestionsBottomConstraint: NSLayoutConstraint!
     private var chatBottomConstraint: NSLayoutConstraint!
     private let offlineBanner = OfflineBanner()
+    private let creditsViewModel = CreditsViewModel()
+    private lazy var balanceChipButton: UIButton = {
+        var config = UIButton.Configuration.plain()
+        config.image = UIImage(systemName: "sparkles")
+        config.imagePadding = 4
+        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 13, weight: .semibold)
+        config.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 6, bottom: 4, trailing: 6)
+        return UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
+            guard let self else { return }
+            self.haptics.impact(.click)
+            CreditStoreViewController.present(from: self)
+        })
+    }()
+    private lazy var balanceChipItem = UIBarButtonItem(customView: balanceChipButton)
     private var notificationObserver: NSObjectProtocol?
     private var layoutManager = AdaptiveLayoutManager(traitCollection: UITraitCollection.current)
     private var leadingConstraint: NSLayoutConstraint!
@@ -135,9 +149,8 @@ class ChatGenerationViewController: UIViewController {
         newChatButton.addTarget(self, action: #selector(newChatTapped), for: .touchUpInside)
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: newChatButton)
         
-        let galleryButton = UIBarButtonItem(title: "Gallery", style: .plain, target: self, action: #selector(galleryTapped))
-        let creditsButton = UIBarButtonItem(title: "Credits", style: .plain, target: self, action: #selector(creditsTapped))
-        
+        let galleryButton = UIBarButtonItem(image: UIImage(systemName: "photo.on.rectangle"), style: .plain, target: self, action: #selector(galleryTapped))
+
         let isAdmin = AuthenticationManager.shared.currentUser?.isAdmin ?? false
         let settingsButton: UIBarButtonItem
         
@@ -179,8 +192,38 @@ class ChatGenerationViewController: UIViewController {
         } else {
             settingsButton = UIBarButtonItem(image: UIImage(systemName: "gearshape"), style: .plain, target: self, action: #selector(settingsTapped))
         }
-        
-        navigationItem.rightBarButtonItems = [settingsButton, creditsButton, galleryButton]
+
+        navigationItem.rightBarButtonItems = [settingsButton, balanceChipItem, galleryButton]
+        updateBalanceChip(creditsViewModel.balance?.balance)
+    }
+
+    private func updateBalanceChip(_ balance: Int?) {
+        #if DEBUG
+        if DemoMode.isActive {
+            balanceChipButton.configuration?.title = "1,372"
+            return
+        }
+        #endif
+        guard let balance else {
+            balanceChipButton.configuration?.title = nil
+            return
+        }
+        var container = AttributeContainer()
+        container.font = UIFont.monospacedDigitSystemFont(ofSize: 15, weight: .semibold)
+        balanceChipButton.configuration?.attributedTitle = AttributedString(
+            NumberFormatter.localizedString(from: NSNumber(value: balance), number: .decimal),
+            attributes: container
+        )
+    }
+
+    private func estimatedCreditCost() -> Int {
+        if inputBar.selectedModel == .gemini { return CreditStoreViewController.nanoBananaCreditCost }
+        switch inputBar.selectedQuality.value {
+        case "low": return 4
+        case "medium": return 16
+        case "high": return 62
+        default: return 50
+        }
     }
     private func setupHandlers() {
         inputBar.onSend = { [weak self] prompt in
@@ -210,6 +253,20 @@ class ChatGenerationViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
     }
     private func setupBindings() {
+        creditsViewModel.$balance
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] balance in
+                self?.updateBalanceChip(balance?.balance)
+            }
+            .store(in: &cancellables)
+        #if DEBUG
+        let skipBalanceFetch = DemoMode.isActive
+        #else
+        let skipBalanceFetch = false
+        #endif
+        if !skipBalanceFetch {
+            Task { await creditsViewModel.loadBalance() }
+        }
         viewModel.messagesPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] messages in
@@ -221,6 +278,9 @@ class ChatGenerationViewController: UIViewController {
             .sink { [weak self] isGenerating in
                 self?.inputBar.isUserInteractionEnabled = !isGenerating
                 self?.updateNavigationForGenerating(isGenerating)
+                if !isGenerating {
+                    Task { await self?.creditsViewModel.loadBalance() }
+                }
             }
             .store(in: &cancellables)
         viewModel.errorPublisher
@@ -303,6 +363,18 @@ class ChatGenerationViewController: UIViewController {
             handleEditImage()
             return
         }
+        if AIConsentViewController.presentIfNeeded(from: self, onContinue: { [weak self] in
+            self?.handleSendPrompt(prompt)
+        }) {
+            return
+        }
+        if let balance = creditsViewModel.balance?.balance {
+            let estimated = estimatedCreditCost()
+            if balance < estimated {
+                CreditStoreViewController.present(from: self, shortfall: estimated - balance)
+                return
+            }
+        }
         if currentState == .suggestions {
             print("🖋️ ChatGenerationVC: Transitioning from suggestions to chat")
             suggestionsView.alpha = 0
@@ -383,17 +455,17 @@ class ChatGenerationViewController: UIViewController {
     }
     
     private func presentErrorAlert(_ error: GenerationError) {
+        if case .insufficientCredits = error {
+            Task { await creditsViewModel.loadBalance() }
+            CreditStoreViewController.present(from: self, shortfall: nil)
+            return
+        }
         let alert = UIAlertController(
             title: "Generation Failed",
             message: error.localizedDescription,
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: "OK", style: .default))
-        if case .insufficientCredits = error {
-            alert.addAction(UIAlertAction(title: "Buy Credits", style: .default) { [weak self] _ in
-                self?.creditsTapped()
-            })
-        }
         present(alert, animated: true)
     }
     @objc private func newChatTapped() {
@@ -426,8 +498,7 @@ class ChatGenerationViewController: UIViewController {
     }
     @objc private func creditsTapped() {
         haptics.impact(.click)
-        let creditsVC = CreditsMainViewController()
-        navigationController?.pushViewController(creditsVC, animated: true)
+        CreditStoreViewController.present(from: self)
     }
     @objc private func settingsTapped() {
         haptics.impact(.click)
@@ -449,9 +520,8 @@ class ChatGenerationViewController: UIViewController {
             cancelButton.tintColor = .systemRed
             navigationItem.rightBarButtonItem = cancelButton
         } else {
-            let galleryButton = UIBarButtonItem(title: "Gallery", style: .plain, target: self, action: #selector(galleryTapped))
-            let creditsButton = UIBarButtonItem(title: "Credits", style: .plain, target: self, action: #selector(creditsTapped))
-            
+            let galleryButton = UIBarButtonItem(image: UIImage(systemName: "photo.on.rectangle"), style: .plain, target: self, action: #selector(galleryTapped))
+
             // Check if user is admin
             let isAdmin = AuthenticationManager.shared.currentUser?.isAdmin ?? false
             let settingsButton: UIBarButtonItem
@@ -496,7 +566,7 @@ class ChatGenerationViewController: UIViewController {
                 settingsButton = UIBarButtonItem(image: UIImage(systemName: "gearshape"), style: .plain, target: self, action: #selector(settingsTapped))
             }
             
-            navigationItem.rightBarButtonItems = [settingsButton, creditsButton, galleryButton]
+            navigationItem.rightBarButtonItems = [settingsButton, balanceChipItem, galleryButton]
         }
     }
     private func presentPhotoPicker() {

@@ -78,6 +78,7 @@ class SettingsViewController: UIViewController {
     
     private enum HelpRow: Int, CaseIterable {
         case documentation
+        case cloudAIConsent
         case about
     }
     
@@ -566,6 +567,10 @@ extension SettingsViewController: UITableViewDataSource {
             cell.textLabel?.text = "Help Documentation"
             cell.detailTextLabel?.text = "Learn how to use Pixie"
             cell.accessoryType = .disclosureIndicator
+        case .cloudAIConsent:
+            cell.textLabel?.text = "Cloud AI Consent"
+            cell.detailTextLabel?.text = CloudAIConsent.isGranted ? "Granted" : "Not granted"
+            cell.accessoryType = .disclosureIndicator
         case .about:
             cell.textLabel?.text = "About"
             if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
@@ -739,9 +744,33 @@ extension SettingsViewController: UITableViewDelegate {
         switch row {
         case .documentation:
             presentHelpDocumentation()
+        case .cloudAIConsent:
+            presentCloudAIConsentOptions(at: indexPath)
         case .about:
             break
         }
+    }
+
+    private func presentCloudAIConsentOptions(at indexPath: IndexPath) {
+        let granted = CloudAIConsent.isGranted
+        let alert = UIAlertController(
+            title: "Cloud AI Consent",
+            message: "Pixie sends your prompts and attached photos to Google Gemini and OpenAI to create images. Withdrawing consent pauses image generation until you grant it again.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        if granted {
+            alert.addAction(UIAlertAction(title: "Withdraw Consent", style: .destructive) { [weak self] _ in
+                CloudAIConsent.withdraw()
+                self?.tableView.reloadRows(at: [indexPath], with: .automatic)
+            })
+        } else {
+            alert.addAction(UIAlertAction(title: "Grant Consent", style: .default) { [weak self] _ in
+                CloudAIConsent.grant()
+                self?.tableView.reloadRows(at: [indexPath], with: .automatic)
+            })
+        }
+        present(alert, animated: true)
     }
     
     private func handleAccountSelection(at indexPath: IndexPath) {
