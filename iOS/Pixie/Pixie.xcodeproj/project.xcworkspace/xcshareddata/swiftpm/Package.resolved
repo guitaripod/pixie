@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "git@github.com:guitaripod/AICredits.git",
       "state" : {
-        "revision" : "e94ad1c9665de942eefec750c1c76b85aa85e14e",
-        "version" : "1.0.0"
+        "revision" : "08f4decb1e55c7d006cca1dcd6152e9ddff2cabb",
+        "version" : "1.3.0"
       }
     },
     {
@@ -78,8 +78,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RevenueCat/purchases-ios-spm.git",
       "state" : {
-        "revision" : "709554156bb93c909b362e0b30ec0f2afee3df6e",
-        "version" : "5.33.1"
+        "revision" : "629a56ecef190469914b8f0914bf0446363eb09f",
+        "version" : "5.78.0"
       }
     }
   ],

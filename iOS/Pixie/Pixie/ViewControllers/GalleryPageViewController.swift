@@ -479,8 +479,17 @@ extension GalleryPageViewController: UICollectionViewDelegate {
             guard let self = self else { return }
             self.delegate?.galleryPageDidPerformAction(self, action: .share, on: image)
         }
-        
-        return UIMenu(title: "", children: [viewDetails, useForEdit, copyPrompt, save, share])
+
+        var children: [UIMenuElement] = [viewDetails, useForEdit, copyPrompt, save, share]
+        if type == .explore {
+            let report = UIAction(title: "Report Image", image: UIImage(systemName: "exclamationmark.bubble"), attributes: .destructive) { [weak self] _ in
+                guard let self = self else { return }
+                self.delegate?.galleryPageDidPerformAction(self, action: .report, on: image)
+            }
+            children.append(UIMenu(options: .displayInline, children: [report]))
+        }
+
+        return UIMenu(title: "", children: children)
     }
 }
 

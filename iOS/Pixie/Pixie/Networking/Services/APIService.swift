@@ -20,6 +20,21 @@ protocol APIServiceProtocol {
     func authenticateApple(_ request: OAuthCallbackRequest) async throws -> AuthResponse
     func authenticateAppleToken(_ request: AppleTokenRequest) async throws -> AuthResponse
     func validateRevenueCatPurchase<T: Codable>(_ request: T) async throws -> RevenueCatPurchaseValidationResponse
+    func reportImage(id: String) async throws -> ReportImageResponse
+}
+
+struct ReportImageRequest: Codable {
+    let reason: String?
+}
+
+struct ReportImageResponse: Codable {
+    let reported: Bool
+    let imageId: String
+
+    enum CodingKeys: String, CodingKey {
+        case reported
+        case imageId = "image_id"
+    }
 }
 
 class APIService: APIServiceProtocol {
@@ -108,6 +123,10 @@ class APIService: APIServiceProtocol {
     
     func estimateCreditCost(_ request: CreditEstimateRequest) async throws -> CreditEstimateResponse {
         try await networkService.post("/v1/credits/estimate", body: request, type: CreditEstimateResponse.self)
+    }
+
+    func reportImage(id: String) async throws -> ReportImageResponse {
+        try await networkService.post("/v1/images/\(id)/report", body: ReportImageRequest(reason: nil), type: ReportImageResponse.self)
     }
     
     func checkDeviceAuthStatus(deviceCode: String) async throws -> DeviceAuthStatus {

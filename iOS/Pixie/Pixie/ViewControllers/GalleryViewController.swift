@@ -10,6 +10,7 @@ enum ImageAction {
     case copyPrompt
     case download
     case share
+    case report
 }
 
 final class GalleryViewController: UIViewController {
@@ -170,7 +171,36 @@ private extension GalleryViewController {
         case .share:
             HapticsManager.shared.impact(.light)
             shareImage(from: image.url)
+
+        case .report:
+            HapticsManager.shared.impact(.light)
+            reportImage(image)
         }
+    }
+
+    func reportImage(_ image: ImageMetadata) {
+        let alert = UIAlertController(
+            title: "Report Image",
+            message: "Report this image if it is offensive, unsafe, or violates the community guidelines. Reported images are reviewed and removed when they break the rules.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Report", style: .destructive) { [weak self] _ in
+            Task {
+                do {
+                    _ = try await APIService.shared.reportImage(id: image.id)
+                    await MainActor.run {
+                        HapticsManager.shared.notification(.success)
+                        self?.showToast("Thanks — this image was reported")
+                    }
+                } catch {
+                    await MainActor.run {
+                        self?.showToast("Could not send report. Try again later.")
+                    }
+                }
+            }
+        })
+        present(alert, animated: true)
     }
     
     func showToast(_ message: String) {
