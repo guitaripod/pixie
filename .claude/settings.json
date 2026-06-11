@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s https://itunes.apple.com/*)",
+      "Bash(curl -s \"https://itunes.apple.com/*)",
+      "Bash(curl -s https://api.appstoreconnect.apple.com/*)",
+      "Bash(curl -s https://mako.midgarcorp.cc/*)",
+      "Bash(npx wrangler d1 execute openai-image-proxy --remote --command:*)",
+      "Bash(python3:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Read",
+      "Write(docs/**)",
+      "Edit(docs/**)",
+      "WebFetch(domain:itunes.apple.com)",
+      "WebFetch(domain:apps.apple.com)"
+    ]
+  }
+}

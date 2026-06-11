@@ -1,0 +1,35 @@
+# Midgar Operator autonomy dials for PixiePocket (contract: operator-design.md
+# in the operator repo). Levels: observe | propose | act | manual-only.
+# Ratchet: a class moves propose -> act only after N=3 consecutive
+# approved-unchanged proposals, flipped by the human, never by the operator.
+#
+# Note: this repo is multi-product (mako backend + PixiePocket iOS + Android + CLI).
+# These dials govern PixiePocket-the-app only; backend changes for other tenants
+# (psywave, dreameater, psybeam) are out of episode scope entirely.
+
+product: pixiepocket
+
+action_classes:
+  review_reply:
+    autonomy: propose
+  social_post:
+    autonomy: propose
+    when_act: { max_per_day: 1 }
+  metadata_edit:
+    autonomy: propose
+  ugc_report_resolution:
+    autonomy: propose
+  price_change:
+    autonomy: propose
+    ratchet: never
+  release:
+    autonomy: manual-only
+  backend_deploy:
+    autonomy: manual-only
+
+budget:
+  max_tokens_per_episode: 200000
+
+ratchet:
+  to_act_requires: 3 consecutive approved-unchanged proposals in the class
+  excluded: [price_change, release, backend_deploy]

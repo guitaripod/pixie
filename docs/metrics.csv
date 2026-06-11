@@ -1,0 +1,2 @@
+date,us_ratings,us_avg,downloads_wk,new_users_wk,buyers_wk,credit_units_wk,proceeds_wk_cents,gens_wk,credits_spent_wk,reports_open,notes
+2026-06-11,0,0,,6,0,0,0,5,89,0,"baseline at 1.3.0 onboarding; downloads_wk pending first ASC weekly report; 6 anon users / 5 generations / 0 purchases last 7d confirms the pre-1.3.0 funnel was dead"
