@@ -1,0 +1,55 @@
+# Marketing node: machine-readable manifest for an external marketing agent.
+# Contract: everything an agent needs to market this app autonomously lives here
+# or is pointed to from here. No secrets in this file — env/keychain pointers only.
+
+app:
+  name: "PixiePocket: AI Image Maker"
+  apple_id: "6751730339"
+  bundle_id: com.guitaripod.Pixie
+  store_url: https://apps.apple.com/app/id6751730339
+  campaign_url_template: "https://apps.apple.com/app/id6751730339?pt=TODO&ct={campaign}"
+  platforms: [ios, ipados]
+  price_model: "free (25 welcome credits) + consumable credit packs $2.99-$99.99; no subscription, ever"
+
+voice:
+  tone: "playful but precise; creator-first; anti-subscription-fatigue without being preachy"
+  pillars:
+    - "No subscription, ever. Pay for what you make — credits never expire."
+    - "Chat your way to the image: conversation in, pro-grade image out (Nano Banana + GPT image)"
+    - "Control like a pro: quality tiers, exact sizes, transparent backgrounds, batch up to 10"
+  never: ["fake urgency", "AI-slop hashtag walls", "claims of on-device generation", "price claims in screenshots"]
+
+content_engines:
+  daily_art:
+    description: >
+      One generated image a day with its prompt — the public community gallery is an
+      infinite well. Post image + prompt + store link. Never post user images without
+      checking the gallery is_public flag; prefer house-generated art.
+  prompt_recipes:
+    description: >
+      Short prompt-engineering recipes ("anime portrait in 3 modifiers") that end with
+      the image PixiePocket produced. Reusable as App Store promotional text rotations.
+  milestones:
+    description: ratings/downloads milestones become posts
+    source: revenue-ops metrics (docs/metrics.csv)
+
+channels:
+  mastodon: { enabled: false, auth_env: PIXIE_MASTODON_TOKEN }
+  bluesky: { enabled: false, auth_env: PIXIE_BSKY_APP_PASSWORD }
+  x: { enabled: false, auth_env: PIXIE_X_API_KEY, note: "paid API; evaluate cost vs ct attribution before enabling" }
+  reddit: { enabled: false, note: "manual-first; r/StableDiffusion-adjacent subs hostile to app promo — agent drafts, human posts" }
+
+cadence:
+  default: "max 1 post/day/channel; quality bar over frequency; stop on engagement < channel floor for 14 days"
+
+assets:
+  screenshot_rig: >
+    DEBUG env PX_DEMO = create|edit|gallery|store on iPhone 17 Pro Max (1320x2868)
+    and iPad Pro 13" M5 (2064x2752). Staging details in docs/store-playbook.md §3.
+  icon: iOS/Pixie/Pixie/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png
+
+ops:
+  metrics_skill: .claude/skills/revenue-ops
+  playbook: docs/store-playbook.md
+  asc_api_key_id: DSS2FFU68G   # p8 at ~/.appstoreconnect/private_keys/ on the operator machine
+  backend: "this repo IS the backend (mako tenant 'pixie'); D1 ledger is first-party metrics truth"
