@@ -218,3 +218,51 @@ pub async fn get_image(req: Request, ctx: RouteContext<()>) -> Result<Response> 
         }
     }
 }
+
+#[derive(Debug, Deserialize)]
+struct ReportImageRequest {
+    reason: Option<String>,
+}
+
+pub async fn report_image(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let image_id = ctx.param("image_id")
+        .ok_or_else(|| AppError::BadRequest("Missing image_id parameter".to_string()))?
+        .to_string();
+
+    let env = ctx.env;
+    let db = env.d1("DB")?;
+    let auth = match crate::auth::authenticate(&req, &db).await {
+        Ok(a) => a,
+        Err(e) => return e.to_response(),
+    };
+    if let Err(e) = crate::rate_limit::enforce_write_rate_limit(&env, &auth.app_id, &auth.user_id, "image.report").await {
+        return e.to_response();
+    }
+
+    let reason = req.json::<ReportImageRequest>().await.ok().and_then(|r| r.reason);
+
+    let exists = db
+        .prepare("SELECT id FROM stored_images WHERE app_id = ?1 AND id = ?2")
+        .bind(&[auth.app_id.clone().into(), image_id.clone().into()])?
+        .first::<serde_json::Value>(None)
+        .await?;
+    if exists.is_none() {
+        return AppError::NotFound(format!("Image {} not found", image_id)).to_response();
+    }
+
+    db.prepare(
+        "INSERT OR IGNORE INTO image_reports (id, app_id, image_id, reporter_user_id, reason, created_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, datetime('now'))",
+    )
+    .bind(&[
+        uuid::Uuid::new_v4().to_string().into(),
+        auth.app_id.clone().into(),
+        image_id.clone().into(),
+        auth.user_id.clone().into(),
+        reason.unwrap_or_default().into(),
+    ])?
+    .run()
+    .await?;
+
+    Response::from_json(&json!({ "reported": true, "image_id": image_id }))
+}
