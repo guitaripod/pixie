@@ -945,8 +945,29 @@ pub async fn validate_revenuecat_purchase(mut req: Request, ctx: RouteContext<()
     if validate_req.platform != "ios" && validate_req.platform != "android" {
         return AppError::BadRequest("Invalid platform. Must be 'ios' or 'android'".to_string()).to_response();
     }
-    
+
+    // An empty token or product id would make the substring verification below
+    // (body.contains) trivially true. Reject before any RevenueCat call.
+    if validate_req.purchase_token.trim().is_empty() || validate_req.product_id.trim().is_empty() {
+        return AppError::BadRequest("Missing purchase_token or product_id".to_string()).to_response();
+    }
+
     let db = env.d1("DB")?;
+
+    // The product id must be this app's pack-product prefix + the claimed pack id.
+    // This binds the price the user paid to the credits they receive, so a real
+    // cheap-pack receipt cannot be replayed to claim an expensive pack.
+    let product_prefix = db
+        .prepare("SELECT rc_product_prefix FROM apps WHERE app_id = ?1")
+        .bind(&[app_id.clone().into()])?
+        .first::<serde_json::Value>(None)
+        .await?
+        .and_then(|v| v.get("rc_product_prefix").and_then(|p| p.as_str()).map(|s| s.to_string()))
+        .unwrap_or_default();
+    let expected_product = format!("{}{}", product_prefix, validate_req.pack_id);
+    if !product_prefix.is_empty() && validate_req.product_id != expected_product {
+        return AppError::BadRequest("product_id does not match pack_id".to_string()).to_response();
+    }
 
     // Find the pack (per-app catalog)
     let packs = get_credit_packs_for_app(&app_id, &db).await;
@@ -986,9 +1007,15 @@ pub async fn validate_revenuecat_purchase(mut req: Request, ctx: RouteContext<()
     ).await;
 
     match validation_result {
-        Ok(true) => {}
-        Ok(false) => {
+        Ok(PurchaseVerification::Verified) => {}
+        Ok(PurchaseVerification::Rejected) => {
             return AppError::BadRequest("Purchase could not be verified with RevenueCat".to_string()).to_response();
+        }
+        Ok(PurchaseVerification::Defer) => {
+            // Not yet visible in RevenueCat. Do NOT grant here; the authenticated
+            // webhook is the authoritative, idempotent fallback.
+            worker::console_log!("RevenueCat purchase not yet visible, deferring to webhook");
+            return AppError::InternalError("Could not verify the purchase right now; it will be credited shortly.".to_string()).to_response();
         }
         Err(e) => {
             // RevenueCat unreachable: do NOT grant. The webhook will reconcile this purchase.
@@ -1127,15 +1154,35 @@ pub async fn is_premium_user(
     }
 }
 
+/// Outcome of verifying a client-reported purchase against RevenueCat.
+enum PurchaseVerification {
+    /// The transaction and product were both found in the customer's RevenueCat
+    /// purchases — safe to grant on the fast-track client path.
+    Verified,
+    /// RevenueCat answered, but this transaction/product is not present in the
+    /// customer's record. Never grant: the token is fake, replayed, or claims a
+    /// different product than was actually bought.
+    Rejected,
+    /// RevenueCat could not confirm right now (customer/purchase not yet
+    /// propagated, or the API was unreachable). Do not grant on this path; the
+    /// authenticated webhook is the authoritative, idempotent fallback.
+    Defer,
+}
+
+/// Verifies that `purchase_token` and `product_id` both belong to a real purchase
+/// on this RevenueCat customer. The store transaction id is high-entropy, so its
+/// literal presence anywhere in the customer's purchases payload is proof the
+/// purchase is real and belongs to them; requiring `product_id` to also appear
+/// blocks pack-substitution (paying for a cheap pack, claiming an expensive one).
 async fn validate_with_revenuecat(
     env: &Env,
     db: &worker::D1Database,
     app_id: &str,
     user_id: &str,
-    _purchase_token: &str,
-    _product_id: &str,
+    purchase_token: &str,
+    product_id: &str,
     platform: &str,
-) -> Result<bool> {
+) -> Result<PurchaseVerification> {
     let key_name = format!("REVENUECAT_IOS_API_KEY_{}", app_id.to_uppercase());
     let api_key = env
         .secret(&key_name)
@@ -1150,46 +1197,55 @@ async fn validate_with_revenuecat(
         .await?
         .and_then(|v| v.get("rc_project_id").and_then(|p| p.as_str()).map(|s| s.to_string()))
         .ok_or_else(|| format!("rc_project_id not configured for {}", app_id))?;
-    let customer_id = user_id;
-    let url = format!("https://api.revenuecat.com/v2/projects/{}/customers/{}", project_id, customer_id);
-    
+
+    let url = format!(
+        "https://api.revenuecat.com/v2/projects/{}/customers/{}/purchases",
+        project_id, user_id
+    );
+
     let headers = Headers::new();
     headers.set("Authorization", &format!("Bearer {}", api_key))?;
     headers.set("Content-Type", "application/json")?;
     headers.set("X-Platform", platform)?;
-    
+
     let mut init = worker::RequestInit::new();
-    init.with_method(Method::Get)
-        .with_headers(headers);
-    
+    init.with_method(Method::Get).with_headers(headers);
+
     let request = Request::new_with_init(&url, &init)?;
     let mut response = Fetch::Request(request).send().await?;
-    
+
     let status_code = response.status_code();
     if status_code == 404 {
-        // Customer/purchase not known to RevenueCat yet — cannot confirm here.
-        // Return false so the client path does not grant; the webhook reconciles.
-        worker::console_log!("RevenueCat customer not found; deferring grant to webhook");
-        return Ok(false);
+        worker::console_log!("RevenueCat customer/purchases not found; deferring to webhook");
+        return Ok(PurchaseVerification::Defer);
     }
-    
     if status_code < 200 || status_code >= 300 {
         let error_text = response.text().await.unwrap_or_default();
         worker::console_log!("RevenueCat API error: {} - {}", status_code, error_text);
         return Err(format!("RevenueCat API error: {}", status_code).into());
     }
-    
-    // For V2 API, we get a different response structure
-    // For now, if we get a 200 response, we consider it valid
-    // The V2 API would return 404 if the customer doesn't exist
-    // and 200 if they do, which is enough validation for our purposes
-    let _response_text = response.text().await?;
-    worker::console_log!("RevenueCat V2 response received for customer: {}", customer_id);
-    
-    // If we got here with a 200 status, the customer exists in RevenueCat
-    // We could parse the V2 response for more detailed validation, but for now
-    // we'll accept that the customer exists as validation
-    Ok(true)
+
+    let body = response.text().await?;
+    let token_present = body.contains(purchase_token);
+    let product_present = body.contains(product_id);
+
+    match (token_present, product_present) {
+        (true, true) => Ok(PurchaseVerification::Verified),
+        (false, _) => {
+            worker::console_log!(
+                "RevenueCat purchase token not found for customer {} (product {}); rejecting fast-track",
+                user_id, product_id
+            );
+            Ok(PurchaseVerification::Rejected)
+        }
+        (true, false) => {
+            worker::console_log!(
+                "RevenueCat token present but product {} mismatched for customer {}; rejecting fast-track",
+                product_id, user_id
+            );
+            Ok(PurchaseVerification::Rejected)
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
