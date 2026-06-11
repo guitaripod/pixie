@@ -59,14 +59,40 @@ class ChatGenerationViewController: UIViewController {
         layoutManager.delegate = self
     }
 
-    #if DEBUG
-    private var demoApplied = false
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        #if DEBUG
+        if DemoMode.isActive { return }
+        #endif
+        Task { await creditsViewModel.loadBalance() }
+    }
+
+    private var onboardingShown = false
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        guard let demoMode = demoMode, !demoApplied else { return }
-        demoApplied = true
-        applyDemoScenario(demoMode)
+        #if DEBUG
+        if let demoMode = demoMode, !demoApplied {
+            demoApplied = true
+            applyDemoScenario(demoMode)
+        }
+        if DemoMode.isActive { return }
+        #endif
+        presentOnboardingIfNeeded()
     }
+
+    private func presentOnboardingIfNeeded() {
+        guard !onboardingShown, !Onboarding.isCompleted, presentedViewController == nil else { return }
+        onboardingShown = true
+        let onboarding = OnboardingViewController()
+        onboarding.modalPresentationStyle = .fullScreen
+        onboarding.onFinished = { [weak self] in
+            self?.dismiss(animated: true)
+        }
+        present(onboarding, animated: false)
+    }
+
+    #if DEBUG
+    private var demoApplied = false
 
     private func applyDemoScenario(_ scenario: DemoScenario) {
         suggestionsView.alpha = 0
@@ -208,12 +234,16 @@ class ChatGenerationViewController: UIViewController {
             balanceChipButton.configuration?.title = nil
             return
         }
+        let isLow = balance < CreditStoreViewController.nanoBananaCreditCost
         var container = AttributeContainer()
         container.font = UIFont.monospacedDigitSystemFont(ofSize: 15, weight: .semibold)
+        container.foregroundColor = isLow ? .systemOrange : .label
         balanceChipButton.configuration?.attributedTitle = AttributedString(
             NumberFormatter.localizedString(from: NSNumber(value: balance), number: .decimal),
             attributes: container
         )
+        balanceChipButton.configuration?.image = UIImage(systemName: isLow ? "exclamationmark.circle.fill" : "sparkles")
+        balanceChipButton.configuration?.baseForegroundColor = isLow ? .systemOrange : .systemPurple
     }
 
     private func estimatedCreditCost() -> Int {
@@ -297,6 +327,15 @@ class ChatGenerationViewController: UIViewController {
             .sink { progress in
             }
             .store(in: &cancellables)
+        viewModel.generationSucceededPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
+                guard let self else { return }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+                    RatingPrompt.registerSuccessfulGeneration(in: self?.view.window?.windowScene)
+                }
+            }
+            .store(in: &cancellables)
     }
     
     private func setupNotificationObserver() {
@@ -358,14 +397,14 @@ class ChatGenerationViewController: UIViewController {
             print("🖋️ ChatGenerationVC: Prompt is empty, returning")
             return
         }
-        if prompt == "EDIT_MODE" {
-            print("🖋️ ChatGenerationVC: Edit mode detected")
-            handleEditImage()
-            return
-        }
         if AIConsentViewController.presentIfNeeded(from: self, onContinue: { [weak self] in
             self?.handleSendPrompt(prompt)
         }) {
+            return
+        }
+        if prompt == "EDIT_MODE" {
+            print("🖋️ ChatGenerationVC: Edit mode detected")
+            handleEditImage()
             return
         }
         if let balance = creditsViewModel.balance?.balance {

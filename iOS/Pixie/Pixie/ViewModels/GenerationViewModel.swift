@@ -29,7 +29,12 @@ class GenerationViewModel: ObservableObject {
     private var appStateObserver: NSObjectProtocol?
     private var generationStartTime: Date?
     private var currentLiveActivity: Activity<ImageGenerationAttributes>?
-    
+    private let generationSucceededSubject = PassthroughSubject<Void, Never>()
+
+    var generationSucceededPublisher: AnyPublisher<Void, Never> {
+        generationSucceededSubject.eraseToAnyPublisher()
+    }
+
     var messagesPublisher: AnyPublisher<[ChatMessage], Never> {
         $messages.eraseToAnyPublisher()
     }
@@ -446,7 +451,8 @@ class GenerationViewModel: ObservableObject {
             )
             messages.append(assistantMessage)
             hapticManager.impact(.success)
-            
+            generationSucceededSubject.send(())
+
             // Update Live Activity if in background
             if let activity = currentLiveActivity {
                 Task {

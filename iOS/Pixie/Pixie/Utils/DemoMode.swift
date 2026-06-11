@@ -6,6 +6,7 @@ enum DemoMode: String {
     case edit
     case create
     case store
+    case onboarding
 
     static var current: DemoMode? {
         guard let raw = ProcessInfo.processInfo.environment["PX_DEMO"] else { return nil }
@@ -175,6 +176,8 @@ enum DemoRootBuilder {
         case .store:
             let storeVC = CreditStoreViewController()
             return UINavigationController(rootViewController: storeVC)
+        case .onboarding:
+            return OnboardingViewController()
         }
     }
 }
