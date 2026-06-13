@@ -61,6 +61,12 @@ STRIPE_PUBLISHABLE_KEY = "pk_test_51QfJU6CLnJ2fO2EeJfP04Z5vnX4hxyUNFCGrxmCCT2K3j
 # STRIPE_PRICE_ID_BUSINESS
 # STRIPE_PRICE_ID_ENTERPRISE
 
+# Sweeps realtime_sessions reservations that were charged up-front in /start but
+# can never be settled (mint cancelled in flight, app killed/crashed mid-start),
+# refunding the unused guard. See handlers::realtime::sweep_orphaned_reservations.
+[triggers]
+crons = ["*/30 * * * *"]
+
 [[d1_databases]]
 binding = "DB"
 database_name = "openai-image-proxy"

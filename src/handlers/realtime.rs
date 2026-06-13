@@ -2,7 +2,7 @@ use worker::{Request, Response, RouteContext, Result, console_log, Fetch, Method
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use uuid::Uuid;
-use chrono::Utc;
+use chrono::{Utc, Duration};
 use crate::error::AppError;
 use crate::auth::authenticate;
 use crate::credits::{get_user_balance, get_flat_capability_cost, deduct_credits, add_credits};
@@ -288,6 +288,77 @@ async fn bill_settlement(
         }
     }
     Ok((balance, refund))
+}
+
+/// Refunds reservations that were deducted up-front in `/start` but can never
+/// be settled by the client: the mint was cancelled in flight (a GPS language
+/// change tears down a warm session before its session id is known), or the
+/// app was killed/crashed/lost the network mid-`/start`. The 1-minute guard
+/// would otherwise stay charged for a session that never ran. Only sweeps rows
+/// older than a window no live session could survive (the client settles on
+/// every leg teardown — background, language change, hang-up), and claims each
+/// row before refunding so it can never race a concurrent `/settle` into a
+/// double refund. Refund-only: it never deducts, so the worst case of an
+/// over-eager sweep is forgoing a charge, never overcharging a user.
+pub async fn sweep_orphaned_reservations(env: &Env) -> std::result::Result<u32, AppError> {
+    let db = env.d1("DB")?;
+    let cutoff = (Utc::now() - Duration::hours(2)).to_rfc3339();
+    let rows = db
+        .prepare(
+            "SELECT id, app_id, user_id, reserved_credits FROM realtime_sessions
+             WHERE settled = 0 AND created_at < ?1 LIMIT 200",
+        )
+        .bind(&[cutoff.into()])?
+        .all()
+        .await?
+        .results::<Value>()?;
+
+    let mut refunded = 0u32;
+    for row in rows {
+        let id = row.get("id").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+        let app_id = row.get("app_id").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+        let user_id = row.get("user_id").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+        let reserved = row.get("reserved_credits").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+        if id.is_empty() {
+            continue;
+        }
+
+        let now = Utc::now().to_rfc3339();
+        let claim = db
+            .prepare(
+                "UPDATE realtime_sessions SET settled = 1, settled_at = ?1, actual_minutes = 0
+                 WHERE id = ?2 AND settled = 0",
+            )
+            .bind(&[now.into(), id.clone().into()])?
+            .run()
+            .await?;
+        let won = claim.meta().ok().flatten().and_then(|m| m.changes).unwrap_or(0) > 0;
+        if !won {
+            continue;
+        }
+
+        if reserved > 0 {
+            match add_credits(&app_id, &user_id, reserved as u32, "refund", "realtime.translate orphaned reservation", Some(&id), &db).await {
+                Ok(_) => {
+                    let _ = db
+                        .prepare("UPDATE realtime_sessions SET refunded_credits = ?1 WHERE id = ?2")
+                        .bind(&[reserved.into(), id.clone().into()])?
+                        .run()
+                        .await;
+                }
+                Err(_) => {
+                    let _ = db
+                        .prepare("UPDATE realtime_sessions SET settled = 0, settled_at = NULL, actual_minutes = NULL WHERE id = ?1")
+                        .bind(&[id.clone().into()])?
+                        .run()
+                        .await;
+                    continue;
+                }
+            }
+        }
+        refunded += 1;
+    }
+    Ok(refunded)
 }
 
 /// Mints the ephemeral OpenAI realtime-translations client secret. The audio

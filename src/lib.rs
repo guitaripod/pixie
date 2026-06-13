@@ -16,6 +16,16 @@ mod privacy;
 
 use handlers::{images, gallery, r2, usage, oauth, oauth_apple, oauth_apple_callback, oauth_native, device_auth, identity};
 
+#[event(scheduled)]
+async fn scheduled(_event: ScheduledEvent, env: Env, _ctx: ScheduleContext) {
+    console_error_panic_hook::set_once();
+    match handlers::realtime::sweep_orphaned_reservations(&env).await {
+        Ok(n) if n > 0 => console_log!("realtime sweep refunded {} orphaned reservations", n),
+        Ok(_) => {}
+        Err(e) => console_error!("realtime sweep failed: {:?}", e),
+    }
+}
+
 #[event(fetch)]
 async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     console_error_panic_hook::set_once();
