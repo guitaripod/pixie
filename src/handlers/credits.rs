@@ -1226,26 +1226,70 @@ async fn validate_with_revenuecat(
     }
 
     let body = response.text().await?;
-    let token_present = body.contains(purchase_token);
-    let product_present = body.contains(product_id);
+    let parsed: serde_json::Value = serde_json::from_str(&body).unwrap_or(serde_json::Value::Null);
+    let Some(items) = parsed.get("items").and_then(|v| v.as_array()) else {
+        worker::console_log!("RevenueCat purchases response had no items; deferring to webhook");
+        return Ok(PurchaseVerification::Defer);
+    };
 
-    match (token_present, product_present) {
-        (true, true) => Ok(PurchaseVerification::Verified),
-        (false, _) => {
+    let matched = items.iter().find(|item| {
+        item.get("store_purchase_identifier").and_then(|v| v.as_str()) == Some(purchase_token)
+    });
+    let Some(purchase) = matched else {
+        worker::console_log!("RevenueCat purchase token not found for customer {}; rejecting fast-track", user_id);
+        return Ok(PurchaseVerification::Rejected);
+    };
+
+    let rc_product_id = purchase.get("product_id").and_then(|v| v.as_str()).unwrap_or_default();
+    match rc_store_identifier(&api_key, &project_id, rc_product_id).await {
+        Ok(Some(store_identifier)) if store_identifier == product_id => Ok(PurchaseVerification::Verified),
+        Ok(Some(store_identifier)) => {
             worker::console_log!(
-                "RevenueCat purchase token not found for customer {} (product {}); rejecting fast-track",
-                user_id, product_id
+                "RevenueCat product mismatch for customer {}: transaction is {} but {} was claimed; rejecting",
+                user_id, store_identifier, product_id
             );
             Ok(PurchaseVerification::Rejected)
         }
-        (true, false) => {
-            worker::console_log!(
-                "RevenueCat token present but product {} mismatched for customer {}; rejecting fast-track",
-                product_id, user_id
-            );
-            Ok(PurchaseVerification::Rejected)
+        _ => {
+            worker::console_log!("RevenueCat product {} could not be resolved; deferring to webhook", rc_product_id);
+            Ok(PurchaseVerification::Defer)
         }
     }
+}
+
+/// Resolves a RevenueCat v2 internal product id (e.g. `proda9db…`) to its App
+/// Store SKU. The v2 `/customers/{id}/purchases` payload carries only the
+/// internal id, never the store SKU — that lives solely on the `/products/{id}`
+/// resource as `store_identifier` — so the purchased product can only be bound
+/// to the pack the client paid for by this second lookup. Returns `None` on any
+/// non-2xx so the caller defers to the webhook rather than reject a real buyer.
+async fn rc_store_identifier(
+    api_key: &str,
+    project_id: &str,
+    rc_product_id: &str,
+) -> Result<Option<String>> {
+    if rc_product_id.is_empty() {
+        return Ok(None);
+    }
+    let url = format!(
+        "https://api.revenuecat.com/v2/projects/{}/products/{}",
+        project_id, rc_product_id
+    );
+    let headers = Headers::new();
+    headers.set("Authorization", &format!("Bearer {}", api_key))?;
+    let mut init = worker::RequestInit::new();
+    init.with_method(Method::Get).with_headers(headers);
+    let request = Request::new_with_init(&url, &init)?;
+    let mut response = Fetch::Request(request).send().await?;
+    if response.status_code() < 200 || response.status_code() >= 300 {
+        return Ok(None);
+    }
+    let body = response.text().await?;
+    let parsed: serde_json::Value = serde_json::from_str(&body).unwrap_or(serde_json::Value::Null);
+    Ok(parsed
+        .get("store_identifier")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string()))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
