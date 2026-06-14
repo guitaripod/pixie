@@ -499,6 +499,29 @@ async fn relink_anonymous_to_apple(
     Ok(())
 }
 
+/// Delete the authenticated user's account (App Store 5.1.1(v)): removes the
+/// user row and every per-user credit record. Scoped to the api-key's own
+/// user_id, so a caller can only ever delete their own account.
+pub async fn delete_identity(req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let db = ctx.env.d1("DB")?;
+    let auth = match authenticate(&req, &db).await {
+        Ok(a) => a,
+        Err(e) => return e.to_response(),
+    };
+    let uid = auth.user_id;
+    for table in ["credit_transactions", "credit_purchases", "user_credits", "user_locks"] {
+        db.prepare(&format!("DELETE FROM {} WHERE user_id = ?", table))
+            .bind(&[uid.clone().into()])?
+            .run()
+            .await?;
+    }
+    db.prepare("DELETE FROM users WHERE id = ?")
+        .bind(&[uid.into()])?
+        .run()
+        .await?;
+    Response::from_json(&json!({ "deleted": true }))
+}
+
 async fn zero_wallet(db: &D1Database, app_id: &str, user_id: &str) -> std::result::Result<(), AppError> {
     let now = Utc::now().to_rfc3339();
     db.prepare("UPDATE user_credits SET balance = 0, updated_at = ? WHERE app_id = ? AND user_id = ?")
