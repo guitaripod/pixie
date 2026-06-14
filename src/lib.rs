@@ -57,6 +57,7 @@ Privacy Policy: /privacy-policy"#)
         .get("/privacy/:app", privacy::privacy_handler)
         .get("/terms/:app", privacy::terms_handler)
         .get("/support/:app", privacy::support_handler)
+        .get("/payday", privacy::payday_landing)
         .get("/docs/", |req, _| {
             let url = req.url().unwrap();
             let base = format!("{}://{}", url.scheme(), url.host().unwrap());

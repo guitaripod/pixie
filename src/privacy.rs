@@ -153,6 +153,25 @@ fn render(app: &str) -> String {
     )
 }
 
+pub fn payday_landing(_req: Request, _ctx: RouteContext<()>) -> Result<Response> {
+    let body = r#"<h1>Pay Day</h1>
+<p style="font-size:18px;color:#555">Invoices &amp; estimates for EU freelancers — beautiful, free, and ready for e-invoicing compliance.</p>
+<h2>What it does</h2>
+<ul>
+<li>Unlimited invoices and estimates, your logo, any currency, full EU VAT math.</li>
+<li><strong>Pro:</strong> EN 16931-valid Factur-X / ZUGFeRD hybrid PDFs that pass tax-authority validation.</li>
+<li><strong>Pro + credits:</strong> deliver invoices over the Peppol network straight into your client's accounting system, and validate VAT numbers against EU VIES.</li>
+<li>Optional AI: draft line items from a photo or a sentence, and write payment reminders.</li>
+</ul>
+<p>Your business and client data stays on your device; nothing is uploaded except the documents you choose to send.</p>
+<h2>Links</h2>
+<p><a href="/privacy/payday">Privacy Policy</a> · <a href="/terms/payday">Terms of Use</a> · <a href="/support/payday">Support</a></p>"#;
+    Response::ok(page("Pay Day", "EU e-invoicing for freelancers", body)).map(|mut r| {
+        let _ = r.headers_mut().set("Content-Type", "text/html; charset=utf-8");
+        r
+    })
+}
+
 pub fn terms_handler(_req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let app = ctx.param("app").map(|s| s.as_str()).unwrap_or("");
     Response::ok(render_terms(app)).map(|mut r| {
