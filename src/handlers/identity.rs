@@ -522,6 +522,48 @@ pub async fn delete_identity(req: Request, ctx: RouteContext<()>) -> Result<Resp
     Response::from_json(&json!({ "deleted": true }))
 }
 
+/// Returns the authenticated user's identity. Used by sibling workers (e.g.
+/// payday-worker) to validate a mako api-key and obtain the stable user id
+/// without sharing mako's database.
+pub async fn identity_me(req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let db = ctx.env.d1("DB")?;
+    let auth = match authenticate(&req, &db).await {
+        Ok(a) => a,
+        Err(e) => return e.to_response(),
+    };
+    Response::from_json(&json!({ "user_id": auth.user_id, "app_id": auth.app_id }))
+}
+
+/// Charges a flat-cost capability (e.g. `peppol.send`) against the authenticated
+/// user's balance — for non-AI metered actions a sibling worker performs.
+/// Returns 402 if the balance is insufficient.
+pub async fn charge_capability(mut req: Request, ctx: RouteContext<()>) -> Result<Response> {
+    let db = ctx.env.d1("DB")?;
+    let auth = match authenticate(&req, &db).await {
+        Ok(a) => a,
+        Err(e) => return e.to_response(),
+    };
+    let body: Value = match req.json().await {
+        Ok(b) => b,
+        Err(e) => return AppError::BadRequest(format!("Invalid request body: {}", e)).to_response(),
+    };
+    let capability = body.get("capability").and_then(|v| v.as_str()).unwrap_or("");
+    if capability.is_empty() {
+        return AppError::BadRequest("capability is required".to_string()).to_response();
+    }
+    let cost = crate::credits::get_flat_capability_cost(&auth.app_id, capability, &db)
+        .await
+        .unwrap_or(0);
+    if cost == 0 {
+        return AppError::BadRequest(format!("Unknown or free capability: {}", capability)).to_response();
+    }
+    let reference = body.get("reference").and_then(|v| v.as_str()).unwrap_or(capability);
+    match crate::credits::deduct_credits(&auth.app_id, &auth.user_id, cost, capability, reference, &db).await {
+        Ok(balance) => Response::from_json(&json!({ "charged": cost, "balance": balance })),
+        Err(_) => AppError::PaymentRequired(format!("Insufficient credits for {}", capability)).to_response(),
+    }
+}
+
 async fn zero_wallet(db: &D1Database, app_id: &str, user_id: &str) -> std::result::Result<(), AppError> {
     let now = Utc::now().to_rfc3339();
     db.prepare("UPDATE user_credits SET balance = 0, updated_at = ? WHERE app_id = ? AND user_id = ?")
