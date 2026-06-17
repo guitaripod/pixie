@@ -112,8 +112,8 @@ fn render(app: &str) -> String {
     } else {
         "Credit packs are sold through Apple In-App Purchase and validated via RevenueCat. We receive purchase records (which pack and a transaction identifier) to credit your balance. We never receive your payment-card details."
     };
-    let deletion = if app == "payday" {
-        "You can delete your account from within the app at any time, which removes your server-side identity and credit ledger; deleting the app removes the on-device data."
+    let deletion = if app == "payday" || app == "psybeam" {
+        "You can delete your account from within the app at any time (in Settings), which removes your server-side identity and credit ledger; deleting the app removes any remaining on-device data."
     } else {
         "You can delete the app at any time to remove on-device data."
     };
