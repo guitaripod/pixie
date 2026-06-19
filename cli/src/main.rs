@@ -55,12 +55,12 @@ async fn main() -> Result<()> {
             }
         }
         
-        Commands::Generate { prompt, number, size, quality, output, background, format, compress, moderation, model } => {
-            commands::generate::handle(&api_url, &prompt, number, &size, &quality, output.as_deref(), background.as_deref(), format.as_deref(), compress, moderation.as_deref(), &model).await?;
+        Commands::Generate { prompt, number, size, quality, output, background, format, compress, moderation, model, private } => {
+            commands::generate::handle(&api_url, &prompt, number, &size, &quality, output.as_deref(), background.as_deref(), format.as_deref(), compress, moderation.as_deref(), &model, private).await?;
         }
         
-        Commands::Edit { image, prompt, number, size, quality, fidelity, output, model } => {
-            commands::edit::handle(&api_url, &image, &prompt, None, number, &size, &quality, &fidelity, output.as_deref(), &model).await?;
+        Commands::Edit { image, prompt, number, size, quality, fidelity, output, model, private } => {
+            commands::edit::handle(&api_url, &image, &prompt, None, number, &size, &quality, &fidelity, output.as_deref(), &model, private).await?;
         }
         
         Commands::Gallery { action } => {
@@ -73,6 +73,17 @@ async fn main() -> Result<()> {
                 }
                 GalleryAction::View { id } => {
                     commands::gallery::view(&api_url, &id).await?;
+                }
+                GalleryAction::Delete { id } => {
+                    commands::gallery::delete(&api_url, &id).await?;
+                }
+                GalleryAction::Visibility { id, state } => {
+                    let is_public = matches!(state, cli::VisibilityState::Public);
+                    commands::gallery::set_visibility(&api_url, &id, is_public).await?;
+                }
+                GalleryAction::ShareAll { state } => {
+                    let is_public = matches!(state, cli::VisibilityState::Public);
+                    commands::gallery::set_all_visibility(&api_url, is_public).await?;
                 }
             }
         }

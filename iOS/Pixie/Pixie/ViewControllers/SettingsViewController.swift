@@ -24,16 +24,18 @@ class SettingsViewController: UIViewController {
     private enum Section: Int, CaseIterable {
         case appearance
         case defaults
+        case privacy
         case storage
         case api
         case admin
         case help
         case account
-        
+
         var title: String {
             switch self {
             case .appearance: return "Appearance"
             case .defaults: return "Defaults"
+            case .privacy: return "Privacy"
             case .storage: return "Storage"
             case .api: return "API"
             case .admin: return "Admin"
@@ -64,6 +66,11 @@ class SettingsViewController: UIViewController {
         case moderation
     }
     
+    private enum PrivacyRow: Int, CaseIterable {
+        case shareToGallery
+        case blockedAccounts
+    }
+
     private enum StorageRow: Int, CaseIterable {
         case cache
     }
@@ -133,8 +140,8 @@ class SettingsViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        // Update cache size when view appears
+
+        tableView.reloadData()
         loadCacheSize()
     }
     
@@ -205,6 +212,8 @@ extension SettingsViewController: UITableViewDataSource {
             return AppearanceRow.allCases.count
         case .defaults:
             return DefaultsRow.allCases.count
+        case .privacy:
+            return PrivacyRow.allCases.count
         case .storage:
             return StorageRow.allCases.count
         case .api:
@@ -231,6 +240,8 @@ extension SettingsViewController: UITableViewDataSource {
             return configureAppearanceCell(at: indexPath)
         case .defaults:
             return configureDefaultsCell(at: indexPath)
+        case .privacy:
+            return configurePrivacyCell(at: indexPath)
         case .storage:
             return configureStorageCell(at: indexPath)
         case .api:
@@ -491,6 +502,37 @@ extension SettingsViewController: UITableViewDataSource {
         return cell
     }
     
+    private func configurePrivacyCell(at indexPath: IndexPath) -> UITableViewCell {
+        guard let row = PrivacyRow(rawValue: indexPath.row) else {
+            return UITableViewCell()
+        }
+
+        switch row {
+        case .shareToGallery:
+            let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
+            cell.selectionStyle = .none
+            cell.textLabel?.text = "Share to Public Gallery"
+            cell.detailTextLabel?.text = "Show new creations in the Explore feed"
+            cell.detailTextLabel?.textColor = .secondaryLabel
+
+            let toggle = UISwitch()
+            toggle.isOn = configurationManager.shareToPublicGallery
+            toggle.onTintColor = UIColor(red: 103/255, green: 80/255, blue: 164/255, alpha: 1.0)
+            toggle.addTarget(self, action: #selector(shareToGalleryToggled(_:)), for: .valueChanged)
+            cell.accessoryView = toggle
+
+            return cell
+
+        case .blockedAccounts:
+            let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
+            cell.textLabel?.text = "Blocked Accounts"
+            let count = BlockedUsers.count
+            cell.detailTextLabel?.text = count == 0 ? "None" : "\(count)"
+            cell.accessoryType = .disclosureIndicator
+            return cell
+        }
+    }
+
     private func configureStorageCell(at indexPath: IndexPath) -> UITableViewCell {
         guard let row = StorageRow(rawValue: indexPath.row) else {
             return UITableViewCell()
@@ -650,6 +692,8 @@ extension SettingsViewController: UITableViewDelegate {
             handleAppearanceSelection(at: indexPath)
         case .defaults:
             handleDefaultsSelection(at: indexPath)
+        case .privacy:
+            handlePrivacySelection(at: indexPath)
         case .storage:
             handleStorageSelection(at: indexPath)
         case .api:
@@ -692,11 +736,25 @@ extension SettingsViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         let visibleSections = Section.allCases.filter { $0.isVisible }
         guard section < visibleSections.count else { return 0 }
-        
-        if visibleSections[section] == .storage {
+
+        switch visibleSections[section] {
+        case .storage:
             return 60
+        case .privacy:
+            return UITableView.automaticDimension
+        default:
+            return 0
         }
-        return 0
+    }
+
+    func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+        let visibleSections = Section.allCases.filter { $0.isVisible }
+        guard section < visibleSections.count else { return nil }
+
+        if visibleSections[section] == .privacy {
+            return "Images you share appear in Pixie's public Explore feed, where anyone can see them. Turn this off to keep new creations private. You can delete or hide any image anytime from your gallery."
+        }
+        return nil
     }
     
     private func handleAppearanceSelection(at indexPath: IndexPath) {
@@ -716,6 +774,16 @@ extension SettingsViewController: UITableViewDelegate {
         }
     }
     
+    private func handlePrivacySelection(at indexPath: IndexPath) {
+        guard let row = PrivacyRow(rawValue: indexPath.row) else { return }
+        switch row {
+        case .shareToGallery:
+            break
+        case .blockedAccounts:
+            navigationController?.pushViewController(BlockedAccountsViewController(), animated: true)
+        }
+    }
+
     private func handleStorageSelection(at indexPath: IndexPath) {
         // Storage rows don't have actions on tap
     }
@@ -861,6 +929,58 @@ extension SettingsViewController: UITableViewDelegate {
         haptics.impact(.click)
         let moderations = ["default", "auto", "low"]
         configurationManager.defaultModeration = moderations[sender.selectedSegmentIndex]
+    }
+
+    @objc private func shareToGalleryToggled(_ sender: UISwitch) {
+        haptics.impact(.click)
+        let isOn = sender.isOn
+        configurationManager.shareToPublicGallery = isOn
+
+        let alert = UIAlertController(
+            title: isOn ? "Share Existing Images?" : "Hide Existing Images?",
+            message: isOn
+                ? "New creations will appear in the public gallery. Do you also want to share all of your existing images?"
+                : "New creations will stay private. Do you also want to remove all of your existing images from the public gallery?",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Only New Images", style: .cancel))
+        alert.addAction(UIAlertAction(
+            title: isOn ? "Share All" : "Hide All",
+            style: isOn ? .default : .destructive
+        ) { [weak self] _ in
+            self?.applyVisibilityToAllImages(isPublic: isOn)
+        })
+        present(alert, animated: true)
+    }
+
+    private func applyVisibilityToAllImages(isPublic: Bool) {
+        Task {
+            do {
+                let count = try await APIService.shared.setAllVisibility(isPublic: isPublic)
+                await MainActor.run {
+                    self.haptics.impact(.success)
+                    GalleryCache.shared.clearCache()
+                    NotificationCenter.default.post(name: .galleryNeedsRefresh, object: nil)
+                    self.presentInfoAlert(
+                        title: "Done",
+                        message: isPublic
+                            ? "\(count) image(s) are now in the public gallery."
+                            : "\(count) image(s) removed from the public gallery."
+                    )
+                }
+            } catch {
+                await MainActor.run {
+                    self.haptics.impact(.error)
+                    self.presentInfoAlert(title: "Error", message: "Could not update your images. Try again later.")
+                }
+            }
+        }
+    }
+
+    private func presentInfoAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
     
     @objc private func clearCacheTapped() {

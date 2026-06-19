@@ -11,6 +11,14 @@ enum ImageAction {
     case download
     case share
     case report
+    case delete
+    case makePublic
+    case makePrivate
+    case block
+}
+
+extension Notification.Name {
+    static let galleryNeedsRefresh = Notification.Name("GalleryNeedsRefresh")
 }
 
 final class GalleryViewController: UIViewController {
@@ -175,6 +183,90 @@ private extension GalleryViewController {
         case .report:
             HapticsManager.shared.impact(.light)
             reportImage(image)
+
+        case .delete:
+            HapticsManager.shared.impact(.light)
+            confirmDelete(image)
+
+        case .makePublic:
+            HapticsManager.shared.impact(.light)
+            setVisibility(image, isPublic: true)
+
+        case .makePrivate:
+            HapticsManager.shared.impact(.light)
+            setVisibility(image, isPublic: false)
+
+        case .block:
+            HapticsManager.shared.impact(.light)
+            confirmBlock(image)
+        }
+    }
+
+    func confirmBlock(_ image: ImageMetadata) {
+        let alert = UIAlertController(
+            title: "Block This Account?",
+            message: "You won't see posts from this account in Explore. You can manage blocked accounts in Settings.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Block", style: .destructive) { _ in
+            BlockedUsers.block(image.userId)
+            HapticsManager.shared.notification(.success)
+            self.showToast("You won't see posts from this account")
+        })
+        present(alert, animated: true)
+    }
+
+    func confirmDelete(_ image: ImageMetadata) {
+        let alert = UIAlertController(
+            title: "Delete Image?",
+            message: "This permanently deletes the image and removes it from the public gallery. This can't be undone.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+            self?.deleteImage(image)
+        })
+        present(alert, animated: true)
+    }
+
+    func deleteImage(_ image: ImageMetadata) {
+        Task {
+            do {
+                try await APIService.shared.deleteImage(id: image.id)
+                await MainActor.run {
+                    HapticsManager.shared.notification(.success)
+                    self.personalGalleryVC.removeImage(id: image.id)
+                    self.exploreGalleryVC.removeImage(id: image.id)
+                    GalleryCache.shared.clearCache()
+                    self.showToast("Image deleted")
+                }
+            } catch {
+                await MainActor.run {
+                    HapticsManager.shared.notification(.error)
+                    self.showToast("Could not delete image. Try again later.")
+                }
+            }
+        }
+    }
+
+    func setVisibility(_ image: ImageMetadata, isPublic: Bool) {
+        Task {
+            do {
+                try await APIService.shared.setImageVisibility(id: image.id, isPublic: isPublic)
+                await MainActor.run {
+                    HapticsManager.shared.notification(.success)
+                    self.personalGalleryVC.applyVisibility(id: image.id, isPublic: isPublic)
+                    self.exploreGalleryVC.applyVisibility(id: image.id, isPublic: isPublic)
+                    GalleryCache.shared.clearCache()
+                    self.showToast(isPublic ? "Added to public gallery" : "Removed from public gallery")
+                }
+            } catch {
+                await MainActor.run {
+                    HapticsManager.shared.notification(.error)
+                    self.showToast("Could not update visibility. Try again later.")
+                }
+            }
         }
     }
 

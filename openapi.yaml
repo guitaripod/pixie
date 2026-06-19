@@ -731,6 +731,10 @@ paths:
                   default: "url"
                 user:
                   type: string
+                is_public:
+                  type: boolean
+                  default: true
+                  description: Whether the edited image appears in the public gallery feed (defaults to true).
       responses:
         '200':
           description: Image edited successfully
@@ -833,6 +837,105 @@ paths:
                 $ref: '#/components/schemas/ImageDetails'
         '404':
           $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: deleteImage
+      summary: Delete one of your own images
+      description: >
+        Permanently deletes the image (R2 object, database row, and any reports
+        filed against it) and removes it from the public gallery feed. Scoped to
+        the authenticated user — a caller can only delete their own image, and a
+        missing or non-owned image returns 404 so ownership is never disclosed.
+      tags: [Gallery]
+      parameters:
+        - in: path
+          name: image_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Image deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: boolean
+                  image_id:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/images/{image_id}/visibility:
+    put:
+      operationId: setImageVisibility
+      summary: Show or hide one of your images in the public gallery
+      description: >
+        Toggles whether one of the caller's own images appears in the public
+        gallery feed, without deleting it. Owner-scoped; returns 404 if the image
+        is missing or not owned by the caller.
+      tags: [Gallery]
+      parameters:
+        - in: path
+          name: image_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VisibilityRequest'
+      responses:
+        '200':
+          description: Visibility updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  image_id:
+                    type: string
+                  is_public:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/images/visibility:
+    put:
+      operationId: setAllImagesVisibility
+      summary: Show or hide all of your images in the public gallery
+      description: >
+        Bulk-sets the public/private flag on every image the caller owns. Backs
+        the "also hide my existing creations" action when a user opts out of the
+        public gallery.
+      tags: [Gallery]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VisibilityRequest'
+      responses:
+        '200':
+          description: Images updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated:
+                    type: integer
+                  is_public:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /r2/{user_id}/{image_id}:
     get:
@@ -1763,9 +1866,24 @@ components:
         user:
           type: string
           description: Optional user identifier
+        is_public:
+          type: boolean
+          default: true
+          description: >
+            Whether the generated image appears in the public gallery feed.
+            Defaults to true when omitted (historical behaviour). Set false to
+            store the image privately.
         openai_api_key:
           type: string
           description: Optional OpenAI API key (self-hosted mode only)
+
+    VisibilityRequest:
+      type: object
+      required: [is_public]
+      properties:
+        is_public:
+          type: boolean
+          description: True to show the image(s) in the public gallery, false to hide.
 
     ImageGenerationResponse:
       type: object
@@ -1841,6 +1959,9 @@ components:
           type: string
         credits_used:
           type: integer
+        is_public:
+          type: boolean
+          description: Whether the image appears in the public gallery feed
         created_at:
           type: string
           format: date-time
