@@ -130,6 +130,61 @@ impl ApiClient {
             .context("Failed to parse image metadata")
     }
     
+    pub async fn delete_image(&self, image_id: &str) -> Result<()> {
+        let url = format!("{}/v1/images/{}", self.base_url, image_id);
+
+        let response = self.client
+            .delete(&url)
+            .headers(self.headers()?)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            let error = response.text().await?;
+            return Err(anyhow::anyhow!("API error: {}", error));
+        }
+
+        Ok(())
+    }
+
+    pub async fn set_image_visibility(&self, image_id: &str, is_public: bool) -> Result<()> {
+        let url = format!("{}/v1/images/{}/visibility", self.base_url, image_id);
+
+        let response = self.client
+            .put(&url)
+            .headers(self.headers()?)
+            .json(&serde_json::json!({ "is_public": is_public }))
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            let error = response.text().await?;
+            return Err(anyhow::anyhow!("API error: {}", error));
+        }
+
+        Ok(())
+    }
+
+    pub async fn set_all_visibility(&self, is_public: bool) -> Result<usize> {
+        let url = format!("{}/v1/images/visibility", self.base_url);
+
+        let response = self.client
+            .put(&url)
+            .headers(self.headers()?)
+            .json(&serde_json::json!({ "is_public": is_public }))
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            let error = response.text().await?;
+            return Err(anyhow::anyhow!("API error: {}", error));
+        }
+
+        let body: serde_json::Value = response.json().await
+            .context("Failed to parse visibility response")?;
+        Ok(body.get("updated").and_then(|v| v.as_u64()).unwrap_or(0) as usize)
+    }
+
     pub async fn download_image(&self, url: &str) -> Result<Vec<u8>> {
         let response = self.client
             .get(url)
@@ -447,6 +502,8 @@ pub struct ImageGenerationRequest {
     pub stream: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub user: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_public: Option<bool>,
 }
 
 #[derive(Debug, Serialize)]
@@ -468,6 +525,8 @@ pub struct ImageEditRequest {
     pub stream: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub user: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_public: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -513,6 +572,8 @@ pub struct ImageMetadata {
     pub size: String,
     pub model: String,
     pub quality: Option<String>,
+    #[serde(default)]
+    pub is_public: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]

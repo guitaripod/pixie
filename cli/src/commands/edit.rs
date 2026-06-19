@@ -22,6 +22,7 @@ pub async fn handle(
     fidelity: &str,
     output: Option<&str>,
     model: &str,
+    private: bool,
 ) -> Result<()> {
     let config = Config::load()?;
     if !config.is_authenticated() {
@@ -165,8 +166,9 @@ pub async fn handle(
         partial_images: 0,
         stream: false,
         user: None,
+        is_public: if private { Some(false) } else { None },
     };
-    
+
     let response = client.edit_image(&request).await?;
     pb.finish_with_message(format!("Generated {} edited image(s)", response.data.len()));
     

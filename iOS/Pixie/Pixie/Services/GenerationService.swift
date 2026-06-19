@@ -111,9 +111,10 @@ class GenerationService {
             outputFormat: options.outputFormat,
             partialImages: nil,
             stream: false,
-            user: nil
+            user: nil,
+            isPublic: ConfigurationManager.shared.shareToPublicGallery
         )
-        
+
         let taskId = UUID().uuidString
         
         currentTask = Task { [weak self] in
@@ -210,9 +211,10 @@ class GenerationService {
                     outputCompression: options.compression,
                     partialImages: 0,
                     stream: false,
-                    user: nil
+                    user: nil,
+                    isPublic: ConfigurationManager.shared.shareToPublicGallery
                 )
-                
+
                 let response = try await apiService.editImage(request)
                 
                 guard !Task.isCancelled else {
