@@ -175,11 +175,14 @@ CREDIT COSTS:
         
         #[arg(long, help = "Moderation level (auto, low)")]
         moderation: Option<String>,
-        
+
         #[arg(long, default_value = "gemini-2.5-flash", help = "Model to use: gemini-2.5-flash (default), gpt-image-1")]
         model: String,
+
+        #[arg(long, help = "Keep this image private (do not show it in the public gallery feed)")]
+        private: bool,
     },
-    
+
     #[command(about = "Edit existing images with AI
 
 Examples:
@@ -276,9 +279,12 @@ CREDIT COSTS:
         
         #[arg(short, long, help = "Directory to save edited images")]
         output: Option<String>,
-        
+
         #[arg(long, default_value = "gemini-2.5-flash", help = "Model to use: gemini-2.5-flash (default), gpt-image-1")]
         model: String,
+
+        #[arg(long, help = "Keep this image private (do not show it in the public gallery feed)")]
+        private: bool,
     },
     
     #[command(about = "Browse image galleries

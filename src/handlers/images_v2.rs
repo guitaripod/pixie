@@ -127,13 +127,14 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
         ).await {
             Ok(stored_image) => {
                 let db = env.d1("DB")?;
-                
+
                 let per_image_credits = cost_estimate.credits / generation_req.n as u32;
                 let cost_cents = (cost_estimate.credits as f32 / 3.0) as i32;
-                
+                let is_public: i32 = if generation_req.is_public.unwrap_or(true) { 1 } else { 0 };
+
                 let stmt = db.prepare(
-                    "INSERT INTO stored_images (id, app_id, user_id, r2_key, prompt, provider, model, size, quality, created_at, expires_at, cost_cents, credits_charged)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    "INSERT INTO stored_images (id, app_id, user_id, r2_key, prompt, provider, model, size, quality, created_at, expires_at, cost_cents, credits_charged, is_public)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 );
 
                 let _ = stmt
@@ -151,6 +152,7 @@ pub async fn handle_generation(mut req: Request, ctx: RouteContext<()>) -> Resul
                         stored_image.expires_at.to_rfc3339().into(),
                         cost_cents.into(),
                         per_image_credits.into(),
+                        is_public.into(),
                     ])?
                     .run()
                     .await?;
@@ -393,13 +395,14 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
         ).await {
             Ok(stored_image) => {
                 let db = env.d1("DB")?;
-                
+
                 let per_image_credits = cost_estimate.credits / edit_req.n as u32;
                 let cost_cents = (cost_estimate.credits as f32 / 3.0) as i32;
-                
+                let is_public: i32 = if edit_req.is_public.unwrap_or(true) { 1 } else { 0 };
+
                 let stmt = db.prepare(
-                    "INSERT INTO stored_images (id, app_id, user_id, r2_key, prompt, provider, model, size, quality, created_at, expires_at, cost_cents, credits_charged)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    "INSERT INTO stored_images (id, app_id, user_id, r2_key, prompt, provider, model, size, quality, created_at, expires_at, cost_cents, credits_charged, is_public)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 );
 
                 let _ = stmt
@@ -417,6 +420,7 @@ pub async fn handle_edit(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
                         stored_image.expires_at.to_rfc3339().into(),
                         cost_cents.into(),
                         per_image_credits.into(),
+                        is_public.into(),
                     ])?
                     .run()
                     .await?;

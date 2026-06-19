@@ -500,8 +500,10 @@ async fn relink_anonymous_to_apple(
 }
 
 /// Delete the authenticated user's account (App Store 5.1.1(v)): removes the
-/// user row and every per-user credit record. Scoped to the api-key's own
-/// user_id, so a caller can only ever delete their own account.
+/// user row, every per-user credit record, and all of the user's generated
+/// images (R2 objects + rows + reports) so nothing of theirs lingers in the
+/// public gallery feed. Scoped to the api-key's own user_id, so a caller can
+/// only ever delete their own account.
 pub async fn delete_identity(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     let db = ctx.env.d1("DB")?;
     let auth = match authenticate(&req, &db).await {
@@ -509,6 +511,9 @@ pub async fn delete_identity(req: Request, ctx: RouteContext<()>) -> Result<Resp
         Err(e) => return e.to_response(),
     };
     let uid = auth.user_id;
+
+    purge_user_images(&ctx.env, &db, &uid).await?;
+
     for table in ["credit_transactions", "credit_purchases", "user_credits", "user_locks"] {
         db.prepare(&format!("DELETE FROM {} WHERE user_id = ?", table))
             .bind(&[uid.clone().into()])?
@@ -520,6 +525,42 @@ pub async fn delete_identity(req: Request, ctx: RouteContext<()>) -> Result<Resp
         .run()
         .await?;
     Response::from_json(&json!({ "deleted": true }))
+}
+
+/// Removes every image owned by `uid`: deletes each R2 object (best-effort, a
+/// failed object delete never blocks account deletion), the reports the user
+/// filed, and the stored_images rows.
+async fn purge_user_images(env: &worker::Env, db: &D1Database, uid: &str) -> std::result::Result<(), AppError> {
+    let rows = db
+        .prepare("SELECT r2_key FROM stored_images WHERE user_id = ?")
+        .bind(&[uid.into()])?
+        .all()
+        .await?;
+
+    if let (Ok(bucket), Ok(results)) = (env.bucket("IMAGES"), rows.results::<Value>()) {
+        for row in results {
+            if let Some(r2_key) = row.get("r2_key").and_then(|v| v.as_str()) {
+                if let Err(e) = bucket.delete(r2_key).await {
+                    console_log!("Failed to delete R2 object {} during account deletion: {:?}", r2_key, e);
+                }
+            }
+        }
+    }
+
+    db.prepare("DELETE FROM image_reports WHERE reporter_user_id = ?")
+        .bind(&[uid.into()])?
+        .run()
+        .await?;
+    db.prepare("DELETE FROM image_reports WHERE image_id IN (SELECT id FROM stored_images WHERE user_id = ?)")
+        .bind(&[uid.into()])?
+        .run()
+        .await?;
+    db.prepare("DELETE FROM stored_images WHERE user_id = ?")
+        .bind(&[uid.into()])?
+        .run()
+        .await?;
+
+    Ok(())
 }
 
 /// Returns the authenticated user's identity. Used by sibling workers (e.g.

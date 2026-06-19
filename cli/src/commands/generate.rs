@@ -21,6 +21,7 @@ pub async fn handle(
     compress: Option<u8>,
     moderation: Option<&str>,
     model: &str,
+    private: bool,
 ) -> Result<()> {
     let config = Config::load()?;
     if !config.is_authenticated() {
@@ -53,7 +54,10 @@ pub async fn handle(
     }
     
     println!("  Quantity:   {}", number.to_string().blue());
-    
+    if private {
+        println!("  Privacy:    {}", "Private (not shared to public gallery)".yellow());
+    }
+
     // Show optional parameters if set (OpenAI only)
     if !is_gemini {
         if let Some(bg) = background {
@@ -99,6 +103,7 @@ pub async fn handle(
         partial_images: None,
         stream: None,
         user: None,
+        is_public: if private { Some(false) } else { None },
     };
     
     let response = client.generate_images(&request).await?;

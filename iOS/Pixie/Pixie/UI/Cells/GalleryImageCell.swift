@@ -7,6 +7,7 @@ final class GalleryImageCell: UICollectionViewCell {
     
     private let imageView = UIImageView()
     private let gradientView = UIView()
+    private let privateBadge = UIImageView()
     private let promptLabel = UILabel()
     private let timeLabel = UILabel()
     private let creditsStackView = UIStackView()
@@ -31,6 +32,7 @@ final class GalleryImageCell: UICollectionViewCell {
         promptLabel.text = nil
         timeLabel.text = nil
         creditsLabel.text = nil
+        privateBadge.isHidden = true
         currentImageMetadata = nil
     }
     
@@ -63,6 +65,17 @@ final class GalleryImageCell: UICollectionViewCell {
         gradientLayer.locations = [0.0, 1.0]
         gradientView.layer.addSublayer(gradientLayer)
         
+        let badgeConfig = UIImage.SymbolConfiguration(pointSize: 10, weight: .semibold)
+        privateBadge.image = UIImage(systemName: "eye.slash.fill", withConfiguration: badgeConfig)
+        privateBadge.tintColor = .white
+        privateBadge.contentMode = .center
+        privateBadge.backgroundColor = .black.withAlphaComponent(0.45)
+        privateBadge.layer.cornerRadius = 10
+        privateBadge.clipsToBounds = true
+        privateBadge.isHidden = true
+        privateBadge.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(privateBadge)
+
         promptLabel.font = .systemFont(ofSize: 10, weight: .medium)
         promptLabel.textColor = .white
         promptLabel.numberOfLines = 2
@@ -111,9 +124,14 @@ final class GalleryImageCell: UICollectionViewCell {
             
             creditsStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
             creditsStackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
-            
+
             creditsIcon.widthAnchor.constraint(equalToConstant: 10),
-            creditsIcon.heightAnchor.constraint(equalToConstant: 10)
+            creditsIcon.heightAnchor.constraint(equalToConstant: 10),
+
+            privateBadge.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
+            privateBadge.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 6),
+            privateBadge.widthAnchor.constraint(equalToConstant: 20),
+            privateBadge.heightAnchor.constraint(equalToConstant: 20)
         ])
     }
     
@@ -122,6 +140,7 @@ final class GalleryImageCell: UICollectionViewCell {
         currentImageMetadata = metadata
         promptLabel.text = metadata.prompt
         timeLabel.text = formatTimeAgo(metadata.createdAt)
+        privateBadge.isHidden = (metadata.isPublic ?? true)
         
         if let creditsUsed = metadata.metadata?.creditsUsed {
             creditsLabel.text = "\(creditsUsed)"
