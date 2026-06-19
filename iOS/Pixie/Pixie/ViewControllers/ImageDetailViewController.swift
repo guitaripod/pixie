@@ -142,11 +142,64 @@ final class ImageDetailViewController: UIViewController {
             image: UIImage(systemName: "square.and.arrow.up"),
             action: #selector(shareTapped)
         )
-        
+
+        let moreButton = createMenuButton(
+            title: "More",
+            image: UIImage(systemName: "ellipsis")
+        )
+        moreButton.menu = makeMoreMenu()
+        moreButton.showsMenuAsPrimaryAction = true
+
         actionsStackView.addArrangedSubview(editButton)
         actionsStackView.addArrangedSubview(copyButton)
         actionsStackView.addArrangedSubview(downloadButton)
         actionsStackView.addArrangedSubview(shareButton)
+        actionsStackView.addArrangedSubview(moreButton)
+    }
+
+    private func makeMoreMenu() -> UIMenu {
+        let isOwn = AuthenticationManager.shared.currentUser?.id == image.userId
+        if isOwn {
+            let isPublic = image.isPublic ?? true
+            let visibility = UIAction(
+                title: isPublic ? "Remove from Public Gallery" : "Add to Public Gallery",
+                image: UIImage(systemName: isPublic ? "eye.slash" : "eye")
+            ) { [weak self] _ in
+                guard let self = self else { return }
+                HapticsManager.shared.impact(.light)
+                self.delegate?.imageDetailDidSelectAction(self, action: isPublic ? .makePrivate : .makePublic, image: self.image)
+            }
+            let delete = UIAction(
+                title: "Delete",
+                image: UIImage(systemName: "trash"),
+                attributes: .destructive
+            ) { [weak self] _ in
+                guard let self = self else { return }
+                HapticsManager.shared.impact(.light)
+                self.delegate?.imageDetailDidSelectAction(self, action: .delete, image: self.image)
+            }
+            return UIMenu(title: "", children: [visibility, delete])
+        } else {
+            let report = UIAction(
+                title: "Report Image",
+                image: UIImage(systemName: "exclamationmark.bubble"),
+                attributes: .destructive
+            ) { [weak self] _ in
+                guard let self = self else { return }
+                HapticsManager.shared.impact(.light)
+                self.delegate?.imageDetailDidSelectAction(self, action: .report, image: self.image)
+            }
+            let block = UIAction(
+                title: "Block User",
+                image: UIImage(systemName: "hand.raised"),
+                attributes: .destructive
+            ) { [weak self] _ in
+                guard let self = self else { return }
+                HapticsManager.shared.impact(.light)
+                self.delegate?.imageDetailDidSelectAction(self, action: .block, image: self.image)
+            }
+            return UIMenu(title: "", children: [report, block])
+        }
     }
     
     private func createActionButton(title: String, image: UIImage?, action: Selector) -> UIButton {
@@ -181,10 +234,36 @@ final class ImageDetailViewController: UIViewController {
                 button.transform = .identity
             }
         }
-        
+
         return button
     }
-    
+
+    private func createMenuButton(title: String, image: UIImage?) -> UIButton {
+        var config = UIButton.Configuration.tinted()
+        config.title = title
+        config.image = image
+        config.imagePlacement = .top
+        config.imagePadding = 4
+        config.baseForegroundColor = UIColor(red: 103/255, green: 80/255, blue: 164/255, alpha: 1.0)
+        config.baseBackgroundColor = UIColor(red: 103/255, green: 80/255, blue: 164/255, alpha: 0.1)
+        config.cornerStyle = .medium
+        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .systemFont(ofSize: 12, weight: .medium)
+            return outgoing
+        }
+
+        let button = UIButton(configuration: config)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.heightAnchor.constraint(equalToConstant: 60).isActive = true
+
+        if UIDevice.isPad {
+            button.setupPointerInteraction()
+        }
+
+        return button
+    }
+
     private func setupDetailsSection() {
         detailsStackView.axis = .vertical
         detailsStackView.spacing = 16

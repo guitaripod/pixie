@@ -88,13 +88,77 @@ pub async fn view(api_url: &str, image_id: &str) -> Result<()> {
         println!("Quality: {}", quality);
     }
     println!("User: {}", image.user_id);
-    
+    if let Some(is_public) = image.is_public {
+        println!("Visibility: {}", if is_public { "Public".green() } else { "Private".yellow() });
+    }
+
     if let Ok(date) = DateTime::parse_from_rfc3339(&image.created_at) {
         println!("Created: {}", date.format("%Y-%m-%d %H:%M:%S"));
     } else {
         println!("Created: {}", image.created_at);
     }
-    
+
+    Ok(())
+}
+
+pub async fn delete(api_url: &str, image_id: &str) -> Result<()> {
+    let config = Config::load()?;
+    if !config.is_authenticated() {
+        return Err(anyhow::anyhow!(
+            "Not authenticated. Run {} to authenticate",
+            "pixie auth github".cyan()
+        ));
+    }
+
+    let client = ApiClient::new(api_url)?;
+
+    println!("Deleting image {}...", image_id);
+    client.delete_image(image_id).await?;
+
+    println!("{}", "Image deleted. It has been removed from your gallery and the public feed.".green());
+
+    Ok(())
+}
+
+pub async fn set_visibility(api_url: &str, image_id: &str, is_public: bool) -> Result<()> {
+    let config = Config::load()?;
+    if !config.is_authenticated() {
+        return Err(anyhow::anyhow!(
+            "Not authenticated. Run {} to authenticate",
+            "pixie auth github".cyan()
+        ));
+    }
+
+    let client = ApiClient::new(api_url)?;
+    client.set_image_visibility(image_id, is_public).await?;
+
+    if is_public {
+        println!("{}", "Image is now public — it appears in the public gallery feed.".green());
+    } else {
+        println!("{}", "Image is now private — removed from the public gallery feed.".yellow());
+    }
+
+    Ok(())
+}
+
+pub async fn set_all_visibility(api_url: &str, is_public: bool) -> Result<()> {
+    let config = Config::load()?;
+    if !config.is_authenticated() {
+        return Err(anyhow::anyhow!(
+            "Not authenticated. Run {} to authenticate",
+            "pixie auth github".cyan()
+        ));
+    }
+
+    let client = ApiClient::new(api_url)?;
+    let updated = client.set_all_visibility(is_public).await?;
+
+    if is_public {
+        println!("{}", format!("{} image(s) are now public.", updated).green());
+    } else {
+        println!("{}", format!("{} image(s) removed from the public gallery feed.", updated).yellow());
+    }
+
     Ok(())
 }
 

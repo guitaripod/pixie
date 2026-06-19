@@ -6,6 +6,6 @@ pub mod admin;
 
 pub use app::{Cli, Commands};
 pub use auth::AuthProvider;
-pub use gallery::GalleryAction;
+pub use gallery::{GalleryAction, VisibilityState};
 pub use credits::CreditsAction;
 pub use admin::{AdminAction, AdminCreditsAction};

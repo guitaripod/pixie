@@ -402,6 +402,11 @@ class ChatGenerationViewController: UIViewController {
         }) {
             return
         }
+        if PublicGalleryConsentViewController.presentIfNeeded(from: self, onContinue: { [weak self] in
+            self?.handleSendPrompt(prompt)
+        }) {
+            return
+        }
         if prompt == "EDIT_MODE" {
             print("🖋️ ChatGenerationVC: Edit mode detected")
             handleEditImage()
