@@ -47,8 +47,21 @@ impl Config {
     pub fn config_path() -> Result<PathBuf> {
         let config_dir = dirs::config_dir()
             .context("Failed to find config directory")?;
-        
-        Ok(config_dir.join("openai-image-proxy").join("config.toml"))
+
+        let mako = config_dir.join("mako").join("config.toml");
+        let legacy = config_dir.join("openai-image-proxy").join("config.toml");
+        Ok(Self::preferred_config_path(mako, legacy))
+    }
+
+    /// Prefers the `mako`-named config, but honors an existing legacy
+    /// `openai-image-proxy` config so already-authenticated CLIs keep working
+    /// after the rename. New configs are written under `mako`.
+    fn preferred_config_path(mako: PathBuf, legacy: PathBuf) -> PathBuf {
+        if !mako.exists() && legacy.exists() {
+            legacy
+        } else {
+            mako
+        }
     }
     
     pub fn is_authenticated(&self) -> bool {
