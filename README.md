@@ -2,7 +2,7 @@
 
 [![Download on the App Store](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/us/app/pixiepocket/id6751730339)
 
-A high-performance monorepo containing the Pixie AI image generation service built on OpenAI's gpt-image-1 model. Includes a Rust-based Cloudflare Worker backend, command-line interface, Android app, and iOS app.
+The Pixie AI image-generation client suite: a command-line interface, an Android app, and an iOS app. The backend that powers them lives in [`guitaripod/mako`](https://github.com/guitaripod/mako) (a shared Cloudflare Worker; deployed as `openai-image-proxy` @ `mako.midgarcorp.cc`).
 
 ## Quick Links
 

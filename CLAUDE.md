@@ -2,49 +2,40 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## What this repo is
+
+**Pixie** is the client-app suite for the Pixie AI image-generation product: the **iOS app** (`iOS/Pixie`), the **Android app** (`android/`), and the **CLI** (`cli/`). All three are clients of the **mako** backend.
+
+> **The backend lives in a separate repo: `guitaripod/mako` (`~/Dev/rust/mako`).** Anything about the Cloudflare Worker, D1, migrations, wrangler, secrets, credits, or providers (OpenAI/Gemini/Claude) belongs there, NOT here. Deployed as `openai-image-proxy` @ `mako.midgarcorp.cc`. This repo only consumes its HTTP API.
+
 ## Common Commands
 
 ```bash
-# Development
-npx wrangler dev            # Run locally with hot reload
-npx wrangler deploy         # Deploy to production
-npx wrangler tail           # Watch logs
-
-# Database
-npx wrangler d1 migrations apply DB --local                         # Apply migrations locally
-npx wrangler d1 execute openai-image-proxy --file=migrations/001_schema.sql --remote  # Apply to production
-
-# Secrets (MUST use wrangler secret, not config files)
-npx wrangler secret put OPENAI_API_KEY
-
-# CLI development
+# CLI (Rust, standalone product + the reference client)
 cd cli && cargo run -- [args]
-The CLI app is a standalone product, but we also use it to validate the backend functions correctly.
+cd cli && cargo build --release
+
+# iOS
+cd iOS/Pixie && xcodebuild -project Pixie.xcodeproj -scheme Pixie \
+  -destination 'platform=iOS Simulator,id=69011470-D880-44F0-A527-480A03C692CA' build -quiet
+
+# Android
+cd android && ./gradlew compileDebugSources
 ```
 
 ## iOS Development
 
-```bash
-# Build iOS project
-cd iOS/Pixie && xcodebuild -project Pixie.xcodeproj -scheme Pixie -destination 'platform=iOS Simulator,id=69011470-D880-44F0-A527-480A03C692CA' build -quiet
-```
-- Do not add code comments.
-- Reference the CLI and the Android app when you build the iOS UI components to ensure you don't hallucinate and create the same thing, but with native iOS components and feel.
-- Use the latest iOS15 SDK UIButton APIs, not the old @objc stuff.
-- Always use UIStackViews as much as possible to build UI constraints.
+- Reference the CLI and the Android app when building iOS UI components so behavior stays consistent — reimplement with native iOS components and feel, don't hallucinate.
+- Use modern SDK `UIButton` configuration APIs, not the old `@objc` target/action style.
+- Prefer `UIStackView` for layout wherever possible.
 
 ## Important Notes
 
-- **No automated tests** - Test with `npx wrangler dev` and the CLI tool.
-- **Testing**: Use the CLI (`cd cli && cargo run -- [args]`) to test both CLI and backend functionality.
-- **Cost optimization**: When testing image generation, always use `--quality low` (4-5 credits) instead of high (50-80 credits).
-- **Rate limiting**: One concurrent request per user via `user_locks` table. Locks can get stuck.
-- **API compatibility**: `/v1/images/generations` must match OpenAI's format exactly.
-- **Build failures**: Run `cargo install worker-build` first.
-- **Database migrations**: Tables have foreign keys - order matters.
-- **No warnings**: There should be no compiler warnings.
-- **No code comments**: Don't add code comments until specifically asked for, such as interface documentation.
-- **CLI is the source of truth**: All client code must consider the CLI as the source of truth.
+- **CLI is the source of truth**: all client code (iOS, Android) must treat the CLI's behavior as canonical.
+- **Cost optimization**: when testing image generation, use `--quality low` (4-5 credits), not high (50-80 credits).
+- **API compatibility**: the backend's `/v1/images/generations` matches OpenAI's format; clients should too.
+- **Backend changes** (worker, credits, providers, migrations, rate limiting): make them in `guitaripod/mako`, then consume here.
+- **No automated tests** — validate clients against a running backend (`~/Dev/rust/mako`, `npx wrangler dev`) via the CLI.
 
 # No Code comments
 - DO NOT ADD CODE COMMENTS. THEY ARE BLOAT!!
