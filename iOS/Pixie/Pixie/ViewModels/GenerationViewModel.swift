@@ -452,6 +452,9 @@ class GenerationViewModel: ObservableObject {
             messages.append(assistantMessage)
             hapticManager.impact(.success)
             generationSucceededSubject.send(())
+            if !images.isEmpty {
+                Task { @MainActor in ReviewPrompt.recordSuccessfulGeneration() }
+            }
 
             // Update Live Activity if in background
             if let activity = currentLiveActivity {
