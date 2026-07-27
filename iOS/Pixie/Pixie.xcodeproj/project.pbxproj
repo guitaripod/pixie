@@ -184,6 +184,7 @@
 				2CB109292E37549E004A0202 /* GoogleSignInSwift */,
 				2CAB91B22E3AB5940087EBE7 /* RevenueCat */,
 				ACED175C0000000000000002 /* AICreditsCore */,
+				2CAA00022F000002004A0202 /* MidgarKit */,
 			);
 			productName = Pixie;
 			productReference = 2CB38B082E36AED800E68202 /* Pixie.app */;
@@ -220,6 +221,7 @@
 				2CB109282E37549E004A0202 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				2CAB91B12E3AB5940087EBE7 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 				ACED175C0000000000000001 /* XCRemoteSwiftPackageReference "AICredits" */,
+				2CAA00012F000001004A0202 /* XCRemoteSwiftPackageReference "MidgarKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2CB38B092E36AED800E68202 /* Products */;
@@ -585,6 +587,14 @@
 				minimumVersion = 9.0.0;
 			};
 		};
+		2CAA00012F000001004A0202 /* XCRemoteSwiftPackageReference "MidgarKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/guitaripod/MidgarKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.1.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -602,6 +612,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 2CB109282E37549E004A0202 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignInSwift;
+		};
+		2CAA00022F000002004A0202 /* MidgarKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2CAA00012F000001004A0202 /* XCRemoteSwiftPackageReference "MidgarKit" */;
+			productName = MidgarKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

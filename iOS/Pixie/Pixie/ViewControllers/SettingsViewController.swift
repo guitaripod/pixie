@@ -1,4 +1,5 @@
 import AuthenticationServices
+import MidgarKit
 import UIKit
 
 class SettingsViewController: UIViewController {
@@ -86,6 +87,7 @@ class SettingsViewController: UIViewController {
     private enum HelpRow: Int, CaseIterable {
         case documentation
         case cloudAIConsent
+        case moreApps
         case about
     }
     
@@ -613,6 +615,10 @@ extension SettingsViewController: UITableViewDataSource {
             cell.textLabel?.text = "Cloud AI Consent"
             cell.detailTextLabel?.text = CloudAIConsent.isGranted ? "Granted" : "Not granted"
             cell.accessoryType = .disclosureIndicator
+        case .moreApps:
+            cell.textLabel?.text = "More Apps"
+            cell.detailTextLabel?.text = "Other apps by this developer"
+            cell.accessoryType = .disclosureIndicator
         case .about:
             cell.textLabel?.text = "About"
             if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
@@ -814,6 +820,8 @@ extension SettingsViewController: UITableViewDelegate {
             presentHelpDocumentation()
         case .cloudAIConsent:
             presentCloudAIConsentOptions(at: indexPath)
+        case .moreApps:
+            Midgar.present(from: self)
         case .about:
             break
         }
