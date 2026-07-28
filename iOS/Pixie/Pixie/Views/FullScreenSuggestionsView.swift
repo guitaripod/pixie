@@ -32,41 +32,41 @@ class FullScreenSuggestionsView: UIView {
     private var isEditMode = false
     private let haptics = HapticManager.shared
     private let quickActions = [
-        QuickAction(icon: "person.crop.square", title: "Portrait", prompt: "Professional portrait photo of a person, studio lighting, high quality, sharp focus", color: UIColor(red: 0.39, green: 0.40, blue: 0.95, alpha: 1)),
-        QuickAction(icon: "bolt.fill", title: "Cyberpunk", prompt: "Cyberpunk cityscape with neon lights, flying cars, rain, blade runner style", color: UIColor(red: 0.88, green: 0.08, blue: 0.28, alpha: 1)),
-        QuickAction(icon: "pawprint", title: "Animals", prompt: "Adorable animal portrait, detailed fur texture, expressive eyes, natural lighting", color: UIColor(red: 0.55, green: 0.36, blue: 0.96, alpha: 1)),
-        QuickAction(icon: "building.2", title: "Architecture", prompt: "Modern architecture photography, clean lines, minimalist design, professional composition", color: UIColor(red: 0.94, green: 0.27, blue: 0.27, alpha: 1)),
-        QuickAction(icon: "mountain.2", title: "Landscape", prompt: "Breathtaking landscape photography, golden hour lighting, dramatic sky, high resolution", color: UIColor(red: 0.06, green: 0.59, blue: 0.53, alpha: 1)),
-        QuickAction(icon: "wand.and.stars", title: "Fantasy", prompt: "Epic fantasy landscape with magical elements, dragons, castles, mystical atmosphere", color: UIColor(red: 0.49, green: 0.23, blue: 0.93, alpha: 1)),
-        QuickAction(icon: "paintbrush", title: "Digital Art", prompt: "Digital artwork, vibrant colors, detailed illustration, professional quality", color: UIColor(red: 0.96, green: 0.62, blue: 0.04, alpha: 1)),
-        QuickAction(icon: "fork.knife", title: "Food", prompt: "Professional food photography, appetizing presentation, restaurant quality, shallow depth of field", color: UIColor(red: 0.93, green: 0.17, blue: 0.60, alpha: 1)),
-        QuickAction(icon: "sparkle", title: "Space", prompt: "Stunning space scene with galaxies, nebulas, planets, cosmic colors", color: UIColor(red: 0.12, green: 0.16, blue: 0.22, alpha: 1)),
-        QuickAction(icon: "leaf", title: "Macro", prompt: "Extreme macro photography, intricate details, shallow depth of field, professional quality", color: UIColor(red: 0.06, green: 0.46, blue: 0.43, alpha: 1)),
-        QuickAction(icon: "moon", title: "Surreal", prompt: "Surreal dreamscape with impossible geometry, floating objects, Salvador Dali style", color: UIColor(red: 0.43, green: 0.16, blue: 0.85, alpha: 1)),
-        QuickAction(icon: "camera.filters", title: "Retro", prompt: "80s retro style with synthwave colors, palm trees, sunset, miami vice aesthetic", color: UIColor(red: 0.86, green: 0.15, blue: 0.47, alpha: 1)),
-        QuickAction(icon: "drop", title: "Underwater", prompt: "Underwater photography, coral reef, tropical fish, sun rays through water", color: UIColor(red: 0.01, green: 0.52, blue: 0.78, alpha: 1)),
-        QuickAction(icon: "square.grid.3x3", title: "Miniature", prompt: "Miniature tilt-shift photography effect, looks like a tiny model world", color: UIColor(red: 0.98, green: 0.45, blue: 0.09, alpha: 1))
+        QuickAction(icon: "person.crop.square", title: String(localized: "Portrait"), prompt: "Professional portrait photo of a person, studio lighting, high quality, sharp focus", color: UIColor(red: 0.39, green: 0.40, blue: 0.95, alpha: 1)),
+        QuickAction(icon: "bolt.fill", title: String(localized: "Cyberpunk"), prompt: "Cyberpunk cityscape with neon lights, flying cars, rain, blade runner style", color: UIColor(red: 0.88, green: 0.08, blue: 0.28, alpha: 1)),
+        QuickAction(icon: "pawprint", title: String(localized: "Animals"), prompt: "Adorable animal portrait, detailed fur texture, expressive eyes, natural lighting", color: UIColor(red: 0.55, green: 0.36, blue: 0.96, alpha: 1)),
+        QuickAction(icon: "building.2", title: String(localized: "Architecture"), prompt: "Modern architecture photography, clean lines, minimalist design, professional composition", color: UIColor(red: 0.94, green: 0.27, blue: 0.27, alpha: 1)),
+        QuickAction(icon: "mountain.2", title: String(localized: "Landscape"), prompt: "Breathtaking landscape photography, golden hour lighting, dramatic sky, high resolution", color: UIColor(red: 0.06, green: 0.59, blue: 0.53, alpha: 1)),
+        QuickAction(icon: "wand.and.stars", title: String(localized: "Fantasy"), prompt: "Epic fantasy landscape with magical elements, dragons, castles, mystical atmosphere", color: UIColor(red: 0.49, green: 0.23, blue: 0.93, alpha: 1)),
+        QuickAction(icon: "paintbrush", title: String(localized: "Digital Art"), prompt: "Digital artwork, vibrant colors, detailed illustration, professional quality", color: UIColor(red: 0.96, green: 0.62, blue: 0.04, alpha: 1)),
+        QuickAction(icon: "fork.knife", title: String(localized: "Food"), prompt: "Professional food photography, appetizing presentation, restaurant quality, shallow depth of field", color: UIColor(red: 0.93, green: 0.17, blue: 0.60, alpha: 1)),
+        QuickAction(icon: "sparkle", title: String(localized: "Space"), prompt: "Stunning space scene with galaxies, nebulas, planets, cosmic colors", color: UIColor(red: 0.12, green: 0.16, blue: 0.22, alpha: 1)),
+        QuickAction(icon: "leaf", title: String(localized: "Macro"), prompt: "Extreme macro photography, intricate details, shallow depth of field, professional quality", color: UIColor(red: 0.06, green: 0.46, blue: 0.43, alpha: 1)),
+        QuickAction(icon: "moon", title: String(localized: "Surreal"), prompt: "Surreal dreamscape with impossible geometry, floating objects, Salvador Dali style", color: UIColor(red: 0.43, green: 0.16, blue: 0.85, alpha: 1)),
+        QuickAction(icon: "camera.filters", title: String(localized: "Retro"), prompt: "80s retro style with synthwave colors, palm trees, sunset, miami vice aesthetic", color: UIColor(red: 0.86, green: 0.15, blue: 0.47, alpha: 1)),
+        QuickAction(icon: "drop", title: String(localized: "Underwater"), prompt: "Underwater photography, coral reef, tropical fish, sun rays through water", color: UIColor(red: 0.01, green: 0.52, blue: 0.78, alpha: 1)),
+        QuickAction(icon: "square.grid.3x3", title: String(localized: "Miniature"), prompt: "Miniature tilt-shift photography effect, looks like a tiny model world", color: UIColor(red: 0.98, green: 0.45, blue: 0.09, alpha: 1))
     ]
     private let editModeQuickActions = [
-        QuickAction(icon: "paintpalette", title: "Recolor", prompt: "Change the color scheme to vibrant warm tones", color: UIColor(red: 0.96, green: 0.26, blue: 0.21, alpha: 1)),
-        QuickAction(icon: "light.max", title: "Lighting", prompt: "Add dramatic lighting with strong shadows and highlights", color: UIColor(red: 0.95, green: 0.77, blue: 0.06, alpha: 1)),
-        QuickAction(icon: "paintbrush.pointed", title: "Art Style", prompt: "Transform into oil painting style with visible brush strokes", color: UIColor(red: 0.55, green: 0.27, blue: 0.07, alpha: 1)),
-        QuickAction(icon: "minus.circle", title: "Remove", prompt: "Remove all unwanted objects and distractions from the background", color: UIColor(red: 0.96, green: 0.27, blue: 0.27, alpha: 1)),
-        QuickAction(icon: "wand.and.stars", title: "Enhance", prompt: "Enhance the image quality, make it sharper and more vibrant", color: UIColor(red: 0.55, green: 0.36, blue: 0.96, alpha: 1)),
-        QuickAction(icon: "moon.stars", title: "Night", prompt: "Transform this into a beautiful nighttime scene with stars and moonlight", color: UIColor(red: 0.12, green: 0.25, blue: 0.69, alpha: 1)),
-        QuickAction(icon: "cloud.rain", title: "Weather", prompt: "Add dramatic storm clouds and rain to create a moody atmosphere", color: UIColor(red: 0.39, green: 0.45, blue: 0.52, alpha: 1)),
-        QuickAction(icon: "tree", title: "Season", prompt: "Transform this into a beautiful autumn scene with fall colors", color: UIColor(red: 0.86, green: 0.15, blue: 0.15, alpha: 1)),
-        QuickAction(icon: "face.smiling", title: "Expression", prompt: "Make the person smile naturally and look happy", color: UIColor(red: 0.96, green: 0.62, blue: 0.04, alpha: 1)),
-        QuickAction(icon: "rectangle.landscape", title: "Background", prompt: "Replace the background with a beautiful beach sunset", color: UIColor(red: 0.01, green: 0.52, blue: 0.78, alpha: 1)),
-        QuickAction(icon: "blur", title: "Blur", prompt: "Add professional bokeh blur to the background", color: UIColor(red: 0.65, green: 0.34, blue: 0.84, alpha: 1)),
-        QuickAction(icon: "sparkles", title: "Dreamy", prompt: "Add a dreamy, ethereal quality with soft light and glow", color: UIColor(red: 0.93, green: 0.51, blue: 0.93, alpha: 1)),
-        QuickAction(icon: "film", title: "Vintage", prompt: "Apply vintage film photography style with grain and faded colors", color: UIColor(red: 0.48, green: 0.31, blue: 0.24, alpha: 1)),
-        QuickAction(icon: "bolt", title: "Cyberpunk", prompt: "Transform into cyberpunk style with neon lights and futuristic elements", color: UIColor(red: 0.88, green: 0.08, blue: 0.72, alpha: 1)),
-        QuickAction(icon: "square.dashed", title: "Minimal", prompt: "Simplify to minimalist style with clean lines and reduced colors", color: UIColor(red: 0.24, green: 0.24, blue: 0.26, alpha: 1)),
-        QuickAction(icon: "theatermasks", title: "Dramatic", prompt: "Add dramatic mood with high contrast and intense emotions", color: UIColor(red: 0.64, green: 0.08, blue: 0.08, alpha: 1))
+        QuickAction(icon: "paintpalette", title: String(localized: "Recolor"), prompt: "Change the color scheme to vibrant warm tones", color: UIColor(red: 0.96, green: 0.26, blue: 0.21, alpha: 1)),
+        QuickAction(icon: "light.max", title: String(localized: "Lighting"), prompt: "Add dramatic lighting with strong shadows and highlights", color: UIColor(red: 0.95, green: 0.77, blue: 0.06, alpha: 1)),
+        QuickAction(icon: "paintbrush.pointed", title: String(localized: "Art Style"), prompt: "Transform into oil painting style with visible brush strokes", color: UIColor(red: 0.55, green: 0.27, blue: 0.07, alpha: 1)),
+        QuickAction(icon: "minus.circle", title: String(localized: "Remove"), prompt: "Remove all unwanted objects and distractions from the background", color: UIColor(red: 0.96, green: 0.27, blue: 0.27, alpha: 1)),
+        QuickAction(icon: "wand.and.stars", title: String(localized: "Enhance"), prompt: "Enhance the image quality, make it sharper and more vibrant", color: UIColor(red: 0.55, green: 0.36, blue: 0.96, alpha: 1)),
+        QuickAction(icon: "moon.stars", title: String(localized: "Night"), prompt: "Transform this into a beautiful nighttime scene with stars and moonlight", color: UIColor(red: 0.12, green: 0.25, blue: 0.69, alpha: 1)),
+        QuickAction(icon: "cloud.rain", title: String(localized: "Weather"), prompt: "Add dramatic storm clouds and rain to create a moody atmosphere", color: UIColor(red: 0.39, green: 0.45, blue: 0.52, alpha: 1)),
+        QuickAction(icon: "tree", title: String(localized: "Season"), prompt: "Transform this into a beautiful autumn scene with fall colors", color: UIColor(red: 0.86, green: 0.15, blue: 0.15, alpha: 1)),
+        QuickAction(icon: "face.smiling", title: String(localized: "Expression"), prompt: "Make the person smile naturally and look happy", color: UIColor(red: 0.96, green: 0.62, blue: 0.04, alpha: 1)),
+        QuickAction(icon: "rectangle.landscape", title: String(localized: "Background"), prompt: "Replace the background with a beautiful beach sunset", color: UIColor(red: 0.01, green: 0.52, blue: 0.78, alpha: 1)),
+        QuickAction(icon: "blur", title: String(localized: "Blur"), prompt: "Add professional bokeh blur to the background", color: UIColor(red: 0.65, green: 0.34, blue: 0.84, alpha: 1)),
+        QuickAction(icon: "sparkles", title: String(localized: "Dreamy"), prompt: "Add a dreamy, ethereal quality with soft light and glow", color: UIColor(red: 0.93, green: 0.51, blue: 0.93, alpha: 1)),
+        QuickAction(icon: "film", title: String(localized: "Vintage"), prompt: "Apply vintage film photography style with grain and faded colors", color: UIColor(red: 0.48, green: 0.31, blue: 0.24, alpha: 1)),
+        QuickAction(icon: "bolt", title: String(localized: "Cyberpunk"), prompt: "Transform into cyberpunk style with neon lights and futuristic elements", color: UIColor(red: 0.88, green: 0.08, blue: 0.72, alpha: 1)),
+        QuickAction(icon: "square.dashed", title: String(localized: "Minimal"), prompt: "Simplify to minimalist style with clean lines and reduced colors", color: UIColor(red: 0.24, green: 0.24, blue: 0.26, alpha: 1)),
+        QuickAction(icon: "theatermasks", title: String(localized: "Dramatic"), prompt: "Add dramatic mood with high contrast and intense emotions", color: UIColor(red: 0.64, green: 0.08, blue: 0.08, alpha: 1))
     ]
     private let creativePrompts = [
-        CreativePrompt(category: "Fantasy", emoji: "🐉", prompts: [
+        CreativePrompt(category: String(localized: "Fantasy"), emoji: "🐉", prompts: [
             "Majestic dragon soaring through cloudy skies, fantasy art style",
             "Futuristic city with flying cars and neon lights at night",
             "Magical forest with glowing mushrooms and fairy lights",
@@ -74,7 +74,7 @@ class FullScreenSuggestionsView: UIView {
             "Steampunk airship floating above Victorian London",
             "Enchanted castle on floating island in the clouds"
         ], color: UIColor(red: 0.58, green: 0.2, blue: 0.92, alpha: 1)),
-        CreativePrompt(category: "Nature", emoji: "🌿", prompts: [
+        CreativePrompt(category: String(localized: "Nature"), emoji: "🌿", prompts: [
             "Majestic eagle soaring over mountain peaks at sunrise",
             "Underwater coral reef teeming with colorful tropical fish",
             "Northern lights dancing over a frozen lake in winter",
@@ -82,7 +82,7 @@ class FullScreenSuggestionsView: UIView {
             "Butterfly garden with hundreds of colorful butterflies",
             "Thunderstorm over dramatic desert landscape"
         ], color: UIColor(red: 0.02, green: 0.59, blue: 0.41, alpha: 1)),
-        CreativePrompt(category: "Abstract", emoji: "🎨", prompts: [
+        CreativePrompt(category: String(localized: "Abstract"), emoji: "🎨", prompts: [
             "Vibrant abstract painting with swirling colors and geometric shapes",
             "Minimalist composition with bold colors and clean lines",
             "Surreal dreamscape with floating objects and impossible geometry",
@@ -90,7 +90,7 @@ class FullScreenSuggestionsView: UIView {
             "Impressionist painting of a sunset over lavender fields",
             "Fractal patterns with infinite complexity and vivid colors"
         ], color: UIColor(red: 0.86, green: 0.15, blue: 0.15, alpha: 1)),
-        CreativePrompt(category: "Urban", emoji: "🏙️", prompts: [
+        CreativePrompt(category: String(localized: "Urban"), emoji: "🏙️", prompts: [
             "High fashion photoshoot in minimalist studio setting",
             "Cozy coffee shop interior with warm lighting and plants",
             "Street style fashion photography in urban setting",
@@ -98,7 +98,7 @@ class FullScreenSuggestionsView: UIView {
             "Modern home office with scandinavian design aesthetic",
             "Bustling city street at night with neon signs"
         ], color: UIColor(red: 0.86, green: 0.15, blue: 0.47, alpha: 1)),
-        CreativePrompt(category: "Tech", emoji: "🤖", prompts: [
+        CreativePrompt(category: String(localized: "Tech"), emoji: "🤖", prompts: [
             "Advanced AI robot assistant helping in modern home",
             "Holographic interface displaying complex data visualization",
             "Electric vehicle charging station of the future",
@@ -108,20 +108,20 @@ class FullScreenSuggestionsView: UIView {
         ], color: UIColor(red: 0.15, green: 0.39, blue: 0.92, alpha: 1))
     ]
     private let stylePresets = [
-        StylePreset(name: "Cinematic", description: "Movie-like", prompt: "cinematic shot, movie still, film grain, dramatic lighting, wide angle lens", icon: "film", gradientColors: [UIColor(red: 0.12, green: 0.16, blue: 0.22, alpha: 1), UIColor(red: 0.22, green: 0.26, blue: 0.32, alpha: 1)]),
-        StylePreset(name: "Anime", description: "Japanese art", prompt: "anime style, manga art, cel shading, vibrant colors, detailed character design", icon: "star.circle", gradientColors: [UIColor(red: 0.93, green: 0.28, blue: 0.6, alpha: 1), UIColor(red: 0.96, green: 0.45, blue: 0.71, alpha: 1)]),
-        StylePreset(name: "3D Render", description: "CGI graphics", prompt: "3D render, octane render, ray tracing, photorealistic, high detail, studio lighting", icon: "cube", gradientColors: [UIColor(red: 0.23, green: 0.51, blue: 0.96, alpha: 1), UIColor(red: 0.38, green: 0.65, blue: 0.98, alpha: 1)]),
-        StylePreset(name: "Oil Paint", description: "Classic art", prompt: "oil painting, traditional art, brush strokes visible, museum quality, masterpiece", icon: "paintpalette", gradientColors: [UIColor(red: 0.94, green: 0.27, blue: 0.27, alpha: 1), UIColor(red: 0.97, green: 0.44, blue: 0.44, alpha: 1)]),
-        StylePreset(name: "Sketch", description: "Pencil art", prompt: "pencil sketch, detailed drawing, graphite on paper, artistic shading, hand drawn", icon: "pencil", gradientColors: [UIColor(red: 0.42, green: 0.45, blue: 0.50, alpha: 1), UIColor(red: 0.61, green: 0.64, blue: 0.69, alpha: 1)]),
-        StylePreset(name: "Watercolor", description: "Soft painting", prompt: "watercolor painting, soft edges, flowing colors, artistic bleeds, paper texture", icon: "paintbrush", gradientColors: [UIColor(red: 0.38, green: 0.65, blue: 0.98, alpha: 1), UIColor(red: 0.58, green: 0.77, blue: 0.99, alpha: 1)]),
-        StylePreset(name: "Comic", description: "Comic book", prompt: "comic book style, bold outlines, halftone dots, speech bubbles, superhero aesthetic", icon: "book", gradientColors: [UIColor(red: 0.98, green: 0.75, blue: 0.14, alpha: 1), UIColor(red: 0.99, green: 0.88, blue: 0.28, alpha: 1)]),
-        StylePreset(name: "Pixel Art", description: "8-bit style", prompt: "pixel art, 8-bit style, retro game aesthetic, limited color palette, blocky design", icon: "gamecontroller", gradientColors: [UIColor(red: 0.06, green: 0.72, blue: 0.51, alpha: 1), UIColor(red: 0.20, green: 0.83, blue: 0.60, alpha: 1)]),
-        StylePreset(name: "Neon", description: "Glowing lights", prompt: "neon lights, glowing effects, cyberpunk aesthetic, dark background, vibrant colors", icon: "lightbulb", gradientColors: [UIColor(red: 0.88, green: 0.11, blue: 0.28, alpha: 1), UIColor(red: 0.95, green: 0.25, blue: 0.37, alpha: 1)]),
-        StylePreset(name: "Minimal", description: "Simple clean", prompt: "minimalist style, simple composition, negative space, clean lines, modern aesthetic", icon: "square.dashed", gradientColors: [UIColor(red: 0.22, green: 0.26, blue: 0.32, alpha: 1), UIColor(red: 0.29, green: 0.33, blue: 0.39, alpha: 1)]),
-        StylePreset(name: "Vintage", description: "Retro look", prompt: "vintage photography, film grain, faded colors, nostalgic mood, old camera effect", icon: "camera", gradientColors: [UIColor(red: 0.57, green: 0.25, blue: 0.05, alpha: 1), UIColor(red: 0.70, green: 0.33, blue: 0.04, alpha: 1)]),
-        StylePreset(name: "HDR", description: "High detail", prompt: "HDR photography, high dynamic range, vivid colors, sharp details, professional quality", icon: "camera.aperture", gradientColors: [UIColor(red: 0.49, green: 0.23, blue: 0.93, alpha: 1), UIColor(red: 0.55, green: 0.36, blue: 0.96, alpha: 1)])
+        StylePreset(name: String(localized: "Cinematic"), description: String(localized: "Movie-like"), prompt: "cinematic shot, movie still, film grain, dramatic lighting, wide angle lens", icon: "film", gradientColors: [UIColor(red: 0.12, green: 0.16, blue: 0.22, alpha: 1), UIColor(red: 0.22, green: 0.26, blue: 0.32, alpha: 1)]),
+        StylePreset(name: String(localized: "Anime"), description: String(localized: "Japanese art"), prompt: "anime style, manga art, cel shading, vibrant colors, detailed character design", icon: "star.circle", gradientColors: [UIColor(red: 0.93, green: 0.28, blue: 0.6, alpha: 1), UIColor(red: 0.96, green: 0.45, blue: 0.71, alpha: 1)]),
+        StylePreset(name: String(localized: "3D Render"), description: String(localized: "CGI graphics"), prompt: "3D render, octane render, ray tracing, photorealistic, high detail, studio lighting", icon: "cube", gradientColors: [UIColor(red: 0.23, green: 0.51, blue: 0.96, alpha: 1), UIColor(red: 0.38, green: 0.65, blue: 0.98, alpha: 1)]),
+        StylePreset(name: String(localized: "Oil Paint"), description: String(localized: "Classic art"), prompt: "oil painting, traditional art, brush strokes visible, museum quality, masterpiece", icon: "paintpalette", gradientColors: [UIColor(red: 0.94, green: 0.27, blue: 0.27, alpha: 1), UIColor(red: 0.97, green: 0.44, blue: 0.44, alpha: 1)]),
+        StylePreset(name: String(localized: "Sketch"), description: String(localized: "Pencil art"), prompt: "pencil sketch, detailed drawing, graphite on paper, artistic shading, hand drawn", icon: "pencil", gradientColors: [UIColor(red: 0.42, green: 0.45, blue: 0.50, alpha: 1), UIColor(red: 0.61, green: 0.64, blue: 0.69, alpha: 1)]),
+        StylePreset(name: String(localized: "Watercolor"), description: String(localized: "Soft painting"), prompt: "watercolor painting, soft edges, flowing colors, artistic bleeds, paper texture", icon: "paintbrush", gradientColors: [UIColor(red: 0.38, green: 0.65, blue: 0.98, alpha: 1), UIColor(red: 0.58, green: 0.77, blue: 0.99, alpha: 1)]),
+        StylePreset(name: String(localized: "Comic"), description: String(localized: "Comic book"), prompt: "comic book style, bold outlines, halftone dots, speech bubbles, superhero aesthetic", icon: "book", gradientColors: [UIColor(red: 0.98, green: 0.75, blue: 0.14, alpha: 1), UIColor(red: 0.99, green: 0.88, blue: 0.28, alpha: 1)]),
+        StylePreset(name: String(localized: "Pixel Art"), description: String(localized: "8-bit style"), prompt: "pixel art, 8-bit style, retro game aesthetic, limited color palette, blocky design", icon: "gamecontroller", gradientColors: [UIColor(red: 0.06, green: 0.72, blue: 0.51, alpha: 1), UIColor(red: 0.20, green: 0.83, blue: 0.60, alpha: 1)]),
+        StylePreset(name: String(localized: "Neon"), description: String(localized: "Glowing lights"), prompt: "neon lights, glowing effects, cyberpunk aesthetic, dark background, vibrant colors", icon: "lightbulb", gradientColors: [UIColor(red: 0.88, green: 0.11, blue: 0.28, alpha: 1), UIColor(red: 0.95, green: 0.25, blue: 0.37, alpha: 1)]),
+        StylePreset(name: String(localized: "Minimal"), description: String(localized: "Simple clean"), prompt: "minimalist style, simple composition, negative space, clean lines, modern aesthetic", icon: "square.dashed", gradientColors: [UIColor(red: 0.22, green: 0.26, blue: 0.32, alpha: 1), UIColor(red: 0.29, green: 0.33, blue: 0.39, alpha: 1)]),
+        StylePreset(name: String(localized: "Vintage"), description: String(localized: "Retro look"), prompt: "vintage photography, film grain, faded colors, nostalgic mood, old camera effect", icon: "camera", gradientColors: [UIColor(red: 0.57, green: 0.25, blue: 0.05, alpha: 1), UIColor(red: 0.70, green: 0.33, blue: 0.04, alpha: 1)]),
+        StylePreset(name: String(localized: "HDR"), description: String(localized: "High detail"), prompt: "HDR photography, high dynamic range, vivid colors, sharp details, professional quality", icon: "camera.aperture", gradientColors: [UIColor(red: 0.49, green: 0.23, blue: 0.93, alpha: 1), UIColor(red: 0.55, green: 0.36, blue: 0.96, alpha: 1)])
     ]
-    private let modifierCategories = ["Quality", "Lighting", "Camera", "Mood", "Composition", "Artistic"]
+    private let modifierCategories = [String(localized: "Quality"), String(localized: "Lighting"), String(localized: "Camera"), String(localized: "Mood"), String(localized: "Composition"), String(localized: "Artistic")]
     private let modifiers = [
         ["8K", "4K", "HD", "ultra detailed", "masterpiece", "best quality"],
         ["studio lighting", "golden hour", "dramatic lighting", "soft light", "backlit", "rim lighting"],
@@ -335,13 +335,13 @@ class FullScreenSuggestionsView: UIView {
                 let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: SectionHeaderView.reuseIdentifier, for: indexPath) as! SectionHeaderView
                 switch SuggestionsSection(rawValue: indexPath.section) {
                 case .editImage:
-                    header.configure(title: "Edit an Image", subtitle: "Transform your photos with AI")
+                    header.configure(title: String(localized: "Edit an Image"), subtitle: String(localized: "Transform your photos with AI"))
                 case .quickActions:
-                    header.configure(title: "Quick Actions", subtitle: "Start with popular templates")
+                    header.configure(title: String(localized: "Quick Actions"), subtitle: String(localized: "Start with popular templates"))
                 case .stylePresets:
-                    header.configure(title: "Style Presets", subtitle: "Apply to any prompt with ' + style'")
+                    header.configure(title: String(localized: "Style Presets"), subtitle: String(localized: "Apply to any prompt with ' + style'"))
                 case .promptModifiers:
-                    header.configure(title: "Prompt Modifiers", subtitle: "Add these to enhance your prompts")
+                    header.configure(title: String(localized: "Prompt Modifiers"), subtitle: String(localized: "Add these to enhance your prompts"))
                 default:
                     break
                 }

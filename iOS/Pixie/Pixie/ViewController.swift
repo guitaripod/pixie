@@ -17,7 +17,7 @@ class ViewController: UIViewController {
         view.backgroundColor = .systemBackground
         
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.text = "Welcome to Pixie"
+        titleLabel.text = String(localized: "Welcome to Pixie")
         titleLabel.font = .systemFont(ofSize: 24, weight: .bold)
         titleLabel.textAlignment = .center
         view.addSubview(titleLabel)
@@ -32,7 +32,7 @@ class ViewController: UIViewController {
         logoutButton.translatesAutoresizingMaskIntoConstraints = false
         
         var config = UIButton.Configuration.filled()
-        config.title = "Logout"
+        config.title = String(localized: "Logout")
         config.baseForegroundColor = .white
         config.baseBackgroundColor = .systemRed
         config.cornerStyle = .medium
@@ -79,9 +79,9 @@ class ViewController: UIViewController {
     
     private func updateUserInfo() {
         if let user = authenticationManager.currentUser {
-            userInfoLabel.text = "Logged in as: \(user.email ?? user.id)"
+            userInfoLabel.text = String(localized: "Logged in as: \(user.email ?? user.id)")
         } else {
-            userInfoLabel.text = "Not logged in"
+            userInfoLabel.text = String(localized: "Not logged in")
         }
     }
     
@@ -89,13 +89,13 @@ class ViewController: UIViewController {
         HapticManager.shared.impact(.click)
         
         let alert = UIAlertController(
-            title: "Logout",
-            message: "Are you sure you want to logout?",
+            title: String(localized: "Logout"),
+            message: String(localized: "Are you sure you want to logout?"),
             preferredStyle: .alert
         )
         
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Logout", style: .destructive) { _ in
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: "Logout"), style: .destructive) { _ in
             Task {
                 do {
                     try await self.authenticationManager.logout()
@@ -108,11 +108,11 @@ class ViewController: UIViewController {
                 } catch {
                     await MainActor.run {
                         let errorAlert = UIAlertController(
-                            title: "Error",
+                            title: String(localized: "Error"),
                             message: error.localizedDescription,
                             preferredStyle: .alert
                         )
-                        errorAlert.addAction(UIAlertAction(title: "OK", style: .default))
+                        errorAlert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
                         self.present(errorAlert, animated: true)
                     }
                 }

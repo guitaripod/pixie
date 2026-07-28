@@ -17,7 +17,7 @@ class ImageSharingService {
         var items: [Any] = [image]
         
         if let prompt = prompt {
-            items.append("Generated with Pixie: \(prompt)")
+            items.append(String(localized: "Generated with Pixie: \(prompt)"))
         }
         
         presentActivityViewController(
@@ -34,7 +34,7 @@ class ImageSharingService {
         sourceView: UIView? = nil,
         completion: ((Bool, UIActivity.ActivityType?) -> Void)? = nil
     ) {
-        let items: [Any] = images + ["Generated with Pixie"]
+        let items: [Any] = images + [String(localized: "Generated with Pixie")]
         
         presentActivityViewController(
             with: items,
@@ -56,7 +56,7 @@ class ImageSharingService {
             preferredStyle: .actionSheet
         )
         
-        alertController.addAction(UIAlertAction(title: "Save to Photos", style: .default) { _ in
+        alertController.addAction(UIAlertAction(title: String(localized: "Save to Photos"), style: .default) { _ in
             PhotoSavingService.shared.saveImage(image) { result in
                 DispatchQueue.main.async {
                     switch result {
@@ -69,16 +69,16 @@ class ImageSharingService {
             }
         })
         
-        alertController.addAction(UIAlertAction(title: "Share", style: .default) { _ in
+        alertController.addAction(UIAlertAction(title: String(localized: "Share"), style: .default) { _ in
             self.shareImage(image, prompt: prompt, from: viewController, sourceView: sourceView)
         })
         
-        alertController.addAction(UIAlertAction(title: "Copy Image", style: .default) { _ in
+        alertController.addAction(UIAlertAction(title: String(localized: "Copy Image"), style: .default) { _ in
             UIPasteboard.general.image = image
             self.showCopySuccess(in: viewController)
         })
         
-        alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alertController.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
         
         if let popover = alertController.popoverPresentationController {
             if let sourceView = sourceView {
@@ -142,8 +142,8 @@ class ImageSharingService {
         haptics.impact(.success)
         
         let alert = UIAlertController(
-            title: "Saved!",
-            message: "Image saved to your Pixie album",
+            title: String(localized: "Saved!"),
+            message: String(localized: "Image saved to your Pixie album"),
             preferredStyle: .alert
         )
         
@@ -159,15 +159,15 @@ class ImageSharingService {
         haptics.impact(.error)
         
         let alert = UIAlertController(
-            title: "Save Failed",
+            title: String(localized: "Save Failed"),
             message: error.localizedDescription,
             preferredStyle: .alert
         )
         
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
         
         if case .permissionDenied = error {
-            alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
+            alert.addAction(UIAlertAction(title: String(localized: "Open Settings"), style: .default) { _ in
                 if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(settingsURL)
                 }
@@ -182,8 +182,8 @@ class ImageSharingService {
         haptics.impact(.success)
         
         let alert = UIAlertController(
-            title: "Copied!",
-            message: "Image copied to clipboard",
+            title: String(localized: "Copied!"),
+            message: String(localized: "Image copied to clipboard"),
             preferredStyle: .alert
         )
         
@@ -199,8 +199,8 @@ class ImageSharingService {
         haptics.impact(.success)
         
         let alert = UIAlertController(
-            title: "Copied!",
-            message: "Prompt copied to clipboard",
+            title: String(localized: "Copied!"),
+            message: String(localized: "Prompt copied to clipboard"),
             preferredStyle: .alert
         )
         

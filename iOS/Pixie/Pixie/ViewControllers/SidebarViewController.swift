@@ -9,11 +9,11 @@ enum SidebarSection: Int, CaseIterable {
     
     var title: String {
         switch self {
-        case .chat: return "Generate"
-        case .gallery: return "Gallery"
-        case .credits: return "Credits"
-        case .settings: return "Settings"
-        case .admin: return "Admin"
+        case .chat: return String(localized: "Generate")
+        case .gallery: return String(localized: "Gallery")
+        case .credits: return String(localized: "Credits")
+        case .settings: return String(localized: "Settings")
+        case .admin: return String(localized: "Admin")
         }
     }
     

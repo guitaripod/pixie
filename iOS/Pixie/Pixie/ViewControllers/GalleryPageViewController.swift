@@ -378,14 +378,14 @@ final class GalleryPageViewController: UIViewController {
     
     private func showError(_ error: Error) {
         let alert = UIAlertController(
-            title: "Error",
+            title: String(localized: "Error"),
             message: error.localizedDescription,
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "Retry", style: .default) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: String(localized: "Retry"), style: .default) { [weak self] _ in
             self?.loadInitialData()
         })
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
         present(alert, animated: true)
     }
 }
@@ -498,27 +498,27 @@ extension GalleryPageViewController: UICollectionViewDelegate {
     }
     
     private func makeContextMenu(for image: ImageMetadata) -> UIMenu {
-        let viewDetails = UIAction(title: "View Details", image: UIImage(systemName: "info.circle")) { [weak self] _ in
+        let viewDetails = UIAction(title: String(localized: "View Details"), image: UIImage(systemName: "info.circle")) { [weak self] _ in
             guard let self = self else { return }
             self.delegate?.galleryPageDidSelectImage(self, image: image)
         }
         
-        let useForEdit = UIAction(title: "Use for Edit", image: UIImage(systemName: "pencil")) { [weak self] _ in
+        let useForEdit = UIAction(title: String(localized: "Use for Edit"), image: UIImage(systemName: "pencil")) { [weak self] _ in
             guard let self = self else { return }
             self.delegate?.galleryPageDidPerformAction(self, action: .useForEdit, on: image)
         }
         
-        let copyPrompt = UIAction(title: "Copy Prompt", image: UIImage(systemName: "doc.on.doc")) { [weak self] _ in
+        let copyPrompt = UIAction(title: String(localized: "Copy Prompt"), image: UIImage(systemName: "doc.on.doc")) { [weak self] _ in
             guard let self = self else { return }
             self.delegate?.galleryPageDidPerformAction(self, action: .copyPrompt, on: image)
         }
         
-        let save = UIAction(title: "Save to Photos", image: UIImage(systemName: "square.and.arrow.down")) { [weak self] _ in
+        let save = UIAction(title: String(localized: "Save to Photos"), image: UIImage(systemName: "square.and.arrow.down")) { [weak self] _ in
             guard let self = self else { return }
             self.delegate?.galleryPageDidPerformAction(self, action: .download, on: image)
         }
         
-        let share = UIAction(title: "Share", image: UIImage(systemName: "square.and.arrow.up")) { [weak self] _ in
+        let share = UIAction(title: String(localized: "Share"), image: UIImage(systemName: "square.and.arrow.up")) { [weak self] _ in
             guard let self = self else { return }
             self.delegate?.galleryPageDidPerformAction(self, action: .share, on: image)
         }
@@ -529,27 +529,27 @@ extension GalleryPageViewController: UICollectionViewDelegate {
             let isPublic = image.isPublic ?? true
             let visibility: UIAction
             if isPublic {
-                visibility = UIAction(title: "Remove from Public Gallery", image: UIImage(systemName: "eye.slash")) { [weak self] _ in
+                visibility = UIAction(title: String(localized: "Remove from Public Gallery"), image: UIImage(systemName: "eye.slash")) { [weak self] _ in
                     guard let self = self else { return }
                     self.delegate?.galleryPageDidPerformAction(self, action: .makePrivate, on: image)
                 }
             } else {
-                visibility = UIAction(title: "Add to Public Gallery", image: UIImage(systemName: "eye")) { [weak self] _ in
+                visibility = UIAction(title: String(localized: "Add to Public Gallery"), image: UIImage(systemName: "eye")) { [weak self] _ in
                     guard let self = self else { return }
                     self.delegate?.galleryPageDidPerformAction(self, action: .makePublic, on: image)
                 }
             }
-            let delete = UIAction(title: "Delete", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+            let delete = UIAction(title: String(localized: "Delete"), image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
                 guard let self = self else { return }
                 self.delegate?.galleryPageDidPerformAction(self, action: .delete, on: image)
             }
             children.append(UIMenu(options: .displayInline, children: [visibility, delete]))
         } else {
-            let report = UIAction(title: "Report Image", image: UIImage(systemName: "exclamationmark.bubble"), attributes: .destructive) { [weak self] _ in
+            let report = UIAction(title: String(localized: "Report Image"), image: UIImage(systemName: "exclamationmark.bubble"), attributes: .destructive) { [weak self] _ in
                 guard let self = self else { return }
                 self.delegate?.galleryPageDidPerformAction(self, action: .report, on: image)
             }
-            let block = UIAction(title: "Block User", image: UIImage(systemName: "hand.raised"), attributes: .destructive) { [weak self] _ in
+            let block = UIAction(title: String(localized: "Block User"), image: UIImage(systemName: "hand.raised"), attributes: .destructive) { [weak self] _ in
                 guard let self = self else { return }
                 self.delegate?.galleryPageDidPerformAction(self, action: .block, on: image)
             }

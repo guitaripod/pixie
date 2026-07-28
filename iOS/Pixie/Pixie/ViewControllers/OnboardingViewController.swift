@@ -20,20 +20,20 @@ final class OnboardingViewController: UIViewController {
         OnboardingPage(
             symbol: "bubble.left.and.text.bubble.right.fill",
             tint: .systemPurple,
-            title: "Chat your way\nto the image",
-            body: "Describe what you want in plain words. Refine it message by message and watch your image evolve — powered by Google Nano Banana and OpenAI."
+            title: String(localized: "Chat your way\nto the image"),
+            body: String(localized: "Describe what you want in plain words. Refine it message by message and watch your image evolve — powered by Google Nano Banana and OpenAI.")
         ),
         OnboardingPage(
             symbol: "wand.and.stars",
             tint: .systemPink,
-            title: "Edit photos\nby talking",
-            body: "Attach any photo and change it with a sentence: swap the background, restyle it, remove objects, make it transparent. No layers, no tools."
+            title: String(localized: "Edit photos\nby talking"),
+            body: String(localized: "Attach any photo and change it with a sentence: swap the background, restyle it, remove objects, make it transparent. No layers, no tools.")
         ),
         OnboardingPage(
             symbol: "sparkles",
             tint: .systemOrange,
-            title: "25 free credits\nto start",
-            body: "You can create right now — no sign-up. Pay only for what you make with credit packs that never expire. No subscription, ever."
+            title: String(localized: "25 free credits\nto start"),
+            body: String(localized: "You can create right now — no sign-up. Pay only for what you make with credit packs that never expire. No subscription, ever.")
         ),
     ]
 
@@ -74,7 +74,7 @@ final class OnboardingViewController: UIViewController {
 
     private lazy var skipButton: UIButton = {
         var config = UIButton.Configuration.plain()
-        config.title = "Skip"
+        config.title = String(localized: "Skip")
         config.baseForegroundColor = .secondaryLabel
         let button = UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
             self?.finish()
@@ -145,7 +145,7 @@ final class OnboardingViewController: UIViewController {
     private func updateChrome() {
         pageControl.currentPage = pageIndex
         let isLast = pageIndex == pages.count - 1
-        primaryButton.configuration?.title = isLast ? "Start Creating" : "Continue"
+        primaryButton.configuration?.title = isLast ? String(localized: "Start Creating") : String(localized: "Continue")
         skipButton.isHidden = isLast
     }
 }

@@ -78,7 +78,7 @@ struct ImageGenerationLiveActivity: Widget {
                             .lineLimit(2)
                     } else {
                         HStack {
-                            Label(context.state.status.rawValue, systemImage: statusIcon(for: context.state.status))
+                            Label(statusText(for: context.state.status), systemImage: statusIcon(for: context.state.status))
                                 .font(.caption)
                                 .foregroundColor(statusColor(for: context.state.status))
                             
@@ -129,6 +129,21 @@ struct ImageGenerationLiveActivity: Widget {
             }
             .widgetURL(URL(string: "pixie://chat/\(context.attributes.chatId)"))
             .keylineTint(.purple)
+        }
+    }
+    
+    private func statusText(for status: GenerationStatus) -> String {
+        switch status {
+        case .queued:
+            return String(localized: "Queued")
+        case .processing:
+            return String(localized: "Processing")
+        case .generating:
+            return String(localized: "Generating")
+        case .completed:
+            return String(localized: "Completed")
+        case .failed:
+            return String(localized: "Failed")
         }
     }
     
@@ -202,7 +217,7 @@ struct LockScreenLiveActivityView: View {
                 .lineLimit(2)
             
             HStack {
-                Label(context.state.status.rawValue, systemImage: statusIcon(for: context.state.status))
+                Label(statusText(for: context.state.status), systemImage: statusIcon(for: context.state.status))
                     .font(.caption)
                     .foregroundColor(statusColor(for: context.state.status))
                 
@@ -228,6 +243,21 @@ struct LockScreenLiveActivityView: View {
             }
         }
         .padding()
+    }
+    
+    private func statusText(for status: GenerationStatus) -> String {
+        switch status {
+        case .queued:
+            return String(localized: "Queued")
+        case .processing:
+            return String(localized: "Processing")
+        case .generating:
+            return String(localized: "Generating")
+        case .completed:
+            return String(localized: "Completed")
+        case .failed:
+            return String(localized: "Failed")
+        }
     }
     
     private func statusIcon(for status: GenerationStatus) -> String {

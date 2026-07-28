@@ -73,7 +73,7 @@ final class CreditStoreViewController: UIViewController {
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "Pixie Credits"
+        label.text = String(localized: "Pixie Credits")
         label.font = UIFont.systemFont(ofSize: 30, weight: .bold).rounded()
         label.textAlignment = .center
         return label
@@ -81,7 +81,7 @@ final class CreditStoreViewController: UIViewController {
 
     private lazy var subtitleLabel: UILabel = {
         let label = UILabel()
-        label.text = "Pay for what you create.\nNo subscription — ever."
+        label.text = String(localized: "Pay for what you create.\nNo subscription — ever.")
         label.font = .preferredFont(forTextStyle: .subheadline)
         label.textColor = .secondaryLabel
         label.textAlignment = .center
@@ -106,7 +106,7 @@ final class CreditStoreViewController: UIViewController {
 
     private lazy var perksLabel: UILabel = {
         let label = UILabel()
-        label.text = "Credits never expire  ·  Every quality tier  ·  No account required"
+        label.text = String(localized: "Credits never expire  ·  Every quality tier  ·  No account required")
         label.font = .preferredFont(forTextStyle: .caption1)
         label.textColor = .secondaryLabel
         label.textAlignment = .center
@@ -116,7 +116,7 @@ final class CreditStoreViewController: UIViewController {
 
     private lazy var ctaButton: UIButton = {
         var config = ctaConfiguration()
-        config.title = "Loading…"
+        config.title = String(localized: "Loading…")
         let button = UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
             self?.purchaseSelectedPack()
         })
@@ -125,13 +125,13 @@ final class CreditStoreViewController: UIViewController {
     }()
 
     private lazy var footerStack: UIStackView = {
-        let restore = UIButton(configuration: plainFooterConfiguration(title: "Restore Purchases"), primaryAction: UIAction { [weak self] _ in
+        let restore = UIButton(configuration: plainFooterConfiguration(title: String(localized: "Restore Purchases")), primaryAction: UIAction { [weak self] _ in
             self?.restorePurchases()
         })
-        let privacy = UIButton(configuration: plainFooterConfiguration(title: "Privacy"), primaryAction: UIAction { [weak self] _ in
+        let privacy = UIButton(configuration: plainFooterConfiguration(title: String(localized: "Privacy")), primaryAction: UIAction { [weak self] _ in
             self?.open(url: "https://mako.midgarcorp.cc/privacy/pixie")
         })
-        let terms = UIButton(configuration: plainFooterConfiguration(title: "Terms"), primaryAction: UIAction { [weak self] _ in
+        let terms = UIButton(configuration: plainFooterConfiguration(title: String(localized: "Terms")), primaryAction: UIAction { [weak self] _ in
             self?.open(url: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")
         })
         let stack = UIStackView(arrangedSubviews: [restore, privacy, terms])
@@ -221,7 +221,7 @@ final class CreditStoreViewController: UIViewController {
         icon.tintColor = .systemOrange
         icon.setContentHuggingPriority(.required, for: .horizontal)
         let label = UILabel()
-        label.text = "You need \(shortfall) more credits to finish this image."
+        label.text = String(localized: "You need \(shortfall) more credits to finish this image.")
         label.font = .preferredFont(forTextStyle: .footnote)
         label.numberOfLines = 0
         let stack = UIStackView(arrangedSubviews: [icon, label])
@@ -244,7 +244,7 @@ final class CreditStoreViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] balance in
                 guard let balance else { return }
-                self?.balanceLabel.text = "Current balance: \(balance.balance) credits"
+                self?.balanceLabel.text = String(localized: "Current balance: \(balance.balance) credits")
             }
             .store(in: &cancellables)
 
@@ -283,8 +283,8 @@ final class CreditStoreViewController: UIViewController {
 
     private func badge(for packId: String) -> String? {
         switch packId {
-        case "popular": return "MOST POPULAR"
-        case "enterprise": return "BEST VALUE"
+        case "popular": return String(localized: "MOST POPULAR")
+        case "enterprise": return String(localized: "BEST VALUE")
         default: return nil
         }
     }
@@ -302,8 +302,8 @@ final class CreditStoreViewController: UIViewController {
     private func updateCTA() {
         guard let pack = packs.first(where: { $0.id == selectedPackId }) else { return }
         var config = ctaButton.configuration ?? ctaConfiguration()
-        config.title = "Get \(formatted(pack.totalCredits)) credits · \(pack.price)"
-        config.subtitle = "One-time purchase · ≈ \(pack.imageEstimate) images"
+        config.title = String(localized: "Get \(formatted(pack.totalCredits)) credits · \(pack.price)")
+        config.subtitle = String(localized: "One-time purchase · ≈ \(pack.imageEstimate) images")
         ctaButton.configuration = config
         ctaButton.isEnabled = true
     }
@@ -353,8 +353,8 @@ final class CreditStoreViewController: UIViewController {
                 switch result {
                 case .success(let purchase):
                     HapticsManager.shared.notification(.success)
-                    self.ctaButton.configuration?.title = "Added \(self.formatted(purchase.credits)) credits"
-                    self.ctaButton.configuration?.subtitle = "New balance: \(self.formatted(purchase.newBalance))"
+                    self.ctaButton.configuration?.title = String(localized: "Added \(self.formatted(purchase.credits)) credits")
+                    self.ctaButton.configuration?.subtitle = String(localized: "New balance: \(self.formatted(purchase.newBalance))")
                     Task { await self.viewModel.loadBalance() }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { [weak self] in
                         self?.dismiss(animated: true)
@@ -363,8 +363,8 @@ final class CreditStoreViewController: UIViewController {
                     self.updateCTA()
                     if error is PurchaseCancelledException { return }
                     HapticsManager.shared.notification(.error)
-                    let alert = UIAlertController(title: "Purchase Failed", message: error.localizedDescription, preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "OK", style: .default))
+                    let alert = UIAlertController(title: String(localized: "Purchase Failed"), message: error.localizedDescription, preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
                     self.present(alert, animated: true)
                 }
             }
@@ -379,12 +379,12 @@ final class CreditStoreViewController: UIViewController {
                 let message: String
                 switch result {
                 case .success(let restored):
-                    message = restored.isEmpty ? "No purchases found to restore." : "Restored \(restored.count) purchase(s)."
+                    message = restored.isEmpty ? String(localized: "No purchases found to restore.") : String(localized: "Restored \(restored.count) purchase(s).")
                 case .failure(let error):
                     message = error.localizedDescription
                 }
-                let alert = UIAlertController(title: "Restore Purchases", message: message, preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                let alert = UIAlertController(title: String(localized: "Restore Purchases"), message: message, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
                 self.present(alert, animated: true)
             }
         }
@@ -447,13 +447,13 @@ final class PackCardView: UIControl {
         creditsLabel.textColor = .secondaryLabel
         let total = NumberFormatter.localizedString(from: NSNumber(value: pack.totalCredits), number: .decimal)
         creditsLabel.text = pack.bonusCredits > 0
-            ? "\(total) credits · +\(pack.bonusPercent)% bonus"
-            : "\(total) credits"
+            ? String(localized: "\(total) credits · +\(pack.bonusPercent)% bonus")
+            : String(localized: "\(total) credits")
 
         let imagesLabel = UILabel()
         imagesLabel.font = .preferredFont(forTextStyle: .caption1)
         imagesLabel.textColor = .tertiaryLabel
-        imagesLabel.text = "≈ \(pack.imageEstimate) Nano Banana images"
+        imagesLabel.text = String(localized: "≈ \(pack.imageEstimate) Nano Banana images")
 
         let leftStack = UIStackView(arrangedSubviews: [nameLabel, creditsLabel, imagesLabel])
         leftStack.axis = .vertical

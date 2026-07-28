@@ -23,7 +23,7 @@ struct CreditPackWithPrice {
 
 class PurchaseCancelledException: LocalizedError {
     var errorDescription: String? {
-        return "Purchase cancelled by user"
+        return String(localized: "Purchase cancelled by user")
     }
 }
 
@@ -117,7 +117,7 @@ class CreditPurchaseManager {
                 return .failure(PurchaseCancelledException())
                 
             default:
-                return .failure(NSError(domain: "CreditPurchase", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unexpected purchase state"]))
+                return .failure(NSError(domain: "CreditPurchase", code: -1, userInfo: [NSLocalizedDescriptionKey: String(localized: "Unexpected purchase state")]))
             }
         } catch {
             return .failure(error)
@@ -149,7 +149,7 @@ class CreditPurchaseManager {
                     amountUsd: ""
                 ))
             } else {
-                return .failure(NSError(domain: "CreditPurchase", code: -1, userInfo: [NSLocalizedDescriptionKey: "Purchase validation failed"]))
+                return .failure(NSError(domain: "CreditPurchase", code: -1, userInfo: [NSLocalizedDescriptionKey: String(localized: "Purchase validation failed")]))
             }
         } catch {
             print("Error recording purchase: \(error)")

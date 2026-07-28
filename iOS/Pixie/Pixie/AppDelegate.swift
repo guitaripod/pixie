@@ -71,13 +71,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private func createNotificationCategories() -> Set<UNNotificationCategory> {
         let viewAction = UNNotificationAction(
             identifier: "VIEW_ACTION",
-            title: "View",
+            title: String(localized: "View"),
             options: [.foreground]
         )
         
         let dismissAction = UNNotificationAction(
             identifier: "DISMISS_ACTION",
-            title: "Dismiss",
+            title: String(localized: "Dismiss"),
             options: []
         )
         

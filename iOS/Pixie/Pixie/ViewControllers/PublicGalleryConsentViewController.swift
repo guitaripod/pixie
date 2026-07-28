@@ -37,7 +37,7 @@ final class PublicGalleryConsentViewController: UIViewController {
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "Your creations go public"
+        label.text = String(localized: "Your creations go public")
         label.font = UIFont.preferredFont(forTextStyle: .title2).rounded()
         label.textAlignment = .center
         return label
@@ -45,7 +45,7 @@ final class PublicGalleryConsentViewController: UIViewController {
 
     private lazy var bodyLabel: UILabel = {
         let label = UILabel()
-        label.text = "Images you make in Pixie appear in the public Explore feed, where anyone using Pixie can see them and get inspired. You can turn this off below or anytime in Settings, and you can delete any post from your gallery."
+        label.text = String(localized: "Images you make in Pixie appear in the public Explore feed, where anyone using Pixie can see them and get inspired. You can turn this off below or anytime in Settings, and you can delete any post from your gallery.")
         label.font = .preferredFont(forTextStyle: .subheadline)
         label.textColor = .secondaryLabel
         label.textAlignment = .center
@@ -55,7 +55,7 @@ final class PublicGalleryConsentViewController: UIViewController {
 
     private lazy var shareLabel: UILabel = {
         let label = UILabel()
-        label.text = "Show my creations in Explore"
+        label.text = String(localized: "Show my creations in Explore")
         label.font = .preferredFont(forTextStyle: .body)
         label.numberOfLines = 0
         return label
@@ -88,7 +88,7 @@ final class PublicGalleryConsentViewController: UIViewController {
         } else {
             config = .borderedProminent()
         }
-        config.title = "Got it"
+        config.title = String(localized: "Got it")
         config.cornerStyle = .capsule
         config.buttonSize = .large
         return UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in

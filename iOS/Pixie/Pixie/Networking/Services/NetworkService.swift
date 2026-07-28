@@ -15,27 +15,27 @@ enum NetworkError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            return "Invalid URL"
+            return String(localized: "Invalid URL")
         case .noData:
-            return "No data received"
+            return String(localized: "No data received")
         case .decodingError(let error):
-            return "Decoding error: \(error.localizedDescription)"
+            return String(localized: "Decoding error: \(error.localizedDescription)")
         case .serverError(let message):
             return message
         case .httpError(let statusCode, let message):
-            return "HTTP \(statusCode): \(message)"
+            return String(localized: "HTTP \(statusCode): \(message)")
         case .unauthorized:
-            return "Authentication failed: Your API key may be invalid"
+            return String(localized: "Authentication failed: Your API key may be invalid")
         case .insufficientCredits:
-            return "Insufficient credits"
+            return String(localized: "Insufficient credits")
         case .forbidden:
-            return "Access forbidden"
+            return String(localized: "Access forbidden")
         case .tooManyRequests:
-            return "Too many requests"
+            return String(localized: "Too many requests")
         case .noConnection:
-            return "No internet connection"
+            return String(localized: "No internet connection")
         case .invalidResponse:
-            return "Invalid response from server"
+            return String(localized: "Invalid response from server")
         }
     }
 }
@@ -124,7 +124,7 @@ class NetworkService: NetworkServiceProtocol {
         }
         
         guard httpResponse.statusCode == 200 else {
-            throw NetworkError.httpError(httpResponse.statusCode, "Failed to download image")
+            throw NetworkError.httpError(httpResponse.statusCode, String(localized: "Failed to download image"))
         }
         
         return data

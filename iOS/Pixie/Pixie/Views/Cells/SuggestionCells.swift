@@ -110,8 +110,8 @@ class CreativePromptsHeaderView: UICollectionReusableView {
         self.categories = categories
         self.selectedIndex = selectedIndex
         self.onCategorySelected = onCategorySelected
-        titleLabel.text = "Creative Prompts"
-        subtitleLabel.text = "Tap a category, then select a prompt"
+        titleLabel.text = String(localized: "Creative Prompts")
+        subtitleLabel.text = String(localized: "Tap a category, then select a prompt")
         stackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
         let leadingPadding = UIView()
         leadingPadding.widthAnchor.constraint(equalToConstant: 16).isActive = true
@@ -226,7 +226,7 @@ class ImageCell: UICollectionViewCell {
             overlayView.layer.borderColor = UIColor.systemBlue.withAlphaComponent(0.5).cgColor
             overlayView.layer.cornerRadius = 16
             iconImageView.image = UIImage(systemName: "photo.badge.plus")
-            label.text = "Choose Image"
+            label.text = String(localized: "Choose Image")
         } else {
             imageView.image = image
             overlayView.isHidden = true

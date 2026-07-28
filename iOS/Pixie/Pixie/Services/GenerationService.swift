@@ -24,21 +24,21 @@ enum GenerationError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .insufficientCredits(let required, let available):
-            return "Insufficient credits: You have \(available) credits but need \(required) credits for this generation."
+            return String(localized: "Insufficient credits: You have \(available) credits but need \(required) credits for this generation.")
         case .unauthorized:
-            return "Session expired. Please sign in again."
+            return String(localized: "Session expired. Please sign in again.")
         case .rateLimitExceeded:
-            return "Too many requests. Please wait a moment and try again."
+            return String(localized: "Too many requests. Please wait a moment and try again.")
         case .contentPolicyViolation:
-            return "Your prompt was blocked by content policy. Please try a different prompt."
+            return String(localized: "Your prompt was blocked by content policy. Please try a different prompt.")
         case .networkError:
-            return "Network error. Please check your connection."
+            return String(localized: "Network error. Please check your connection.")
         case .serverError(let code):
-            return "Server error (\(code)). Please try again later."
+            return String(localized: "Server error (\(code)). Please try again later.")
         case .invalidImage:
-            return "Invalid image. Please select a different image."
+            return String(localized: "Invalid image. Please select a different image.")
         case .fileTooLarge:
-            return "Image file too large. Maximum size is 50MB."
+            return String(localized: "Image file too large. Maximum size is 50MB.")
         case .unknown(let message):
             return message
         }
@@ -131,7 +131,7 @@ class GenerationService {
                 guard !Task.isCancelled else {
                     print("🚀 GenerationService: Task cancelled after API call")
                     self.handleCancellation()
-                    completion(.failure(.unknown("Generation cancelled")))
+                    completion(.failure(.unknown(String(localized: "Generation cancelled"))))
                     return
                 }
                 
@@ -144,7 +144,7 @@ class GenerationService {
                 guard !Task.isCancelled else {
                     print("🚀 GenerationService: Task cancelled after download")
                     self.handleCancellation()
-                    completion(.failure(.unknown("Generation cancelled")))
+                    completion(.failure(.unknown(String(localized: "Generation cancelled"))))
                     return
                 }
                 
@@ -219,7 +219,7 @@ class GenerationService {
                 
                 guard !Task.isCancelled else {
                     self.handleCancellation()
-                    completion(.failure(.unknown("Edit cancelled")))
+                    completion(.failure(.unknown(String(localized: "Edit cancelled"))))
                     return
                 }
                 
@@ -230,7 +230,7 @@ class GenerationService {
                 
                 guard !Task.isCancelled else {
                     self.handleCancellation()
-                    completion(.failure(.unknown("Edit cancelled")))
+                    completion(.failure(.unknown(String(localized: "Edit cancelled"))))
                     return
                 }
                 
@@ -326,7 +326,7 @@ class GenerationService {
             case .noConnection:
                 return .networkError
             case .invalidResponse:
-                return .unknown("Invalid response from server")
+                return .unknown(String(localized: "Invalid response from server"))
             default:
                 return .unknown(error.localizedDescription)
             }

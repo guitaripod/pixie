@@ -31,7 +31,7 @@ class TransactionHistoryViewController: UIViewController {
     }
     
     private func setupUI() {
-        title = "Transaction History"
+        title = String(localized: "Transaction History")
         view.backgroundColor = .systemGroupedBackground
         navigationItem.largeTitleDisplayMode = .never
         
@@ -130,7 +130,7 @@ class TransactionHistoryViewController: UIViewController {
         groupedTransactions = grouped
             .sorted { (first, second) in
                 // Special handling for "Today", "Yesterday", etc.
-                let specialOrder = ["Today": 0, "Yesterday": 1]
+                let specialOrder = [String(localized: "Today"): 0, String(localized: "Yesterday"): 1]
                 
                 if let order1 = specialOrder[first.key], let order2 = specialOrder[second.key] {
                     return order1 < order2
@@ -199,7 +199,7 @@ class TransactionHistoryViewController: UIViewController {
             if let customDate = customFormatter.date(from: dateString) {
                 return formatDateDisplay(customDate)
             }
-            return "Recent"
+            return String(localized: "Recent")
         }
         
         return formatDateDisplay(date)
@@ -208,9 +208,9 @@ class TransactionHistoryViewController: UIViewController {
     private func formatDateDisplay(_ date: Date) -> String {
         let calendar = Calendar.current
         if calendar.isDateInToday(date) {
-            return "Today"
+            return String(localized: "Today")
         } else if calendar.isDateInYesterday(date) {
-            return "Yesterday"
+            return String(localized: "Yesterday")
         } else if let daysAgo = calendar.dateComponents([.day], from: date, to: Date()).day, daysAgo < 7 {
             let formatter = DateFormatter()
             formatter.dateFormat = "EEEE" // Day name

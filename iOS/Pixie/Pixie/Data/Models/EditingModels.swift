@@ -36,15 +36,15 @@ enum FidelityLevel: CaseIterable {
     
     var displayName: String {
         switch self {
-        case .low: return "Low"
-        case .high: return "High"
+        case .low: return String(localized: "Low")
+        case .high: return String(localized: "High")
         }
     }
     
     var description: String {
         switch self {
-        case .low: return "More creative freedom"
-        case .high: return "Preserve details (faces, logos)"
+        case .low: return String(localized: "More creative freedom")
+        case .high: return String(localized: "Preserve details (faces, logos)")
         }
     }
 }

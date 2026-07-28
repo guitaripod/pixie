@@ -48,7 +48,7 @@ class OfflineBanner: UIView {
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         stackView.addArrangedSubview(iconImageView)
         
-        messageLabel.text = "No Internet Connection"
+        messageLabel.text = String(localized: "No Internet Connection")
         messageLabel.textColor = .white
         messageLabel.font = .systemFont(ofSize: 14, weight: .medium)
         messageLabel.numberOfLines = 1

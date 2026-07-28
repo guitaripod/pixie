@@ -31,19 +31,19 @@ class AdminDashboardViewController: UIViewController {
         contentStackView.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
         contentStackView.isLayoutMarginsRelativeArrangement = true
         
-        titleLabel.text = "Admin Dashboard"
+        titleLabel.text = String(localized: "Admin Dashboard")
         titleLabel.font = .systemFont(ofSize: 34, weight: .bold)
         titleLabel.textColor = .label
         
-        subtitleLabel.text = "Manage system resources and user accounts"
+        subtitleLabel.text = String(localized: "Manage system resources and user accounts")
         subtitleLabel.font = .systemFont(ofSize: 17)
         subtitleLabel.textColor = .secondaryLabel
         subtitleLabel.numberOfLines = 0
         
         systemStatsCard.configure(
             icon: UIImage(systemName: "chart.line.uptrend.xyaxis"),
-            title: "System Statistics",
-            description: "View system-wide metrics and revenue data"
+            title: String(localized: "System Statistics"),
+            description: String(localized: "View system-wide metrics and revenue data")
         )
         systemStatsCard.onTap = { [weak self] in
             self?.presentSystemStats()
@@ -51,8 +51,8 @@ class AdminDashboardViewController: UIViewController {
         
         creditAdjustmentCard.configure(
             icon: UIImage(systemName: "creditcard.fill"),
-            title: "Credit Adjustments",
-            description: "Add or remove credits from user accounts"
+            title: String(localized: "Credit Adjustments"),
+            description: String(localized: "Add or remove credits from user accounts")
         )
         creditAdjustmentCard.onTap = { [weak self] in
             self?.presentCreditAdjustment()
@@ -60,8 +60,8 @@ class AdminDashboardViewController: UIViewController {
         
         adjustmentHistoryCard.configure(
             icon: UIImage(systemName: "clock.arrow.circlepath"),
-            title: "Adjustment History",
-            description: "View all credit adjustment records"
+            title: String(localized: "Adjustment History"),
+            description: String(localized: "View all credit adjustment records")
         )
         adjustmentHistoryCard.onTap = { [weak self] in
             self?.presentAdjustmentHistory()
@@ -94,7 +94,7 @@ class AdminDashboardViewController: UIViewController {
     }
     
     private func setupNavigationBar() {
-        navigationItem.title = "Admin"
+        navigationItem.title = String(localized: "Admin")
         navigationItem.largeTitleDisplayMode = .never
     }
     

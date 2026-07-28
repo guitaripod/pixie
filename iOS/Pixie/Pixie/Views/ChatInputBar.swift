@@ -15,22 +15,22 @@ class ChatInputBar: UIView {
     private let indicatorStackView = UIStackView()
     private let promptTextView = UITextView()
     private let modelSelector = UISegmentedControl(items: ["Gemini", "OpenAI GPT"])
-    private let sizeSelector = UISegmentedControl(items: ["Auto", "Square", "Landscape", "Portrait"])
-    private let qualitySelector = UISegmentedControl(items: ["Auto", "Low", "Medium", "High"])
+    private let sizeSelector = UISegmentedControl(items: [String(localized: "Auto"), String(localized: "Square"), String(localized: "Landscape"), String(localized: "Portrait")])
+    private let qualitySelector = UISegmentedControl(items: [String(localized: "Auto"), String(localized: "Low"), String(localized: "Medium"), String(localized: "High")])
     private let advancedOptionsButton = UIButton(type: .system)
     private let advancedOptionsContainer = UIView()
-    private let backgroundSelector = UISegmentedControl(items: ["Auto", "Transparent", "Opaque", "None"])
+    private let backgroundSelector = UISegmentedControl(items: [String(localized: "Auto"), String(localized: "Transparent"), String(localized: "Opaque"), String(localized: "None")])
     private let formatSelector = UISegmentedControl(items: ["PNG", "JPG", "WebP"])
     private let compressionSlider = UISlider()
     private let compressionLabel = UILabel()
-    private let moderationSelector = UISegmentedControl(items: ["Default", "Auto", "Low"])
+    private let moderationSelector = UISegmentedControl(items: [String(localized: "Default"), String(localized: "Auto"), String(localized: "Low")])
     private let generateButton = UIButton(type: .system)
     private let creditsLabel = UILabel()
     private let expandedImageContainer = UIView()
     private let expandedSelectedImageView = UIImageView()
     private let selectedImageView = UIImageView()
     private let editPromptLabel = UILabel()
-    private let fidelitySelector = UISegmentedControl(items: ["Low", "High"])
+    private let fidelitySelector = UISegmentedControl(items: [String(localized: "Low"), String(localized: "High")])
     private(set) var isExpanded = false
     private var heightConstraint: NSLayoutConstraint!
     private var creditsLabelTopToAdvancedConstraint: NSLayoutConstraint!
@@ -163,12 +163,12 @@ class ChatInputBar: UIView {
         sparkleImageView.contentMode = .scaleAspectFit
         sparkleImageView.translatesAutoresizingMaskIntoConstraints = false
         let promptLabel = UILabel()
-        promptLabel.text = "What do you want to create?"
+        promptLabel.text = String(localized: "What do you want to create?")
         promptLabel.font = .systemFont(ofSize: 16)
         promptLabel.textColor = .secondaryLabel
         promptLabel.translatesAutoresizingMaskIntoConstraints = false
         let tapLabel = UILabel()
-        tapLabel.text = "Tap to customize"
+        tapLabel.text = String(localized: "Tap to customize")
         tapLabel.font = .systemFont(ofSize: 13)
         tapLabel.textColor = .tertiaryLabel
         tapLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -241,21 +241,21 @@ class ChatInputBar: UIView {
         promptTextView.isScrollEnabled = false
         promptTextView.delegate = self
         contentView.addSubview(promptTextView)
-        let modelLabel = createLabel("AI Model")
+        let modelLabel = createLabel(String(localized: "AI Model"))
         modelLabel.tag = 900
         contentView.addSubview(modelLabel)
         modelSelector.translatesAutoresizingMaskIntoConstraints = false
         modelSelector.addTarget(self, action: #selector(modelChanged), for: .valueChanged)
         modelSelector.tag = 901
         contentView.addSubview(modelSelector)
-        let sizeLabel = createLabel("Size")
+        let sizeLabel = createLabel(String(localized: "Size"))
         sizeLabel.tag = 902
         contentView.addSubview(sizeLabel)
         sizeSelector.translatesAutoresizingMaskIntoConstraints = false
         sizeSelector.addTarget(self, action: #selector(updateCredits), for: .valueChanged)
         sizeSelector.tag = 903
         contentView.addSubview(sizeSelector)
-        let qualityLabel = createLabel("Quality")
+        let qualityLabel = createLabel(String(localized: "Quality"))
         qualityLabel.tag = 904
         contentView.addSubview(qualityLabel)
         qualitySelector.translatesAutoresizingMaskIntoConstraints = false
@@ -278,7 +278,7 @@ class ChatInputBar: UIView {
         advancedButtonContent.alignment = .center
         advancedButtonContent.isUserInteractionEnabled = false
         let advancedLabel = UILabel()
-        advancedLabel.text = "Advanced Options"
+        advancedLabel.text = String(localized: "Advanced Options")
         advancedLabel.font = .systemFont(ofSize: 16, weight: .medium)
         let chevronImageView = UIImageView(image: UIImage(systemName: "chevron.down"))
         chevronImageView.tintColor = .secondaryLabel
@@ -302,7 +302,7 @@ class ChatInputBar: UIView {
         contentView.addSubview(creditsLabel)
         generateButton.translatesAutoresizingMaskIntoConstraints = false
         var config = UIButton.Configuration.filled()
-        config.title = "Generate"
+        config.title = String(localized: "Generate")
         config.image = UIImage(systemName: "sparkles")
         config.imagePadding = 8
         config.cornerStyle = .medium
@@ -401,16 +401,16 @@ class ChatInputBar: UIView {
         stackView.axis = .vertical
         stackView.spacing = 16
         advancedOptionsContainer.addSubview(stackView)
-        let backgroundLabel = createLabel("Background")
+        let backgroundLabel = createLabel(String(localized: "Background"))
         stackView.addArrangedSubview(backgroundLabel)
         backgroundSelector.translatesAutoresizingMaskIntoConstraints = false
         stackView.addArrangedSubview(backgroundSelector)
-        let formatLabel = createLabel("Output Format")
+        let formatLabel = createLabel(String(localized: "Output Format"))
         stackView.addArrangedSubview(formatLabel)
         formatSelector.translatesAutoresizingMaskIntoConstraints = false
         formatSelector.addTarget(self, action: #selector(formatChanged), for: .valueChanged)
         stackView.addArrangedSubview(formatSelector)
-        compressionLabel.text = "Compression: \(ConfigurationManager.shared.defaultCompression)%"
+        compressionLabel.text = String(localized: "Compression: \(ConfigurationManager.shared.defaultCompression)%")
         compressionLabel.font = .systemFont(ofSize: 14, weight: .medium)
         compressionLabel.textColor = .secondaryLabel
         compressionLabel.isHidden = true
@@ -421,7 +421,7 @@ class ChatInputBar: UIView {
         compressionSlider.isHidden = true
         compressionSlider.addTarget(self, action: #selector(compressionChanged), for: .valueChanged)
         stackView.addArrangedSubview(compressionSlider)
-        let moderationLabel = createLabel("Moderation")
+        let moderationLabel = createLabel(String(localized: "Moderation"))
         stackView.addArrangedSubview(moderationLabel)
         moderationSelector.translatesAutoresizingMaskIntoConstraints = false
         stackView.addArrangedSubview(moderationSelector)
@@ -557,7 +557,7 @@ class ChatInputBar: UIView {
 
     @objc private func updateCredits() {
         if let fixedCost = selectedModel.fixedCost {
-            creditsLabel.text = "\(fixedCost) credits"
+            creditsLabel.text = String(localized: "\(fixedCost) credits")
             return
         }
 
@@ -589,9 +589,9 @@ class ChatInputBar: UIView {
             creditsRange = 4...6
         }
         if creditsRange.lowerBound == creditsRange.upperBound {
-            creditsLabel.text = "\(creditsRange.lowerBound) credits"
+            creditsLabel.text = String(localized: "\(creditsRange.lowerBound) credits")
         } else {
-            creditsLabel.text = "\(creditsRange.lowerBound)-\(creditsRange.upperBound) credits"
+            creditsLabel.text = String(localized: "\(creditsRange.lowerBound)-\(creditsRange.upperBound) credits")
         }
     }
     func setText(_ text: String) {
@@ -636,7 +636,7 @@ class ChatInputBar: UIView {
     }
     @objc private func compressionChanged() {
         let value = Int(compressionSlider.value)
-        compressionLabel.text = "Compression: \(value)%"
+        compressionLabel.text = String(localized: "Compression: \(value)%")
     }
     func updateIndicators() {
         indicatorStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
@@ -665,10 +665,10 @@ class ChatInputBar: UIView {
                 }
                 if stackView.arrangedSubviews.count > 1,
                    let label = stackView.arrangedSubviews[1] as? UILabel {
-                    label.text = "Describe your edits..."
+                    label.text = String(localized: "Describe your edits...")
                 }
             }
-            generateButton.setTitle("Edit Image", for: .normal)
+            generateButton.setTitle(String(localized: "Edit Image"), for: .normal)
             if !advancedOptionsContainer.subviews.contains(fidelitySelector) {
                 addFidelitySection()
             }
@@ -686,10 +686,10 @@ class ChatInputBar: UIView {
                 }
                 if stackView.arrangedSubviews.count > 1,
                    let label = stackView.arrangedSubviews[1] as? UILabel {
-                    label.text = "What do you want to create?"
+                    label.text = String(localized: "What do you want to create?")
                 }
             }
-            generateButton.setTitle("Generate", for: .normal)
+            generateButton.setTitle(String(localized: "Generate"), for: .normal)
             selectedImageView.removeFromSuperview()
             expandedImageContainer.isHidden = true
             expandedSelectedImageView.image = nil
@@ -714,7 +714,7 @@ class ChatInputBar: UIView {
         ])
     }
     private func addFidelitySection() {
-        let fidelityLabel = createLabel("Fidelity")
+        let fidelityLabel = createLabel(String(localized: "Fidelity"))
         advancedOptionsContainer.addSubview(fidelityLabel)
         fidelitySelector.translatesAutoresizingMaskIntoConstraints = false
         fidelitySelector.selectedSegmentIndex = 0

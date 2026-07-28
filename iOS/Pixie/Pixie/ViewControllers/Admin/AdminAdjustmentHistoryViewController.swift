@@ -36,7 +36,7 @@ class AdminAdjustmentHistoryViewController: UIViewController {
     }
     
     private func setupUI() {
-        title = "Adjustment History"
+        title = String(localized: "Adjustment History")
         view.backgroundColor = .systemGroupedBackground
         
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -53,7 +53,7 @@ class AdminAdjustmentHistoryViewController: UIViewController {
         loadingView.hidesWhenStopped = true
         
         emptyStateLabel.translatesAutoresizingMaskIntoConstraints = false
-        emptyStateLabel.text = "No adjustment history"
+        emptyStateLabel.text = String(localized: "No adjustment history")
         emptyStateLabel.font = .systemFont(ofSize: 17)
         emptyStateLabel.textColor = .secondaryLabel
         emptyStateLabel.textAlignment = .center
@@ -128,11 +128,11 @@ class AdminAdjustmentHistoryViewController: UIViewController {
     
     private func showError(_ message: String) {
         let alert = UIAlertController(
-            title: "Error",
+            title: String(localized: "Error"),
             message: message,
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
         present(alert, animated: true)
     }
 }
@@ -156,18 +156,18 @@ extension AdminAdjustmentHistoryViewController: UITableViewDelegate {
         
         let item = adjustmentHistory[indexPath.row]
         let detailAlert = UIAlertController(
-            title: "Adjustment Details",
-            message: """
+            title: String(localized: "Adjustment Details"),
+            message: String(localized: """
             User ID: \(item.userId)
             Admin ID: \(item.adminId)
             Amount: \(item.amount > 0 ? "+" : "")\(item.amount)
             New Balance: \(item.newBalance)
             Reason: \(item.reason)
             Date: \(dateFormatter.string(from: ISO8601DateFormatter().date(from: item.createdAt) ?? Date()))
-            """,
+            """),
             preferredStyle: .alert
         )
-        detailAlert.addAction(UIAlertAction(title: "OK", style: .default))
+        detailAlert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
         
         haptics.impact(.click)
         present(detailAlert, animated: true)
@@ -262,8 +262,8 @@ class AdjustmentHistoryCell: UITableViewCell {
         amountLabel.textColor = amount > 0 ? .systemGreen : .systemRed
         
         reasonLabel.text = item.reason
-        userIdLabel.text = "User: \(item.userId)"
-        newBalanceLabel.text = "Balance: \(item.newBalance)"
+        userIdLabel.text = String(localized: "User: \(item.userId)")
+        newBalanceLabel.text = String(localized: "Balance: \(item.newBalance)")
         
         if let date = ISO8601DateFormatter().date(from: item.createdAt) {
             dateLabel.text = dateFormatter.string(from: date)

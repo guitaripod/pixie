@@ -7,13 +7,13 @@ class GenerationOptionsViewController: UIViewController {
     
     private let promptTextView = UITextView()
     private let quantityControl = UISegmentedControl(items: ["1", "2", "3", "4"])
-    private let sizeControl = UISegmentedControl(items: ["Auto", "Square", "Landscape", "Portrait"])
-    private let qualityControl = UISegmentedControl(items: ["Low", "Medium", "High"])
+    private let sizeControl = UISegmentedControl(items: [String(localized: "Auto"), String(localized: "Square"), String(localized: "Landscape"), String(localized: "Portrait")])
+    private let qualityControl = UISegmentedControl(items: [String(localized: "Low"), String(localized: "Medium"), String(localized: "High")])
     
     private let advancedToggle = UISwitch()
     private var advancedStack: UIStackView!
     
-    private let backgroundControl = UISegmentedControl(items: ["Transparent", "White", "Black"])
+    private let backgroundControl = UISegmentedControl(items: [String(localized: "Transparent"), String(localized: "White"), String(localized: "Black")])
     private let formatControl = UISegmentedControl(items: ["PNG", "JPEG", "WEBP"])
     private let compressionSlider = UISlider()
     private let compressionLabel = UILabel()
@@ -44,7 +44,7 @@ class GenerationOptionsViewController: UIViewController {
     
     private func setupUI() {
         view.backgroundColor = .systemBackground
-        title = "Generation Options"
+        title = String(localized: "Generation Options")
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(cancelTapped))
         
@@ -81,7 +81,7 @@ class GenerationOptionsViewController: UIViewController {
         compressionSlider.value = 90
         compressionSlider.addTarget(self, action: #selector(compressionChanged), for: .valueChanged)
         
-        compressionLabel.text = "90%"
+        compressionLabel.text = String(localized: "90%")
         compressionLabel.textAlignment = .right
         compressionLabel.font = .systemFont(ofSize: 14)
         
@@ -89,17 +89,17 @@ class GenerationOptionsViewController: UIViewController {
         creditsLabel.font = .systemFont(ofSize: 14, weight: .medium)
         creditsLabel.textColor = .secondaryLabel
         creditsLabel.textAlignment = .center
-        generateButton.setTitle("Generate", for: .normal)
+        generateButton.setTitle(String(localized: "Generate"), for: .normal)
         generateButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
         generateButton.backgroundColor = .systemBlue
         generateButton.setTitleColor(.white, for: .normal)
         generateButton.layer.cornerRadius = 12
         generateButton.addTarget(self, action: #selector(generateTapped), for: .touchUpInside)
         let stack = UIStackView(arrangedSubviews: [
-            createSection(title: "Prompt", content: promptTextView),
-            createSection(title: "Quantity", content: quantityControl),
-            createSection(title: "Size", content: sizeControl),
-            createSection(title: "Quality", content: qualityControl),
+            createSection(title: String(localized: "Prompt"), content: promptTextView),
+            createSection(title: String(localized: "Quantity"), content: quantityControl),
+            createSection(title: String(localized: "Size"), content: sizeControl),
+            createSection(title: String(localized: "Quality"), content: qualityControl),
             createAdvancedSection(),
             creditsLabel,
             generateButton
@@ -167,7 +167,7 @@ class GenerationOptionsViewController: UIViewController {
         headerStack.axis = .horizontal
         
         let label = UILabel()
-        label.text = "Advanced Options"
+        label.text = String(localized: "Advanced Options")
         label.font = .systemFont(ofSize: 14, weight: .medium)
         label.textColor = .secondaryLabel
         
@@ -182,15 +182,15 @@ class GenerationOptionsViewController: UIViewController {
         let moderationStack = UIStackView()
         moderationStack.axis = .horizontal
         let moderationLabel = UILabel()
-        moderationLabel.text = "Content Moderation"
+        moderationLabel.text = String(localized: "Content Moderation")
         moderationLabel.font = .systemFont(ofSize: 16)
         moderationStack.addArrangedSubview(moderationLabel)
         moderationStack.addArrangedSubview(moderationToggle)
         
         advancedStack = UIStackView(arrangedSubviews: [
-            createSection(title: "Background", content: backgroundControl),
-            createSection(title: "Format", content: formatControl),
-            createSection(title: "Compression", content: compressionStack),
+            createSection(title: String(localized: "Background"), content: backgroundControl),
+            createSection(title: String(localized: "Format"), content: formatControl),
+            createSection(title: String(localized: "Compression"), content: compressionStack),
             moderationStack
         ])
         
@@ -219,7 +219,7 @@ class GenerationOptionsViewController: UIViewController {
     }
     
     @objc private func compressionChanged() {
-        compressionLabel.text = "\(Int(compressionSlider.value))%"
+        compressionLabel.text = String(localized: "\(Int(compressionSlider.value))%")
         updateCreditsEstimate()
     }
     
@@ -242,7 +242,7 @@ class GenerationOptionsViewController: UIViewController {
         }
         
         let totalCredits = creditsPerImage * quantity
-        creditsLabel.text = "Estimated cost: \(totalCredits) credits"
+        creditsLabel.text = String(localized: "Estimated cost: \(totalCredits) credits")
     }
     
     @objc private func cancelTapped() {
@@ -251,7 +251,7 @@ class GenerationOptionsViewController: UIViewController {
     
     @objc private func generateTapped() {
         let sizes = ["auto", "1024x1024", "1536x1024", "1024x1536"]
-        let sizeDisplays = ["Auto", "Square", "Landscape", "Portrait"]
+        let sizeDisplays = [String(localized: "Auto"), String(localized: "Square"), String(localized: "Landscape"), String(localized: "Portrait")]
         let qualities = ["low", "medium", "high"]
         
         var options = GenerationOptions.default

@@ -14,7 +14,7 @@ class CostEstimatorViewController: UIViewController {
     
     private let qualitySection = UIView()
     private let qualityLabel = UILabel()
-    private let qualitySegmentedControl = UISegmentedControl(items: ["Low", "Medium", "High"])
+    private let qualitySegmentedControl = UISegmentedControl(items: [String(localized: "Low"), String(localized: "Medium"), String(localized: "High")])
     
     private let sizeSection = UIView()
     private let sizeLabel = UILabel()
@@ -52,7 +52,7 @@ class CostEstimatorViewController: UIViewController {
     }
     
     private func setupUI() {
-        title = "Cost Estimator"
+        title = String(localized: "Cost Estimator")
         view.backgroundColor = .systemBackground
         navigationItem.largeTitleDisplayMode = .never
         
@@ -92,7 +92,7 @@ class CostEstimatorViewController: UIViewController {
         balanceCard.layer.cornerRadius = 16
         balanceCard.translatesAutoresizingMaskIntoConstraints = false
         
-        balanceLabel.text = "Current Balance"
+        balanceLabel.text = String(localized: "Current Balance")
         balanceLabel.font = .systemFont(ofSize: 14, weight: .medium)
         balanceLabel.textColor = .secondaryLabel
         balanceLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -114,7 +114,7 @@ class CostEstimatorViewController: UIViewController {
     }
     
     private func setupQualitySection() {
-        qualityLabel.text = "Quality"
+        qualityLabel.text = String(localized: "Quality")
         qualityLabel.font = .systemFont(ofSize: 16, weight: .semibold)
         qualityLabel.translatesAutoresizingMaskIntoConstraints = false
         
@@ -124,7 +124,7 @@ class CostEstimatorViewController: UIViewController {
     }
     
     private func setupSizeSection() {
-        sizeLabel.text = "Size"
+        sizeLabel.text = String(localized: "Size")
         sizeLabel.font = .systemFont(ofSize: 16, weight: .semibold)
         sizeLabel.translatesAutoresizingMaskIntoConstraints = false
         
@@ -138,7 +138,7 @@ class CostEstimatorViewController: UIViewController {
         editSection.layer.cornerRadius = 12
         editSection.translatesAutoresizingMaskIntoConstraints = false
         
-        editLabel.text = "Edit Mode"
+        editLabel.text = String(localized: "Edit Mode")
         editLabel.font = .systemFont(ofSize: 16, weight: .medium)
         editLabel.translatesAutoresizingMaskIntoConstraints = false
         
@@ -165,7 +165,7 @@ class CostEstimatorViewController: UIViewController {
         numberOfImagesSection.layer.cornerRadius = 12
         numberOfImagesSection.translatesAutoresizingMaskIntoConstraints = false
         
-        numberOfImagesLabel.text = "Number of Images"
+        numberOfImagesLabel.text = String(localized: "Number of Images")
         numberOfImagesLabel.font = .systemFont(ofSize: 16, weight: .medium)
         numberOfImagesLabel.translatesAutoresizingMaskIntoConstraints = false
         
@@ -292,7 +292,7 @@ class CostEstimatorViewController: UIViewController {
     
     private func updateBalance(_ balance: CreditBalance?) {
         guard let balance = balance else { return }
-        balanceAmountLabel.text = "\(balance.balance) credits"
+        balanceAmountLabel.text = String(localized: "\(balance.balance) credits")
         balanceAmountLabel.textColor = balance.getBalanceColor()
     }
     
@@ -325,9 +325,9 @@ class CostEstimatorViewController: UIViewController {
         let totalCost = totalCostPerImage * numberOfImages
         
         // Update UI
-        estimatedCostLabel.text = "\(totalCost) credits"
-        estimatedUSDLabel.text = String(format: "≈ $%.2f USD", Double(totalCost) * 0.01)
-        noteLabel.text = "Estimate based on \(numberOfImages) image\(numberOfImages > 1 ? "s" : "")"
+        estimatedCostLabel.text = String(localized: "\(totalCost) credits")
+        estimatedUSDLabel.text = String(format: String(localized: "≈ $%.2f USD"), Double(totalCost) * 0.01)
+        noteLabel.text = String(localized: "Estimate based on \(numberOfImages) image\(numberOfImages > 1 ? "s" : "")")
     }
     
     private func getBaseCost(quality: String, size: String) -> Int {

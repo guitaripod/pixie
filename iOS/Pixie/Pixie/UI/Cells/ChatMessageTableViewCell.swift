@@ -189,7 +189,7 @@ class ChatMessageTableViewCell: UITableViewCell {
         editImageBottomConstraint.isActive = false
         
         if let metadata = metadata {
-            let titleLabel = createMetadataLabel(text: metadata.isEditMode ? "✏️ Edit Request" : "🎨 Generation Request", isBold: true)
+            let titleLabel = createMetadataLabel(text: metadata.isEditMode ? String(localized: "✏️ Edit Request") : String(localized: "🎨 Generation Request"), isBold: true)
             metadataStackView.addArrangedSubview(titleLabel)
             
             let divider = UIView()
@@ -197,25 +197,25 @@ class ChatMessageTableViewCell: UITableViewCell {
             divider.heightAnchor.constraint(equalToConstant: 0.5).isActive = true
             metadataStackView.addArrangedSubview(divider)
             
-            addMetadataRow("Quality", value: metadata.quality?.uppercased() ?? "")
+            addMetadataRow(String(localized: "Quality"), value: metadata.quality?.uppercased() ?? "")
             
             if let sizeDisplay = metadata.sizeDisplay {
-                addMetadataRow("Size", value: sizeDisplay)
+                addMetadataRow(String(localized: "Size"), value: sizeDisplay)
             }
             
             if let background = metadata.background {
-                addMetadataRow("Background", value: background)
+                addMetadataRow(String(localized: "Background"), value: background)
             }
             
             if let format = metadata.format {
-                addMetadataRow("Format", value: format)
+                addMetadataRow(String(localized: "Format"), value: format)
                 if let compression = metadata.compression {
-                    addMetadataRow("Compress", value: "\(compression)%")
+                    addMetadataRow(String(localized: "Compress"), value: String(localized: "\(compression)%"))
                 }
             }
             
             if let moderation = metadata.moderation {
-                addMetadataRow("Moderation", value: moderation)
+                addMetadataRow(String(localized: "Moderation"), value: moderation)
             }
         }
         

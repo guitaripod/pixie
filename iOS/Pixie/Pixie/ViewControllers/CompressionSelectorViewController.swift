@@ -28,7 +28,7 @@ class CompressionSelectorViewController: UIViewController {
         super.viewDidLoad()
         
         view.backgroundColor = .systemBackground
-        title = "Compression Level"
+        title = String(localized: "Compression Level")
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             barButtonSystemItem: .done,
@@ -50,7 +50,7 @@ class CompressionSelectorViewController: UIViewController {
         view.addSubview(containerView)
         
         // Title
-        titleLabel.text = "Compression Level"
+        titleLabel.text = String(localized: "Compression Level")
         titleLabel.font = .systemFont(ofSize: 17, weight: .semibold)
         containerView.addSubview(titleLabel)
         
@@ -67,7 +67,7 @@ class CompressionSelectorViewController: UIViewController {
         containerView.addSubview(slider)
         
         // Description
-        descriptionLabel.text = "Higher compression reduces file size but may lower image quality"
+        descriptionLabel.text = String(localized: "Higher compression reduces file size but may lower image quality")
         descriptionLabel.font = .systemFont(ofSize: 13)
         descriptionLabel.textColor = .secondaryLabel
         descriptionLabel.numberOfLines = 0
@@ -127,6 +127,6 @@ class CompressionSelectorViewController: UIViewController {
     
     private func updateLabels() {
         let value = Int(slider.value)
-        valueLabel.text = "\(value)%"
+        valueLabel.text = String(localized: "\(value)%")
     }
 }

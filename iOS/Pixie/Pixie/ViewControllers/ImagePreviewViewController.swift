@@ -36,7 +36,7 @@ class ImagePreviewViewController: UIViewController {
         if onEditConfirmed != nil {
             editButton.translatesAutoresizingMaskIntoConstraints = false
             var config = UIButton.Configuration.filled()
-            config.title = "Edit Image"
+            config.title = String(localized: "Edit Image")
             config.image = UIImage(systemName: "wand.and.stars")
             config.imagePlacement = .leading
             config.imagePadding = 8

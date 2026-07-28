@@ -2,7 +2,7 @@ import UIKit
 
 class HelpViewController: UIViewController {
     
-    private let segmentedControl = UISegmentedControl(items: ["Getting Started", "Features", "FAQ"])
+    private let segmentedControl = UISegmentedControl(items: [String(localized: "Getting Started"), String(localized: "Features"), String(localized: "FAQ")])
     private let scrollView = UIScrollView()
     private let contentView = UIView()
     private let stackView = UIStackView()
@@ -13,7 +13,7 @@ class HelpViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        title = "Help"
+        title = String(localized: "Help")
         view.backgroundColor = .systemBackground
         
         setupViews()
@@ -104,30 +104,30 @@ class HelpViewController: UIViewController {
     
     private func showGettingStartedContent() {
         stackView.addArrangedSubview(createSection(
-            title: "Welcome to Pixie",
-            content: "Pixie is a powerful AI image generation app powered by gpt-image-1. Create stunning images from text descriptions, edit existing images, and browse galleries of amazing creations."
+            title: String(localized: "Welcome to Pixie"),
+            content: String(localized: "Pixie is a powerful AI image generation app powered by gpt-image-1. Create stunning images from text descriptions, edit existing images, and browse galleries of amazing creations.")
         ))
         
         stackView.addArrangedSubview(createSection(
-            title: "Quick Start",
-            content: """
+            title: String(localized: "Quick Start"),
+            content: String(localized: """
                 1. **Generate Images**: Tap the bottom toolbar and enter a description
                 2. **Edit Images**: Select an image from gallery or your device
                 3. **Browse Gallery**: Explore public images or view your creations
                 4. **Manage Credits**: Check your balance and purchase more credits
-                """
+                """)
         ))
         
         stackView.addArrangedSubview(createSection(
-            title: "Authentication",
-            content: """
+            title: String(localized: "Authentication"),
+            content: String(localized: """
                 Sign in with your preferred provider:
                 • GitHub (recommended)
                 • Google
                 • Apple
                 
                 Your account syncs across all devices and with the CLI tool.
-                """
+                """)
         ))
     }
     
@@ -135,8 +135,8 @@ class HelpViewController: UIViewController {
     
     private func showFeaturesContent() {
         stackView.addArrangedSubview(createSection(
-            title: "Image Generation",
-            content: """
+            title: String(localized: "Image Generation"),
+            content: String(localized: """
                 **Quality Options:**
                 • Low: ~4-6 credits per image
                 • Medium: ~16-24 credits per image
@@ -154,12 +154,12 @@ class HelpViewController: UIViewController {
                 • Format: PNG, JPEG, WebP
                 • Compression: 0-100 (JPEG/WebP only)
                 • Moderation: Auto (default), Low (less restrictive)
-                """
+                """)
         ))
         
         stackView.addArrangedSubview(createSection(
-            title: "Image Editing",
-            content: """
+            title: String(localized: "Image Editing"),
+            content: String(localized: """
                 Transform existing images with AI:
                 
                 **Edit Options:**
@@ -177,12 +177,12 @@ class HelpViewController: UIViewController {
                 • Low: ~7 credits
                 • Medium: ~16 credits
                 • High: ~72-110 credits
-                """
+                """)
         ))
         
         stackView.addArrangedSubview(createSection(
-            title: "Gallery Features",
-            content: """
+            title: String(localized: "Gallery Features"),
+            content: String(localized: """
                 **Public Gallery:**
                 • Browse all public images
                 • View image details and prompts
@@ -194,12 +194,12 @@ class HelpViewController: UIViewController {
                 • Edit from gallery
                 • Manage your creations
                 • Track image metadata
-                """
+                """)
         ))
         
         stackView.addArrangedSubview(createSection(
-            title: "Credits System",
-            content: """
+            title: String(localized: "Credits System"),
+            content: String(localized: """
                 **Understanding Credits:**
                 • Credits never expire
                 • Shared across all platforms
@@ -210,7 +210,7 @@ class HelpViewController: UIViewController {
                 • Export usage data as CSV
                 • Monitor credit consumption
                 • Set up low balance alerts
-                """
+                """)
         ))
     }
     
@@ -218,29 +218,29 @@ class HelpViewController: UIViewController {
     
     private func showFAQContent() {
         let faqs = [
-            ("How do credits work?", 
-             "Credits are the currency used to generate and edit images. Each operation costs a different amount based on quality and size."),
+            (String(localized: "How do credits work?"),
+             String(localized: "Credits are the currency used to generate and edit images. Each operation costs a different amount based on quality and size.")),
             
-            ("Can I use my own OpenAI API key?", 
-             "Yes! The backend supports using your own OpenAI API key. Contact support to set this up for your account."),
+            (String(localized: "Can I use my own OpenAI API key?"),
+             String(localized: "Yes! The backend supports using your own OpenAI API key. Contact support to set this up for your account.")),
             
-            ("What's the difference between quality levels?", 
-             "Higher quality produces more detailed images but costs more credits. Low quality is great for drafts and experiments, while high quality is best for final artwork."),
+            (String(localized: "What's the difference between quality levels?"),
+             String(localized: "Higher quality produces more detailed images but costs more credits. Low quality is great for drafts and experiments, while high quality is best for final artwork.")),
             
-            ("How do I get transparent backgrounds?", 
-             "Select 'Transparent' in the background options when generating images. This works best with isolated subjects like logos or products."),
+            (String(localized: "How do I get transparent backgrounds?"),
+             String(localized: "Select 'Transparent' in the background options when generating images. This works best with isolated subjects like logos or products.")),
             
-            ("Can I edit images from my gallery?", 
-             "Yes! Long-press any image in the gallery and select 'Edit' to modify it with AI."),
+            (String(localized: "Can I edit images from my gallery?"),
+             String(localized: "Yes! Long-press any image in the gallery and select 'Edit' to modify it with AI.")),
             
-            ("Is my data private?", 
-             "Your API keys are stored securely on your device. All images you generate are automatically shared to the public gallery. You can save images locally or share them to other apps."),
+            (String(localized: "Is my data private?"),
+             String(localized: "Your API keys are stored securely on your device. All images you generate are automatically shared to the public gallery. You can save images locally or share them to other apps.")),
             
-            ("How do I report issues?", 
-             "Report issues at github.com/anthropics/claude-code/issues or contact support through the app."),
+            (String(localized: "How do I report issues?"),
+             String(localized: "Report issues at github.com/anthropics/claude-code/issues or contact support through the app.")),
             
-            ("Can I use Pixie offline?", 
-             "No, Pixie requires an internet connection to communicate with the AI servers for image generation.")
+            (String(localized: "Can I use Pixie offline?"),
+             String(localized: "No, Pixie requires an internet connection to communicate with the AI servers for image generation."))
         ]
         
         for (question, answer) in faqs {

@@ -19,13 +19,13 @@ class GoogleSignInCoordinator: NSObject {
         var errorDescription: String? {
             switch self {
             case .noServerAuthCode:
-                return "No server authorization code received"
+                return String(localized: "No server authorization code received")
             case .noIdToken:
-                return "No ID token received"
+                return String(localized: "No ID token received")
             case .configurationError:
-                return "Google Sign-In configuration error"
+                return String(localized: "Google Sign-In configuration error")
             case .serviceUnavailable:
-                return "Google Sign-In service is currently unavailable"
+                return String(localized: "Google Sign-In service is currently unavailable")
             }
         }
     }

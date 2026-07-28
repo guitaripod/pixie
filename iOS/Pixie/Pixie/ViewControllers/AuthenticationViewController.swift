@@ -94,7 +94,7 @@ class AuthenticationViewController: UIViewController {
         
         githubButton.configure(
             provider: .github,
-            title: "Sign in with GitHub",
+            title: String(localized: "Sign in with GitHub"),
             backgroundColor: UIColor(red: 0.141, green: 0.161, blue: 0.180, alpha: 1.0),
             textColor: .white,
             borderColor: nil,
@@ -128,7 +128,7 @@ class AuthenticationViewController: UIViewController {
         }
         
         termsLabel.translatesAutoresizingMaskIntoConstraints = false
-        termsLabel.text = "By signing in, you agree to our Terms"
+        termsLabel.text = String(localized: "By signing in, you agree to our Terms")
         termsLabel.font = .systemFont(ofSize: 12)
         termsLabel.textColor = .tertiaryLabel
         termsLabel.textAlignment = .center
@@ -177,7 +177,7 @@ class AuthenticationViewController: UIViewController {
             
             let placeholderLabel = UILabel()
             placeholderLabel.translatesAutoresizingMaskIntoConstraints = false
-            placeholderLabel.text = ["Anime Art", "Photorealistic", "Abstract", "Fantasy"][i]
+            placeholderLabel.text = [String(localized: "Anime Art"), String(localized: "Photorealistic"), String(localized: "Abstract"), String(localized: "Fantasy")][i]
             placeholderLabel.font = .systemFont(ofSize: 14, weight: .medium)
             placeholderLabel.textColor = colors[i]
             placeholderLabel.textAlignment = .center
@@ -208,12 +208,12 @@ class AuthenticationViewController: UIViewController {
         headerStackView.alignment = .center
         contentStackView.addArrangedSubview(headerStackView)
         
-        titleLabel.text = "Turn ideas into stunning visuals"
+        titleLabel.text = String(localized: "Turn ideas into stunning visuals")
         titleLabel.font = .systemFont(ofSize: 24, weight: .bold)
         titleLabel.textAlignment = .center
         titleLabel.numberOfLines = 0
         
-        subtitleLabel.text = "Create AI-powered images in seconds"
+        subtitleLabel.text = String(localized: "Create AI-powered images in seconds")
         subtitleLabel.font = .systemFont(ofSize: 15)
         subtitleLabel.textColor = .secondaryLabel
         subtitleLabel.textAlignment = .center
@@ -235,7 +235,7 @@ class AuthenticationViewController: UIViewController {
         creditsHintView.layer.cornerRadius = 12
         
         creditsHintLabel.translatesAutoresizingMaskIntoConstraints = false
-        creditsHintLabel.text = "✨ Get free credits to start creating"
+        creditsHintLabel.text = String(localized: "✨ Get free credits to start creating")
         creditsHintLabel.font = .systemFont(ofSize: 14, weight: .medium)
         creditsHintLabel.textColor = UIColor(red: 0.404, green: 0.314, blue: 0.643, alpha: 1.0)
         creditsHintLabel.textAlignment = .center
@@ -255,7 +255,7 @@ class AuthenticationViewController: UIViewController {
         securityIconView.tintColor = .systemGray
         securityIconView.contentMode = .scaleAspectFit
         
-        securityLabel.text = "Secure sign-in • We never post on your behalf"
+        securityLabel.text = String(localized: "Secure sign-in • We never post on your behalf")
         securityLabel.font = .systemFont(ofSize: 13)
         securityLabel.textColor = .systemGray
         securityLabel.textAlignment = .center
@@ -293,7 +293,7 @@ class AuthenticationViewController: UIViewController {
         
         getStartedButton.translatesAutoresizingMaskIntoConstraints = false
         var config = UIButton.Configuration.filled()
-        config.title = "Get Started"
+        config.title = String(localized: "Get Started")
         config.baseBackgroundColor = UIColor(red: 0.404, green: 0.314, blue: 0.643, alpha: 1.0)
         config.baseForegroundColor = .white
         config.cornerStyle = .medium
@@ -310,7 +310,7 @@ class AuthenticationViewController: UIViewController {
         
         whySignInButton.translatesAutoresizingMaskIntoConstraints = false
         var whyConfig = UIButton.Configuration.plain()
-        whyConfig.title = "Why do I need to sign in?"
+        whyConfig.title = String(localized: "Why do I need to sign in?")
         whyConfig.baseForegroundColor = .systemGray
         whyConfig.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
         whyConfig.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
@@ -531,7 +531,7 @@ class AuthenticationViewController: UIViewController {
         
         let titleLabel = UILabel()
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.text = "Why Sign In?"
+        titleLabel.text = String(localized: "Why Sign In?")
         titleLabel.font = .systemFont(ofSize: 24, weight: .bold)
         titleLabel.textAlignment = .center
         
@@ -542,11 +542,11 @@ class AuthenticationViewController: UIViewController {
         contentStackView.alignment = .fill
         
         let benefits = [
-            ("cloud", "Sync across all your devices"),
-            ("photo.on.rectangle.angled", "Save your creations to gallery"),
-            ("clock.arrow.circlepath", "Access generation history"),
-            ("creditcard", "Track your credits and usage"),
-            ("lock.shield", "Secure and private")
+            ("cloud", String(localized: "Sync across all your devices")),
+            ("photo.on.rectangle.angled", String(localized: "Save your creations to gallery")),
+            ("clock.arrow.circlepath", String(localized: "Access generation history")),
+            ("creditcard", String(localized: "Track your credits and usage")),
+            ("lock.shield", String(localized: "Secure and private"))
         ]
         
         for (icon, text) in benefits {
@@ -580,7 +580,7 @@ class AuthenticationViewController: UIViewController {
         let closeButton = UIButton(type: .system)
         closeButton.translatesAutoresizingMaskIntoConstraints = false
         var config = UIButton.Configuration.filled()
-        config.title = "Got it"
+        config.title = String(localized: "Got it")
         config.baseBackgroundColor = UIColor(red: 0.404, green: 0.314, blue: 0.643, alpha: 1.0)
         config.baseForegroundColor = .white
         config.cornerStyle = .medium

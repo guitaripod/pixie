@@ -41,7 +41,7 @@ final class AIConsentViewController: UIViewController {
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "Made with cloud AI"
+        label.text = String(localized: "Made with cloud AI")
         label.font = UIFont.preferredFont(forTextStyle: .title2).rounded()
         label.textAlignment = .center
         return label
@@ -49,7 +49,7 @@ final class AIConsentViewController: UIViewController {
 
     private lazy var bodyLabel: UILabel = {
         let label = UILabel()
-        label.text = "Pixie sends your prompts and any photos you attach to Google Gemini and OpenAI to create your images. Automated moderation checks every request. Nothing is used to identify you, and you can withdraw consent anytime in Settings."
+        label.text = String(localized: "Pixie sends your prompts and any photos you attach to Google Gemini and OpenAI to create your images. Automated moderation checks every request. Nothing is used to identify you, and you can withdraw consent anytime in Settings.")
         label.font = .preferredFont(forTextStyle: .subheadline)
         label.textColor = .secondaryLabel
         label.textAlignment = .center
@@ -64,7 +64,7 @@ final class AIConsentViewController: UIViewController {
         } else {
             config = .borderedProminent()
         }
-        config.title = "Continue"
+        config.title = String(localized: "Continue")
         config.cornerStyle = .capsule
         config.buttonSize = .large
         return UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
@@ -77,7 +77,7 @@ final class AIConsentViewController: UIViewController {
 
     private lazy var cancelButton: UIButton = {
         var config = UIButton.Configuration.plain()
-        config.title = "Not Now"
+        config.title = String(localized: "Not Now")
         config.baseForegroundColor = .secondaryLabel
         return UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
             self?.dismiss(animated: true)

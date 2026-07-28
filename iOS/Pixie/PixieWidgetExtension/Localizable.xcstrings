@@ -1,0 +1,17 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%llds" : {},
+    "Completed" : {},
+    "Editing Image" : {},
+    "Failed" : {},
+    "Generating" : {},
+    "Generating Image" : {},
+    "Generation failed" : {},
+    "Processing" : {},
+    "Queued" : {},
+    "Ready to view!" : {},
+    "Tap to view" : {}
+  },
+  "version" : "1.0"
+}

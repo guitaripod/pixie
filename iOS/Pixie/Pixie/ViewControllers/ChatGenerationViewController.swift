@@ -170,7 +170,7 @@ class ChatGenerationViewController: UIViewController {
     private func setupNavigationBar() {
         let newChatButton = UIButton(type: .system)
         newChatButton.setImage(UIImage(systemName: "sparkles"), for: .normal)
-        newChatButton.setTitle(" New", for: .normal)
+        newChatButton.setTitle(String(localized: " New"), for: .normal)
         newChatButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         newChatButton.addTarget(self, action: #selector(newChatTapped), for: .touchUpInside)
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: newChatButton)
@@ -505,11 +505,11 @@ class ChatGenerationViewController: UIViewController {
             return
         }
         let alert = UIAlertController(
-            title: "Generation Failed",
+            title: String(localized: "Generation Failed"),
             message: error.localizedDescription,
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
         present(alert, animated: true)
     }
     @objc private func newChatTapped() {
@@ -556,7 +556,7 @@ class ChatGenerationViewController: UIViewController {
     private func updateNavigationForGenerating(_ isGenerating: Bool) {
         if isGenerating {
             let cancelButton = UIBarButtonItem(
-                title: "Cancel",
+                title: String(localized: "Cancel"),
                 style: .plain,
                 target: self,
                 action: #selector(cancelGeneration)
@@ -638,12 +638,12 @@ class ChatGenerationViewController: UIViewController {
     
     private func showPhotoPermissionAlert() {
         let alert = UIAlertController(
-            title: "Photo Access Required",
-            message: "Please allow access to your photos to select images for editing.",
+            title: String(localized: "Photo Access Required"),
+            message: String(localized: "Please allow access to your photos to select images for editing."),
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: "Open Settings"), style: .default) { _ in
             if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
                 UIApplication.shared.open(settingsURL)
             }
@@ -685,7 +685,7 @@ class ChatGenerationViewController: UIViewController {
         let editOptions = inputBar.getEditOptions()
         let message = ChatMessage(
             id: UUID().uuidString,
-            text: "Edit: \(editOptions.prompt)",
+            text: String(localized: "Edit: \(editOptions.prompt)"),
             images: [selectedImage.image],
             isUser: true,
             timestamp: Date(),
@@ -788,8 +788,8 @@ extension ChatGenerationViewController: ChatTableViewDelegate {
     private func showBatchSaveSuccess(count: Int) {
         haptics.impact(.success)
         let alert = UIAlertController(
-            title: "Saved!",
-            message: "\(count) image\(count > 1 ? "s" : "") saved to your Pixie album",
+            title: String(localized: "Saved!"),
+            message: String(localized: "\(count) image\(count > 1 ? "s" : "") saved to your Pixie album"),
             preferredStyle: .alert
         )
         present(alert, animated: true)
@@ -800,13 +800,13 @@ extension ChatGenerationViewController: ChatTableViewDelegate {
     private func showBatchSaveError(_ error: PhotoSavingError) {
         haptics.impact(.error)
         let alert = UIAlertController(
-            title: "Save Failed",
+            title: String(localized: "Save Failed"),
             message: error.localizedDescription,
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
         if case .permissionDenied = error {
-            alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
+            alert.addAction(UIAlertAction(title: String(localized: "Open Settings"), style: .default) { _ in
                 if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(settingsURL)
                 }
@@ -841,7 +841,7 @@ struct GenerationOptions {
             model: "gemini-2.5-flash",
             quantity: 1,
             size: "1024x1024",
-            sizeDisplay: "Square",
+            sizeDisplay: String(localized: "Square"),
             quality: "low",
             stylePreset: nil,
             modifiers: [],
@@ -880,33 +880,33 @@ extension ChatGenerationViewController {
     }
     
     private func setupKeyboardCommands() {
-        addKeyCommand(UIKeyCommand(title: "New Chat",
+        addKeyCommand(UIKeyCommand(title: String(localized: "New Chat"),
                                   action: #selector(newChatTapped),
                                   input: "N",
                                   modifierFlags: .command))
         
-        addKeyCommand(UIKeyCommand(title: "Generate",
+        addKeyCommand(UIKeyCommand(title: String(localized: "Generate"),
                                   action: #selector(generateWithKeyboard),
                                   input: "\r",
                                   modifierFlags: .command))
         
-        addKeyCommand(UIKeyCommand(title: "Open Gallery",
+        addKeyCommand(UIKeyCommand(title: String(localized: "Open Gallery"),
                                   action: #selector(galleryTapped),
                                   input: "G",
                                   modifierFlags: .command))
         
-        addKeyCommand(UIKeyCommand(title: "Save Image",
+        addKeyCommand(UIKeyCommand(title: String(localized: "Save Image"),
                                   action: #selector(saveCurrentImage),
                                   input: "S",
                                   modifierFlags: .command))
         
-        addKeyCommand(UIKeyCommand(title: "Focus Input",
+        addKeyCommand(UIKeyCommand(title: String(localized: "Focus Input"),
                                   action: #selector(focusInputField),
                                   input: "L",
                                   modifierFlags: .command))
         
         if UIDevice.isPad {
-            addKeyCommand(UIKeyCommand(title: "Toggle Sidebar",
+            addKeyCommand(UIKeyCommand(title: String(localized: "Toggle Sidebar"),
                                       action: #selector(toggleSidebarShortcut),
                                       input: "\\",
                                       modifierFlags: .command))

@@ -24,7 +24,7 @@ extension Notification.Name {
 final class GalleryViewController: UIViewController {
     
     private let pageViewController = UIPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal)
-    private let segmentedControl = UISegmentedControl(items: ["My Images", "Explore"])
+    private let segmentedControl = UISegmentedControl(items: [String(localized: "My Images"), String(localized: "Explore")])
     private var currentType: GalleryType = .personal
     
     private lazy var personalGalleryVC = GalleryPageViewController(type: .personal)
@@ -170,7 +170,7 @@ private extension GalleryViewController {
         case .copyPrompt:
             HapticsManager.shared.notification(.success)
             UIPasteboard.general.string = image.prompt
-            showToast("Prompt copied to clipboard")
+            showToast(String(localized: "Prompt copied to clipboard"))
             
         case .download:
             HapticsManager.shared.impact(.light)
@@ -204,27 +204,27 @@ private extension GalleryViewController {
 
     func confirmBlock(_ image: ImageMetadata) {
         let alert = UIAlertController(
-            title: "Block This Account?",
-            message: "You won't see posts from this account in Explore. You can manage blocked accounts in Settings.",
+            title: String(localized: "Block This Account?"),
+            message: String(localized: "You won't see posts from this account in Explore. You can manage blocked accounts in Settings."),
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Block", style: .destructive) { _ in
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: "Block"), style: .destructive) { _ in
             BlockedUsers.block(image.userId)
             HapticsManager.shared.notification(.success)
-            self.showToast("You won't see posts from this account")
+            self.showToast(String(localized: "You won't see posts from this account"))
         })
         present(alert, animated: true)
     }
 
     func confirmDelete(_ image: ImageMetadata) {
         let alert = UIAlertController(
-            title: "Delete Image?",
-            message: "This permanently deletes the image and removes it from the public gallery. This can't be undone.",
+            title: String(localized: "Delete Image?"),
+            message: String(localized: "This permanently deletes the image and removes it from the public gallery. This can't be undone."),
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: "Delete"), style: .destructive) { [weak self] _ in
             self?.deleteImage(image)
         })
         present(alert, animated: true)
@@ -239,12 +239,12 @@ private extension GalleryViewController {
                     self.personalGalleryVC.removeImage(id: image.id)
                     self.exploreGalleryVC.removeImage(id: image.id)
                     GalleryCache.shared.clearCache()
-                    self.showToast("Image deleted")
+                    self.showToast(String(localized: "Image deleted"))
                 }
             } catch {
                 await MainActor.run {
                     HapticsManager.shared.notification(.error)
-                    self.showToast("Could not delete image. Try again later.")
+                    self.showToast(String(localized: "Could not delete image. Try again later."))
                 }
             }
         }
@@ -259,12 +259,12 @@ private extension GalleryViewController {
                     self.personalGalleryVC.applyVisibility(id: image.id, isPublic: isPublic)
                     self.exploreGalleryVC.applyVisibility(id: image.id, isPublic: isPublic)
                     GalleryCache.shared.clearCache()
-                    self.showToast(isPublic ? "Added to public gallery" : "Removed from public gallery")
+                    self.showToast(isPublic ? String(localized: "Added to public gallery") : String(localized: "Removed from public gallery"))
                 }
             } catch {
                 await MainActor.run {
                     HapticsManager.shared.notification(.error)
-                    self.showToast("Could not update visibility. Try again later.")
+                    self.showToast(String(localized: "Could not update visibility. Try again later."))
                 }
             }
         }
@@ -272,22 +272,22 @@ private extension GalleryViewController {
 
     func reportImage(_ image: ImageMetadata) {
         let alert = UIAlertController(
-            title: "Report Image",
-            message: "Report this image if it is offensive, unsafe, or violates the community guidelines. Reported images are reviewed and removed when they break the rules.",
+            title: String(localized: "Report Image"),
+            message: String(localized: "Report this image if it is offensive, unsafe, or violates the community guidelines. Reported images are reviewed and removed when they break the rules."),
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Report", style: .destructive) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: "Report"), style: .destructive) { [weak self] _ in
             Task {
                 do {
                     _ = try await APIService.shared.reportImage(id: image.id)
                     await MainActor.run {
                         HapticsManager.shared.notification(.success)
-                        self?.showToast("Thanks — this image was reported")
+                        self?.showToast(String(localized: "Thanks — this image was reported"))
                     }
                 } catch {
                     await MainActor.run {
-                        self?.showToast("Could not send report. Try again later.")
+                        self?.showToast(String(localized: "Could not send report. Try again later."))
                     }
                 }
             }
@@ -342,7 +342,7 @@ private extension GalleryViewController {
                 UIImageWriteToSavedPhotosAlbum(image, self, #selector(self.image(_:didFinishSavingWithError:contextInfo:)), nil)
             } else {
                 await MainActor.run {
-                    self.showToast("Failed to download image")
+                    self.showToast(String(localized: "Failed to download image"))
                 }
             }
         }
@@ -351,10 +351,10 @@ private extension GalleryViewController {
     @objc func image(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
         if error != nil {
             HapticsManager.shared.notification(.error)
-            showToast("Failed to save image")
+            showToast(String(localized: "Failed to save image"))
         } else {
             HapticsManager.shared.notification(.success)
-            showToast("Image saved to Photos")
+            showToast(String(localized: "Image saved to Photos"))
         }
     }
     
@@ -372,7 +372,7 @@ private extension GalleryViewController {
                 }
             } else {
                 await MainActor.run {
-                    self.showToast("Failed to load image for sharing")
+                    self.showToast(String(localized: "Failed to load image for sharing"))
                 }
             }
         }

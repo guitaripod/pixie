@@ -173,17 +173,17 @@ final class GalleryImageCell: UICollectionViewCell {
         let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: date, to: now)
         
         if let years = components.year, years > 0 {
-            return "\(years)y ago"
+            return String(localized: "\(years)y ago")
         } else if let months = components.month, months > 0 {
-            return "\(months)mo ago"
+            return String(localized: "\(months)mo ago")
         } else if let days = components.day, days > 0 {
-            return "\(days)d ago"
+            return String(localized: "\(days)d ago")
         } else if let hours = components.hour, hours > 0 {
-            return "\(hours)h ago"
+            return String(localized: "\(hours)h ago")
         } else if let minutes = components.minute, minutes > 0 {
-            return "\(minutes)m ago"
+            return String(localized: "\(minutes)m ago")
         } else {
-            return "Just now"
+            return String(localized: "Just now")
         }
     }
     

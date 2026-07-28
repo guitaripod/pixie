@@ -11,7 +11,7 @@ class SettingsViewController: UIViewController {
     private let haptics = HapticManager.shared
     private let networkService = AppContainer.shared.networkService
     
-    private var cacheSize: String = "Calculating..."
+    private var cacheSize: String = String(localized: "Calculating...")
     private var connectionStatus: ConnectionStatus = .idle
     private var isTestingConnection = false
     
@@ -34,14 +34,14 @@ class SettingsViewController: UIViewController {
 
         var title: String {
             switch self {
-            case .appearance: return "Appearance"
-            case .defaults: return "Defaults"
-            case .privacy: return "Privacy"
-            case .storage: return "Storage"
-            case .api: return "API"
-            case .admin: return "Admin"
-            case .help: return "Help & Support"
-            case .account: return "Account"
+            case .appearance: return String(localized: "Appearance")
+            case .defaults: return String(localized: "Defaults")
+            case .privacy: return String(localized: "Privacy")
+            case .storage: return String(localized: "Storage")
+            case .api: return String(localized: "API")
+            case .admin: return String(localized: "Admin")
+            case .help: return String(localized: "Help & Support")
+            case .account: return String(localized: "Account")
             }
         }
         
@@ -99,7 +99,7 @@ class SettingsViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        title = "Settings"
+        title = String(localized: "Settings")
         view.backgroundColor = .systemGroupedBackground
         
         setupTableView()
@@ -166,13 +166,13 @@ class SettingsViewController: UIViewController {
     
     private func handleLogout() {
         let alert = UIAlertController(
-            title: "Logout",
-            message: "Are you sure you want to logout?",
+            title: String(localized: "Logout"),
+            message: String(localized: "Are you sure you want to logout?"),
             preferredStyle: .alert
         )
         
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Logout", style: .destructive) { _ in
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: "Logout"), style: .destructive) { _ in
             Task {
                 do {
                     try await self.authenticationManager.logout()
@@ -185,11 +185,11 @@ class SettingsViewController: UIViewController {
                 } catch {
                     await MainActor.run {
                         let errorAlert = UIAlertController(
-                            title: "Error",
-                            message: "Failed to logout: \(error.localizedDescription)",
+                            title: String(localized: "Error"),
+                            message: String(localized: "Failed to logout: \(error.localizedDescription)"),
                             preferredStyle: .alert
                         )
-                        errorAlert.addAction(UIAlertAction(title: "OK", style: .default))
+                        errorAlert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
                         self.present(errorAlert, animated: true)
                     }
                 }
@@ -292,9 +292,9 @@ extension SettingsViewController: UITableViewDataSource {
         
         switch row {
         case .theme:
-            label.text = "Theme"
+            label.text = String(localized: "Theme")
             
-            let segmentedControl = UISegmentedControl(items: ["System", "Light", "Dark"])
+            let segmentedControl = UISegmentedControl(items: [String(localized: "System"), String(localized: "Light"), String(localized: "Dark")])
             segmentedControl.translatesAutoresizingMaskIntoConstraints = false
             
             switch configurationManager.theme {
@@ -346,7 +346,7 @@ extension SettingsViewController: UITableViewDataSource {
         
         switch row {
         case .model:
-            label.text = "AI Model"
+            label.text = String(localized: "AI Model")
 
             let segmentedControl = UISegmentedControl(items: ["Gemini", "OpenAI GPT"])
             segmentedControl.translatesAutoresizingMaskIntoConstraints = false
@@ -368,9 +368,9 @@ extension SettingsViewController: UITableViewDataSource {
             ])
 
         case .quality:
-            label.text = "Quality"
+            label.text = String(localized: "Quality")
             
-            let segmentedControl = UISegmentedControl(items: ["Low", "Medium", "High", "Auto"])
+            let segmentedControl = UISegmentedControl(items: [String(localized: "Low"), String(localized: "Medium"), String(localized: "High"), String(localized: "Auto")])
             segmentedControl.translatesAutoresizingMaskIntoConstraints = false
             
             switch configurationManager.defaultQuality {
@@ -392,9 +392,9 @@ extension SettingsViewController: UITableViewDataSource {
             ])
             
         case .size:
-            label.text = "Size"
+            label.text = String(localized: "Size")
             
-            let segmentedControl = UISegmentedControl(items: ["Square", "Landscape", "Portrait", "Auto"])
+            let segmentedControl = UISegmentedControl(items: [String(localized: "Square"), String(localized: "Landscape"), String(localized: "Portrait"), String(localized: "Auto")])
             segmentedControl.translatesAutoresizingMaskIntoConstraints = false
             
             switch configurationManager.defaultSize {
@@ -416,7 +416,7 @@ extension SettingsViewController: UITableViewDataSource {
             ])
             
         case .format:
-            label.text = "Format"
+            label.text = String(localized: "Format")
             
             let segmentedControl = UISegmentedControl(items: ["PNG", "JPEG", "WebP"])
             segmentedControl.translatesAutoresizingMaskIntoConstraints = false
@@ -440,8 +440,8 @@ extension SettingsViewController: UITableViewDataSource {
             
         case .compression:
             let compressionCell = UITableViewCell(style: .value1, reuseIdentifier: nil)
-            compressionCell.textLabel?.text = "Compression Level"
-            compressionCell.detailTextLabel?.text = "\(configurationManager.defaultCompression)%"
+            compressionCell.textLabel?.text = String(localized: "Compression Level")
+            compressionCell.detailTextLabel?.text = String(localized: "\(configurationManager.defaultCompression)%")
             
             if configurationManager.defaultOutputFormat == "png" {
                 compressionCell.textLabel?.textColor = .secondaryLabel
@@ -454,9 +454,9 @@ extension SettingsViewController: UITableViewDataSource {
             return compressionCell
             
         case .background:
-            label.text = "Background"
+            label.text = String(localized: "Background")
             
-            let segmentedControl = UISegmentedControl(items: ["Auto", "Transparent", "Opaque", "None"])
+            let segmentedControl = UISegmentedControl(items: [String(localized: "Auto"), String(localized: "Transparent"), String(localized: "Opaque"), String(localized: "None")])
             segmentedControl.translatesAutoresizingMaskIntoConstraints = false
             
             switch configurationManager.defaultBackground {
@@ -478,9 +478,9 @@ extension SettingsViewController: UITableViewDataSource {
             ])
             
         case .moderation:
-            label.text = "Moderation"
+            label.text = String(localized: "Moderation")
             
-            let segmentedControl = UISegmentedControl(items: ["Default", "Auto", "Low"])
+            let segmentedControl = UISegmentedControl(items: [String(localized: "Default"), String(localized: "Auto"), String(localized: "Low")])
             segmentedControl.translatesAutoresizingMaskIntoConstraints = false
             
             switch configurationManager.defaultModeration {
@@ -513,8 +513,8 @@ extension SettingsViewController: UITableViewDataSource {
         case .shareToGallery:
             let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
             cell.selectionStyle = .none
-            cell.textLabel?.text = "Share to Public Gallery"
-            cell.detailTextLabel?.text = "Show new creations in the Explore feed"
+            cell.textLabel?.text = String(localized: "Share to Public Gallery")
+            cell.detailTextLabel?.text = String(localized: "Show new creations in the Explore feed")
             cell.detailTextLabel?.textColor = .secondaryLabel
 
             let toggle = UISwitch()
@@ -527,9 +527,9 @@ extension SettingsViewController: UITableViewDataSource {
 
         case .blockedAccounts:
             let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
-            cell.textLabel?.text = "Blocked Accounts"
+            cell.textLabel?.text = String(localized: "Blocked Accounts")
             let count = BlockedUsers.count
-            cell.detailTextLabel?.text = count == 0 ? "None" : "\(count)"
+            cell.detailTextLabel?.text = count == 0 ? String(localized: "None") : "\(count)"
             cell.accessoryType = .disclosureIndicator
             return cell
         }
@@ -543,7 +543,7 @@ extension SettingsViewController: UITableViewDataSource {
         switch row {
         case .cache:
             let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
-            cell.textLabel?.text = "Image Cache"
+            cell.textLabel?.text = String(localized: "Image Cache")
             cell.detailTextLabel?.text = cacheSize
             return cell
         }
@@ -557,8 +557,8 @@ extension SettingsViewController: UITableViewDataSource {
         switch row {
         case .connection:
             let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
-            cell.textLabel?.text = "API Connection"
-            cell.detailTextLabel?.text = "Test connection to Pixie servers"
+            cell.textLabel?.text = String(localized: "API Connection")
+            cell.detailTextLabel?.text = String(localized: "Test connection to Pixie servers")
             
             switch connectionStatus {
             case .idle:
@@ -571,7 +571,7 @@ extension SettingsViewController: UITableViewDataSource {
                 let checkmark = UIImageView(image: UIImage(systemName: "checkmark.circle.fill"))
                 checkmark.tintColor = .systemGreen
                 cell.accessoryView = checkmark
-                cell.detailTextLabel?.text = "Connected successfully"
+                cell.detailTextLabel?.text = String(localized: "Connected successfully")
                 cell.detailTextLabel?.textColor = .systemGreen
             case .error(let message):
                 let warning = UIImageView(image: UIImage(systemName: "exclamationmark.triangle.fill"))
@@ -593,7 +593,7 @@ extension SettingsViewController: UITableViewDataSource {
         switch row {
         case .dashboard:
             let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-            cell.textLabel?.text = "Admin Dashboard"
+            cell.textLabel?.text = String(localized: "Admin Dashboard")
             cell.accessoryType = .disclosureIndicator
             return cell
         }
@@ -608,22 +608,22 @@ extension SettingsViewController: UITableViewDataSource {
         
         switch row {
         case .documentation:
-            cell.textLabel?.text = "Help Documentation"
-            cell.detailTextLabel?.text = "Learn how to use Pixie"
+            cell.textLabel?.text = String(localized: "Help Documentation")
+            cell.detailTextLabel?.text = String(localized: "Learn how to use Pixie")
             cell.accessoryType = .disclosureIndicator
         case .cloudAIConsent:
-            cell.textLabel?.text = "Cloud AI Consent"
-            cell.detailTextLabel?.text = CloudAIConsent.isGranted ? "Granted" : "Not granted"
+            cell.textLabel?.text = String(localized: "Cloud AI Consent")
+            cell.detailTextLabel?.text = CloudAIConsent.isGranted ? String(localized: "Granted") : String(localized: "Not granted")
             cell.accessoryType = .disclosureIndicator
         case .moreApps:
-            cell.textLabel?.text = "More Apps"
-            cell.detailTextLabel?.text = "Other apps by this developer"
+            cell.textLabel?.text = String(localized: "More Apps")
+            cell.detailTextLabel?.text = String(localized: "Other apps by this developer")
             cell.accessoryType = .disclosureIndicator
         case .about:
-            cell.textLabel?.text = "About"
+            cell.textLabel?.text = String(localized: "About")
             if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
                let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
-                cell.detailTextLabel?.text = "Version \(version) (\(build))"
+                cell.detailTextLabel?.text = String(localized: "Version \(version) (\(build))")
             }
             cell.selectionStyle = .none
         }
@@ -641,21 +641,21 @@ extension SettingsViewController: UITableViewDataSource {
         switch row {
         case .userId:
             if authenticationManager.isAnonymous {
-                cell.textLabel?.text = "Sign in with Apple"
-                cell.detailTextLabel?.text = "Sync & keep your credits"
+                cell.textLabel?.text = String(localized: "Sign in with Apple")
+                cell.detailTextLabel?.text = String(localized: "Sync & keep your credits")
                 cell.detailTextLabel?.textColor = .secondaryLabel
                 cell.accessoryType = .disclosureIndicator
                 cell.selectionStyle = .default
             } else {
-                cell.textLabel?.text = "User ID"
-                cell.detailTextLabel?.text = authenticationManager.currentUser?.id ?? "Not logged in"
+                cell.textLabel?.text = String(localized: "User ID")
+                cell.detailTextLabel?.text = authenticationManager.currentUser?.id ?? String(localized: "Not logged in")
                 cell.detailTextLabel?.textColor = .systemBlue
                 cell.selectionStyle = .none
             }
         case .logout:
-            cell.textLabel?.text = "Log Out"
+            cell.textLabel?.text = String(localized: "Log Out")
             cell.textLabel?.textColor = .systemRed
-            cell.detailTextLabel?.text = "Sign out of your account"
+            cell.detailTextLabel?.text = String(localized: "Sign out of your account")
             cell.detailTextLabel?.textColor = .secondaryLabel
         }
         
@@ -664,20 +664,20 @@ extension SettingsViewController: UITableViewDataSource {
     
     private func formatQuality(_ quality: String) -> String {
         switch quality.lowercased() {
-        case "low": return "Low (~4-5 credits)"
-        case "medium": return "Medium (~12-15 credits)"
-        case "high": return "High (~50-80 credits)"
-        case "auto": return "Auto (AI selects)"
+        case "low": return String(localized: "Low (~4-5 credits)")
+        case "medium": return String(localized: "Medium (~12-15 credits)")
+        case "high": return String(localized: "High (~50-80 credits)")
+        case "auto": return String(localized: "Auto (AI selects)")
         default: return quality.capitalized
         }
     }
     
     private func formatSize(_ size: String) -> String {
         switch size.lowercased() {
-        case "square": return "Square (1024×1024)"
-        case "landscape": return "Landscape (1536×1024)"
-        case "portrait": return "Portrait (1024×1536)"
-        case "auto": return "Auto (AI selects)"
+        case "square": return String(localized: "Square (1024×1024)")
+        case "landscape": return String(localized: "Landscape (1536×1024)")
+        case "portrait": return String(localized: "Portrait (1024×1536)")
+        case "auto": return String(localized: "Auto (AI selects)")
         default: return size.capitalized
         }
     }
@@ -720,7 +720,7 @@ extension SettingsViewController: UITableViewDelegate {
         if visibleSections[section] == .storage {
             let footerView = UIView()
             let button = UIButton(type: .system)
-            button.setTitle("Clear Cache", for: .normal)
+            button.setTitle(String(localized: "Clear Cache"), for: .normal)
             button.setTitleColor(.systemRed, for: .normal)
             button.titleLabel?.font = .systemFont(ofSize: 17, weight: .medium)
             button.addTarget(self, action: #selector(clearCacheTapped), for: .touchUpInside)
@@ -758,7 +758,7 @@ extension SettingsViewController: UITableViewDelegate {
         guard section < visibleSections.count else { return nil }
 
         if visibleSections[section] == .privacy {
-            return "Images you share appear in Pixie's public Explore feed, where anyone can see them. Turn this off to keep new creations private. You can delete or hide any image anytime from your gallery."
+            return String(localized: "Images you share appear in Pixie's public Explore feed, where anyone can see them. Turn this off to keep new creations private. You can delete or hide any image anytime from your gallery.")
         }
         return nil
     }
@@ -830,18 +830,18 @@ extension SettingsViewController: UITableViewDelegate {
     private func presentCloudAIConsentOptions(at indexPath: IndexPath) {
         let granted = CloudAIConsent.isGranted
         let alert = UIAlertController(
-            title: "Cloud AI Consent",
-            message: "Pixie sends your prompts and attached photos to Google Gemini and OpenAI to create images. Withdrawing consent pauses image generation until you grant it again.",
+            title: String(localized: "Cloud AI Consent"),
+            message: String(localized: "Pixie sends your prompts and attached photos to Google Gemini and OpenAI to create images. Withdrawing consent pauses image generation until you grant it again."),
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
         if granted {
-            alert.addAction(UIAlertAction(title: "Withdraw Consent", style: .destructive) { [weak self] _ in
+            alert.addAction(UIAlertAction(title: String(localized: "Withdraw Consent"), style: .destructive) { [weak self] _ in
                 CloudAIConsent.withdraw()
                 self?.tableView.reloadRows(at: [indexPath], with: .automatic)
             })
         } else {
-            alert.addAction(UIAlertAction(title: "Grant Consent", style: .default) { [weak self] _ in
+            alert.addAction(UIAlertAction(title: String(localized: "Grant Consent"), style: .default) { [weak self] _ in
                 CloudAIConsent.grant()
                 self?.tableView.reloadRows(at: [indexPath], with: .automatic)
             })
@@ -877,11 +877,11 @@ extension SettingsViewController: UITableViewDelegate {
 
     private func presentAppleLinkError(_ error: Error) {
         let alert = UIAlertController(
-            title: "Sign in failed",
+            title: String(localized: "Sign in failed"),
             message: error.localizedDescription,
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
         present(alert, animated: true)
     }
     
@@ -945,15 +945,15 @@ extension SettingsViewController: UITableViewDelegate {
         configurationManager.shareToPublicGallery = isOn
 
         let alert = UIAlertController(
-            title: isOn ? "Share Existing Images?" : "Hide Existing Images?",
+            title: isOn ? String(localized: "Share Existing Images?") : String(localized: "Hide Existing Images?"),
             message: isOn
-                ? "New creations will appear in the public gallery. Do you also want to share all of your existing images?"
-                : "New creations will stay private. Do you also want to remove all of your existing images from the public gallery?",
+                ? String(localized: "New creations will appear in the public gallery. Do you also want to share all of your existing images?")
+                : String(localized: "New creations will stay private. Do you also want to remove all of your existing images from the public gallery?"),
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "Only New Images", style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: "Only New Images"), style: .cancel))
         alert.addAction(UIAlertAction(
-            title: isOn ? "Share All" : "Hide All",
+            title: isOn ? String(localized: "Share All") : String(localized: "Hide All"),
             style: isOn ? .default : .destructive
         ) { [weak self] _ in
             self?.applyVisibilityToAllImages(isPublic: isOn)
@@ -970,16 +970,16 @@ extension SettingsViewController: UITableViewDelegate {
                     GalleryCache.shared.clearCache()
                     NotificationCenter.default.post(name: .galleryNeedsRefresh, object: nil)
                     self.presentInfoAlert(
-                        title: "Done",
+                        title: String(localized: "Done"),
                         message: isPublic
-                            ? "\(count) image(s) are now in the public gallery."
-                            : "\(count) image(s) removed from the public gallery."
+                            ? String(localized: "\(count) image(s) are now in the public gallery.")
+                            : String(localized: "\(count) image(s) removed from the public gallery.")
                     )
                 }
             } catch {
                 await MainActor.run {
                     self.haptics.impact(.error)
-                    self.presentInfoAlert(title: "Error", message: "Could not update your images. Try again later.")
+                    self.presentInfoAlert(title: String(localized: "Error"), message: String(localized: "Could not update your images. Try again later."))
                 }
             }
         }
@@ -987,7 +987,7 @@ extension SettingsViewController: UITableViewDelegate {
 
     private func presentInfoAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
         present(alert, animated: true)
     }
     
@@ -995,21 +995,21 @@ extension SettingsViewController: UITableViewDelegate {
         haptics.impact(.warning)
         
         let alert = UIAlertController(
-            title: "Clear Cache",
-            message: "This will delete all cached images. Are you sure?",
+            title: String(localized: "Clear Cache"),
+            message: String(localized: "This will delete all cached images. Are you sure?"),
             preferredStyle: .alert
         )
         
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel) { _ in
             self.haptics.impact(.click)
         })
         
-        alert.addAction(UIAlertAction(title: "Clear", style: .destructive) { _ in
+        alert.addAction(UIAlertAction(title: String(localized: "Clear"), style: .destructive) { _ in
             self.haptics.impact(.success)
             Task {
                 // Show clearing in progress
                 await MainActor.run {
-                    self.cacheSize = "Clearing..."
+                    self.cacheSize = String(localized: "Clearing...")
                     if let indexPath = self.indexPathForRow(StorageRow.cache, inSection: .storage) {
                         self.tableView.reloadRows(at: [indexPath], with: .none)
                     }
@@ -1100,7 +1100,7 @@ extension SettingsViewController: UITableViewDelegate {
     
     
     private func presentQualitySelector() {
-        let alert = UIAlertController(title: "Default Quality", message: nil, preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: String(localized: "Default Quality"), message: nil, preferredStyle: .actionSheet)
         
         let qualities = ["low", "medium", "high", "auto"]
         for quality in qualities {
@@ -1116,7 +1116,7 @@ extension SettingsViewController: UITableViewDelegate {
             alert.addAction(action)
         }
         
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel) { _ in
             self.haptics.impact(.click)
         })
         
@@ -1132,7 +1132,7 @@ extension SettingsViewController: UITableViewDelegate {
     }
     
     private func presentSizeSelector() {
-        let alert = UIAlertController(title: "Default Size", message: nil, preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: String(localized: "Default Size"), message: nil, preferredStyle: .actionSheet)
         
         let sizes = ["square", "landscape", "portrait", "auto"]
         for size in sizes {
@@ -1148,7 +1148,7 @@ extension SettingsViewController: UITableViewDelegate {
             alert.addAction(action)
         }
         
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel) { _ in
             self.haptics.impact(.click)
         })
         
@@ -1164,7 +1164,7 @@ extension SettingsViewController: UITableViewDelegate {
     }
     
     private func presentFormatSelector() {
-        let alert = UIAlertController(title: "Default Format", message: nil, preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: String(localized: "Default Format"), message: nil, preferredStyle: .actionSheet)
         
         let formats = ["png", "webp", "jpg"]
         for format in formats {
@@ -1185,7 +1185,7 @@ extension SettingsViewController: UITableViewDelegate {
             alert.addAction(action)
         }
         
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel) { _ in
             self.haptics.impact(.click)
         })
         
@@ -1249,9 +1249,9 @@ extension SettingsViewController: UITableViewDelegate {
 extension AppTheme {
     var displayName: String {
         switch self {
-        case .system: return "System"
-        case .light: return "Light"
-        case .dark: return "Dark"
+        case .system: return String(localized: "System")
+        case .light: return String(localized: "Light")
+        case .dark: return String(localized: "Dark")
         }
     }
 }

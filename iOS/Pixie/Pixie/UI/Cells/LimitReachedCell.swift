@@ -39,13 +39,13 @@ final class LimitReachedCell: UICollectionViewCell {
         iconImageView.contentMode = .scaleAspectFit
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         
-        titleLabel.text = "Reached viewing limit (100 images)"
+        titleLabel.text = String(localized: "Reached viewing limit (100 images)")
         titleLabel.font = .systemFont(ofSize: 16, weight: .medium)
         titleLabel.textColor = .label
         titleLabel.textAlignment = .center
         titleLabel.numberOfLines = 0
         
-        subtitleLabel.text = "Refresh to see more recent images"
+        subtitleLabel.text = String(localized: "Refresh to see more recent images")
         subtitleLabel.font = .systemFont(ofSize: 14)
         subtitleLabel.textColor = .secondaryLabel
         subtitleLabel.textAlignment = .center

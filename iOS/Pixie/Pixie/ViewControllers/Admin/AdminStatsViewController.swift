@@ -36,7 +36,7 @@ class AdminStatsViewController: UIViewController {
     }
     
     private func setupUI() {
-        title = "System Statistics"
+        title = String(localized: "System Statistics")
         view.backgroundColor = .systemGroupedBackground
         
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -60,25 +60,25 @@ class AdminStatsViewController: UIViewController {
         errorLabel.isHidden = true
         
         userStatsCard.configure(
-            title: "Users",
+            title: String(localized: "Users"),
             icon: UIImage(systemName: "person.2.fill"),
             color: .systemBlue
         )
         
         creditStatsCard.configure(
-            title: "Credits",
+            title: String(localized: "Credits"),
             icon: UIImage(systemName: "creditcard.fill"),
             color: .systemGreen
         )
         
         revenueStatsCard.configure(
-            title: "Revenue",
+            title: String(localized: "Revenue"),
             icon: UIImage(systemName: "dollarsign.circle.fill"),
             color: .systemOrange
         )
         
         imageStatsCard.configure(
-            title: "Images",
+            title: String(localized: "Images"),
             icon: UIImage(systemName: "photo.fill"),
             color: .systemPurple
         )
@@ -157,18 +157,18 @@ class AdminStatsViewController: UIViewController {
     }
     
     private func updateUI(with stats: SystemStatsResponse) {
-        userStatsCard.addStatItem(label: "Total Users", value: "\(stats.users.total)")
+        userStatsCard.addStatItem(label: String(localized: "Total Users"), value: "\(stats.users.total)")
         
-        creditStatsCard.addStatItem(label: "Total Balance", value: "\(stats.credits.totalBalance)")
-        creditStatsCard.addStatItem(label: "Total Purchased", value: "\(stats.credits.totalPurchased)")
-        creditStatsCard.addStatItem(label: "Total Spent", value: "\(stats.credits.totalSpent)")
+        creditStatsCard.addStatItem(label: String(localized: "Total Balance"), value: "\(stats.credits.totalBalance)")
+        creditStatsCard.addStatItem(label: String(localized: "Total Purchased"), value: "\(stats.credits.totalPurchased)")
+        creditStatsCard.addStatItem(label: String(localized: "Total Spent"), value: "\(stats.credits.totalSpent)")
         
-        revenueStatsCard.addStatItem(label: "Total Revenue", value: "$\(stats.revenue.totalUsd)")
-        revenueStatsCard.addStatItem(label: "OpenAI Costs", value: "$\(stats.revenue.openaiCostsUsd)")
-        revenueStatsCard.addStatItem(label: "Gross Profit", value: "$\(stats.revenue.grossProfitUsd)")
-        revenueStatsCard.addStatItem(label: "Profit Margin", value: "\(stats.revenue.profitMargin)%")
+        revenueStatsCard.addStatItem(label: String(localized: "Total Revenue"), value: String(localized: "$\(stats.revenue.totalUsd)"))
+        revenueStatsCard.addStatItem(label: String(localized: "OpenAI Costs"), value: String(localized: "$\(stats.revenue.openaiCostsUsd)"))
+        revenueStatsCard.addStatItem(label: String(localized: "Gross Profit"), value: String(localized: "$\(stats.revenue.grossProfitUsd)"))
+        revenueStatsCard.addStatItem(label: String(localized: "Profit Margin"), value: String(localized: "\(stats.revenue.profitMargin)%"))
         
-        imageStatsCard.addStatItem(label: "Total Generated", value: "\(stats.images.totalGenerated)")
+        imageStatsCard.addStatItem(label: String(localized: "Total Generated"), value: "\(stats.images.totalGenerated)")
     }
     
     private func showLoading() {

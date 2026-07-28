@@ -60,7 +60,7 @@ class CreditsMainViewController: UIViewController {
     }
     
     private func setupUI() {
-        title = "Credits & Usage"
+        title = String(localized: "Credits & Usage")
         view.backgroundColor = .systemBackground
         navigationItem.largeTitleDisplayMode = .never
         
@@ -157,7 +157,7 @@ class CreditsMainViewController: UIViewController {
         // Store gradient layer reference for layout updates
         balanceCard.layer.setValue(gradientLayer, forKey: "gradientLayer")
         
-        balanceTitleLabel.text = "Current Balance"
+        balanceTitleLabel.text = String(localized: "Current Balance")
         balanceTitleLabel.font = .systemFont(ofSize: 16, weight: .medium)
         balanceTitleLabel.textColor = .secondaryLabel
         balanceTitleLabel.textAlignment = .center
@@ -167,7 +167,7 @@ class CreditsMainViewController: UIViewController {
         balanceAmountLabel.textAlignment = .center
         balanceAmountLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        creditsLabel.text = "credits"
+        creditsLabel.text = String(localized: "credits")
         creditsLabel.font = .systemFont(ofSize: 22, weight: .medium)
         creditsLabel.textColor = .secondaryLabel
         creditsLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -181,7 +181,7 @@ class CreditsMainViewController: UIViewController {
     }
     
     private func setupQuickActions() {
-        quickActionsLabel.text = "Quick Actions"
+        quickActionsLabel.text = String(localized: "Quick Actions")
         quickActionsLabel.font = .systemFont(ofSize: 18, weight: .bold)
         quickActionsLabel.translatesAutoresizingMaskIntoConstraints = false
         
@@ -192,16 +192,16 @@ class CreditsMainViewController: UIViewController {
         
         let buyCreditsCard = createQuickActionCard(
             icon: UIImage(systemName: "wallet.pass"),
-            title: "Buy Credits",
-            subtitle: "View packs"
+            title: String(localized: "Buy Credits"),
+            subtitle: String(localized: "View packs")
         ) { [weak self] in
             self?.navigateToCreditPacks()
         }
         
         let estimateCard = createQuickActionCard(
             icon: UIImage(systemName: "function"),
-            title: "Estimate",
-            subtitle: "Calculate cost"
+            title: String(localized: "Estimate"),
+            subtitle: String(localized: "Calculate cost")
         ) { [weak self] in
             self?.navigateToEstimator()
         }
@@ -211,7 +211,7 @@ class CreditsMainViewController: UIViewController {
     }
     
     private func setupFeatures() {
-        featuresLabel.text = "Features"
+        featuresLabel.text = String(localized: "Features")
         featuresLabel.font = .systemFont(ofSize: 18, weight: .bold)
         featuresLabel.translatesAutoresizingMaskIntoConstraints = false
         
@@ -221,24 +221,24 @@ class CreditsMainViewController: UIViewController {
         
         let historyCard = createFeatureCard(
             icon: UIImage(systemName: "clock"),
-            title: "Transaction History",
-            description: "See all your credit transactions"
+            title: String(localized: "Transaction History"),
+            description: String(localized: "See all your credit transactions")
         ) { [weak self] in
             self?.navigateToHistory()
         }
         
         let packsCard = createFeatureCard(
             icon: UIImage(systemName: "cart"),
-            title: "Credit Packs",
-            description: "Browse and purchase credit packs"
+            title: String(localized: "Credit Packs"),
+            description: String(localized: "Browse and purchase credit packs")
         ) { [weak self] in
             self?.navigateToCreditPacks()
         }
         
         let estimatorCard = createFeatureCard(
             icon: UIImage(systemName: "function"),
-            title: "Cost Estimator",
-            description: "Calculate costs before generating images"
+            title: String(localized: "Cost Estimator"),
+            description: String(localized: "Calculate costs before generating images")
         ) { [weak self] in
             self?.navigateToEstimator()
         }
@@ -258,12 +258,12 @@ class CreditsMainViewController: UIViewController {
         headerView.translatesAutoresizingMaskIntoConstraints = false
         
         let titleLabel = UILabel()
-        titleLabel.text = "Recent Transactions"
+        titleLabel.text = String(localized: "Recent Transactions")
         titleLabel.font = .systemFont(ofSize: 16, weight: .bold)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
         let viewAllButton = UIButton(type: .system)
-        viewAllButton.setTitle("View All", for: .normal)
+        viewAllButton.setTitle(String(localized: "View All"), for: .normal)
         viewAllButton.titleLabel?.font = .systemFont(ofSize: 14)
         viewAllButton.addTarget(self, action: #selector(viewAllTransactionsTapped), for: .touchUpInside)
         viewAllButton.translatesAutoresizingMaskIntoConstraints = false
@@ -306,8 +306,8 @@ class CreditsMainViewController: UIViewController {
         
         let tipLabel = UILabel()
         let tipText = NSMutableAttributedString()
-        tipText.append(NSAttributedString(string: "Tip: ", attributes: [.font: UIFont.systemFont(ofSize: 14, weight: .bold)]))
-        tipText.append(NSAttributedString(string: "View transaction history to see recent credit usage\nBrowse credit packs to purchase more credits", attributes: [.font: UIFont.systemFont(ofSize: 14)]))
+        tipText.append(NSAttributedString(string: String(localized: "Tip: "), attributes: [.font: UIFont.systemFont(ofSize: 14, weight: .bold)]))
+        tipText.append(NSAttributedString(string: String(localized: "View transaction history to see recent credit usage\nBrowse credit packs to purchase more credits"), attributes: [.font: UIFont.systemFont(ofSize: 14)]))
         tipLabel.attributedText = tipText
         tipLabel.numberOfLines = 0
         tipLabel.textColor = .secondaryLabel

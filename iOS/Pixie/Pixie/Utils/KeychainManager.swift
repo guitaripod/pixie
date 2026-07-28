@@ -9,11 +9,11 @@ enum KeychainError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unhandledError(let status):
-            return "Keychain error: \(status)"
+            return String(localized: "Keychain error: \(status)")
         case .unexpectedData:
-            return "Unexpected data format in keychain"
+            return String(localized: "Unexpected data format in keychain")
         case .noData:
-            return "No data found in keychain"
+            return String(localized: "No data found in keychain")
         }
     }
 }

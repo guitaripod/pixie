@@ -9,11 +9,11 @@ enum PhotoSavingError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .permissionDenied:
-            return "Photo library access denied. Please enable access in Settings."
+            return String(localized: "Photo library access denied. Please enable access in Settings.")
         case .saveFailed(let reason):
-            return "Failed to save image: \(reason)"
+            return String(localized: "Failed to save image: \(reason)")
         case .albumCreationFailed:
-            return "Failed to create Pixie album"
+            return String(localized: "Failed to create Pixie album")
         }
     }
 }
@@ -167,10 +167,10 @@ class PhotoSavingService {
                     if let asset = fetchResult.firstObject {
                         completion(.success(asset))
                     } else {
-                        completion(.failure(.saveFailed("Could not fetch saved asset")))
+                        completion(.failure(.saveFailed(String(localized: "Could not fetch saved asset"))))
                     }
                 } else {
-                    completion(.failure(.saveFailed(error?.localizedDescription ?? "Unknown error")))
+                    completion(.failure(.saveFailed(error?.localizedDescription ?? String(localized: "Unknown error"))))
                 }
             }
         }
@@ -212,7 +212,7 @@ class PhotoSavingService {
                     
                     completion(.success(assets))
                 } else {
-                    completion(.failure(.saveFailed(error?.localizedDescription ?? "Unknown error")))
+                    completion(.failure(.saveFailed(error?.localizedDescription ?? String(localized: "Unknown error"))))
                 }
             }
         }

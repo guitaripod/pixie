@@ -7,7 +7,7 @@ final class BlockedAccountsViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Blocked Accounts"
+        title = String(localized: "Blocked Accounts")
         view.backgroundColor = .systemGroupedBackground
 
         tableView.dataSource = self
@@ -39,7 +39,7 @@ extension BlockedAccountsViewController: UITableViewDataSource, UITableViewDeleg
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
         if blocked.isEmpty {
-            cell.textLabel?.text = "You haven't blocked anyone."
+            cell.textLabel?.text = String(localized: "You haven't blocked anyone.")
             cell.textLabel?.textColor = .secondaryLabel
             cell.selectionStyle = .none
         } else {
@@ -57,7 +57,7 @@ extension BlockedAccountsViewController: UITableViewDataSource, UITableViewDeleg
 
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         guard !blocked.isEmpty else { return nil }
-        let unblock = UIContextualAction(style: .destructive, title: "Unblock") { [weak self] _, _, completion in
+        let unblock = UIContextualAction(style: .destructive, title: String(localized: "Unblock")) { [weak self] _, _, completion in
             guard let self = self, indexPath.row < self.blocked.count else { completion(false); return }
             BlockedUsers.unblock(self.blocked[indexPath.row])
             self.reload()
@@ -67,6 +67,6 @@ extension BlockedAccountsViewController: UITableViewDataSource, UITableViewDeleg
     }
 
     func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        "Swipe a row to unblock. Unblocked accounts will reappear in Explore."
+        String(localized: "Swipe a row to unblock. Unblocked accounts will reappear in Explore.")
     }
 }

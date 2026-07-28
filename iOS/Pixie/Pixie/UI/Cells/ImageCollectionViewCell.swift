@@ -97,7 +97,7 @@ class ImageCollectionViewCell: UICollectionViewCell {
         promptLabel.text = configuration.prompt
         
         if let credits = configuration.creditsUsed {
-            creditsLabel.text = "\(credits) credits"
+            creditsLabel.text = String(localized: "\(credits) credits")
             creditsLabel.isHidden = false
         } else {
             creditsLabel.isHidden = true

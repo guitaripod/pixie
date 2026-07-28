@@ -61,13 +61,13 @@ final class EmptyStateView: UIView {
         switch type {
         case .personal:
             iconImageView.image = UIImage(systemName: "photo.on.rectangle.angled")
-            titleLabel.text = "No images yet"
-            subtitleLabel.text = "Your generated images will appear here"
+            titleLabel.text = String(localized: "No images yet")
+            subtitleLabel.text = String(localized: "Your generated images will appear here")
             
         case .explore:
             iconImageView.image = UIImage(systemName: "globe.americas.fill")
-            titleLabel.text = "Gallery is empty"
-            subtitleLabel.text = "Be the first to share your creations"
+            titleLabel.text = String(localized: "Gallery is empty")
+            subtitleLabel.text = String(localized: "Be the first to share your creations")
         }
     }
     
@@ -75,18 +75,18 @@ final class EmptyStateView: UIView {
         switch emptyType {
         case .personal:
             iconImageView.image = UIImage(systemName: "photo.on.rectangle.angled")
-            titleLabel.text = "No images yet"
-            subtitleLabel.text = "Your generated images will appear here"
+            titleLabel.text = String(localized: "No images yet")
+            subtitleLabel.text = String(localized: "Your generated images will appear here")
             
         case .explore:
             iconImageView.image = UIImage(systemName: "globe.americas.fill")
-            titleLabel.text = "Gallery is empty"
-            subtitleLabel.text = "Be the first to share your creations"
+            titleLabel.text = String(localized: "Gallery is empty")
+            subtitleLabel.text = String(localized: "Be the first to share your creations")
             
         case .transactions:
             iconImageView.image = UIImage(systemName: "clock.arrow.circlepath")
-            titleLabel.text = "No transactions yet"
-            subtitleLabel.text = "Your credit usage history will appear here"
+            titleLabel.text = String(localized: "No transactions yet")
+            subtitleLabel.text = String(localized: "Your credit usage history will appear here")
         }
     }
 }

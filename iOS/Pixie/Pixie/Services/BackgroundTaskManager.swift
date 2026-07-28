@@ -253,8 +253,8 @@ class BackgroundTaskManager: NSObject {
             )
         } else {
             await sendNotification(
-                title: "Image Generation Complete",
-                body: "Your image for \"\(prompt)\" is ready!",
+                title: String(localized: "Image Generation Complete"),
+                body: String(localized: "Your image for \"\(prompt)\" is ready!"),
                 chatId: chatId,
                 taskId: taskId,
                 success: true
@@ -278,7 +278,7 @@ class BackgroundTaskManager: NSObject {
             )
         } else {
             await sendNotification(
-                title: "Image Generation Failed",
+                title: String(localized: "Image Generation Failed"),
                 body: error.localizedDescription,
                 chatId: chatId,
                 taskId: taskId,

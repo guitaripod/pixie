@@ -329,7 +329,7 @@ class GenerationViewModel: ObservableObject {
             size: options.size.value,
             quality: options.quality.value,
             credits: nil,
-            sizeDisplay: options.size.displayName + " (" + options.size.dimensions + ")",
+            sizeDisplay: String(localized: "\(options.size.displayName) (\(options.size.dimensions))"),
             background: options.background,
             format: options.outputFormat,
             compression: options.compression,
@@ -339,7 +339,7 @@ class GenerationViewModel: ObservableObject {
         
         let userMessage = ChatMessage(
             id: UUID().uuidString,
-            text: "Edit: " + options.prompt,
+            text: String(localized: "Edit: \(options.prompt)"),
             images: nil,
             isUser: true,
             timestamp: Date(),
@@ -446,7 +446,7 @@ class GenerationViewModel: ObservableObject {
             print("🎨 GenerationViewModel: Success with \(images.count) images")
             let assistantMessage = ChatMessage(
                 role: .assistant,
-                content: "Here are your generated images:",
+                content: String(localized: "Here are your generated images:"),
                 images: images
             )
             messages.append(assistantMessage)
@@ -483,7 +483,7 @@ class GenerationViewModel: ObservableObject {
             
             let errorMessage = ChatMessage(
                 role: .assistant,
-                content: "Generation failed: \(error.localizedDescription)"
+                content: String(localized: "Generation failed: \(error.localizedDescription)")
             )
             messages.append(errorMessage)
             

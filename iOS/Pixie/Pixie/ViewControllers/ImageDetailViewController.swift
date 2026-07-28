@@ -120,31 +120,31 @@ final class ImageDetailViewController: UIViewController {
         actionsStackView.translatesAutoresizingMaskIntoConstraints = false
         
         let editButton = createActionButton(
-            title: "Edit",
+            title: String(localized: "Edit"),
             image: UIImage(systemName: "pencil"),
             action: #selector(editTapped)
         )
         
         let copyButton = createActionButton(
-            title: "Copy",
+            title: String(localized: "Copy"),
             image: UIImage(systemName: "doc.on.doc"),
             action: #selector(copyTapped)
         )
         
         let downloadButton = createActionButton(
-            title: "Save",
+            title: String(localized: "Save"),
             image: UIImage(systemName: "arrow.down.to.line"),
             action: #selector(downloadTapped)
         )
         
         let shareButton = createActionButton(
-            title: "Share",
+            title: String(localized: "Share"),
             image: UIImage(systemName: "square.and.arrow.up"),
             action: #selector(shareTapped)
         )
 
         let moreButton = createMenuButton(
-            title: "More",
+            title: String(localized: "More"),
             image: UIImage(systemName: "ellipsis")
         )
         moreButton.menu = makeMoreMenu()
@@ -162,7 +162,7 @@ final class ImageDetailViewController: UIViewController {
         if isOwn {
             let isPublic = image.isPublic ?? true
             let visibility = UIAction(
-                title: isPublic ? "Remove from Public Gallery" : "Add to Public Gallery",
+                title: isPublic ? String(localized: "Remove from Public Gallery") : String(localized: "Add to Public Gallery"),
                 image: UIImage(systemName: isPublic ? "eye.slash" : "eye")
             ) { [weak self] _ in
                 guard let self = self else { return }
@@ -170,7 +170,7 @@ final class ImageDetailViewController: UIViewController {
                 self.delegate?.imageDetailDidSelectAction(self, action: isPublic ? .makePrivate : .makePublic, image: self.image)
             }
             let delete = UIAction(
-                title: "Delete",
+                title: String(localized: "Delete"),
                 image: UIImage(systemName: "trash"),
                 attributes: .destructive
             ) { [weak self] _ in
@@ -181,7 +181,7 @@ final class ImageDetailViewController: UIViewController {
             return UIMenu(title: "", children: [visibility, delete])
         } else {
             let report = UIAction(
-                title: "Report Image",
+                title: String(localized: "Report Image"),
                 image: UIImage(systemName: "exclamationmark.bubble"),
                 attributes: .destructive
             ) { [weak self] _ in
@@ -190,7 +190,7 @@ final class ImageDetailViewController: UIViewController {
                 self.delegate?.imageDetailDidSelectAction(self, action: .report, image: self.image)
             }
             let block = UIAction(
-                title: "Block User",
+                title: String(localized: "Block User"),
                 image: UIImage(systemName: "hand.raised"),
                 attributes: .destructive
             ) { [weak self] _ in
@@ -269,19 +269,19 @@ final class ImageDetailViewController: UIViewController {
         detailsStackView.spacing = 16
         detailsStackView.translatesAutoresizingMaskIntoConstraints = false
         
-        addDetailRow(title: "Prompt", value: image.prompt)
-        addDetailRow(title: "Created", value: formatDate(image.createdAt))
+        addDetailRow(title: String(localized: "Prompt"), value: image.prompt)
+        addDetailRow(title: String(localized: "Created"), value: formatDate(image.createdAt))
         
         if let metadata = image.metadata {
             if let model = metadata.model {
-                addDetailRow(title: "Model", value: model)
+                addDetailRow(title: String(localized: "Model"), value: model)
             }
-            addDetailRow(title: "Size", value: "\(metadata.width)x\(metadata.height)")
+            addDetailRow(title: String(localized: "Size"), value: "\(metadata.width)x\(metadata.height)")
             if let quality = metadata.quality {
-                addDetailRow(title: "Quality", value: quality.capitalized)
+                addDetailRow(title: String(localized: "Quality"), value: quality.capitalized)
             }
-            addDetailRow(title: "Credits Used", value: "\(metadata.creditsUsed)")
-            addDetailRow(title: "Format", value: metadata.format.uppercased())
+            addDetailRow(title: String(localized: "Credits Used"), value: "\(metadata.creditsUsed)")
+            addDetailRow(title: String(localized: "Format"), value: metadata.format.uppercased())
         }
     }
     
@@ -404,21 +404,21 @@ final class ImageDetailViewController: UIViewController {
     }
     
     private func setupKeyboardCommands() {
-        addKeyCommand(UIKeyCommand(title: "Close",
+        addKeyCommand(UIKeyCommand(title: String(localized: "Close"),
                                   action: #selector(dismissDetail),
                                   input: UIKeyCommand.inputEscape))
         
-        addKeyCommand(UIKeyCommand(title: "Copy Prompt",
+        addKeyCommand(UIKeyCommand(title: String(localized: "Copy Prompt"),
                                   action: #selector(copyTapped),
                                   input: "C",
                                   modifierFlags: .command))
         
-        addKeyCommand(UIKeyCommand(title: "Save Image",
+        addKeyCommand(UIKeyCommand(title: String(localized: "Save Image"),
                                   action: #selector(downloadTapped),
                                   input: "S",
                                   modifierFlags: .command))
         
-        addKeyCommand(UIKeyCommand(title: "Share",
+        addKeyCommand(UIKeyCommand(title: String(localized: "Share"),
                                   action: #selector(shareTapped),
                                   input: "S",
                                   modifierFlags: [.command, .shift]))

@@ -164,8 +164,8 @@ enum ImageModel: String, CaseIterable {
 
     var description: String {
         switch self {
-        case .gemini: return "Fast & affordable (21 credits)"
-        case .openai: return "Advanced options (5-94 credits)"
+        case .gemini: return String(localized: "Fast & affordable (21 credits)")
+        case .openai: return String(localized: "Advanced options (5-94 credits)")
         }
     }
 

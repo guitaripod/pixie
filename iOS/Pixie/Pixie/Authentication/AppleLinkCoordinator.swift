@@ -3,7 +3,7 @@ import UIKit
 
 enum AppleLinkError: LocalizedError {
     case missingToken
-    var errorDescription: String? { "Could not read the Apple identity token." }
+    var errorDescription: String? { String(localized: "Could not read the Apple identity token.") }
 }
 
 @MainActor

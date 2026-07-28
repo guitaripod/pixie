@@ -33,11 +33,11 @@ class AdminCreditAdjustmentViewController: UIViewController {
     }
     
     private func setupUI() {
-        title = "Credit Adjustments"
+        title = String(localized: "Credit Adjustments")
         view.backgroundColor = .systemGroupedBackground
         
         searchBar.translatesAutoresizingMaskIntoConstraints = false
-        searchBar.placeholder = "Search users by email or ID"
+        searchBar.placeholder = String(localized: "Search users by email or ID")
         searchBar.delegate = self
         searchBar.searchBarStyle = .minimal
         
@@ -52,7 +52,7 @@ class AdminCreditAdjustmentViewController: UIViewController {
         loadingView.hidesWhenStopped = true
         
         emptyStateLabel.translatesAutoresizingMaskIntoConstraints = false
-        emptyStateLabel.text = "Search for users to adjust their credits"
+        emptyStateLabel.text = String(localized: "Search for users to adjust their credits")
         emptyStateLabel.font = .systemFont(ofSize: 17)
         emptyStateLabel.textColor = .secondaryLabel
         emptyStateLabel.textAlignment = .center
@@ -118,10 +118,10 @@ class AdminCreditAdjustmentViewController: UIViewController {
     
     private func updateEmptyState() {
         if searchResults.isEmpty && !searchBar.text!.isEmpty {
-            emptyStateLabel.text = "No users found"
+            emptyStateLabel.text = String(localized: "No users found")
             emptyStateLabel.isHidden = false
         } else if searchResults.isEmpty {
-            emptyStateLabel.text = "Search for users to adjust their credits"
+            emptyStateLabel.text = String(localized: "Search for users to adjust their credits")
             emptyStateLabel.isHidden = false
         } else {
             emptyStateLabel.isHidden = true
@@ -130,26 +130,26 @@ class AdminCreditAdjustmentViewController: UIViewController {
     
     private func showAdjustmentDialog(for user: UserSearchResult) {
         let alertController = UIAlertController(
-            title: "Adjust Credits",
-            message: "Current balance: \(user.credits) credits\nUser: \(user.email ?? user.id)",
+            title: String(localized: "Adjust Credits"),
+            message: String(localized: "Current balance: \(user.credits) credits\nUser: \(user.email ?? user.id)"),
             preferredStyle: .alert
         )
         
         alertController.addTextField { textField in
-            textField.placeholder = "Amount (positive to add, negative to remove)"
+            textField.placeholder = String(localized: "Amount (positive to add, negative to remove)")
             textField.keyboardType = .numbersAndPunctuation
         }
         
         alertController.addTextField { textField in
-            textField.placeholder = "Reason for adjustment"
+            textField.placeholder = String(localized: "Reason for adjustment")
         }
         
-        let adjustAction = UIAlertAction(title: "Adjust", style: .default) { [weak self] _ in
+        let adjustAction = UIAlertAction(title: String(localized: "Adjust"), style: .default) { [weak self] _ in
             guard let amountText = alertController.textFields?[0].text,
                   let amount = Int(amountText),
                   let reason = alertController.textFields?[1].text,
                   !reason.isEmpty else {
-                self?.showError("Please enter a valid amount and reason")
+                self?.showError(String(localized: "Please enter a valid amount and reason"))
                 return
             }
             
@@ -157,14 +157,14 @@ class AdminCreditAdjustmentViewController: UIViewController {
         }
         
         alertController.addAction(adjustAction)
-        alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alertController.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
         
         haptics.impact(.click)
         present(alertController, animated: true)
     }
     
     private func performAdjustment(userId: String, amount: Int, reason: String) {
-        let loadingAlert = UIAlertController(title: "Adjusting Credits", message: "Please wait...", preferredStyle: .alert)
+        let loadingAlert = UIAlertController(title: String(localized: "Adjusting Credits"), message: String(localized: "Please wait..."), preferredStyle: .alert)
         present(loadingAlert, animated: true)
         
         Task {
@@ -176,11 +176,11 @@ class AdminCreditAdjustmentViewController: UIViewController {
                     loadingAlert.dismiss(animated: true) {
                         self.haptics.notification(.success)
                         let successAlert = UIAlertController(
-                            title: "Success",
-                            message: "Credits adjusted successfully. New balance: \(response.newBalance)",
+                            title: String(localized: "Success"),
+                            message: String(localized: "Credits adjusted successfully. New balance: \(response.newBalance)"),
                             preferredStyle: .alert
                         )
-                        successAlert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+                        successAlert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default) { _ in
                             self.searchBar.text = ""
                             self.searchResults = []
                             self.tableView.reloadData()
@@ -202,11 +202,11 @@ class AdminCreditAdjustmentViewController: UIViewController {
     
     private func showError(_ message: String) {
         let alert = UIAlertController(
-            title: "Error",
+            title: String(localized: "Error"),
             message: message,
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
         present(alert, animated: true)
     }
 }
@@ -287,7 +287,7 @@ class UserSearchResultCell: UITableViewCell {
         creditsLabel.textColor = UIColor(red: 103/255, green: 80/255, blue: 164/255, alpha: 1.0)
         
         adminBadge.translatesAutoresizingMaskIntoConstraints = false
-        adminBadge.text = "ADMIN"
+        adminBadge.text = String(localized: "ADMIN")
         adminBadge.font = .systemFont(ofSize: 11, weight: .bold)
         adminBadge.textColor = .white
         adminBadge.backgroundColor = .systemOrange
@@ -326,8 +326,8 @@ class UserSearchResultCell: UITableViewCell {
     }
     
     func configure(with user: UserSearchResult) {
-        emailLabel.text = user.email ?? "No email"
-        idLabel.text = "ID: \(user.id)"
+        emailLabel.text = user.email ?? String(localized: "No email")
+        idLabel.text = String(localized: "ID: \(user.id)")
         creditsLabel.text = "\(user.credits)"
         adminBadge.isHidden = !user.isAdmin
     }

@@ -224,7 +224,7 @@ extension AuthenticationManager: OAuthCoordinatorDelegate {
                 delegate?.authenticationManager(self, didFailWithError: message)
                 
             case .cancelled:
-                delegate?.authenticationManager(self, didFailWithError: "Authentication cancelled")
+                delegate?.authenticationManager(self, didFailWithError: String(localized: "Authentication cancelled"))
                 
             case .pending:
                 break

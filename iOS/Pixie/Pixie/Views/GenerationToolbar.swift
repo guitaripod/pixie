@@ -51,7 +51,7 @@ class GenerationToolbar: UIView {
         collapsedContent.addSubview(stackView)
         
         promptTextField.translatesAutoresizingMaskIntoConstraints = false
-        promptTextField.placeholder = "Describe what you want to create..."
+        promptTextField.placeholder = String(localized: "Describe what you want to create...")
         promptTextField.borderStyle = .none
         promptTextField.font = .systemFont(ofSize: 16)
         promptTextField.returnKeyType = .go
@@ -139,7 +139,7 @@ class GenerationToolbar: UIView {
         
         let titleLabel = UILabel()
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.text = "Create Image"
+        titleLabel.text = String(localized: "Create Image")
         titleLabel.font = .systemFont(ofSize: 24, weight: .semibold)
         headerView.addSubview(titleLabel)
         
@@ -194,7 +194,7 @@ class GenerationToolbar: UIView {
         
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "Describe what you want to create..."
+        label.text = String(localized: "Describe what you want to create...")
         label.font = .systemFont(ofSize: 14)
         label.textColor = .secondaryLabel
         section.addSubview(label)
@@ -241,7 +241,7 @@ class GenerationToolbar: UIView {
 
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "AI Model"
+        label.text = String(localized: "AI Model")
         label.font = .systemFont(ofSize: 16, weight: .medium)
 
         headerStack.addArrangedSubview(iconView)
@@ -382,7 +382,7 @@ class GenerationToolbar: UIView {
         
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "Size"
+        label.text = String(localized: "Size")
         label.font = .systemFont(ofSize: 16, weight: .medium)
         
         headerStack.addArrangedSubview(iconView)
@@ -518,7 +518,7 @@ class GenerationToolbar: UIView {
         
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "Quality"
+        label.text = String(localized: "Quality")
         label.font = .systemFont(ofSize: 16, weight: .medium)
         
         let creditsLabel = UILabel()
@@ -655,7 +655,7 @@ class GenerationToolbar: UIView {
         
         let toggleLabel = UILabel()
         toggleLabel.translatesAutoresizingMaskIntoConstraints = false
-        toggleLabel.text = "Advanced Options"
+        toggleLabel.text = String(localized: "Advanced Options")
         toggleLabel.font = .systemFont(ofSize: 16, weight: .medium)
         toggleView.addSubview(toggleLabel)
         
@@ -719,9 +719,9 @@ class GenerationToolbar: UIView {
     
     private func createBackgroundSection() -> UIView {
         let section = createMultipleChoiceSection(
-            title: "Background",
+            title: String(localized: "Background"),
             icon: "person.crop.circle",
-            options: [("Default", nil)] + BackgroundStyle.allCases.map { ($0.displayName, $0) },
+            options: [(String(localized: "Default"), nil)] + BackgroundStyle.allCases.map { ($0.displayName, $0) },
             onSelect: { [weak self] option in
                 self?.selectedBackground = option as? BackgroundStyle
             }
@@ -733,9 +733,9 @@ class GenerationToolbar: UIView {
         let section = UIView()
         
         let formatSection = createMultipleChoiceSection(
-            title: "Output format",
+            title: String(localized: "Output format"),
             icon: "photo",
-            options: [("Default", nil)] + OutputFormat.allCases.map { ($0.displayName, $0) },
+            options: [(String(localized: "Default"), nil)] + OutputFormat.allCases.map { ($0.displayName, $0) },
             onSelect: { [weak self] option in
                 self?.selectedFormat = option as? OutputFormat
                 self?.updateCompressionVisibility()
@@ -758,13 +758,13 @@ class GenerationToolbar: UIView {
         let compressionHeader = UIView()
         let compressionLabel = UILabel()
         compressionLabel.translatesAutoresizingMaskIntoConstraints = false
-        compressionLabel.text = "Compression"
+        compressionLabel.text = String(localized: "Compression")
         compressionLabel.font = .systemFont(ofSize: 14, weight: .medium)
         compressionHeader.addSubview(compressionLabel)
         
         let compressionValue = UILabel()
         compressionValue.translatesAutoresizingMaskIntoConstraints = false
-        compressionValue.text = "\(compressionLevel)%"
+        compressionValue.text = String(localized: "\(compressionLevel)%")
         compressionValue.font = .systemFont(ofSize: 14, weight: .medium)
         compressionValue.textColor = .systemBlue
         compressionValue.tag = 2002
@@ -810,9 +810,9 @@ class GenerationToolbar: UIView {
     
     private func createModerationSection() -> UIView {
         let section = createMultipleChoiceSection(
-            title: "Moderation",
+            title: String(localized: "Moderation"),
             icon: "lock",
-            options: [("Default", nil)] + ModerationLevel.allCases.map { ($0.displayName, $0) },
+            options: [(String(localized: "Default"), nil)] + ModerationLevel.allCases.map { ($0.displayName, $0) },
             onSelect: { [weak self] option in
                 self?.selectedModeration = option as? ModerationLevel
             }
@@ -940,7 +940,7 @@ class GenerationToolbar: UIView {
         slider.value = Float(roundedValue)
         
         if let label = viewWithTag(2002) as? UILabel {
-            label.text = "\(roundedValue)%"
+            label.text = String(localized: "\(roundedValue)%")
         }
         
         if roundedValue % 5 == 0 {
@@ -974,7 +974,7 @@ class GenerationToolbar: UIView {
             guard let self = self else { return }
             var config = button.configuration
             let credits = self.estimateCredits()
-            config?.title = "Generate (\(credits.lowerBound)-\(credits.upperBound) credits)"
+            config?.title = String(localized: "Generate (\(credits.lowerBound)-\(credits.upperBound) credits)")
             button.configuration = config
         }
         button.addTarget(self, action: #selector(generateTapped), for: .touchUpInside)
@@ -1131,7 +1131,7 @@ class GenerationToolbar: UIView {
             options.quality = selectedQuality.value
         } else {
             options.size = "auto"
-            options.sizeDisplay = "Auto"
+            options.sizeDisplay = String(localized: "Auto")
             options.quality = "low"
         }
 
@@ -1249,16 +1249,16 @@ enum ImageSize: CaseIterable {
     
     var displayName: String {
         switch self {
-        case .auto: return "Auto"
-        case .square: return "Square"
-        case .landscape: return "Landscape"
-        case .portrait: return "Portrait"
+        case .auto: return String(localized: "Auto")
+        case .square: return String(localized: "Square")
+        case .landscape: return String(localized: "Landscape")
+        case .portrait: return String(localized: "Portrait")
         }
     }
     
     var dimensions: String {
         switch self {
-        case .auto: return "Optimal"
+        case .auto: return String(localized: "Optimal")
         case .square: return "1024×1024"
         case .landscape: return "1536×1024"
         case .portrait: return "1024×1536"
@@ -1280,19 +1280,19 @@ enum ImageQuality: CaseIterable {
     
     var displayName: String {
         switch self {
-        case .low: return "Low"
-        case .medium: return "Medium"
-        case .high: return "High"
-        case .auto: return "Auto"
+        case .low: return String(localized: "Low")
+        case .medium: return String(localized: "Medium")
+        case .high: return String(localized: "High")
+        case .auto: return String(localized: "Auto")
         }
     }
     
     var creditRange: String {
         switch self {
-        case .low: return "4-6 credits"
-        case .medium: return "16-24 credits"
-        case .high: return "62-94 credits"
-        case .auto: return "50-75 credits"
+        case .low: return String(localized: "4-6 credits")
+        case .medium: return String(localized: "16-24 credits")
+        case .high: return String(localized: "62-94 credits")
+        case .auto: return String(localized: "50-75 credits")
         }
     }
     
@@ -1311,10 +1311,10 @@ enum BackgroundStyle: CaseIterable {
     
     var displayName: String {
         switch self {
-        case .auto: return "Auto"
-        case .transparent: return "Transparent"
-        case .white: return "White"
-        case .black: return "Black"
+        case .auto: return String(localized: "Auto")
+        case .transparent: return String(localized: "Transparent")
+        case .white: return String(localized: "White")
+        case .black: return String(localized: "Black")
         }
     }
     
@@ -1360,15 +1360,15 @@ enum ModerationLevel: CaseIterable {
     
     var displayName: String {
         switch self {
-        case .auto: return "Auto"
-        case .low: return "Low"
+        case .auto: return String(localized: "Auto")
+        case .low: return String(localized: "Low")
         }
     }
     
     var description: String {
         switch self {
-        case .auto: return "Default moderation"
-        case .low: return "Less restrictive"
+        case .auto: return String(localized: "Default moderation")
+        case .low: return String(localized: "Less restrictive")
         }
     }
     

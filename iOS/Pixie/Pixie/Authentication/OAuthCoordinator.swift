@@ -45,7 +45,7 @@ class OAuthCoordinator: NSObject {
             redirectURI = "\(baseURL)/v1/auth/apple/callback"
         case .google:
 
-            delegate?.oauthCoordinator(self, didCompleteWith: .error("Google authentication requires SDK"))
+            delegate?.oauthCoordinator(self, didCompleteWith: .error(String(localized: "Google authentication requires SDK")))
             return
         }
         var components = URLComponents(string: "\(baseURL)\(authPath)")!
@@ -54,7 +54,7 @@ class OAuthCoordinator: NSObject {
             URLQueryItem(name: "redirect_uri", value: redirectURI)
         ]
         guard let authURL = components.url else {
-            delegate?.oauthCoordinator(self, didCompleteWith: .error("Invalid authentication URL"))
+            delegate?.oauthCoordinator(self, didCompleteWith: .error(String(localized: "Invalid authentication URL")))
             return
         }
         authSession = ASWebAuthenticationSession(
@@ -71,7 +71,7 @@ class OAuthCoordinator: NSObject {
                 return
             }
             guard let callbackURL = callbackURL else {
-                self.delegate?.oauthCoordinator(self, didCompleteWith: .error("No callback URL received"))
+                self.delegate?.oauthCoordinator(self, didCompleteWith: .error(String(localized: "No callback URL received")))
                 return
             }
             Task {
@@ -84,7 +84,7 @@ class OAuthCoordinator: NSObject {
     }
     private func authenticateWithGoogle() {
         guard let viewController = presentingViewController else {
-            delegate?.oauthCoordinator(self, didCompleteWith: .error("No presenting view controller"))
+            delegate?.oauthCoordinator(self, didCompleteWith: .error(String(localized: "No presenting view controller")))
             return
         }
         let state = OAuthState(provider: .google)
@@ -104,7 +104,7 @@ class OAuthCoordinator: NSObject {
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let code = components.queryItems?.first(where: { $0.name == "code" })?.value,
               let state = components.queryItems?.first(where: { $0.name == "state" })?.value else {
-            delegate?.oauthCoordinator(self, didCompleteWith: .error("Missing required parameters in callback"))
+            delegate?.oauthCoordinator(self, didCompleteWith: .error(String(localized: "Missing required parameters in callback")))
             return
         }
         if let error = components.queryItems?.first(where: { $0.name == "error" })?.value {
@@ -114,7 +114,7 @@ class OAuthCoordinator: NSObject {
         guard let savedState = pendingAuthState,
               savedState.state == state,
               savedState.isValid() else {
-            delegate?.oauthCoordinator(self, didCompleteWith: .error("Invalid OAuth state"))
+            delegate?.oauthCoordinator(self, didCompleteWith: .error(String(localized: "Invalid OAuth state")))
             return
         }
         let callbackRequest = OAuthCallbackRequest(
@@ -155,12 +155,12 @@ extension OAuthCoordinator: ASWebAuthenticationPresentationContextProviding {
 extension OAuthCoordinator: ASAuthorizationControllerDelegate {
     func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential else {
-            delegate?.oauthCoordinator(self, didCompleteWith: .error("Invalid Apple ID credential"))
+            delegate?.oauthCoordinator(self, didCompleteWith: .error(String(localized: "Invalid Apple ID credential")))
             return
         }
         guard let authorizationCode = appleIDCredential.authorizationCode,
               let identityToken = appleIDCredential.identityToken else {
-            delegate?.oauthCoordinator(self, didCompleteWith: .error("Missing authorization data"))
+            delegate?.oauthCoordinator(self, didCompleteWith: .error(String(localized: "Missing authorization data")))
             return
         }
         let state = OAuthState(provider: .apple)
@@ -182,7 +182,7 @@ extension OAuthCoordinator: ASAuthorizationControllerDelegate {
     }
     private func handleAppleSignIn(authorizationCode: Data, identityToken: Data, state: OAuthState) async {
         guard let tokenString = String(data: identityToken, encoding: .utf8) else {
-            delegate?.oauthCoordinator(self, didCompleteWith: .error("Invalid identity token"))
+            delegate?.oauthCoordinator(self, didCompleteWith: .error(String(localized: "Invalid identity token")))
             return
         }
         let tokenRequest = AppleTokenRequest(identityToken: tokenString)
