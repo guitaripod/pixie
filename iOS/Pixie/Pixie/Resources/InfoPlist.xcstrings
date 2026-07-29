@@ -1,0 +1,122 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSPhotoLibraryAddUsageDescription" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie benötigt Zugriff, um generierte Bilder in deiner Fotomediathek zu sichern."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie needs access to save generated images to your photo library"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie necesita acceso para guardar las imágenes generadas en tu fototeca."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie a besoin d’un accès pour enregistrer les images générées dans votre photothèque."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie ha bisogno dell’accesso per salvare le immagini generate nella tua libreria foto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "生成した画像を写真ライブラリに保存するために、Pixie はアクセスを必要とします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "생성한 이미지를 사진 라이브러리에 저장하려면 Pixie에 접근 권한이 필요합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Pixie precisa de acesso para salvar as imagens geradas na sua fototeca."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie 需要访问权限，以将生成的图片存储到你的照片图库。"
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryUsageDescription" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie benötigt Zugriff auf deine Fotomediathek, um vorhandene Bilder zu bearbeiten und generierte Bilder zu sichern."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie needs access to your photo library to edit existing images and save generated images"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie necesita acceso a tu fototeca para editar imágenes existentes y guardar las imágenes generadas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie a besoin d’accéder à votre photothèque pour modifier des images existantes et enregistrer les images générées."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie ha bisogno di accedere alla tua libreria foto per modificare immagini esistenti e salvare le immagini generate."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "既存の画像を編集し、生成した画像を保存するために、Pixie は写真ライブラリへのアクセスを必要とします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기존 이미지를 편집하고 생성한 이미지를 저장하려면 Pixie에 사진 라이브러리 접근 권한이 필요합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Pixie precisa de acesso à sua fototeca para editar imagens existentes e salvar as imagens geradas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie 需要访问你的照片图库，以编辑现有图片并存储生成的图片。"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}
