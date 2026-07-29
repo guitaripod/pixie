@@ -56,6 +56,12 @@
             "state" : "translated",
             "value" : "Pixie 需要访问权限，以将生成的图片存储到你的照片图库。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie 需要取用權限，以將生成的圖片儲存到你的照片圖庫。"
+          }
         }
       }
     },
@@ -113,6 +119,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pixie 需要访问你的照片图库，以编辑现有图片并存储生成的图片。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie 需要取用你的照片圖庫，以編輯現有圖片並儲存生成的圖片。"
           }
         }
       }
