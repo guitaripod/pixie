@@ -1,0 +1,35 @@
+{
+  "name": "PixiePocket: AI Image Maker",
+  "subtitle": "Nano Banana Photo & Art Editor",
+  "keywords": "generator,gemini,gpt,chatbot,anime,wallpaper,avatar,sticker,transparent,background,batch,credits",
+  "promotionalText": "No subscription. Credits never expire — buy a pack once, use it whenever, and keep whatever you don't spend.",
+  "description": "Pro-grade AI images, created by chat. Pay only for what you make — no subscription, ever.\n\nEvery new creator starts with 25 free credits — enough to try Nano Banana image generation the moment the app opens. No sign-up required.\n\nCHAT YOUR WAY TO THE IMAGE\nDescribe what you want, refine it message by message, and watch your image evolve. Attach a photo and edit it by talking: change hair, swap backgrounds, restyle anything.\n\nPOWERED BY NANO BANANA + GPT IMAGE\nPixiePocket generates with Google's Nano Banana (Gemini) and OpenAI's GPT image models — two engines, one chat.\n\nPAY PER IMAGE, NOT PER MONTH\nCredits never expire. Buy a pack once and create whenever inspiration strikes — bigger packs carry up to 68% bonus credits. No weekly trap, no renewals, no surprise charges.\n\nCONTROL THE OUTPUT LIKE A PRO\n• Batch up to 10 images per request\n• Low / Medium / High / Auto quality tiers\n• Custom sizes, square to widescreen\n• PNG, JPEG or WebP output, transparent backgrounds\n• Live credit cost shown before you create\n\nEVERYWHERE YOU ARE\nStart anonymously, then sign in with Apple, Google, or GitHub to keep your gallery in sync across devices. Share your best work to the public community gallery — or keep it all to yourself.\n\nA NOTE ON PRIVACY & SAFETY\nYour prompts and attached photos are sent to Google Gemini and OpenAI to generate images — you approve this in-app before your first creation and can withdraw consent anytime in Settings. Some prompts may be filtered by content moderation. Images shared to the community gallery can be reported in one tap and are reviewed.\n\nGoogle, Gemini and Nano Banana are trademarks of Google LLC. This app is not endorsed by or affiliated with Google or OpenAI.",
+  "whatsNew": "• A real welcome: a new chat now opens with a set of starter prompts you can tap to try — no blank screen.\n• The rating request no longer fires twice after the same generation.\n• Screenshots and the store page are now fully localized in nine languages.",
+  "screenshots": [
+    {
+      "file": "01_create",
+      "headline": "Chat your way to the image",
+      "subhead": "No subscription — ever",
+      "screen": "create"
+    },
+    {
+      "file": "02_edit",
+      "headline": "Edit a photo by talking",
+      "subhead": "Change hair, swap backgrounds, restyle anything",
+      "screen": "edit"
+    },
+    {
+      "file": "03_store",
+      "headline": "Pay per image, not per month",
+      "subhead": "Credits never expire. Start with 25 free",
+      "screen": "store"
+    },
+    {
+      "file": "04_gallery",
+      "headline": "Nano Banana + GPT image",
+      "subhead": "Two engines, one chat — synced on iPhone and iPad",
+      "screen": "gallery"
+    }
+  ],
+  "supportUrl": "https://x.com/guitaripod"
+}

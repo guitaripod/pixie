@@ -5,6 +5,7 @@ enum DemoMode: String {
     case gallery
     case edit
     case create
+    case empty
     case store
     case onboarding
 
@@ -32,18 +33,18 @@ enum DemoContent {
     static let mockURLPrefix = "pixie-demo://art/"
 
     static let galleryItems: [DemoGalleryItem] = [
-        DemoGalleryItem(asset: "art02", prompt: "Cyberpunk anime girl, neon city, rain, blade runner mood", createdAt: minutesAgo(3), credits: 15, quality: "high"),
-        DemoGalleryItem(asset: "art01", prompt: "Change her hair into something wild, spiky volumetric", createdAt: minutesAgo(8), credits: 15, quality: "high"),
-        DemoGalleryItem(asset: "art03", prompt: "Stunning space scene with galaxies, nebulas, cosmic colors", createdAt: hoursAgo(2), credits: 8, quality: "medium"),
-        DemoGalleryItem(asset: "art04", prompt: "Deep space spiral galaxy, vivid purples and teal stars", createdAt: hoursAgo(5), credits: 8, quality: "medium"),
-        DemoGalleryItem(asset: "art05", prompt: "Cheerful anime girl enjoying a colorful plated meal", createdAt: hoursAgo(9), credits: 15, quality: "high"),
-        DemoGalleryItem(asset: "art06", prompt: "Professional food photography, appetizing presentation", createdAt: daysAgo(1), credits: 62, quality: "high"),
-        DemoGalleryItem(asset: "art07", prompt: "Girl at a futuristic EV charging station, clean lines", createdAt: daysAgo(2), credits: 16, quality: "medium"),
-        DemoGalleryItem(asset: "art09", prompt: "80s retro synthwave portrait, palm trees, miami sunset", createdAt: daysAgo(3), credits: 15, quality: "high"),
-        DemoGalleryItem(asset: "art10", prompt: "Make it green, glowing emerald star, cosmic energy", createdAt: daysAgo(4), credits: 4, quality: "low"),
-        DemoGalleryItem(asset: "art11", prompt: "The sun, churning solar plasma surface, intense detail", createdAt: daysAgo(4), credits: 4, quality: "low"),
-        DemoGalleryItem(asset: "art12", prompt: "Stunning deep space scene with a distant black hole", createdAt: daysAgo(5), credits: 8, quality: "medium"),
-        DemoGalleryItem(asset: "art08", prompt: "Modern architecture photography, minimalist, golden light", createdAt: daysAgo(6), credits: 62, quality: "high")
+        DemoGalleryItem(asset: "art02", prompt: String(localized: "Cyberpunk anime girl, neon city, rain, blade runner mood"), createdAt: minutesAgo(3), credits: 15, quality: "high"),
+        DemoGalleryItem(asset: "art01", prompt: String(localized: "Change her hair into something wild, spiky volumetric"), createdAt: minutesAgo(8), credits: 15, quality: "high"),
+        DemoGalleryItem(asset: "art03", prompt: String(localized: "Stunning space scene with galaxies, nebulas, cosmic colors"), createdAt: hoursAgo(2), credits: 8, quality: "medium"),
+        DemoGalleryItem(asset: "art04", prompt: String(localized: "Deep space spiral galaxy, vivid purples and teal stars"), createdAt: hoursAgo(5), credits: 8, quality: "medium"),
+        DemoGalleryItem(asset: "art05", prompt: String(localized: "Cheerful anime girl enjoying a colorful plated meal"), createdAt: hoursAgo(9), credits: 15, quality: "high"),
+        DemoGalleryItem(asset: "art06", prompt: String(localized: "Professional food photography, appetizing presentation"), createdAt: daysAgo(1), credits: 62, quality: "high"),
+        DemoGalleryItem(asset: "art07", prompt: String(localized: "Girl at a futuristic EV charging station, clean lines"), createdAt: daysAgo(2), credits: 16, quality: "medium"),
+        DemoGalleryItem(asset: "art09", prompt: String(localized: "80s retro synthwave portrait, palm trees, miami sunset"), createdAt: daysAgo(3), credits: 15, quality: "high"),
+        DemoGalleryItem(asset: "art10", prompt: String(localized: "Make it green, glowing emerald star, cosmic energy"), createdAt: daysAgo(4), credits: 4, quality: "low"),
+        DemoGalleryItem(asset: "art11", prompt: String(localized: "The sun, churning solar plasma surface, intense detail"), createdAt: daysAgo(4), credits: 4, quality: "low"),
+        DemoGalleryItem(asset: "art12", prompt: String(localized: "Stunning deep space scene with a distant black hole"), createdAt: daysAgo(5), credits: 8, quality: "medium"),
+        DemoGalleryItem(asset: "art08", prompt: String(localized: "Modern architecture photography, minimalist, golden light"), createdAt: daysAgo(6), credits: 62, quality: "high")
     ]
 
     static func mockMetadata() -> [ImageMetadata] {
@@ -109,7 +110,7 @@ enum DemoChatBuilder {
 
         let request = ChatMessage(
             id: "demo-edit-request",
-            text: "Edit: Change her hair into something wild",
+            text: String(localized: "Edit: Change her hair into something wild"),
             images: nil,
             isUser: true,
             timestamp: Date().addingTimeInterval(-40),
@@ -119,7 +120,7 @@ enum DemoChatBuilder {
 
         let response = ChatMessage(
             role: .assistant,
-            content: "Here is your edited image:",
+            content: String(localized: "Here is your edited image:"),
             images: [result]
         )
 
@@ -129,7 +130,7 @@ enum DemoChatBuilder {
     static func createConversation() -> [ChatMessage] {
         let first = ChatMessage(
             id: "demo-create-1",
-            text: "Cyberpunk anime girl in a neon-soaked city, rain, blade runner mood",
+            text: String(localized: "Cyberpunk anime girl in a neon-soaked city, rain, blade runner mood"),
             images: nil,
             isUser: true,
             timestamp: Date().addingTimeInterval(-90),
@@ -137,12 +138,12 @@ enum DemoChatBuilder {
         )
         let firstResult = ChatMessage(
             role: .assistant,
-            content: "Here are your generated images:",
+            content: String(localized: "Here are your generated images:"),
             images: [DemoMode.image("art02")]
         )
         let second = ChatMessage(
             id: "demo-create-2",
-            text: "Now make it a stunning deep-space galaxy with vivid nebulas",
+            text: String(localized: "Now make it a stunning deep-space galaxy with vivid nebulas"),
             images: nil,
             isUser: true,
             timestamp: Date().addingTimeInterval(-30),
@@ -150,7 +151,7 @@ enum DemoChatBuilder {
         )
         let secondResult = ChatMessage(
             role: .assistant,
-            content: "Here are your generated images:",
+            content: String(localized: "Here are your generated images:"),
             images: [DemoMode.image("art04")]
         )
         return [first, firstResult, second, secondResult]
@@ -172,6 +173,10 @@ enum DemoRootBuilder {
         case .create:
             let chatVC = ChatGenerationViewController()
             chatVC.demoMode = .create
+            return UINavigationController(rootViewController: chatVC)
+        case .empty:
+            let chatVC = ChatGenerationViewController()
+            chatVC.demoMode = .empty
             return UINavigationController(rootViewController: chatVC)
         case .store:
             let storeVC = CreditStoreViewController()

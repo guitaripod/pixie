@@ -16,7 +16,9 @@ class ChatTableView: UIView {
         return tv
     }()
     private var dataSource: UITableViewDiffableDataSource<Section, ChatMessage>!
+    private let emptyStateView = ChatEmptyStateView()
     weak var delegate: ChatTableViewDelegate?
+    var onStarterPromptSelected: ((String) -> Void)?
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
@@ -33,6 +35,17 @@ class ChatTableView: UIView {
             tableView.leadingAnchor.constraint(equalTo: leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
+        emptyStateView.translatesAutoresizingMaskIntoConstraints = false
+        emptyStateView.onPromptSelected = { [weak self] prompt in
+            self?.onStarterPromptSelected?(prompt)
+        }
+        addSubview(emptyStateView)
+        NSLayoutConstraint.activate([
+            emptyStateView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
+            emptyStateView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            emptyStateView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            emptyStateView.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
         registerCells()
     }
@@ -72,6 +85,22 @@ class ChatTableView: UIView {
                 self?.scrollToBottom(animated: animated)
             }
         }
+        updateEmptyState(isEmpty: messages.isEmpty, animated: animated)
+    }
+
+    private func updateEmptyState(isEmpty: Bool, animated: Bool) {
+        emptyStateView.isUserInteractionEnabled = isEmpty
+        if isEmpty {
+            emptyStateView.isHidden = false
+        }
+        let apply = { self.emptyStateView.alpha = isEmpty ? 1 : 0 }
+        let finish = { self.emptyStateView.isHidden = !isEmpty }
+        if animated {
+            UIView.animate(withDuration: 0.25, animations: apply) { _ in finish() }
+        } else {
+            apply()
+            finish()
+        }
     }
     func addMessage(_ message: ChatMessage, animated: Bool = true) {
         var snapshot = dataSource.snapshot()
@@ -82,6 +111,7 @@ class ChatTableView: UIView {
         dataSource.apply(snapshot, animatingDifferences: animated) { [weak self] in
             self?.scrollToBottom(animated: animated)
         }
+        updateEmptyState(isEmpty: false, animated: animated)
     }
     func scrollToBottom(animated: Bool = true) {
         guard let lastSection = dataSource.snapshot().sectionIdentifiers.last,

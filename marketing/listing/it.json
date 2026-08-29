@@ -1,0 +1,35 @@
+{
+  "name": "PixiePocket: Immagini AI",
+  "subtitle": "Editor foto e arte Nano Banana",
+  "keywords": "generatore,fotoritocco,sfondo,anime,avatar,adesivo,gemini,gpt,chatbot,trasparente,disegno,gratis,ia",
+  "promotionalText": "Nessun abbonamento. I crediti non scadono mai: compri un pacchetto, lo usi quando vuoi e tieni quello che non spendi.",
+  "description": "Immagini di qualità professionale, create chiacchierando. Paghi solo quello che crei. Nessun abbonamento, mai.\n\nChi inizia riceve 25 crediti gratuiti: bastano per provare la generazione di immagini con Nano Banana appena apri l'app. Senza registrazione.\n\nCHATTA FINO ALL'IMMAGINE GIUSTA\nDescrivi quello che vuoi, affinalo messaggio dopo messaggio e guarda la tua immagine prendere forma. Allega una foto e modificala parlando: cambia i capelli, sostituisci lo sfondo, cambia stile a qualsiasi cosa.\n\nCON NANO BANANA + GPT IMAGE\nPixiePocket genera con Nano Banana (Gemini) di Google e con i modelli di immagine GPT di OpenAI: due motori, un'unica chat.\n\nPAGHI A IMMAGINE, NON AL MESE\nI crediti non scadono mai. Compri un pacchetto una volta sola e crei quando arriva l'ispirazione: i pacchetti più grandi includono fino al 68% di crediti in regalo. Nessuna trappola settimanale, nessun rinnovo, nessun addebito a sorpresa.\n\nCONTROLLA IL RISULTATO DA PROFESSIONISTA\n• Fino a 10 immagini per richiesta, in blocco\n• Qualità Bassa / Media / Alta / Auto\n• Formati personalizzati, dal quadrato al panoramico\n• Output PNG, JPEG o WebP, con sfondo trasparente\n• Costo in crediti sempre visibile prima di creare\n\nOVUNQUE TU SIA\nInizia in anonimo, poi accedi con Apple, Google o GitHub per tenere la galleria sincronizzata su tutti i dispositivi. Condividi i tuoi lavori migliori nella galleria pubblica della community, oppure tieni tutto per te.\n\nNOTA SU PRIVACY E SICUREZZA\nI tuoi prompt e le foto che alleghi vengono inviati a Google Gemini e a OpenAI per generare le immagini: lo approvi nell'app prima della prima creazione e puoi revocare il consenso quando vuoi nelle Impostazioni. Alcuni prompt possono essere filtrati dalla moderazione dei contenuti. Le immagini condivise nella galleria della community possono essere segnalate con un tocco e vengono esaminate.\n\nGoogle, Gemini e Nano Banana sono marchi di Google LLC. Questa app non è approvata da Google o OpenAI né affiliata a queste aziende.",
+  "whatsNew": "• Un vero benvenuto: una nuova chat si apre ora con prompt di partenza da toccare per iniziare — niente più schermo vuoto.\n• La richiesta di recensione non compare più due volte dopo la stessa generazione.\n• Screenshot e scheda dello store ora sono completamente localizzati in nove lingue.",
+  "screenshots": [
+    {
+      "file": "01_create",
+      "headline": "Chatta fino all'immagine",
+      "subhead": "Nessun abbonamento, mai",
+      "screen": "create"
+    },
+    {
+      "file": "02_edit",
+      "headline": "Modifica una foto parlando",
+      "subhead": "Capelli, sfondi, stile: cambia tutto",
+      "screen": "edit"
+    },
+    {
+      "file": "03_store",
+      "headline": "Paghi a immagine, non al mese",
+      "subhead": "Crediti eterni. Parti con 25 gratis",
+      "screen": "store"
+    },
+    {
+      "file": "04_gallery",
+      "headline": "Nano Banana + GPT image",
+      "subhead": "Due motori, una chat — sync su iPhone e iPad",
+      "screen": "gallery"
+    }
+  ],
+  "supportUrl": "https://x.com/guitaripod"
+}

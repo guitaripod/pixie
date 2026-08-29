@@ -86,3 +86,4 @@ iOS/**/fastlane/Preview.html
 iOS/**/fastlane/screenshots/**/*.png
 iOS/**/fastlane/test_output
 iOS/**/iOSInjectionProject/
+marketing/raw/

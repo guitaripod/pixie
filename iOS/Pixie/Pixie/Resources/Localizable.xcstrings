@@ -7297,6 +7297,64 @@
         }
       }
     },
+    "Cozy cabin in the snow, watercolor" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gemütliche Hütte im Schnee, Aquarell"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cabaña acogedora en la nieve, acuarela"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chalet douillet sous la neige, aquarelle"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baita accogliente nella neve, acquerello"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "雪の中の居心地よい小屋、水彩画"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "눈 속 아늑한 오두막, 수채화"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cabana aconchegante na neve, aquarela"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "雪中温馨小屋，水彩画"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "雪中溫馨小屋，水彩畫"
+          }
+        }
+      }
+    },
     "Create AI-powered images in seconds" : {
       "localizations" : {
         "de" : {
@@ -8309,6 +8367,64 @@
         }
       }
     },
+    "Cute cat astronaut sticker, transparent background" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niedlicher Katzen-Astronaut-Sticker, transparenter Hintergrund"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegatina de gato astronauta, fondo transparente"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autocollant de chat astronaute, fond transparent"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sticker di gatto astronauta, sfondo trasparente"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "かわいい猫の宇宙飛行士ステッカー、背景透過"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "귀여운 고양이 우주인 스티커, 투명 배경"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adesivo de gato astronauta, fundo transparente"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可爱猫咪宇航员贴纸，透明背景"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可愛貓咪太空人貼紙，透明背景"
+          }
+        }
+      }
+    },
     "Cyberpunk" : {
       "localizations" : {
         "de" : {
@@ -8363,6 +8479,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "賽博龐克"
+          }
+        }
+      }
+    },
+    "Cyberpunk anime portrait, neon rain" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cyberpunk-Anime-Porträt, Neonregen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retrato anime cyberpunk, lluvia de neón"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Portrait anime cyberpunk, pluie néon"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ritratto anime cyberpunk, pioggia al neon"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サイバーパンクのアニメ肖像、ネオンの雨"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사이버펑크 애니메 초상화, 네온 빗줄기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retrato anime cyberpunk, chuva de neon"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "赛博朋克动漫肖像，霓虹雨"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "賽博龐克動漫肖像，霓虹雨"
           }
         }
       }
@@ -8943,6 +9117,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "要刪除這張圖片嗎？"
+          }
+        }
+      }
+    },
+    "Describe an image below, or start from one of these." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beschreibe unten ein Bild oder starte mit einem dieser Vorschläge."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Describe una imagen abajo o empieza con una de estas ideas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Décrivez une image ci-dessous ou partez de l'une de ces idées."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descrivi un'immagine qui sotto o parti da uno di questi spunti."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下に画像を説明するか、こちらから始めましょう。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아래에 이미지를 설명하거나 아래 예시로 시작해 보세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descreva uma imagem abaixo ou comece por uma destas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在下方描述一张图片，或从这些开始。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在下方描述一張圖片，或從這些開始。"
           }
         }
       }
@@ -16133,6 +16365,64 @@
         }
       }
     },
+    "Minimal logo for a coffee brand" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimalistisches Logo für eine Kaffeemarke"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logo minimalista para una marca de café"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logo minimaliste pour une marque de café"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logo minimal per un marchio di caffè"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コーヒーブランドのミニマルなロゴ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "커피 브랜드를 위한 미니멀 로고"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logo minimalista para uma marca de café"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "咖啡品牌极简标志"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "咖啡品牌極簡標誌"
+          }
+        }
+      }
+    },
     "Missing authorization data" : {
       "localizations" : {
         "de" : {
@@ -20103,6 +20393,64 @@
         }
       }
     },
+    "Product photo of sneakers on white" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Produktfoto von Sneakern auf Weiß"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foto de producto de zapatillas sobre blanco"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photo produit de baskets sur fond blanc"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foto prodotto di sneaker su bianco"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "白背景のスニーカーの商品写真"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "흰 배경의 스니커즈 제품 사진"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foto de produto de tênis em fundo branco"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "白底运动鞋产品照"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "白底運動鞋產品照"
+          }
+        }
+      }
+    },
     "Profit Margin" : {
       "localizations" : {
         "de" : {
@@ -21749,6 +22097,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "復古"
+          }
+        }
+      }
+    },
+    "Retro 80s synthwave sunset" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retro-Synthwave-Sonnenuntergang der 80er"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atardecer synthwave retro de los 80"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coucher de soleil synthwave rétro des années 80"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tramonto synthwave retrò anni '80"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "80年代レトロなシンセウェイブの夕日"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "80년대 레트로 신스웨이브 노을"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pôr do sol synthwave retrô dos anos 80"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复古80年代合成波日落"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "復古80年代合成波日落"
           }
         }
       }
@@ -27495,6 +27901,64 @@
         }
       }
     },
+    "What will you make today?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was erschaffst du heute?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Qué vas a crear hoy?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Que voulez-vous créer aujourd'hui ?"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cosa vuoi creare oggi?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今日は何をつくりますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오늘은 무엇을 만들까요?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que você vai criar hoje?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天想创作什么？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天想創作什麼？"
+          }
+        }
+      }
+    },
     "What's the difference between quality levels?" : {
       "localizations" : {
         "de" : {
@@ -29109,6 +29573,934 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎨 生成請求"
+          }
+        }
+      }
+    },
+    "Cyberpunk anime girl, neon city, rain, blade runner mood" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cyberpunk-Anime-Mädchen, Neon-Stadt, Regen, Blade-Runner-Stimmung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chica anime cyberpunk, ciudad de neón, lluvia, ambiente blade runner"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fille anime cyberpunk, ville néon, pluie, ambiance blade runner"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ragazza anime cyberpunk, città al neon, pioggia, atmosfera blade runner"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サイバーパンクアニメ美少女、ネオン都市、雨、ブレードランナー風の雰囲気"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사이버펑크 애니메이션 소녀, 네온 도시, 비, 블레이드 러너 분위기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garota anime cyberpunk, cidade neon, chuva, clima blade runner"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "赛博朋克动漫女孩，霓虹都市，雨夜，银翼杀手氛围"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "賽博龐克動漫女孩，霓虹都市，雨夜，銀翼殺手氛圍"
+          }
+        }
+      }
+    },
+    "Change her hair into something wild, spiky volumetric" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihre Haare in etwas Wildes verwandeln, stachelig und voluminös"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambia su cabello por algo salvaje, puntiagudo y voluminoso"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transforme ses cheveux en quelque chose de sauvage, hérissé et volumineux"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trasforma i suoi capelli in qualcosa di selvaggio, spettinato e voluminoso"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "髪をワイルドでボリュームのあるスパイキーヘアに変えて"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "머리를 거칠고 뾰족한 볼륨 스타일로 바꿔줘"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mude o cabelo dela para algo selvagem, espetado e volumoso"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把她的头发换成狂野蓬松的尖刺造型"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把她的頭髮換成狂野蓬鬆的尖刺造型"
+          }
+        }
+      }
+    },
+    "Stunning space scene with galaxies, nebulas, cosmic colors" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atemberaubende Weltraumszene mit Galaxien, Nebeln, kosmischen Farben"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impresionante escena espacial con galaxias, nebulosas, colores cósmicos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scène spatiale époustouflante avec galaxies, nébuleuses, couleurs cosmiques"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scena spaziale mozzafiato con galassie, nebulose, colori cosmici"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "銀河や星雲、宇宙の色彩が広がる息をのむ宇宙シーン"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "은하수와 성운, 우주적인 색감이 어우러진 경이로운 우주 장면"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cena espacial deslumbrante com galáxias, nebulosas, cores cósmicas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "震撼的宇宙场景，星系、星云与绚烂宇宙色彩"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "震撼的宇宙場景，星系、星雲與絢爛宇宙色彩"
+          }
+        }
+      }
+    },
+    "Deep space spiral galaxy, vivid purples and teal stars" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spiralgalaxie im tiefen All, kräftige Lila- und Türkistöne bei den Sternen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Galaxia espiral en el espacio profundo, morados vivos y estrellas turquesa"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Galaxie spirale dans l'espace profond, violets vifs et étoiles turquoise"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Galassia a spirale nello spazio profondo, viola intensi e stelle color turchese"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "深宇宙の渦巻銀河、鮮やかな紫とティール色の星々"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "심우주의 나선 은하, 선명한 보라색과 청록빛 별들"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Galáxia espiral no espaço profundo, roxos vívidos e estrelas cor de verde-azulado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "深空螺旋星系，鲜艳紫色与青绿色星光"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "深空螺旋星系，鮮豔紫色與青綠色星光"
+          }
+        }
+      }
+    },
+    "Cheerful anime girl enjoying a colorful plated meal" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fröhliches Anime-Mädchen genießt ein bunt angerichtetes Essen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chica anime alegre disfrutando de un plato colorido"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fille anime joyeuse savourant un plat coloré"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ragazza anime allegra che gusta un piatto colorato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カラフルに盛り付けられた料理を楽しむ元気なアニメ美少女"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "화려하게 담긴 요리를 맛있게 즐기는 발랄한 애니메이션 소녀"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garota anime alegre saboreando um prato colorido"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开心的动漫女孩享用色彩缤纷的美食"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開心的動漫女孩享用色彩繽紛的美食"
+          }
+        }
+      }
+    },
+    "Professional food photography, appetizing presentation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Professionelle Food-Fotografie, appetitliche Präsentation"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotografía profesional de comida, presentación apetitosa"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photographie culinaire professionnelle, présentation appétissante"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotografia gastronomica professionale, presentazione invitante"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロによる料理写真、食欲をそそる盛り付け"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전문 푸드 포토그래피, 먹음직스러운 플레이팅"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotografia gastronômica profissional, apresentação apetitosa"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "专业美食摄影，令人垂涎的摆盘呈现"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "專業美食攝影，令人垂涎的擺盤呈現"
+          }
+        }
+      }
+    },
+    "Girl at a futuristic EV charging station, clean lines" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mädchen an einer futuristischen E-Auto-Ladestation, klare Linien"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chica en una estación de carga futurista para vehículos eléctricos, líneas limpias"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fille à une borne de recharge futuriste pour véhicules électriques, lignes épurées"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ragazza in una stazione di ricarica futuristica per auto elettriche, linee pulite"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "近未来的なEV充電ステーションにいる女の子、すっきりとしたライン"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미래적인 전기차 충전소에 있는 소녀, 깔끔한 라인"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garota em uma estação de recarga de veículo elétrico futurista, linhas limpas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未来感十足的电动车充电站前的女孩，线条简洁利落"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未來感十足的電動車充電站前的女孩，線條簡潔俐落"
+          }
+        }
+      }
+    },
+    "80s retro synthwave portrait, palm trees, miami sunset" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retro-Synthwave-Porträt im 80er-Stil, Palmen, Sonnenuntergang über Miami"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retrato retro synthwave estilo años 80, palmeras, atardecer de Miami"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Portrait rétro synthwave années 80, palmiers, coucher de soleil à Miami"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ritratto retro synthwave anni '80, palme, tramonto stile Miami"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "80年代レトロなシンセウェイブ風ポートレート、ヤシの木、マイアミの夕陽"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "80년대 레트로 신스웨이브 초상화, 야자수, 마이애미 노을"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retrato retrô synthwave estilo anos 80, palmeiras, pôr do sol em Miami"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "80年代复古合成波风格肖像，棕榈树，迈阿密日落"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "80年代復古合成波風格肖像，棕櫚樹，邁阿密日落"
+          }
+        }
+      }
+    },
+    "Make it green, glowing emerald star, cosmic energy" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mach es grün, leuchtender Smaragdstern, kosmische Energie"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hazlo verde, estrella esmeralda resplandeciente, energía cósmica"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rends-le vert, étoile émeraude scintillante, énergie cosmique"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rendilo verde, stella smeraldo luminosa, energia cosmica"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "緑色にして、輝くエメラルドの星、宇宙のエネルギー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "초록빛으로 바꿔줘, 빛나는 에메랄드빛 별, 우주적 에너지"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deixe verde, estrela esmeralda brilhante, energia cósmica"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把它变成绿色，闪耀的翡翠之星，宇宙能量"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把它變成綠色，閃耀的翡翠之星，宇宙能量"
+          }
+        }
+      }
+    },
+    "The sun, churning solar plasma surface, intense detail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Sonne, brodelnde Plasmaoberfläche, intensive Detailtiefe"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El sol, superficie de plasma solar en ebullición, detalle intenso"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le soleil, surface de plasma solaire en ébullition, détails intenses"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il sole, superficie di plasma solare ribollente, dettaglio intenso"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "太陽、渦巻く太陽プラズマの表面、圧倒的なディテール"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "태양, 소용돌이치는 태양 플라즈마 표면, 강렬한 디테일"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O sol, superfície de plasma solar em turbilhão, detalhes intensos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "太阳，翻腾的太阳等离子体表面，细节极致"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "太陽，翻騰的太陽電漿表面，細節極致"
+          }
+        }
+      }
+    },
+    "Stunning deep space scene with a distant black hole" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atemberaubende Tiefraumszene mit einem fernen Schwarzen Loch"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impresionante escena del espacio profundo con un agujero negro distante"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scène époustouflante de l'espace profond avec un trou noir lointain"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scena mozzafiato dello spazio profondo con un buco nero lontano"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "遥か彼方のブラックホールを捉えた息をのむ深宇宙シーン"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "멀리 있는 블랙홀이 담긴 경이로운 심우주 장면"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cena deslumbrante do espaço profundo com um buraco negro distante"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "震撼的深空场景，远处的黑洞"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "震撼的深空場景，遠處的黑洞"
+          }
+        }
+      }
+    },
+    "Modern architecture photography, minimalist, golden light" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moderne Architekturfotografie, minimalistisch, goldenes Licht"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotografía de arquitectura moderna, minimalista, luz dorada"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photographie d'architecture moderne, minimaliste, lumière dorée"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotografia di architettura moderna, minimalista, luce dorata"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モダン建築写真、ミニマルで金色の光"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현대 건축 사진, 미니멀하고 황금빛 조명"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotografia de arquitetura moderna, minimalista, luz dourada"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "现代建筑摄影，极简风格，金色光线"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現代建築攝影，極簡風格，金色光線"
+          }
+        }
+      }
+    },
+    "Edit: Change her hair into something wild" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bearbeiten: Ihre Haare in etwas Wildes verwandeln"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar: cambia su cabello por algo salvaje"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier : transforme ses cheveux en quelque chose de sauvage"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifica: trasforma i suoi capelli in qualcosa di selvaggio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編集：髪をワイルドなスタイルに変えて"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "편집: 머리를 거친 스타일로 바꿔줘"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar: mude o cabelo dela para algo selvagem"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑：把她的头发换成狂野造型"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編輯：把她的頭髮換成狂野造型"
+          }
+        }
+      }
+    },
+    "Here is your edited image:" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier ist dein bearbeitetes Bild:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquí tienes tu imagen editada:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voici votre image modifiée :"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ecco la tua immagine modificata:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編集された画像はこちらです："
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "편집된 이미지입니다:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aqui está sua imagem editada:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这是您编辑后的图片："
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這是您編輯後的圖片："
+          }
+        }
+      }
+    },
+    "Cyberpunk anime girl in a neon-soaked city, rain, blade runner mood" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cyberpunk-Anime-Mädchen in einer neongetränkten Stadt, Regen, Blade-Runner-Stimmung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chica anime cyberpunk en una ciudad bañada de neón, lluvia, ambiente blade runner"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fille anime cyberpunk dans une ville baignée de néons, pluie, ambiance blade runner"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ragazza anime cyberpunk in una città inondata di neon, pioggia, atmosfera blade runner"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ネオンに染まる都市のサイバーパンクアニメ美少女、雨、ブレードランナー風の雰囲気"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "네온으로 물든 도시 속 사이버펑크 애니메이션 소녀, 비, 블레이드 러너 분위기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garota anime cyberpunk em uma cidade banhada de neon, chuva, clima blade runner"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沉浸在霓虹光影中的赛博朋克动漫女孩，雨夜，银翼杀手氛围"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沉浸在霓虹光影中的賽博龐克動漫女孩，雨夜，銀翼殺手氛圍"
+          }
+        }
+      }
+    },
+    "Now make it a stunning deep-space galaxy with vivid nebulas" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mach daraus jetzt eine atemberaubende Tiefraumgalaxie mit leuchtenden Nebeln"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ahora conviértelo en una impresionante galaxia del espacio profundo con nebulosas vívidas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transforme-le maintenant en une galaxie spectaculaire de l'espace profond avec des nébuleuses éclatantes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ora trasformalo in una galassia spaziale mozzafiato con nebulose vivide"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今度は鮮やかな星雲が広がる息をのむ深宇宙の銀河にして"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이번엔 선명한 성운이 가득한 경이로운 심우주 은하로 만들어줘"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agora transforme em uma galáxia deslumbrante do espaço profundo com nebulosas vívidas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "现在把它变成一个绚丽的深空星系，配上鲜艳的星云"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在把它變成一個絢麗的深空星系，配上鮮豔的星雲"
           }
         }
       }

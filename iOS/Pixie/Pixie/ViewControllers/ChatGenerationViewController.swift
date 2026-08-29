@@ -42,7 +42,7 @@ class ChatGenerationViewController: UIViewController {
     private var leadingConstraint: NSLayoutConstraint!
     private var trailingConstraint: NSLayoutConstraint!
     #if DEBUG
-    enum DemoScenario { case edit, create }
+    enum DemoScenario { case edit, create, empty }
     var demoMode: DemoScenario?
     #endif
     override func viewDidLoad() {
@@ -104,6 +104,8 @@ class ChatGenerationViewController: UIViewController {
             messages = DemoChatBuilder.editConversation()
         case .create:
             messages = DemoChatBuilder.createConversation()
+        case .empty:
+            messages = []
         }
         chatView.setMessages(messages, animated: false)
     }
@@ -261,6 +263,11 @@ class ChatGenerationViewController: UIViewController {
         }
         inputBar.onExpandedChanged = { isExpanded in
         }
+        chatView.onStarterPromptSelected = { [weak self] prompt in
+            guard let self else { return }
+            self.inputBar.setText(prompt)
+            _ = self.inputBar.becomeFirstResponder()
+        }
         suggestionsView.onEditImageTapped = { [weak self] in
             self?.presentPhotoPicker()
         }
@@ -325,15 +332,6 @@ class ChatGenerationViewController: UIViewController {
         viewModel.progressPublisher
             .receive(on: DispatchQueue.main)
             .sink { progress in
-            }
-            .store(in: &cancellables)
-        viewModel.generationSucceededPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] in
-                guard let self else { return }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
-                    RatingPrompt.registerSuccessfulGeneration(in: self?.view.window?.windowScene)
-                }
             }
             .store(in: &cancellables)
     }

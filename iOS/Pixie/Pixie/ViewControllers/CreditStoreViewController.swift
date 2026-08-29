@@ -397,7 +397,7 @@ final class CreditStoreViewController: UIViewController {
 
     #if DEBUG
     private func applyDemoPacks() {
-        balanceLabel.text = "Current balance: 132 credits"
+        balanceLabel.text = String(localized: "Current balance: \(132) credits")
         packs = [
             StorePackDisplay(id: "starter", name: "Starter", baseCredits: 150, bonusCredits: 0, price: "$2.99", rcPackage: nil),
             StorePackDisplay(id: "basic", name: "Basic", baseCredits: 475, bonusCredits: 75, price: "$9.99", rcPackage: nil),

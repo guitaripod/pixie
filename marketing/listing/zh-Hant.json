@@ -1,0 +1,35 @@
+{
+  "name": "PixiePocket：AI 繪圖生成器",
+  "subtitle": "Nano Banana 聊天修圖與藝術創作",
+  "keywords": "去背,桌布,頭像,大頭貼,貼圖,梗圖,動漫,插畫,海報,生圖,透明背景,批次,文字轉圖片,二次元,免費,gemini,gpt,產生器,高畫質,圖片編輯,商品圖,素材,logo,寫真,塗鴉,封面,手繪",
+  "promotionalText": "不用訂閱。點數永不過期——買一包，想創作的時候再用，沒用完的就一直留著。",
+  "description": "專業水準的 AI 圖片，用聊天就能做出來。創作多少付多少，永遠不必訂閱。\n\n每位新使用者都有 25 點免費點數，打開 App 就能立刻試試 Nano Banana 生成圖片，也不必註冊帳號。\n\n【邊聊邊改，直到滿意】\n把想要的畫面說出來，一句一句慢慢調，看著圖片越來越接近腦中的樣子。也可以直接附上一張照片，用說的來改：換髮型、換背景、整個換一種風格。\n\n【由 Nano Banana + GPT Image 驅動】\nPixiePocket 使用 Google 的 Nano Banana（Gemini）與 OpenAI 的 GPT 圖像模型生成——兩套引擎，同一個對話。\n\n【按張付費，不按月付費】\n點數永不過期。買一包，想創作的時候隨時都能用；點數包越大，加贈的點數越多，最高多送 68%。沒有週方案陷阱，不會自動續訂，也不會有莫名其妙的扣款。\n\n【像專業人士一樣掌控輸出】\n• 單次請求最多批次生成 10 張\n• 低／中／高／自動四種品質等級\n• 尺寸可自訂，從正方形到寬螢幕\n• 可輸出 PNG、JPEG 或 WebP，也能做透明背景\n• 生成前就先看到這次會花多少點數\n\n【換台裝置也能接著做】\n可以先匿名使用，之後再用 Apple、Google 或 GitHub 登入，你的作品圖庫就會在多台裝置之間同步。得意之作可以分享到公開的社群圖庫，也可以只留給自己。\n\n【關於隱私與安全】\n你輸入的提示詞與所附的照片，會傳送給 Google Gemini 與 OpenAI 用來生成圖片；第一次創作前，App 內會先請你同意，之後隨時可以在「設定」中撤回。部分提示詞可能會被內容審核擋下。分享到社群圖庫的圖片，只要輕點一下就能檢舉，並會經過審核。\n\nGoogle、Gemini 與 Nano Banana 是 Google LLC 的商標。本 App 未獲 Google 或 OpenAI 認可，也與其無隸屬關係。",
+  "whatsNew": "• 全新歡迎體驗：開新對話時會出現一組起手範例，點一下就能試——不再是空白畫面。\n• 修正同一次生成後評分邀請跳兩次的問題。\n• 截圖與商店頁面已完整支援九種語言。",
+  "screenshots": [
+    {
+      "file": "01_create",
+      "headline": "邊聊邊生圖",
+      "subhead": "不用訂閱，永遠不用",
+      "screen": "create"
+    },
+    {
+      "file": "02_edit",
+      "headline": "用說的來修圖",
+      "subhead": "換髮型、換背景、換風格",
+      "screen": "edit"
+    },
+    {
+      "file": "03_store",
+      "headline": "按張付費更划算",
+      "subhead": "點數不過期，先送 25 點",
+      "screen": "store"
+    },
+    {
+      "file": "04_gallery",
+      "headline": "Nano Banana + GPT image",
+      "subhead": "雙引擎同步 iPhone 與 iPad",
+      "screen": "gallery"
+    }
+  ],
+  "supportUrl": "https://x.com/guitaripod"
+}
