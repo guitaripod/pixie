@@ -67,7 +67,6 @@ enum DemoContent {
                     model: "gpt-image-1",
                     revisedPrompt: nil
                 ),
-                isPublic: false,
                 tags: nil
             )
         }

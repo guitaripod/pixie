@@ -5,7 +5,6 @@ final class GalleryPageViewController: UIViewController {
     
     weak var delegate: GalleryPageViewControllerDelegate?
     
-    private let type: GalleryType
     private var images: [ImageMetadata] = []
     private var isLoading = false
     private var isRefreshing = false
@@ -13,7 +12,6 @@ final class GalleryPageViewController: UIViewController {
     private var currentPage = 1
     private let pageSize = 20
     private var totalPagesLoaded = 0
-    private let maxImagesLimit = 100
     
     private let collectionView: UICollectionView
     private let refreshControl = UIRefreshControl()
@@ -23,9 +21,7 @@ final class GalleryPageViewController: UIViewController {
     private var dataSource: UICollectionViewDiffableDataSource<Int, ImageMetadata>!
     private var layoutManager = AdaptiveLayoutManager(traitCollection: UITraitCollection.current)
     
-    init(type: GalleryType) {
-        self.type = type
-        
+    init() {
         let layout = Self.createLayout(for: UITraitCollection.current)
         self.collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         
@@ -46,7 +42,6 @@ final class GalleryPageViewController: UIViewController {
         loadInitialData()
         layoutManager.delegate = self
 
-        NotificationCenter.default.addObserver(self, selector: #selector(blockedUsersChanged), name: BlockedUsers.didChangeNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(galleryNeedsRefresh), name: .galleryNeedsRefresh, object: nil)
     }
 
@@ -54,24 +49,11 @@ final class GalleryPageViewController: UIViewController {
         NotificationCenter.default.removeObserver(self)
     }
 
-    @objc private func blockedUsersChanged() {
-        let filtered = filteredForBlocked(images)
-        guard filtered.count != images.count else { return }
-        images = filtered
-        updateSnapshot()
-        updateEmptyState()
-    }
 
     @objc private func galleryNeedsRefresh() {
         refresh()
     }
 
-    private func filteredForBlocked(_ items: [ImageMetadata]) -> [ImageMetadata] {
-        guard type == .explore else { return items }
-        let blocked = BlockedUsers.all
-        guard !blocked.isEmpty else { return items }
-        return items.filter { !blocked.contains($0.userId) }
-    }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
@@ -155,7 +137,7 @@ final class GalleryPageViewController: UIViewController {
             emptyStateView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -32)
         ])
         
-        emptyStateView.configure(for: type)
+        emptyStateView.configure(for: .personal)
     }
     
     private func setupCollectionView() {
@@ -198,7 +180,7 @@ final class GalleryPageViewController: UIViewController {
             do {
                 let response = try await fetchImages(page: 1)
                 await MainActor.run {
-                    self.images = self.filteredForBlocked(response.images)
+                    self.images = response.images
                     self.currentPage = 1
                     self.totalPagesLoaded = 1
                     self.hasMore = response.images.count == self.pageSize
@@ -230,7 +212,7 @@ final class GalleryPageViewController: UIViewController {
             do {
                 let response = try await fetchImages(page: 1)
                 await MainActor.run {
-                    self.images = self.filteredForBlocked(response.images)
+                    self.images = response.images
                     self.totalPagesLoaded = 1
                     self.hasMore = response.images.count == self.pageSize
                     self.isRefreshing = false
@@ -251,11 +233,6 @@ final class GalleryPageViewController: UIViewController {
     private func loadMore() {
         guard !isLoading, hasMore else { return }
         
-        if type == .explore && images.count >= maxImagesLimit {
-            hasMore = false
-            return
-        }
-        
         isLoading = true
         let nextPage = currentPage + 1
         
@@ -263,7 +240,7 @@ final class GalleryPageViewController: UIViewController {
             do {
                 let response = try await fetchImages(page: nextPage)
                 await MainActor.run {
-                    self.images.append(contentsOf: self.filteredForBlocked(response.images))
+                    self.images.append(contentsOf: response.images)
                     self.currentPage = nextPage
                     self.totalPagesLoaded += 1
                     self.hasMore = response.images.count == self.pageSize
@@ -292,18 +269,11 @@ final class GalleryPageViewController: UIViewController {
             throw URLError(.userAuthenticationRequired)
         }
         
-        let urlString: String
-        let cacheKey: String
-        if type == .personal {
-            guard let userId = AuthenticationManager.shared.currentUser?.id else {
-                throw URLError(.userAuthenticationRequired)
-            }
-            urlString = "\(APIService.shared.baseURL)/v1/images/user/\(userId)?page=\(page)&per_page=\(pageSize)"
-            cacheKey = "personal_\(userId)_page_\(page)"
-        } else {
-            urlString = "\(APIService.shared.baseURL)/v1/images?page=\(page)&per_page=\(pageSize)"
-            cacheKey = "public_page_\(page)"
+        guard let userId = AuthenticationManager.shared.currentUser?.id else {
+            throw URLError(.userAuthenticationRequired)
         }
+        let urlString = "\(APIService.shared.baseURL)/v1/images/user/\(userId)?page=\(page)&per_page=\(pageSize)"
+        let cacheKey = "personal_\(userId)_page_\(page)"
         
         if !isRefreshing, let cachedResponse = GalleryCache.shared.getResponse(for: cacheKey) {
             return cachedResponse
@@ -352,15 +322,6 @@ final class GalleryPageViewController: UIViewController {
         updateEmptyState()
     }
 
-    func applyVisibility(id: String, isPublic: Bool) {
-        guard let index = images.firstIndex(where: { $0.id == id }) else { return }
-        if type == .explore && !isPublic {
-            removeImage(id: id)
-            return
-        }
-        images[index] = images[index].withIsPublic(isPublic)
-        updateSnapshot()
-    }
 
     private func updateSnapshot() {
         var snapshot = NSDiffableDataSourceSnapshot<Int, ImageMetadata>()
@@ -523,46 +484,14 @@ extension GalleryPageViewController: UICollectionViewDelegate {
             self.delegate?.galleryPageDidPerformAction(self, action: .share, on: image)
         }
 
-        var children: [UIMenuElement] = [viewDetails, useForEdit, copyPrompt, save, share]
-
-        if isOwnImage(image) {
-            let isPublic = image.isPublic ?? true
-            let visibility: UIAction
-            if isPublic {
-                visibility = UIAction(title: String(localized: "Remove from Public Gallery"), image: UIImage(systemName: "eye.slash")) { [weak self] _ in
-                    guard let self = self else { return }
-                    self.delegate?.galleryPageDidPerformAction(self, action: .makePrivate, on: image)
-                }
-            } else {
-                visibility = UIAction(title: String(localized: "Add to Public Gallery"), image: UIImage(systemName: "eye")) { [weak self] _ in
-                    guard let self = self else { return }
-                    self.delegate?.galleryPageDidPerformAction(self, action: .makePublic, on: image)
-                }
-            }
-            let delete = UIAction(title: String(localized: "Delete"), image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
-                guard let self = self else { return }
-                self.delegate?.galleryPageDidPerformAction(self, action: .delete, on: image)
-            }
-            children.append(UIMenu(options: .displayInline, children: [visibility, delete]))
-        } else {
-            let report = UIAction(title: String(localized: "Report Image"), image: UIImage(systemName: "exclamationmark.bubble"), attributes: .destructive) { [weak self] _ in
-                guard let self = self else { return }
-                self.delegate?.galleryPageDidPerformAction(self, action: .report, on: image)
-            }
-            let block = UIAction(title: String(localized: "Block User"), image: UIImage(systemName: "hand.raised"), attributes: .destructive) { [weak self] _ in
-                guard let self = self else { return }
-                self.delegate?.galleryPageDidPerformAction(self, action: .block, on: image)
-            }
-            children.append(UIMenu(options: .displayInline, children: [report, block]))
+        let delete = UIAction(title: String(localized: "Delete"), image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+            guard let self = self else { return }
+            self.delegate?.galleryPageDidPerformAction(self, action: .delete, on: image)
         }
 
-        return UIMenu(title: "", children: children)
+        return UIMenu(title: "", children: [viewDetails, useForEdit, copyPrompt, save, share, UIMenu(options: .displayInline, children: [delete])])
     }
 
-    private func isOwnImage(_ image: ImageMetadata) -> Bool {
-        guard let userId = AuthenticationManager.shared.currentUser?.id else { return false }
-        return image.userId == userId
-    }
 }
 
 extension GalleryPageViewController: UICollectionViewDataSourcePrefetching {

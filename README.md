@@ -20,7 +20,7 @@ The Pixie AI image-generation client suite: a command-line interface, an Android
 High-performance Rust-based Cloudflare Worker that provides OpenAI-compatible image generation with enhanced features:
 - Automatic image storage in Cloudflare R2
 - Usage tracking and analytics
-- Public galleries
+- Private image library
 - Credit-based billing system
 - OAuth authentication (GitHub, Google, Apple*)
 
@@ -106,7 +106,7 @@ prompt: "Add a sunset"
 ```
 
 #### Other Endpoints
-- `GET /v1/images` - Browse public gallery
+- `GET /v1/images` - Images are private; lists only your own
 - `GET /v1/credits/balance` - Check credit balance
 - `POST /v1/credits/purchase` - Buy credit packs
 - `POST /v1/auth/device/code` - Start device auth flow
@@ -171,7 +171,7 @@ pixie credits estimate -q high -s 1024x1024  # Cost estimation
 
 ### Gallery
 ```bash
-pixie gallery list         # Browse public images
+pixie gallery list         # Your images (all images are private)
 pixie gallery mine         # Your images
 pixie gallery view <id>    # Image details
 ```
@@ -194,7 +194,7 @@ Native Android application built with Kotlin and Jetpack Compose, providing a mo
 ### Features
 - **Image Generation**: Chat-based interface with batch generation (1-10 images)
 - **Image Editing**: Upload and modify existing images with AI
-- **Gallery**: Browse public and personal galleries with download/share options
+- **Gallery**: Your private images with download/share options
 - **Credits**: Balance tracking, usage dashboard, and in-app purchases
 - **Authentication**: OAuth with GitHub, Google, and Apple
 - **Admin Panel**: System statistics and user management (admin only)
@@ -240,7 +240,7 @@ Native iOS application built with UIKit and Swift, providing a mobile interface 
 ### Features
 - **Image Generation**: Chat-based interface with batch generation (1-10 images)
 - **Image Editing**: Upload and modify existing images with AI
-- **Gallery**: Browse public and personal galleries with download/share options
+- **Gallery**: Your private images with download/share options
 - **Credits**: Balance tracking, usage dashboard, and in-app purchases via RevenueCat
 - **Authentication**: OAuth with GitHub, Google, and Apple Sign In
 - **Admin Panel**: System statistics and user management (admin only)

@@ -1,20 +1,11 @@
 import UIKit
 
-enum GalleryType {
-    case personal
-    case explore
-}
-
 enum ImageAction {
     case useForEdit
     case copyPrompt
     case download
     case share
-    case report
     case delete
-    case makePublic
-    case makePrivate
-    case block
 }
 
 extension Notification.Name {
@@ -22,61 +13,37 @@ extension Notification.Name {
 }
 
 final class GalleryViewController: UIViewController {
-    
-    private let pageViewController = UIPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal)
-    private let segmentedControl = UISegmentedControl(items: [String(localized: "My Images"), String(localized: "Explore")])
-    private var currentType: GalleryType = .personal
-    
-    private lazy var personalGalleryVC = GalleryPageViewController(type: .personal)
-    private lazy var exploreGalleryVC = GalleryPageViewController(type: .explore)
-    
-    private var pages: [UIViewController] {
-        [personalGalleryVC, exploreGalleryVC]
-    }
-    
+
+    private let galleryPageVC = GalleryPageViewController()
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setupPageViewController()
         setupNavigationBar()
-        setupSegmentedControl()
     }
-    
+
     private func setupUI() {
         view.backgroundColor = .systemBackground
-        
-        addChild(pageViewController)
-        view.addSubview(pageViewController.view)
-        pageViewController.view.translatesAutoresizingMaskIntoConstraints = false
-        pageViewController.didMove(toParent: self)
-        
+
+        addChild(galleryPageVC)
+        view.addSubview(galleryPageVC.view)
+        galleryPageVC.view.translatesAutoresizingMaskIntoConstraints = false
+        galleryPageVC.didMove(toParent: self)
+        galleryPageVC.delegate = self
+
         NSLayoutConstraint.activate([
-            pageViewController.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            pageViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            pageViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            pageViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            galleryPageVC.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            galleryPageVC.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            galleryPageVC.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            galleryPageVC.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
-    
-    private func setupPageViewController() {
-        pageViewController.dataSource = self
-        pageViewController.delegate = self
-        pageViewController.setViewControllers([personalGalleryVC], direction: .forward, animated: false)
-        
-        personalGalleryVC.delegate = self
-        exploreGalleryVC.delegate = self
-    }
-    
+
     private func setupNavigationBar() {
         navigationController?.navigationBar.isHidden = false
         navigationItem.largeTitleDisplayMode = .never
-    }
-    
-    private func setupSegmentedControl() {
-        segmentedControl.selectedSegmentIndex = 0
-        segmentedControl.addTarget(self, action: #selector(segmentChanged), for: .valueChanged)
-        navigationItem.titleView = segmentedControl
-        
+        title = String(localized: "My Images")
+
         navigationItem.leftBarButtonItem = UIBarButtonItem(
             image: UIImage(systemName: "chevron.left"),
             style: .plain,
@@ -84,45 +51,10 @@ final class GalleryViewController: UIViewController {
             action: #selector(backButtonTapped)
         )
     }
-    
-    @objc private func segmentChanged() {
-        HapticsManager.shared.impact(.light)
-        
-        let selectedIndex = segmentedControl.selectedSegmentIndex
-        let direction: UIPageViewController.NavigationDirection = selectedIndex == 0 ? .reverse : .forward
-        let targetVC = pages[selectedIndex]
-        
-        pageViewController.setViewControllers([targetVC], direction: direction, animated: true) { [weak self] _ in
-            self?.currentType = selectedIndex == 0 ? .personal : .explore
-        }
-    }
-    
+
     @objc private func backButtonTapped() {
         HapticsManager.shared.impact(.light)
         navigationController?.popViewController(animated: true)
-    }
-}
-
-extension GalleryViewController: UIPageViewControllerDataSource {
-    func pageViewController(_ pageViewController: UIPageViewController, viewControllerBefore viewController: UIViewController) -> UIViewController? {
-        guard let index = pages.firstIndex(of: viewController), index > 0 else { return nil }
-        return pages[index - 1]
-    }
-    
-    func pageViewController(_ pageViewController: UIPageViewController, viewControllerAfter viewController: UIViewController) -> UIViewController? {
-        guard let index = pages.firstIndex(of: viewController), index < pages.count - 1 else { return nil }
-        return pages[index + 1]
-    }
-}
-
-extension GalleryViewController: UIPageViewControllerDelegate {
-    func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
-        guard completed,
-              let currentVC = pageViewController.viewControllers?.first,
-              let index = pages.firstIndex(of: currentVC) else { return }
-        
-        segmentedControl.selectedSegmentIndex = index
-        currentType = index == 0 ? .personal : .explore
     }
 }
 
@@ -180,47 +112,17 @@ private extension GalleryViewController {
             HapticsManager.shared.impact(.light)
             shareImage(from: image.url)
 
-        case .report:
-            HapticsManager.shared.impact(.light)
-            reportImage(image)
-
         case .delete:
             HapticsManager.shared.impact(.light)
             confirmDelete(image)
-
-        case .makePublic:
-            HapticsManager.shared.impact(.light)
-            setVisibility(image, isPublic: true)
-
-        case .makePrivate:
-            HapticsManager.shared.impact(.light)
-            setVisibility(image, isPublic: false)
-
-        case .block:
-            HapticsManager.shared.impact(.light)
-            confirmBlock(image)
         }
     }
 
-    func confirmBlock(_ image: ImageMetadata) {
-        let alert = UIAlertController(
-            title: String(localized: "Block This Account?"),
-            message: String(localized: "You won't see posts from this account in Explore. You can manage blocked accounts in Settings."),
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
-        alert.addAction(UIAlertAction(title: String(localized: "Block"), style: .destructive) { _ in
-            BlockedUsers.block(image.userId)
-            HapticsManager.shared.notification(.success)
-            self.showToast(String(localized: "You won't see posts from this account"))
-        })
-        present(alert, animated: true)
-    }
 
     func confirmDelete(_ image: ImageMetadata) {
         let alert = UIAlertController(
             title: String(localized: "Delete Image?"),
-            message: String(localized: "This permanently deletes the image and removes it from the public gallery. This can't be undone."),
+            message: String(localized: "This permanently deletes the image. This can't be undone."),
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
@@ -236,8 +138,7 @@ private extension GalleryViewController {
                 try await APIService.shared.deleteImage(id: image.id)
                 await MainActor.run {
                     HapticsManager.shared.notification(.success)
-                    self.personalGalleryVC.removeImage(id: image.id)
-                    self.exploreGalleryVC.removeImage(id: image.id)
+                    self.galleryPageVC.removeImage(id: image.id)
                     GalleryCache.shared.clearCache()
                     self.showToast(String(localized: "Image deleted"))
                 }
@@ -250,50 +151,7 @@ private extension GalleryViewController {
         }
     }
 
-    func setVisibility(_ image: ImageMetadata, isPublic: Bool) {
-        Task {
-            do {
-                try await APIService.shared.setImageVisibility(id: image.id, isPublic: isPublic)
-                await MainActor.run {
-                    HapticsManager.shared.notification(.success)
-                    self.personalGalleryVC.applyVisibility(id: image.id, isPublic: isPublic)
-                    self.exploreGalleryVC.applyVisibility(id: image.id, isPublic: isPublic)
-                    GalleryCache.shared.clearCache()
-                    self.showToast(isPublic ? String(localized: "Added to public gallery") : String(localized: "Removed from public gallery"))
-                }
-            } catch {
-                await MainActor.run {
-                    HapticsManager.shared.notification(.error)
-                    self.showToast(String(localized: "Could not update visibility. Try again later."))
-                }
-            }
-        }
-    }
 
-    func reportImage(_ image: ImageMetadata) {
-        let alert = UIAlertController(
-            title: String(localized: "Report Image"),
-            message: String(localized: "Report this image if it is offensive, unsafe, or violates the community guidelines. Reported images are reviewed and removed when they break the rules."),
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
-        alert.addAction(UIAlertAction(title: String(localized: "Report"), style: .destructive) { [weak self] _ in
-            Task {
-                do {
-                    _ = try await APIService.shared.reportImage(id: image.id)
-                    await MainActor.run {
-                        HapticsManager.shared.notification(.success)
-                        self?.showToast(String(localized: "Thanks — this image was reported"))
-                    }
-                } catch {
-                    await MainActor.run {
-                        self?.showToast(String(localized: "Could not send report. Try again later."))
-                    }
-                }
-            }
-        })
-        present(alert, animated: true)
-    }
     
     func showToast(_ message: String) {
         let toast = UIView()

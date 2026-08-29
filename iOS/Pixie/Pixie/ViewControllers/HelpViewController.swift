@@ -105,7 +105,7 @@ class HelpViewController: UIViewController {
     private func showGettingStartedContent() {
         stackView.addArrangedSubview(createSection(
             title: String(localized: "Welcome to Pixie"),
-            content: String(localized: "Pixie is a powerful AI image generation app powered by gpt-image-1. Create stunning images from text descriptions, edit existing images, and browse galleries of amazing creations.")
+            content: String(localized: "Pixie is a powerful AI image generation app powered by gpt-image-1. Create stunning images from text descriptions, edit existing images, and browse your own private gallery.")
         ))
         
         stackView.addArrangedSubview(createSection(
@@ -113,7 +113,7 @@ class HelpViewController: UIViewController {
             content: String(localized: """
                 1. **Generate Images**: Tap the bottom toolbar and enter a description
                 2. **Edit Images**: Select an image from gallery or your device
-                3. **Browse Gallery**: Explore public images or view your creations
+                3. **Browse Gallery**: View and manage your creations
                 4. **Manage Credits**: Check your balance and purchase more credits
                 """)
         ))
@@ -183,14 +183,11 @@ class HelpViewController: UIViewController {
         stackView.addArrangedSubview(createSection(
             title: String(localized: "Gallery Features"),
             content: String(localized: """
-                **Public Gallery:**
-                • Browse all public images
+                **My Images:**
+                • View your generated images
                 • View image details and prompts
                 • Copy prompts for inspiration
                 • Download or share images
-                
-                **My Images:**
-                • View your generated images
                 • Edit from gallery
                 • Manage your creations
                 • Track image metadata
@@ -234,7 +231,7 @@ class HelpViewController: UIViewController {
              String(localized: "Yes! Long-press any image in the gallery and select 'Edit' to modify it with AI.")),
             
             (String(localized: "Is my data private?"),
-             String(localized: "Your API keys are stored securely on your device. All images you generate are automatically shared to the public gallery. You can save images locally or share them to other apps.")),
+             String(localized: "Your API keys are stored securely on your device. The images you generate are private to your account and only you can see them. You can save images locally or share them to other apps.")),
             
             (String(localized: "How do I report issues?"),
              String(localized: "Report issues at github.com/anthropics/claude-code/issues or contact support through the app.")),

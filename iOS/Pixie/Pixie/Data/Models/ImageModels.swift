@@ -13,7 +13,6 @@ struct ImageGenerationRequest: Codable {
     let partialImages: Int?
     let stream: Bool?
     let user: String?
-    let isPublic: Bool?
 
     enum CodingKeys: String, CodingKey {
         case prompt, model, n, size, quality, background, moderation
@@ -21,7 +20,6 @@ struct ImageGenerationRequest: Codable {
         case outputFormat = "output_format"
         case partialImages = "partial_images"
         case stream, user
-        case isPublic = "is_public"
     }
 }
 
@@ -40,7 +38,6 @@ struct ImageEditRequest: Codable {
     let partialImages: Int
     let stream: Bool
     let user: String?
-    let isPublic: Bool?
 
     enum CodingKeys: String, CodingKey {
         case image, prompt, mask, model, n, size, quality, background
@@ -49,7 +46,6 @@ struct ImageEditRequest: Codable {
         case outputCompression = "output_compression"
         case partialImages = "partial_images"
         case stream, user
-        case isPublic = "is_public"
     }
 }
 
@@ -104,7 +100,6 @@ struct ImageMetadata: Codable, Hashable {
     let userId: String
     let thumbnailUrl: String?
     let metadata: ImageMetadataDetails?
-    let isPublic: Bool?
     let tags: [String]?
     
     enum CodingKeys: String, CodingKey {
@@ -113,22 +108,7 @@ struct ImageMetadata: Codable, Hashable {
         case userId = "user_id"
         case thumbnailUrl = "thumbnail_url"
         case metadata
-        case isPublic = "is_public"
         case tags
-    }
-
-    func withIsPublic(_ value: Bool) -> ImageMetadata {
-        ImageMetadata(
-            id: id,
-            url: url,
-            prompt: prompt,
-            createdAt: createdAt,
-            userId: userId,
-            thumbnailUrl: thumbnailUrl,
-            metadata: metadata,
-            isPublic: value,
-            tags: tags
-        )
     }
 }
 

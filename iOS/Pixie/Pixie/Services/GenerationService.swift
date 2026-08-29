@@ -111,8 +111,7 @@ class GenerationService {
             outputFormat: options.outputFormat,
             partialImages: nil,
             stream: false,
-            user: nil,
-            isPublic: ConfigurationManager.shared.shareToPublicGallery
+            user: nil
         )
 
         let taskId = UUID().uuidString
@@ -211,8 +210,7 @@ class GenerationService {
                     outputCompression: options.compression,
                     partialImages: 0,
                     stream: false,
-                    user: nil,
-                    isPublic: ConfigurationManager.shared.shareToPublicGallery
+                    user: nil
                 )
 
                 let response = try await apiService.editImage(request)

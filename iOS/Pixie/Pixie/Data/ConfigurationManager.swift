@@ -76,10 +76,6 @@ class ConfigurationManager: ConfigurationManagerProtocol {
     var enableHaptics: Bool {
         didSet { notifyConfigurationChanged() }
     }
-    @UserDefaultsWrapper(key: "pixie.shareToPublicGallery", defaultValue: true)
-    var shareToPublicGallery: Bool {
-        didSet { notifyConfigurationChanged() }
-    }
     var theme: AppTheme {
         get {
             if let rawValue = defaults.string(forKey: "pixie.theme"),
@@ -112,7 +108,6 @@ class ConfigurationManager: ConfigurationManagerProtocol {
         defaultBackground = "auto"
         defaultModeration = "auto"
         enableHaptics = true
-        shareToPublicGallery = true
         theme = .system
     }
     private func notifyConfigurationChanged() {

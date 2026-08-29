@@ -2,7 +2,6 @@ import UIKit
 
 enum EmptyStateType {
     case personal
-    case explore
     case transactions
 }
 
@@ -57,31 +56,12 @@ final class EmptyStateView: UIView {
         ])
     }
     
-    func configure(for type: GalleryType) {
-        switch type {
-        case .personal:
-            iconImageView.image = UIImage(systemName: "photo.on.rectangle.angled")
-            titleLabel.text = String(localized: "No images yet")
-            subtitleLabel.text = String(localized: "Your generated images will appear here")
-            
-        case .explore:
-            iconImageView.image = UIImage(systemName: "globe.americas.fill")
-            titleLabel.text = String(localized: "Gallery is empty")
-            subtitleLabel.text = String(localized: "Be the first to share your creations")
-        }
-    }
-    
     func configure(for emptyType: EmptyStateType) {
         switch emptyType {
         case .personal:
             iconImageView.image = UIImage(systemName: "photo.on.rectangle.angled")
             titleLabel.text = String(localized: "No images yet")
             subtitleLabel.text = String(localized: "Your generated images will appear here")
-            
-        case .explore:
-            iconImageView.image = UIImage(systemName: "globe.americas.fill")
-            titleLabel.text = String(localized: "Gallery is empty")
-            subtitleLabel.text = String(localized: "Be the first to share your creations")
             
         case .transactions:
             iconImageView.image = UIImage(systemName: "clock.arrow.circlepath")

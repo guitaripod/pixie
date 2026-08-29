@@ -20,52 +20,7 @@ protocol APIServiceProtocol {
     func authenticateApple(_ request: OAuthCallbackRequest) async throws -> AuthResponse
     func authenticateAppleToken(_ request: AppleTokenRequest) async throws -> AuthResponse
     func validateRevenueCatPurchase<T: Codable>(_ request: T) async throws -> RevenueCatPurchaseValidationResponse
-    func reportImage(id: String) async throws -> ReportImageResponse
     func deleteImage(id: String) async throws
-    func setImageVisibility(id: String, isPublic: Bool) async throws
-    func setAllVisibility(isPublic: Bool) async throws -> Int
-}
-
-struct ReportImageRequest: Codable {
-    let reason: String?
-}
-
-struct ReportImageResponse: Codable {
-    let reported: Bool
-    let imageId: String
-
-    enum CodingKeys: String, CodingKey {
-        case reported
-        case imageId = "image_id"
-    }
-}
-
-struct VisibilityRequest: Codable {
-    let isPublic: Bool
-
-    enum CodingKeys: String, CodingKey {
-        case isPublic = "is_public"
-    }
-}
-
-struct ImageVisibilityResponse: Codable {
-    let imageId: String
-    let isPublic: Bool
-
-    enum CodingKeys: String, CodingKey {
-        case imageId = "image_id"
-        case isPublic = "is_public"
-    }
-}
-
-struct AllVisibilityResponse: Codable {
-    let updated: Int
-    let isPublic: Bool
-
-    enum CodingKeys: String, CodingKey {
-        case updated
-        case isPublic = "is_public"
-    }
 }
 
 class APIService: APIServiceProtocol {
@@ -156,21 +111,8 @@ class APIService: APIServiceProtocol {
         try await networkService.post("/v1/credits/estimate", body: request, type: CreditEstimateResponse.self)
     }
 
-    func reportImage(id: String) async throws -> ReportImageResponse {
-        try await networkService.post("/v1/images/\(id)/report", body: ReportImageRequest(reason: nil), type: ReportImageResponse.self)
-    }
-
     func deleteImage(id: String) async throws {
         try await networkService.delete("/v1/images/\(id)")
-    }
-
-    func setImageVisibility(id: String, isPublic: Bool) async throws {
-        _ = try await networkService.put("/v1/images/\(id)/visibility", body: VisibilityRequest(isPublic: isPublic), type: ImageVisibilityResponse.self)
-    }
-
-    func setAllVisibility(isPublic: Bool) async throws -> Int {
-        let response = try await networkService.put("/v1/images/visibility", body: VisibilityRequest(isPublic: isPublic), type: AllVisibilityResponse.self)
-        return response.updated
     }
     
     func checkDeviceAuthStatus(deviceCode: String) async throws -> DeviceAuthStatus {

@@ -22,9 +22,8 @@ voice:
 content_engines:
   daily_art:
     description: >
-      One generated image a day with its prompt — the public community gallery is an
-      infinite well. Post image + prompt + store link. Never post user images without
-      checking the gallery is_public flag; prefer house-generated art.
+      One house-generated image a day with its prompt. There is no public gallery and user
+      images are private: never post anything a user made. Post image + prompt + store link.
   prompt_recipes:
     description: >
       Short prompt-engineering recipes ("anime portrait in 3 modifiers") that end with

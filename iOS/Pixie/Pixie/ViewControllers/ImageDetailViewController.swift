@@ -158,48 +158,16 @@ final class ImageDetailViewController: UIViewController {
     }
 
     private func makeMoreMenu() -> UIMenu {
-        let isOwn = AuthenticationManager.shared.currentUser?.id == image.userId
-        if isOwn {
-            let isPublic = image.isPublic ?? true
-            let visibility = UIAction(
-                title: isPublic ? String(localized: "Remove from Public Gallery") : String(localized: "Add to Public Gallery"),
-                image: UIImage(systemName: isPublic ? "eye.slash" : "eye")
-            ) { [weak self] _ in
-                guard let self = self else { return }
-                HapticsManager.shared.impact(.light)
-                self.delegate?.imageDetailDidSelectAction(self, action: isPublic ? .makePrivate : .makePublic, image: self.image)
-            }
-            let delete = UIAction(
-                title: String(localized: "Delete"),
-                image: UIImage(systemName: "trash"),
-                attributes: .destructive
-            ) { [weak self] _ in
-                guard let self = self else { return }
-                HapticsManager.shared.impact(.light)
-                self.delegate?.imageDetailDidSelectAction(self, action: .delete, image: self.image)
-            }
-            return UIMenu(title: "", children: [visibility, delete])
-        } else {
-            let report = UIAction(
-                title: String(localized: "Report Image"),
-                image: UIImage(systemName: "exclamationmark.bubble"),
-                attributes: .destructive
-            ) { [weak self] _ in
-                guard let self = self else { return }
-                HapticsManager.shared.impact(.light)
-                self.delegate?.imageDetailDidSelectAction(self, action: .report, image: self.image)
-            }
-            let block = UIAction(
-                title: String(localized: "Block User"),
-                image: UIImage(systemName: "hand.raised"),
-                attributes: .destructive
-            ) { [weak self] _ in
-                guard let self = self else { return }
-                HapticsManager.shared.impact(.light)
-                self.delegate?.imageDetailDidSelectAction(self, action: .block, image: self.image)
-            }
-            return UIMenu(title: "", children: [report, block])
+        let delete = UIAction(
+            title: String(localized: "Delete"),
+            image: UIImage(systemName: "trash"),
+            attributes: .destructive
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            HapticsManager.shared.impact(.light)
+            self.delegate?.imageDetailDidSelectAction(self, action: .delete, image: self.image)
         }
+        return UIMenu(title: "", children: [delete])
     }
     
     private func createActionButton(title: String, image: UIImage?, action: Selector) -> UIButton {
