@@ -1,7 +1,10 @@
 #!/opt/homebrew/bin/python3
 """Compose localized App Store screenshots from raw simulator captures.
 
-Usage: compose_screenshots.py [locale ...]   (defaults to every marketing/listing/<locale>.json)
+Usage: compose_screenshots.py [--ipad] [locale ...]   (defaults to every marketing/listing/<locale>.json)
+
+--ipad composes the 13-inch iPad set from marketing/raw/<locale>/ipad/<screen>.png into
+marketing/appstore-ipad/<locale>/, skipping entries with no capture; geometry scales with the canvas.
 
 Raw 1320x2868 captures live in marketing/raw/<locale>/<screen>.png (produced by marketing/shoot.sh,
 which launches the localized app in PX_DEMO mode on an iPhone 17 Pro Max simulator). Each entry in
@@ -208,7 +211,7 @@ def background():
     plane = top * (1 - t) + bottom * t
     canvas = np.repeat(plane, SIZE[0], axis=1)
     yy, xx = np.mgrid[0:height, 0:SIZE[0]]
-    glow = np.exp(-(((xx - 660) / 620) ** 2 + ((yy - 120) / 520) ** 2))
+    glow = np.exp(-(((xx - SIZE[0] / 2) / (SIZE[0] * 0.47)) ** 2 + ((yy - 120) / 520) ** 2))
     canvas += glow[..., None] * (np.array(GLOW, dtype=np.float32) - top) * 0.55
     return Image.fromarray(np.clip(canvas, 0, 255).astype(np.uint8))
 
@@ -254,7 +257,7 @@ def caption_bottom(headline, subhead):
 
 
 def compose(entry, locale, fonts, phone_top):
-    capture = Image.open(os.path.join(RAW, locale, f"{entry['screen']}.png")).convert("RGB")
+    capture = Image.open(raw_path(locale, entry["screen"])).convert("RGB")
     assert capture.size == SIZE, f"{locale}/{entry['screen']}: unexpected capture size {capture.size}"
     canvas = background().convert("RGBA")
     draw = ImageDraw.Draw(canvas)
@@ -283,17 +286,44 @@ def locales_present():
     return sorted(os.path.splitext(os.path.basename(p))[0] for p in glob.glob(os.path.join(LISTING, "*.json")))
 
 
+IPAD_SIZE = (2064, 2752)
+
+
+def use_ipad_geometry():
+    """Scale the iPhone layout to the iPad canvas; the wider screen gets a slimmer top band."""
+    global SIZE, RAW, APPSTORE, PHONE_LEFT, PHONE_RIGHT, PHONE_TOP, PHONE_RADIUS, TEXT_MARGIN, HEADLINE_TOP
+    scale = IPAD_SIZE[0] / SIZE[0]
+    SIZE = IPAD_SIZE
+    RAW = os.path.join(RAW, "%s", "ipad")
+    APPSTORE = os.path.join(ROOT, "appstore-ipad")
+    PHONE_LEFT, PHONE_RIGHT = round(92 * scale), IPAD_SIZE[0] - round(92 * scale)
+    PHONE_TOP = round(PHONE_TOP * 0.95)
+    PHONE_RADIUS = round(PHONE_RADIUS * 0.6)
+    TEXT_MARGIN = round(TEXT_MARGIN * scale)
+    HEADLINE_TOP = round(HEADLINE_TOP * 0.9)
+
+
+def raw_path(locale, screen):
+    folder = RAW % locale if "%s" in RAW else os.path.join(RAW, locale)
+    return os.path.join(folder, f"{screen}.png")
+
+
 def main(argv):
+    if argv and argv[0] == "--ipad":
+        use_ipad_geometry()
+        argv = argv[1:]
     for locale in argv or locales_present():
         with open(os.path.join(LISTING, f"{locale}.json")) as fh:
-            entries = json.load(fh)["screenshots"]
+            entries = [e for e in json.load(fh)["screenshots"] if os.path.exists(raw_path(locale, e["screen"]))]
+        if not entries:
+            continue
         fonts = load_fonts(locale)
         out_dir = os.path.join(APPSTORE, locale)
         os.makedirs(out_dir, exist_ok=True)
         phone_top = max([PHONE_TOP] + [caption_bottom(*typeset(e, locale, fonts)) + CAPTION_BOTTOM_GAP for e in entries])
         for entry in entries:
             compose(entry, locale, fonts, phone_top).save(os.path.join(out_dir, f"{entry['file']}.png"), optimize=True)
-            print(f"{locale}/{entry['file']}.png")
+            print(f"{os.path.basename(APPSTORE)}/{locale}/{entry['file']}.png")
 
 
 if __name__ == "__main__":
