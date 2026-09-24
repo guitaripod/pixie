@@ -39,6 +39,12 @@
             "value" : " 새 채팅"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " Nowy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -92,6 +98,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "$%@"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "$%@"
@@ -155,6 +167,12 @@
             "value" : "%@ (%@)"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (%@)"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -211,6 +229,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ 크레딧"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ kredytów"
           }
         },
         "pt-BR" : {
@@ -271,6 +295,12 @@
             "value" : "%@ 크레딧 · 보너스 +%lld%%"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ kredytów · +%lld%% bonusu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -327,6 +357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@%%"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ %%"
           }
         },
         "pt-BR" : {
@@ -442,6 +478,36 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld크레딧"
+                }
+              }
+            }
+          }
+        },
+        "pl" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld kredyt"
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld kredyty"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld kredytów"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld kredytu"
                 }
               }
             }
@@ -589,6 +655,36 @@
             }
           }
         },
+        "pl" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Zapisano %lld obraz w twoim albumie Pixie"
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Zapisano %lld obrazy w twoim albumie Pixie"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Zapisano %lld obrazów w twoim albumie Pixie"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Zapisano %lld obrazu w twoim albumie Pixie"
+                }
+              }
+            }
+          }
+        },
         "pt-BR" : {
           "variations" : {
             "plural" : {
@@ -671,6 +767,12 @@
             "value" : "%lld%%"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %%"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -727,6 +829,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld~%lld 크레딧"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld-%lld kredytów"
           }
         },
         "pt-BR" : {
@@ -787,6 +895,12 @@
             "value" : "%lld일 전"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld dni temu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -843,6 +957,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld시간 전"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld godz. temu"
           }
         },
         "pt-BR" : {
@@ -903,6 +1023,12 @@
             "value" : "%lld분 전"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld min temu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -959,6 +1085,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld개월 전"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld mies. temu"
           }
         },
         "pt-BR" : {
@@ -1019,6 +1151,12 @@
             "value" : "%lld년 전"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld lata temu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1075,6 +1213,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "**품질 옵션:**\n• 낮음: 이미지당 약 4~6크레딧\n• 보통: 이미지당 약 16~24크레딧\n• 높음: 이미지당 약 62~94크레딧\n• 자동: 약 50~75크레딧 (AI가 선택)\n\n**크기 옵션:**\n• 정사각형 (1024×1024)\n• 가로 (1536×1024)\n• 세로 (1024×1536)\n• 자동 (AI가 최적 크기 선택)\n\n**고급 옵션:**\n• 배경: 자동, 투명, 흰색, 검정\n• 형식: PNG, JPEG, WebP\n• 압축: 0~100 (JPEG/WebP 전용)\n• 콘텐츠 검열: 자동(기본), 낮음(덜 엄격)"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Opcje jakości:**\n• Niska: ~4-6 kredytów za obraz\n• Średnia: ~16-24 kredytów za obraz\n• Wysoka: ~62-94 kredytów za obraz\n• Auto: ~50-75 kredytów (wybiera AI)\n\n**Opcje rozmiaru:**\n• Kwadrat (1024×1024)\n• Poziomy (1536×1024)\n• Pionowy (1024×1536)\n• Auto (AI wybiera optymalny)\n\n**Opcje zaawansowane:**\n• Tło: auto, przezroczyste, białe, czarne\n• Format: PNG, JPEG, WebP\n• Kompresja: 0-100 (tylko JPEG/WebP)\n• Moderacja: auto (domyślnie), niska (mniej restrykcyjna)"
           }
         },
         "pt-BR" : {
@@ -1135,6 +1279,12 @@
             "value" : "**크레딧 이해하기:**\n• 크레딧은 만료되지 않습니다\n• 모든 플랫폼에서 함께 사용됩니다\n• 이미지 생성과 편집에 사용됩니다\n\n**사용량 확인:**\n• 일간·주간·월간 사용량 보기\n• 사용 데이터를 CSV로 내보내기\n• 크레딧 소비 모니터링\n• 잔액 부족 알림 설정"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Jak działają kredyty:**\n• Kredyty nigdy nie wygasają\n• Wspólne dla wszystkich platform\n• Służą do generowania i edycji obrazów\n\n**Śledzenie zużycia:**\n• Podgląd zużycia dziennie/tygodniowo/miesięcznie\n• Eksport danych o zużyciu jako CSV\n• Monitorowanie zużycia kredytów\n• Ustawianie alertów o niskim saldzie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1191,6 +1341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "16~24 크레딧"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "16-24 kredytów"
           }
         },
         "pt-BR" : {
@@ -1251,6 +1407,12 @@
             "value" : "시작 크레딧\n25개 무료"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "25 darmowych kredytów\nna start"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1307,6 +1469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "3D 렌더"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Render 3D"
           }
         },
         "pt-BR" : {
@@ -1367,6 +1535,12 @@
             "value" : "4~6 크레딧"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4-6 kredytów"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1423,6 +1597,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "50~75 크레딧"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "50-75 kredytów"
           }
         },
         "pt-BR" : {
@@ -1483,6 +1663,12 @@
             "value" : "62~94 크레딧"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "62-94 kredytów"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1539,6 +1725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "8비트 스타일"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Styl 8-bit"
           }
         },
         "pt-BR" : {
@@ -1599,6 +1791,12 @@
             "value" : "90%"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "90 %"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1655,6 +1853,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "관리자"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ADMIN"
           }
         },
         "pt-BR" : {
@@ -1715,6 +1919,12 @@
             "value" : "AI 모델"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Model AI"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1768,6 +1978,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "API"
@@ -1831,6 +2047,12 @@
             "value" : "API 연결"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Połączenie z API"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1887,6 +2109,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "앱 정보"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O aplikacji"
           }
         },
         "pt-BR" : {
@@ -1947,6 +2175,12 @@
             "value" : "추상"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abstrakcyjny"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2003,6 +2237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "접근이 거부되었습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brak dostępu"
           }
         },
         "pt-BR" : {
@@ -2063,6 +2303,12 @@
             "value" : "생성 기록 보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobacz historię generowania"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2119,6 +2365,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "계정"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konto"
           }
         },
         "pt-BR" : {
@@ -2179,6 +2431,12 @@
             "value" : "사용자 계정의 크레딧 추가 또는 차감"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodawaj lub odejmuj kredyty na kontach użytkowników"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2235,6 +2493,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프롬프트에 추가해 결과를 강화하세요"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj je, aby wzmocnić swoje prompty"
           }
         },
         "pt-BR" : {
@@ -2295,6 +2559,12 @@
             "value" : "크레딧 %@개 추가됨"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodano %@ kredytów"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2351,6 +2621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "조정"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dostosuj"
           }
         },
         "pt-BR" : {
@@ -2411,6 +2687,12 @@
             "value" : "크레딧 조정"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dostosuj kredyty"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2467,6 +2749,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "크레딧 조정 중"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dostosowywanie kredytów"
           }
         },
         "pt-BR" : {
@@ -2527,6 +2815,12 @@
             "value" : "조정 세부 정보"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szczegóły korekty"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2583,6 +2877,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "조정 기록"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historia korekt"
           }
         },
         "pt-BR" : {
@@ -2643,6 +2943,12 @@
             "value" : "관리자"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Admin"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2699,6 +3005,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "관리자 대시보드"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panel administratora"
           }
         },
         "pt-BR" : {
@@ -2759,6 +3071,12 @@
             "value" : "고급 옵션"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opcje zaawansowane"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2815,6 +3133,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "고급 옵션 (5~94크레딧)"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opcje zaawansowane (5-94 kredytów)"
           }
         },
         "pt-BR" : {
@@ -2875,6 +3199,12 @@
             "value" : "수량 (양수는 추가, 음수는 차감)"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kwota (dodatnia, aby dodać, ujemna, aby odjąć)"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2931,6 +3261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "동물"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwierzęta"
           }
         },
         "pt-BR" : {
@@ -2991,6 +3327,12 @@
             "value" : "애니메"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anime"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3047,6 +3389,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "애니메 아트"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sztuka anime"
           }
         },
         "pt-BR" : {
@@ -3107,6 +3455,12 @@
             "value" : "화면 모드"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wygląd"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3163,6 +3517,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "어떤 프롬프트에든 ' + 스타일'로 적용"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj do promptu przez „ + styl”"
           }
         },
         "pt-BR" : {
@@ -3223,6 +3583,12 @@
             "value" : "건축"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Architektura"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3279,6 +3645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "로그아웃하시겠습니까?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Czy na pewno chcesz się wylogować?"
           }
         },
         "pt-BR" : {
@@ -3339,6 +3711,12 @@
             "value" : "아트 스타일"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Styl artystyczny"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3395,6 +3773,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "예술"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artystyczny"
           }
         },
         "pt-BR" : {
@@ -3455,6 +3839,12 @@
             "value" : "사진을 첨부하고 한 문장으로 바꾸세요. 배경 교체, 스타일 변경, 사물 제거, 배경 투명화까지. 레이어도 도구도 필요 없습니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dołącz dowolne zdjęcie i zmień je jednym zdaniem: podmień tło, zmień styl, usuń elementy, zrób je przezroczystym. Bez warstw, bez narzędzi."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3511,6 +3901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "인증"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uwierzytelnianie"
           }
         },
         "pt-BR" : {
@@ -3571,6 +3967,12 @@
             "value" : "인증이 취소되었습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulowano uwierzytelnianie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3627,6 +4029,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "인증에 실패했습니다. API 키가 올바르지 않을 수 있습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uwierzytelnianie nie powiodło się: twój klucz API może być nieprawidłowy"
           }
         },
         "pt-BR" : {
@@ -3687,6 +4095,12 @@
             "value" : "자동"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3743,6 +4157,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "자동 (AI가 선택)"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto (wybiera AI)"
           }
         },
         "pt-BR" : {
@@ -3803,6 +4223,12 @@
             "value" : "최고 혜택"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NAJLEPSZA OFERTA"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3859,6 +4285,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "배경"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tło"
           }
         },
         "pt-BR" : {
@@ -3919,6 +4351,12 @@
             "value" : "잔액: %lld"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saldo: %lld"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3975,6 +4413,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "검정"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Czarny"
           }
         },
         "pt-BR" : {
@@ -4035,6 +4479,12 @@
             "value" : "흐림"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozmycie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4091,6 +4541,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "크레딧 팩 둘러보고 구입하기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przeglądaj i kupuj pakiety kredytów"
           }
         },
         "pt-BR" : {
@@ -4151,6 +4607,12 @@
             "value" : "크레딧 구입"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kup kredyty"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4207,6 +4669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "로그인하면 이용약관에 동의하는 것으로 간주됩니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logując się, akceptujesz nasze warunki korzystania"
           }
         },
         "pt-BR" : {
@@ -4267,6 +4735,12 @@
             "value" : "CGI 그래픽"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grafika CGI"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4323,6 +4797,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "비용 계산"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oblicz koszt"
           }
         },
         "pt-BR" : {
@@ -4383,6 +4863,12 @@
             "value" : "이미지를 생성하기 전에 비용을 계산하세요"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oblicz koszt przed wygenerowaniem obrazów"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4439,6 +4925,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "계산 중…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obliczanie…"
           }
         },
         "pt-BR" : {
@@ -4499,6 +4991,12 @@
             "value" : "카메라"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aparat"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4555,6 +5053,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "갤러리에 있는 이미지를 편집할 수 있나요?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Czy mogę edytować obrazy z galerii?"
           }
         },
         "pt-BR" : {
@@ -4615,6 +5119,12 @@
             "value" : "오프라인에서도 Pixie를 쓸 수 있나요?"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Czy mogę używać Pixie offline?"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4671,6 +5181,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "내 OpenAI API 키를 사용할 수 있나요?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Czy mogę użyć własnego klucza API OpenAI?"
           }
         },
         "pt-BR" : {
@@ -4731,6 +5247,12 @@
             "value" : "취소"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anuluj"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4787,6 +5309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "대화하며\n원하는 이미지로"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Czatem\ndo obrazu"
           }
         },
         "pt-BR" : {
@@ -4847,6 +5375,12 @@
             "value" : "이미지 선택"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz obraz"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4903,6 +5437,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "시네마틱"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filmowy"
           }
         },
         "pt-BR" : {
@@ -4963,6 +5503,12 @@
             "value" : "고전 회화"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sztuka klasyczna"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5019,6 +5565,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "지우기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyczyść"
           }
         },
         "pt-BR" : {
@@ -5079,6 +5631,12 @@
             "value" : "캐시 지우기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyczyść pamięć podręczną"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5135,6 +5693,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "지우는 중…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Czyszczenie…"
           }
         },
         "pt-BR" : {
@@ -5195,6 +5759,12 @@
             "value" : "닫기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamknij"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5251,6 +5821,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "클라우드 AI 동의"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zgoda na AI w chmurze"
           }
         },
         "pt-BR" : {
@@ -5311,6 +5887,12 @@
             "value" : "코믹"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Komiks"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5367,6 +5949,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "만화책 느낌"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Styl komiksowy"
           }
         },
         "pt-BR" : {
@@ -5427,6 +6015,12 @@
             "value" : "구도"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kompozycja"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5483,6 +6077,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "압축"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kompresja"
           }
         },
         "pt-BR" : {
@@ -5543,6 +6143,12 @@
             "value" : "압축"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kompresja"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5599,6 +6205,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "압축 수준"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poziom kompresji"
           }
         },
         "pt-BR" : {
@@ -5659,6 +6271,12 @@
             "value" : "압축: %lld%%"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kompresja: %lld %%"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5715,6 +6333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "연결에 성공했습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Połączono pomyślnie"
           }
         },
         "pt-BR" : {
@@ -5775,6 +6399,12 @@
             "value" : "콘텐츠 검열"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moderacja treści"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5831,6 +6461,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "계속"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kontynuuj"
           }
         },
         "pt-BR" : {
@@ -5891,6 +6527,12 @@
             "value" : "복사됨"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skopiowano!"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5947,6 +6589,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "복사"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiuj"
           }
         },
         "pt-BR" : {
@@ -6007,6 +6655,12 @@
             "value" : "이미지 복사"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiuj obraz"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6063,6 +6717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프롬프트 복사"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiuj prompt"
           }
         },
         "pt-BR" : {
@@ -6123,6 +6783,12 @@
             "value" : "비용 계산기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kalkulator kosztów"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6179,6 +6845,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이미지를 삭제하지 못했습니다. 나중에 다시 시도해 주세요."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się usunąć obrazu. Spróbuj ponownie później."
           }
         },
         "pt-BR" : {
@@ -6239,6 +6911,12 @@
             "value" : "저장된 항목을 가져오지 못했습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się pobrać zapisanego zasobu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6295,6 +6973,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apple 인증 토큰을 읽지 못했습니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się odczytać tokenu tożsamości Apple."
           }
         },
         "pt-BR" : {
@@ -6355,6 +7039,12 @@
             "value" : "눈 속 아늑한 오두막, 수채화"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przytulna chatka w śniegu, akwarela"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6411,6 +7101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI로 몇 초 만에 이미지 만들기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Twórz obrazy AI w kilka sekund"
           }
         },
         "pt-BR" : {
@@ -6471,6 +7167,12 @@
             "value" : "이미지 만들기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utwórz obraz"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6527,6 +7229,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "생성일"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utworzono"
           }
         },
         "pt-BR" : {
@@ -6587,6 +7295,12 @@
             "value" : "창의적인 프롬프트"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kreatywne prompty"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6643,6 +7357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "크레딧 조정"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Korekty kredytów"
           }
         },
         "pt-BR" : {
@@ -6703,6 +7423,12 @@
             "value" : "크레딧 팩"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pakiety kredytów"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6759,6 +7485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "크레딧"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kredyty"
           }
         },
         "pt-BR" : {
@@ -6819,6 +7551,12 @@
             "value" : "크레딧 및 사용량"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kredyty i zużycie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6875,6 +7613,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "크레딧 시스템"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System kredytów"
           }
         },
         "pt-BR" : {
@@ -6935,6 +7679,12 @@
             "value" : "사용한 크레딧"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zużyte kredyty"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6991,6 +7741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "크레딧을 조정했습니다. 새 잔액: %lld"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skorygowano kredyty. Nowe saldo: %lld"
           }
         },
         "pt-BR" : {
@@ -7051,6 +7807,12 @@
             "value" : "크레딧은 이미지를 생성하고 편집할 때 사용하는 화폐입니다. 작업마다 품질과 크기에 따라 소모량이 달라집니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kredyty to waluta służąca do generowania i edycji obrazów. Koszt każdej operacji zależy od jakości i rozmiaru."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7109,6 +7871,12 @@
             "value" : "크레딧 무기한  ·  모든 품질 지원  ·  계정 불필요"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kredyty nigdy nie wygasają  ·  Każdy poziom jakości  ·  Bez konta"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7165,6 +7933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 잔액"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktualne saldo"
           }
         },
         "pt-BR" : {
@@ -7285,6 +8059,36 @@
             }
           }
         },
+        "pl" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Aktualne saldo: %lld kredyt"
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Aktualne saldo: %lld kredyty"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Aktualne saldo: %lld kredytów"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Aktualne saldo: %lld kredytu"
+                }
+              }
+            }
+          }
+        },
         "pt-BR" : {
           "variations" : {
             "plural" : {
@@ -7367,6 +8171,12 @@
             "value" : "현재 잔액: %lld크레딧\n사용자: %@"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktualne saldo: %lld kredytów\nUżytkownik: %@"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7423,6 +8233,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "귀여운 고양이 우주인 스티커, 투명 배경"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naklejka słodkiego kota astronauty, przezroczyste tło"
           }
         },
         "pt-BR" : {
@@ -7483,6 +8299,12 @@
             "value" : "사이버펑크"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cyberpunk"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7539,6 +8361,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "사이버펑크 애니메 초상화, 네온 빗줄기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Portret anime cyberpunk, neonowy deszcz"
           }
         },
         "pt-BR" : {
@@ -7599,6 +8427,12 @@
             "value" : "다크"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ciemny"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7655,6 +8489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "디코딩 오류: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Błąd dekodowania: %@"
           }
         },
         "pt-BR" : {
@@ -7715,6 +8555,12 @@
             "value" : "기본"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domyślne"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7771,6 +8617,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "기본 형식"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domyślny format"
           }
         },
         "pt-BR" : {
@@ -7831,6 +8683,12 @@
             "value" : "기본 품질"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domyślna jakość"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7887,6 +8745,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "기본 크기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domyślny rozmiar"
           }
         },
         "pt-BR" : {
@@ -7947,6 +8811,12 @@
             "value" : "기본 검열 수준"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domyślna moderacja"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8003,6 +8873,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "기본값"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ustawienia domyślne"
           }
         },
         "pt-BR" : {
@@ -8063,6 +8939,12 @@
             "value" : "삭제"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usuń"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8119,6 +9001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이미지를 삭제할까요?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usunąć obraz?"
           }
         },
         "pt-BR" : {
@@ -8179,6 +9067,12 @@
             "value" : "아래에 이미지를 설명하거나 아래 예시로 시작해 보세요."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opisz obraz poniżej albo zacznij od jednej z tych propozycji."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8235,6 +9129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "원하는 것을 평범한 말로 설명하세요. 메시지를 주고받으며 다듬으면 이미지가 점점 완성됩니다. Google Nano Banana와 OpenAI 기반입니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opisz, czego chcesz, zwykłymi słowami. Doprecyzowuj wiadomość po wiadomości i patrz, jak twój obraz się zmienia, dzięki Google Nano Banana i OpenAI."
           }
         },
         "pt-BR" : {
@@ -8295,6 +9195,12 @@
             "value" : "만들고 싶은 것을 설명하세요…"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opisz, co chcesz stworzyć…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8351,6 +9257,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "편집할 내용을 설명하세요…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opisz swoje zmiany…"
           }
         },
         "pt-BR" : {
@@ -8411,6 +9323,12 @@
             "value" : "디지털 아트"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sztuka cyfrowa"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8467,6 +9385,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "닫기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odrzuć"
           }
         },
         "pt-BR" : {
@@ -8527,6 +9451,12 @@
             "value" : "드라마틱"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dramatyczny"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8583,6 +9513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "몽환적"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marzycielski"
           }
         },
         "pt-BR" : {
@@ -8643,6 +9579,12 @@
             "value" : "편집"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edytuj"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8699,6 +9641,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이미지 편집"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edytuj obraz"
           }
         },
         "pt-BR" : {
@@ -8759,6 +9707,12 @@
             "value" : "편집 모드"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryb edycji"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8815,6 +9769,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이미지 편집하기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edycja obrazu"
           }
         },
         "pt-BR" : {
@@ -8875,6 +9835,12 @@
             "value" : "편집이 취소되었습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulowano edycję"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8931,6 +9897,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "말로 하는\n사진 편집"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edytuj zdjęcia\nrozmową"
           }
         },
         "pt-BR" : {
@@ -8991,6 +9963,12 @@
             "value" : "편집: %@"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edycja: %@"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9047,6 +10025,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화질 개선"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Popraw"
           }
         },
         "pt-BR" : {
@@ -9107,6 +10091,12 @@
             "value" : "오류"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Błąd"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9163,6 +10153,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "예상 비용"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szacunek"
           }
         },
         "pt-BR" : {
@@ -9278,6 +10274,36 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "이미지 %lld개 기준 예상 비용"
+                }
+              }
+            }
+          }
+        },
+        "pl" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Szacunek dla %lld obrazu"
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Szacunek dla %lld obrazów"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Szacunek dla %lld obrazów"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Szacunek dla %lld obrazu"
                 }
               }
             }
@@ -9425,6 +10451,36 @@
             }
           }
         },
+        "pl" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Szacowany koszt: %lld kredyt"
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Szacowany koszt: %lld kredyty"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Szacowany koszt: %lld kredytów"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Szacowany koszt: %lld kredytu"
+                }
+              }
+            }
+          }
+        },
         "pt-BR" : {
           "variations" : {
             "plural" : {
@@ -9507,6 +10563,12 @@
             "value" : "표정"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mimika"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9563,6 +10625,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "자주 묻는 질문"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FAQ"
           }
         },
         "pt-BR" : {
@@ -9623,6 +10691,12 @@
             "value" : "Pixie 앨범을 만들지 못했습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się utworzyć albumu Pixie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9679,6 +10753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이미지를 다운로드하지 못했습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się pobrać obrazu"
           }
         },
         "pt-BR" : {
@@ -9739,6 +10819,12 @@
             "value" : "공유할 이미지를 불러오지 못했습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się wczytać obrazu do udostępnienia"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9795,6 +10881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "로그아웃하지 못했습니다: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się wylogować: %@"
           }
         },
         "pt-BR" : {
@@ -9855,6 +10947,12 @@
             "value" : "이미지를 저장하지 못했습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się zapisać obrazu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9911,6 +11009,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이미지를 저장하지 못했습니다: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się zapisać obrazu: %@"
           }
         },
         "pt-BR" : {
@@ -9971,6 +11075,12 @@
             "value" : "판타지"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fantasy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10027,6 +11137,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "빠르고 저렴함 (21크레딧)"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szybko i tanio (21 kredytów)"
           }
         },
         "pt-BR" : {
@@ -10087,6 +11203,12 @@
             "value" : "기능"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funkcje"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10143,6 +11265,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "원본 유지도"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wierność"
           }
         },
         "pt-BR" : {
@@ -10203,6 +11331,12 @@
             "value" : "입력란으로 이동"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktywuj pole tekstowe"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10259,6 +11393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "음식"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jedzenie"
           }
         },
         "pt-BR" : {
@@ -10319,6 +11459,12 @@
             "value" : "형식"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Format"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10375,6 +11521,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "갤러리"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Galeria"
           }
         },
         "pt-BR" : {
@@ -10435,6 +11587,12 @@
             "value" : "갤러리 기능"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funkcje galerii"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10491,6 +11649,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "생성"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generuj"
           }
         },
         "pt-BR" : {
@@ -10551,6 +11715,12 @@
             "value" : "생성 (%lld~%lld크레딧)"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generuj (%lld-%lld kredytów)"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10607,6 +11777,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pixie로 생성"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wygenerowano w Pixie"
           }
         },
         "pt-BR" : {
@@ -10667,6 +11843,12 @@
             "value" : "Pixie로 생성: %@"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wygenerowano w Pixie: %@"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10723,6 +11905,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "생성 실패"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generowanie nie powiodło się"
           }
         },
         "pt-BR" : {
@@ -10783,6 +11971,12 @@
             "value" : "생성 옵션"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opcje generowania"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10839,6 +12033,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "생성이 취소되었습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulowano generowanie"
           }
         },
         "pt-BR" : {
@@ -10899,6 +12099,12 @@
             "value" : "생성에 실패했습니다: %@"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generowanie nie powiodło się: %@"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10955,6 +12161,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ 크레딧 받기 · %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kup %@ kredytów · %@"
           }
         },
         "pt-BR" : {
@@ -11015,6 +12227,12 @@
             "value" : "시작하기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozpocznij"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11071,6 +12289,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "시작하기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pierwsze kroki"
           }
         },
         "pt-BR" : {
@@ -11131,6 +12355,12 @@
             "value" : "빛나는 조명"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Świecące światła"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11187,6 +12417,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Google Sign-In 구성 오류"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Błąd konfiguracji Google Sign-In"
           }
         },
         "pt-BR" : {
@@ -11247,6 +12483,12 @@
             "value" : "지금은 Google Sign-In을 사용할 수 없습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usługa Google Sign-In jest obecnie niedostępna"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11303,6 +12545,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Google 인증에는 SDK가 필요합니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uwierzytelnianie Google wymaga SDK"
           }
         },
         "pt-BR" : {
@@ -11363,6 +12611,12 @@
             "value" : "확인"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozumiem"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11419,6 +12673,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "동의하기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyraź zgodę"
           }
         },
         "pt-BR" : {
@@ -11479,6 +12739,12 @@
             "value" : "동의함"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przyznano"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11537,6 +12803,12 @@
             "value" : "매출 총이익"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zysk brutto"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11590,6 +12862,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HDR"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "HDR"
@@ -11653,6 +12931,12 @@
             "value" : "HTTP %lld: %@"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HTTP %lld: %@"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11709,6 +12993,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "도움말"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomoc"
           }
         },
         "pt-BR" : {
@@ -11769,6 +13059,12 @@
             "value" : "도움말 및 지원"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomoc i wsparcie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11825,6 +13121,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "도움말 문서"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dokumentacja pomocy"
           }
         },
         "pt-BR" : {
@@ -11885,6 +13187,12 @@
             "value" : "생성된 이미지입니다:"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oto twoje wygenerowane obrazy:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11941,6 +13249,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "높음"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wysoka"
           }
         },
         "pt-BR" : {
@@ -12001,6 +13315,12 @@
             "value" : "높음 (약 50~80크레딧)"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wysoka (~50-80 kredytów)"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12057,6 +13377,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "높은 디테일"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wysoka szczegółowość"
           }
         },
         "pt-BR" : {
@@ -12117,6 +13443,12 @@
             "value" : "압축을 높이면 파일 크기는 줄지만 화질이 떨어질 수 있습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Większa kompresja zmniejsza rozmiar pliku, ale może obniżyć jakość obrazu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12173,6 +13505,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "품질이 높을수록 이미지가 정교해지지만 크레딧을 더 많이 씁니다. 낮음은 초안과 실험에, 높음은 최종 결과물에 알맞습니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyższa jakość daje bardziej szczegółowe obrazy, ale kosztuje więcej kredytów. Niska jakość sprawdza się w szkicach i eksperymentach, a wysoka w finalnych pracach."
           }
         },
         "pt-BR" : {
@@ -12233,6 +13571,12 @@
             "value" : "배경을 투명하게 하려면?"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jak uzyskać przezroczyste tło?"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12289,6 +13633,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "문제는 어떻게 신고하나요?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jak zgłosić problem?"
           }
         },
         "pt-BR" : {
@@ -12349,6 +13699,12 @@
             "value" : "크레딧은 어떻게 작동하나요?"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jak działają kredyty?"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12402,6 +13758,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ID: %@"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ID: %@"
@@ -12465,6 +13827,12 @@
             "value" : "이미지 캐시"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pamięć podręczna obrazów"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12521,6 +13889,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이미지 편집"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edycja obrazów"
           }
         },
         "pt-BR" : {
@@ -12581,6 +13955,12 @@
             "value" : "이미지 생성"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generowanie obrazów"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12637,6 +14017,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이미지 생성 완료"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generowanie obrazu zakończone"
           }
         },
         "pt-BR" : {
@@ -12697,6 +14083,12 @@
             "value" : "이미지 생성 실패"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generowanie obrazu nie powiodło się"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12753,6 +14145,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이미지를 클립보드에 복사했습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skopiowano obraz do schowka"
           }
         },
         "pt-BR" : {
@@ -12813,6 +14211,12 @@
             "value" : "이미지를 삭제했습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usunięto obraz"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12869,6 +14273,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이미지 파일이 너무 큽니다. 최대 50MB까지 가능합니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plik obrazu jest za duży. Maksymalny rozmiar to 50 MB."
           }
         },
         "pt-BR" : {
@@ -12929,6 +14339,12 @@
             "value" : "이미지를 사진 앱에 저장했습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapisano obraz w Zdjęciach"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12985,6 +14401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이미지를 Pixie 앨범에 저장했습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapisano obraz w twoim albumie Pixie"
           }
         },
         "pt-BR" : {
@@ -13045,6 +14467,12 @@
             "value" : "이미지"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obrazy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13101,6 +14529,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "크레딧이 부족합니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Za mało kredytów"
           }
         },
         "pt-BR" : {
@@ -13161,6 +14595,12 @@
             "value" : "크레딧이 부족합니다. 보유 크레딧은 %lld개이지만 이번 생성에는 %lld개가 필요합니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Za mało kredytów: masz %lld, a ta generacja wymaga %lld."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13217,6 +14657,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apple ID 인증 정보가 올바르지 않습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieprawidłowe dane logowania Apple ID"
           }
         },
         "pt-BR" : {
@@ -13277,6 +14723,12 @@
             "value" : "OAuth state가 올바르지 않습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieprawidłowy stan OAuth"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13333,6 +14785,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "URL이 올바르지 않습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieprawidłowy URL"
           }
         },
         "pt-BR" : {
@@ -13393,6 +14851,12 @@
             "value" : "인증 URL이 올바르지 않습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieprawidłowy URL uwierzytelniania"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13449,6 +14913,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "인증 토큰이 올바르지 않습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieprawidłowy token tożsamości"
           }
         },
         "pt-BR" : {
@@ -13509,6 +14979,12 @@
             "value" : "사용할 수 없는 이미지입니다. 다른 이미지를 선택해 주세요."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieprawidłowy obraz. Wybierz inny."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13565,6 +15041,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "서버 응답이 올바르지 않습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieprawidłowa odpowiedź serwera"
           }
         },
         "pt-BR" : {
@@ -13625,6 +15107,12 @@
             "value" : "내 데이터는 비공개인가요?"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Czy moje dane są prywatne?"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13681,6 +15169,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "일본풍 아트"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sztuka japońska"
           }
         },
         "pt-BR" : {
@@ -13741,6 +15235,12 @@
             "value" : "방금"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przed chwilą"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13797,6 +15297,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "키체인 오류: %d"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Błąd pęku kluczy: %d"
           }
         },
         "pt-BR" : {
@@ -13857,6 +15363,12 @@
             "value" : "가로"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poziomy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13913,6 +15425,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "가로 (1536×1024)"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poziomy (1536×1024)"
           }
         },
         "pt-BR" : {
@@ -13973,6 +15491,12 @@
             "value" : "Pixie 사용법 알아보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dowiedz się, jak korzystać z Pixie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14029,6 +15553,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "덜 엄격함"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mniej restrykcyjna"
           }
         },
         "pt-BR" : {
@@ -14089,6 +15619,12 @@
             "value" : "라이트"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jasny"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14145,6 +15681,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "조명"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oświetlenie"
           }
         },
         "pt-BR" : {
@@ -14205,6 +15747,12 @@
             "value" : "불러오는 중…"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wczytywanie…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14261,6 +15809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "로그아웃"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyloguj się"
           }
         },
         "pt-BR" : {
@@ -14321,6 +15875,12 @@
             "value" : "로그인 계정: %@"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zalogowano jako: %@"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14377,6 +15937,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "로그아웃"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wylogowanie"
           }
         },
         "pt-BR" : {
@@ -14437,6 +16003,12 @@
             "value" : "낮음"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niska"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14493,6 +16065,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "낮음 (약 4~5크레딧)"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niska (~4-5 kredytów)"
           }
         },
         "pt-BR" : {
@@ -14553,6 +16131,12 @@
             "value" : "가장 인기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NAJPOPULARNIEJSZY"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14609,6 +16193,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "매크로"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Makro"
           }
         },
         "pt-BR" : {
@@ -14669,6 +16259,12 @@
             "value" : "클라우드 AI로 제작"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stworzone z AI w chmurze"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14725,6 +16321,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "시스템 리소스와 사용자 계정 관리"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zarządzaj zasobami systemu i kontami użytkowników"
           }
         },
         "pt-BR" : {
@@ -14785,6 +16387,12 @@
             "value" : "보통"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Średnia"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14841,6 +16449,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "보통 (약 12~15크레딧)"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Średnia (~12-15 kredytów)"
           }
         },
         "pt-BR" : {
@@ -14901,6 +16515,12 @@
             "value" : "미니어처"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Miniatura"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14957,6 +16577,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "미니멀"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimalistyczny"
           }
         },
         "pt-BR" : {
@@ -15017,6 +16643,12 @@
             "value" : "커피 브랜드를 위한 미니멀 로고"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimalistyczne logo dla marki kawy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15073,6 +16705,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "인증 데이터가 없습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brak danych autoryzacji"
           }
         },
         "pt-BR" : {
@@ -15133,6 +16771,12 @@
             "value" : "콜백에 필수 매개변수가 없습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brak wymaganych parametrów w wywołaniu zwrotnym"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15189,6 +16833,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "모델"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Model"
           }
         },
         "pt-BR" : {
@@ -15249,6 +16899,12 @@
             "value" : "콘텐츠 검열"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moderacja"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15305,6 +16961,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분위기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastrój"
           }
         },
         "pt-BR" : {
@@ -15365,6 +17027,12 @@
             "value" : "더보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Więcej"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15421,6 +17089,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다른 앱"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Więcej aplikacji"
           }
         },
         "pt-BR" : {
@@ -15481,6 +17155,12 @@
             "value" : "더 자유로운 창작"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Więcej swobody twórczej"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15537,6 +17217,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "영화 같은 느낌"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jak z filmu"
           }
         },
         "pt-BR" : {
@@ -15597,6 +17283,12 @@
             "value" : "내 이미지"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moje obrazy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15653,6 +17345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "자연"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Natura"
           }
         },
         "pt-BR" : {
@@ -15713,6 +17411,12 @@
             "value" : "네온"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neon"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15769,6 +17473,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "네트워크 오류입니다. 연결 상태를 확인해 주세요."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Błąd sieci. Sprawdź swoje połączenie."
           }
         },
         "pt-BR" : {
@@ -15829,6 +17539,12 @@
             "value" : "새 채팅"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nowy czat"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15885,6 +17601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새 잔액: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nowe saldo: %@"
           }
         },
         "pt-BR" : {
@@ -15945,6 +17667,12 @@
             "value" : "밤"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noc"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16001,6 +17729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ID 토큰을 받지 못했습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie otrzymano tokenu ID"
           }
         },
         "pt-BR" : {
@@ -16061,6 +17795,12 @@
             "value" : "인터넷 연결 없음"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brak połączenia z internetem"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16117,6 +17857,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "조정 기록 없음"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brak historii korekt"
           }
         },
         "pt-BR" : {
@@ -16177,6 +17923,12 @@
             "value" : "콜백 URL을 받지 못했습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie otrzymano adresu URL wywołania zwrotnego"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16233,6 +17985,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "키체인에서 데이터를 찾을 수 없습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie znaleziono danych w pęku kluczy"
           }
         },
         "pt-BR" : {
@@ -16293,6 +18051,12 @@
             "value" : "데이터를 받지 못했습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie otrzymano danych"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16349,6 +18113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이메일 없음"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brak adresu e-mail"
           }
         },
         "pt-BR" : {
@@ -16409,6 +18179,12 @@
             "value" : "아직 이미지가 없습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brak obrazów"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16465,6 +18241,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "인터넷 연결 없음"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brak połączenia z internetem"
           }
         },
         "pt-BR" : {
@@ -16525,6 +18307,12 @@
             "value" : "표시할 뷰 컨트롤러가 없습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brak prezentującego kontrolera widoku"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16581,6 +18369,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "복원할 구입 내역이 없습니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie znaleziono zakupów do przywrócenia."
           }
         },
         "pt-BR" : {
@@ -16641,6 +18435,12 @@
             "value" : "서버 인증 코드를 받지 못했습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie otrzymano kodu autoryzacji serwera"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16697,6 +18497,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "아직 거래 내역이 없습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brak transakcji"
           }
         },
         "pt-BR" : {
@@ -16757,6 +18563,12 @@
             "value" : "사용자를 찾을 수 없습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie znaleziono użytkowników"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16813,6 +18625,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "아니요. Pixie는 이미지를 생성하기 위해 AI 서버와 통신해야 하므로 인터넷 연결이 필요합니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie, Pixie wymaga połączenia z internetem, aby komunikować się z serwerami AI podczas generowania obrazów."
           }
         },
         "pt-BR" : {
@@ -16873,6 +18691,12 @@
             "value" : "없음"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brak"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16929,6 +18753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "나중에"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie teraz"
           }
         },
         "pt-BR" : {
@@ -16989,6 +18819,12 @@
             "value" : "동의 안 함"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie przyznano"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17045,6 +18881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "로그인하지 않음"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie zalogowano"
           }
         },
         "pt-BR" : {
@@ -17105,6 +18947,12 @@
             "value" : "이미지 수"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liczba obrazów"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17163,6 +19011,12 @@
             "value" : "확인"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17219,6 +19073,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "유화"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farby olejne"
           }
         },
         "pt-BR" : {
@@ -17339,6 +19199,36 @@
             }
           }
         },
+        "pl" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Zakup jednorazowy · ≈ %lld obraz"
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Zakup jednorazowy · ≈ %lld obrazy"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Zakup jednorazowy · ≈ %lld obrazów"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Zakup jednorazowy · ≈ %lld obrazu"
+                }
+              }
+            }
+          }
+        },
         "pt-BR" : {
           "variations" : {
             "plural" : {
@@ -17421,6 +19311,12 @@
             "value" : "불투명"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieprzezroczyste"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17477,6 +19373,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "갤러리 열기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otwórz galerię"
           }
         },
         "pt-BR" : {
@@ -17537,6 +19439,12 @@
             "value" : "설정 열기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otwórz ustawienia"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17593,6 +19501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OpenAI 비용"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koszty OpenAI"
           }
         },
         "pt-BR" : {
@@ -17653,6 +19567,12 @@
             "value" : "최적"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optymalny"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17709,6 +19629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이 개발자의 다른 앱"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inne aplikacje tego dewelopera"
           }
         },
         "pt-BR" : {
@@ -17769,6 +19695,12 @@
             "value" : "출력 형식"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Format wyjściowy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17825,6 +19757,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "출력 형식"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Format wyjściowy"
           }
         },
         "pt-BR" : {
@@ -17885,6 +19823,12 @@
             "value" : "만든 만큼만 결제하세요.\n구독은 절대 없습니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Płać tylko za to, co tworzysz.\nBez subskrypcji, nigdy."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17941,6 +19885,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "연필 드로잉"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rysunek ołówkiem"
           }
         },
         "pt-BR" : {
@@ -18001,6 +19951,12 @@
             "value" : "사진 접근 권한이 필요합니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wymagany dostęp do zdjęć"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18057,6 +20013,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "사진 보관함 접근이 거부되었습니다. 설정에서 권한을 허용해 주세요."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odmówiono dostępu do biblioteki zdjęć. Włącz go w ustawieniach."
           }
         },
         "pt-BR" : {
@@ -18117,6 +20079,12 @@
             "value" : "포토리얼"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotorealistyczny"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18173,6 +20141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "픽셀 아트"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixel art"
           }
         },
         "pt-BR" : {
@@ -18233,6 +20207,12 @@
             "value" : "Pixie 크레딧"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kredyty Pixie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18289,6 +20269,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pixie는 이미지를 만들기 위해 프롬프트와 첨부한 사진을 Google Gemini 및 OpenAI로 전송합니다. 모든 요청은 자동 검열을 거칩니다. 개인 식별에는 사용되지 않으며, 설정에서 언제든 동의를 철회할 수 있습니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie wysyła twoje prompty i dołączone zdjęcia do Google Gemini i OpenAI, aby stworzyć twoje obrazy. Każde żądanie jest automatycznie moderowane. Nic nie służy do twojej identyfikacji, a zgodę możesz wycofać w dowolnym momencie w ustawieniach."
           }
         },
         "pt-BR" : {
@@ -18349,6 +20335,12 @@
             "value" : "Pixie는 이미지를 만들기 위해 프롬프트와 첨부한 사진을 Google Gemini 및 OpenAI로 전송합니다. 동의를 철회하면 다시 동의할 때까지 이미지 생성이 중단됩니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie wysyła twoje prompty i dołączone zdjęcia do Google Gemini i OpenAI, aby tworzyć obrazy. Wycofanie zgody wstrzymuje generowanie obrazów, dopóki nie zostanie ponownie udzielona."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18405,6 +20397,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "편집할 이미지를 선택하려면 사진 접근을 허용해 주세요."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zezwól na dostęp do zdjęć, aby wybrać obrazy do edycji."
           }
         },
         "pt-BR" : {
@@ -18465,6 +20463,12 @@
             "value" : "올바른 수량과 사유를 입력해 주세요"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podaj prawidłową kwotę i powód"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18521,6 +20525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "잠시만 기다려 주세요…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proszę czekać…"
           }
         },
         "pt-BR" : {
@@ -18581,6 +20591,12 @@
             "value" : "세로"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pionowy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18637,6 +20653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세로 (1024×1536)"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pionowy (1024×1536)"
           }
         },
         "pt-BR" : {
@@ -18697,6 +20719,12 @@
             "value" : "디테일 유지 (얼굴, 로고)"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zachowaj szczegóły (twarze, logo)"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18753,6 +20781,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "개인정보 보호"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prywatność"
           }
         },
         "pt-BR" : {
@@ -18813,6 +20847,12 @@
             "value" : "흰 배경의 스니커즈 제품 사진"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zdjęcie produktowe sneakersów na białym tle"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18869,6 +20909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이익률"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marża zysku"
           }
         },
         "pt-BR" : {
@@ -18929,6 +20975,12 @@
             "value" : "프롬프트"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prompt"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18985,6 +21037,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프롬프트 수식어"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modyfikatory promptu"
           }
         },
         "pt-BR" : {
@@ -19045,6 +21103,12 @@
             "value" : "프롬프트를 클립보드에 복사했습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skopiowano prompt do schowka"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19101,6 +21165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "구입 실패"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zakup nie powiódł się"
           }
         },
         "pt-BR" : {
@@ -19161,6 +21231,12 @@
             "value" : "사용자가 구입을 취소했습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zakup anulowany przez użytkownika"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19217,6 +21293,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "구입 검증에 실패했습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weryfikacja zakupu nie powiodła się"
           }
         },
         "pt-BR" : {
@@ -19277,6 +21359,12 @@
             "value" : "품질"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jakość"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19333,6 +21421,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "수량"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ilość"
           }
         },
         "pt-BR" : {
@@ -19393,6 +21487,12 @@
             "value" : "빠른 실행"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szybkie akcje"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19449,6 +21549,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "빠른 시작"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szybki start"
           }
         },
         "pt-BR" : {
@@ -19509,6 +21615,12 @@
             "value" : "표시 한도에 도달했습니다 (이미지 100개)"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osiągnięto limit wyświetlania (100 obrazów)"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19565,6 +21677,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "조정 사유"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Powód korekty"
           }
         },
         "pt-BR" : {
@@ -19625,6 +21743,12 @@
             "value" : "최근"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ostatnie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19681,6 +21805,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "최근 거래"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ostatnie transakcje"
           }
         },
         "pt-BR" : {
@@ -19741,6 +21871,12 @@
             "value" : "색상 변경"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmień kolor"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19797,6 +21933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로 고치면 더 최근 이미지를 볼 수 있습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odśwież, aby zobaczyć nowsze obrazy"
           }
         },
         "pt-BR" : {
@@ -19857,6 +21999,12 @@
             "value" : "제거"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usuń"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19915,6 +22063,12 @@
             "value" : "문제는 github.com/anthropics/claude-code/issues 에 신고하거나 앱에서 지원팀에 문의하세요."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zgłaszaj problemy na github.com/anthropics/claude-code/issues albo skontaktuj się z pomocą techniczną w aplikacji."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19971,6 +22125,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "구입 복원"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przywróć zakupy"
           }
         },
         "pt-BR" : {
@@ -20091,6 +22251,36 @@
             }
           }
         },
+        "pl" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Przywrócono %lld zakup."
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Przywrócono %lld zakupy."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Przywrócono %lld zakupów."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Przywrócono %lld zakupu."
+                }
+              }
+            }
+          }
+        },
         "pt-BR" : {
           "variations" : {
             "plural" : {
@@ -20173,6 +22363,12 @@
             "value" : "레트로"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retro"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20229,6 +22425,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "80년대 레트로 신스웨이브 노을"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retro zachód słońca synthwave z lat 80."
           }
         },
         "pt-BR" : {
@@ -20289,6 +22491,12 @@
             "value" : "레트로 감성"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Styl retro"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20345,6 +22553,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다시 시도"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spróbuj ponownie"
           }
         },
         "pt-BR" : {
@@ -20405,6 +22619,12 @@
             "value" : "매출"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przychód"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20461,6 +22681,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "저장"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapisz"
           }
         },
         "pt-BR" : {
@@ -20521,6 +22747,12 @@
             "value" : "저장 실패"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapis nie powiódł się"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20577,6 +22809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이미지 저장"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapisz obraz"
           }
         },
         "pt-BR" : {
@@ -20637,6 +22875,12 @@
             "value" : "사진 앱에 저장"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapisz w Zdjęciach"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20693,6 +22937,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "내 작품을 갤러리에 저장"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapisuj swoje kreacje w galerii"
           }
         },
         "pt-BR" : {
@@ -20753,6 +23003,12 @@
             "value" : "저장됨"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapisano!"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20809,6 +23065,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "크레딧을 조정할 사용자를 검색하세요"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znajdź użytkownika, aby dostosować jego kredyty"
           }
         },
         "pt-BR" : {
@@ -20869,6 +23131,12 @@
             "value" : "이메일 또는 ID로 사용자 검색"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szukaj użytkowników po e-mailu lub ID"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20925,6 +23193,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "계절"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pora roku"
           }
         },
         "pt-BR" : {
@@ -20985,6 +23259,12 @@
             "value" : "안전하고 비공개"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bezpieczne i prywatne"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21041,6 +23321,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "안전한 로그인 • 사용자 대신 게시하지 않습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bezpieczne logowanie • Nigdy nie publikujemy w twoim imieniu"
           }
         },
         "pt-BR" : {
@@ -21101,6 +23387,12 @@
             "value" : "모든 크레딧 거래 내역 보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobacz wszystkie swoje transakcje kredytów"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21157,6 +23449,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이미지를 생성할 때 배경 옵션에서 '투명'을 선택하세요. 로고나 제품처럼 피사체가 하나일 때 가장 잘 작동합니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz „Przezroczyste” w opcjach tła podczas generowania obrazów. Najlepiej sprawdza się to w przypadku wyizolowanych obiektów, takich jak logo czy produkty."
           }
         },
         "pt-BR" : {
@@ -21217,6 +23515,12 @@
             "value" : "서버 오류(%lld)입니다. 나중에 다시 시도해 주세요."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Błąd serwera (%lld). Spróbuj ponownie później."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21273,6 +23577,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션이 만료되었습니다. 다시 로그인해 주세요."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesja wygasła. Zaloguj się ponownie."
           }
         },
         "pt-BR" : {
@@ -21333,6 +23643,12 @@
             "value" : "설정"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ustawienia"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21389,6 +23705,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "공유"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Udostępnij"
           }
         },
         "pt-BR" : {
@@ -21449,6 +23771,12 @@
             "value" : "로그인에 실패했습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logowanie nie powiodło się"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21505,6 +23833,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apple로 로그인"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaloguj się przez Apple"
           }
         },
         "pt-BR" : {
@@ -21565,6 +23899,12 @@
             "value" : "GitHub로 로그인"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaloguj się przez GitHub"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21621,6 +23961,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "원하는 제공업체로 로그인하세요:\n• GitHub (권장)\n• Google\n• Apple\n\n계정은 모든 기기와 CLI 도구에서 동기화됩니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaloguj się przez wybranego dostawcę:\n• GitHub (zalecane)\n• Google\n• Apple\n\nTwoje konto synchronizuje się na wszystkich urządzeniach i z narzędziem CLI."
           }
         },
         "pt-BR" : {
@@ -21681,6 +24027,12 @@
             "value" : "계정에서 로그아웃"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyloguj się ze swojego konta"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21737,6 +24089,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "심플하고 깔끔"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proste i eleganckie"
           }
         },
         "pt-BR" : {
@@ -21797,6 +24155,12 @@
             "value" : "크기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozmiar"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21853,6 +24217,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스케치"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szkic"
           }
         },
         "pt-BR" : {
@@ -21913,6 +24283,12 @@
             "value" : "건너뛰기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomiń"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21969,6 +24345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "부드러운 채색"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Miękkie malarstwo"
           }
         },
         "pt-BR" : {
@@ -22029,6 +24411,12 @@
             "value" : "우주"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kosmos"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22085,6 +24473,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "정사각형"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kwadrat"
           }
         },
         "pt-BR" : {
@@ -22145,6 +24539,12 @@
             "value" : "정사각형 (1024×1024)"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kwadrat (1024×1024)"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22201,6 +24601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "만들기 시작"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zacznij tworzyć"
           }
         },
         "pt-BR" : {
@@ -22261,6 +24667,12 @@
             "value" : "인기 템플릿으로 시작하기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zacznij od popularnych szablonów"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22317,6 +24729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "저장 공간"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pamięć"
           }
         },
         "pt-BR" : {
@@ -22377,6 +24795,12 @@
             "value" : "스타일 프리셋"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gotowe style"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22433,6 +24857,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "완료"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sukces"
           }
         },
         "pt-BR" : {
@@ -22493,6 +24923,12 @@
             "value" : "초현실"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Surrealistyczny"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22549,6 +24985,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "크레딧 동기화 및 유지"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronizuj i zachowaj kredyty"
           }
         },
         "pt-BR" : {
@@ -22609,6 +25051,12 @@
             "value" : "모든 기기에서 동기화"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronizacja na wszystkich urządzeniach"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22665,6 +25113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "시스템"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System"
           }
         },
         "pt-BR" : {
@@ -22725,6 +25179,12 @@
             "value" : "시스템 통계"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Statystyki systemu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22781,6 +25241,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "카테고리를 탭한 뒤 프롬프트를 선택하세요"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stuknij kategorię, a potem wybierz prompt"
           }
         },
         "pt-BR" : {
@@ -22841,6 +25307,12 @@
             "value" : "탭하여 사용자화"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stuknij, aby dostosować"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22897,6 +25369,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "테크"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tech"
           }
         },
         "pt-BR" : {
@@ -22957,6 +25435,12 @@
             "value" : "이용약관"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warunki"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23013,6 +25497,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pixie 서버 연결 테스트"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Testuj połączenie z serwerami Pixie"
           }
         },
         "pt-BR" : {
@@ -23073,6 +25563,12 @@
             "value" : "테마"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Motyw"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23129,6 +25625,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "캐시된 이미지를 모두 삭제합니다. 계속할까요?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spowoduje to usunięcie wszystkich obrazów w pamięci podręcznej. Kontynuować?"
           }
         },
         "pt-BR" : {
@@ -23189,6 +25691,12 @@
             "value" : "팁: "
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wskazówka: "
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23245,6 +25753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "오늘"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dziś"
           }
         },
         "pt-BR" : {
@@ -23305,6 +25819,12 @@
             "value" : "사이드바 표시 전환"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przełącz panel boczny"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23361,6 +25881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "요청이 너무 많습니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zbyt wiele żądań"
           }
         },
         "pt-BR" : {
@@ -23421,6 +25947,12 @@
             "value" : "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zbyt wiele żądań. Poczekaj chwilę i spróbuj ponownie."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23477,6 +26009,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "총 잔액"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saldo łączne"
           }
         },
         "pt-BR" : {
@@ -23537,6 +26075,12 @@
             "value" : "총 생성 수"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Łącznie wygenerowano"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23593,6 +26137,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "총 구입량"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Łącznie kupiono"
           }
         },
         "pt-BR" : {
@@ -23653,6 +26203,12 @@
             "value" : "총 매출"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przychód łączny"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23709,6 +26265,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "총 사용량"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Łącznie wydano"
           }
         },
         "pt-BR" : {
@@ -23769,6 +26331,12 @@
             "value" : "총 사용자 수"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Łącznie użytkowników"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23825,6 +26393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "크레딧과 사용량 확인"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Śledź swoje kredyty i zużycie"
           }
         },
         "pt-BR" : {
@@ -23885,6 +26459,12 @@
             "value" : "거래 내역"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historia transakcji"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23941,6 +26521,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "기존 이미지를 AI로 바꿔 보세요:\n\n**편집 옵션:**\n• 스타일 변경 (사이버펑크, 유화 등)\n• 요소 추가 또는 제거\n• 디테일 강화\n• 변형 만들기\n\n**품질과 원본 유지도:**\n• 유지도 낮음: 더 자유로운 창작\n• 유지도 높음: 얼굴과 로고를 더 잘 보존\n\n**크레딧 소모:**\n기본 편집 비용 + 품질 비용:\n• 낮음: 약 7크레딧\n• 보통: 약 16크레딧\n• 높음: 약 72~110크레딧"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przekształcaj istniejące obrazy dzięki AI:\n\n**Opcje edycji:**\n• Zmiana stylu (cyberpunk, farby olejne itd.)\n• Dodawanie lub usuwanie elementów\n• Poprawianie szczegółów\n• Tworzenie wariantów\n\n**Jakość i wierność:**\n• Niska wierność: więcej swobody twórczej\n• Wysoka wierność: lepiej zachowuje twarze/logo\n\n**Koszt w kredytach:**\nKoszt bazowy edycji + koszt jakości:\n• Niska: ~7 kredytów\n• Średnia: ~16 kredytów\n• Wysoka: ~72-110 kredytów"
           }
         },
         "pt-BR" : {
@@ -24001,6 +26587,12 @@
             "value" : "AI로 사진을 바꿔 보세요"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przekształcaj swoje zdjęcia dzięki AI"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24057,6 +26649,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "투명"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przezroczyste"
           }
         },
         "pt-BR" : {
@@ -24117,6 +26715,12 @@
             "value" : "아이디어를 멋진 비주얼로"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamień pomysły w zjawiskowe obrazy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24173,6 +26777,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "수중"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podwodny"
           }
         },
         "pt-BR" : {
@@ -24233,6 +26843,12 @@
             "value" : "키체인의 데이터 형식이 올바르지 않습니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieoczekiwany format danych w pęku kluczy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24289,6 +26905,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "예상치 못한 구입 상태입니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieoczekiwany stan zakupu"
           }
         },
         "pt-BR" : {
@@ -24349,6 +26971,12 @@
             "value" : "알 수 없는 오류"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieznany błąd"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24405,6 +27033,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "도시"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Miejski"
           }
         },
         "pt-BR" : {
@@ -24465,6 +27099,12 @@
             "value" : "편집에 사용"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Użyj do edycji"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24521,6 +27161,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "사용자 ID"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ID użytkownika"
           }
         },
         "pt-BR" : {
@@ -24581,6 +27227,12 @@
             "value" : "사용자 ID: %@\n관리자 ID: %@\n수량: %@%lld\n새 잔액: %lld\n사유: %@\n날짜: %@"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ID użytkownika: %@\nID administratora: %@\nKwota: %@%lld\nNowe saldo: %lld\nPowód: %@\nData: %@"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24637,6 +27289,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "사용자: %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Użytkownik: %@"
           }
         },
         "pt-BR" : {
@@ -24697,6 +27355,12 @@
             "value" : "사용자"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Użytkownicy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24753,6 +27417,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "버전 %@ (%@)"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wersja %@ (%@)"
           }
         },
         "pt-BR" : {
@@ -24813,6 +27483,12 @@
             "value" : "보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24869,6 +27545,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "전체 보기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż wszystko"
           }
         },
         "pt-BR" : {
@@ -24929,6 +27611,12 @@
             "value" : "세부 정보 보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż szczegóły"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24985,6 +27673,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "모든 크레딧 조정 기록 보기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż wszystkie korekty kredytów"
           }
         },
         "pt-BR" : {
@@ -25045,6 +27739,12 @@
             "value" : "팩 보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż pakiety"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25101,6 +27801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "시스템 전체 지표와 매출 데이터 보기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż statystyki systemowe i dane o przychodach"
           }
         },
         "pt-BR" : {
@@ -25161,6 +27867,12 @@
             "value" : "거래 내역에서 최근 크레딧 사용량을 확인하세요\n크레딧 팩을 둘러보고 추가로 구입하세요"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobacz historię transakcji, aby sprawdzić ostatnie zużycie kredytów\nPrzeglądaj pakiety kredytów, aby kupić więcej"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25217,6 +27929,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "빈티지"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vintage"
           }
         },
         "pt-BR" : {
@@ -25277,6 +27995,12 @@
             "value" : "수채화"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akwarela"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25333,6 +28057,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "날씨"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pogoda"
           }
         },
         "pt-BR" : {
@@ -25393,6 +28123,12 @@
             "value" : "Pixie에 오신 것을 환영합니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Witaj w Pixie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25449,6 +28185,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "무엇을 만들까요?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Co chcesz stworzyć?"
           }
         },
         "pt-BR" : {
@@ -25509,6 +28251,12 @@
             "value" : "오늘은 무엇을 만들까요?"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Co dziś stworzysz?"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25565,6 +28313,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "품질 단계는 어떻게 다른가요?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Czym różnią się poziomy jakości?"
           }
         },
         "pt-BR" : {
@@ -25625,6 +28379,12 @@
             "value" : "흰색"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Biały"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25681,6 +28441,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "왜 로그인하나요?"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dlaczego się zalogować?"
           }
         },
         "pt-BR" : {
@@ -25741,6 +28507,12 @@
             "value" : "꼭 로그인해야 하나요?"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dlaczego muszę się zalogować?"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25797,6 +28569,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "동의 철회"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wycofaj zgodę"
           }
         },
         "pt-BR" : {
@@ -25857,6 +28635,12 @@
             "value" : "네! 갤러리에서 이미지를 길게 누른 뒤 '편집'을 선택하면 AI로 수정할 수 있습니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tak! Przytrzymaj dowolny obraz w galerii i wybierz „Edytuj”, aby zmienić go dzięki AI."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25913,6 +28697,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "네! 백엔드에서 본인의 OpenAI API 키를 사용할 수 있습니다. 계정에 설정하려면 지원팀에 문의하세요."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tak! Backend obsługuje własny klucz API OpenAI. Skontaktuj się z pomocą techniczną, aby skonfigurować to na swoim koncie."
           }
         },
         "pt-BR" : {
@@ -25973,6 +28763,12 @@
             "value" : "어제"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wczoraj"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26029,6 +28825,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "가입 없이 지금 바로 만들 수 있습니다. 만료되지 않는 크레딧 팩으로 만든 만큼만 결제하세요. 구독은 절대 없습니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Możesz tworzyć od razu, bez rejestracji. Płać tylko za to, co stworzysz, dzięki pakietom kredytów, które nigdy nie wygasają. Bez subskrypcji, nigdy."
           }
         },
         "pt-BR" : {
@@ -26149,6 +28951,36 @@
             }
           }
         },
+        "pl" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Potrzebujesz jeszcze %lld kredytu, aby dokończyć ten obraz."
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Potrzebujesz jeszcze %lld kredytów, aby dokończyć ten obraz."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Potrzebujesz jeszcze %lld kredytów, aby dokończyć ten obraz."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Potrzebujesz jeszcze %lld kredytu, aby dokończyć ten obraz."
+                }
+              }
+            }
+          }
+        },
         "pt-BR" : {
           "variations" : {
             "plural" : {
@@ -26231,6 +29063,12 @@
             "value" : "크레딧 사용 내역이 여기에 표시됩니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutaj pojawi się historia zużycia kredytów"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26287,6 +29125,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "생성한 이미지가 여기에 표시됩니다"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutaj pojawią się twoje wygenerowane obrazy"
           }
         },
         "pt-BR" : {
@@ -26347,6 +29191,12 @@
             "value" : "'%@' 이미지가 완성되었습니다!"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Twój obraz dla „%@” jest gotowy!"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26403,6 +29253,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "콘텐츠 정책에 따라 프롬프트가 차단되었습니다. 다른 프롬프트로 시도해 주세요."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Twój prompt został zablokowany przez politykę treści. Spróbuj innego promptu."
           }
         },
         "pt-BR" : {
@@ -26463,6 +29319,12 @@
             "value" : "크레딧"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kredyty"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26516,6 +29378,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "≈ $%.2f USD"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "≈ $%.2f USD"
@@ -26639,6 +29507,36 @@
             }
           }
         },
+        "pl" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "≈ %lld obraz Nano Banana"
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "≈ %lld obrazy Nano Banana"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "≈ %lld obrazów Nano Banana"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "≈ %lld obrazu Nano Banana"
+                }
+              }
+            }
+          }
+        },
         "pt-BR" : {
           "variations" : {
             "plural" : {
@@ -26721,6 +29619,12 @@
             "value" : "✏️ 편집 요청"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "✏️ Prośba o edycję"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26777,6 +29681,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "✨ 무료 크레딧을 받고 창작을 시작하세요"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "✨ Zdobądź darmowe kredyty i zacznij tworzyć"
           }
         },
         "pt-BR" : {
@@ -26837,6 +29747,12 @@
             "value" : "🎨 생성 요청"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎨 Prośba o wygenerowanie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26893,6 +29809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "사이버펑크 애니메이션 소녀, 네온 도시, 비, 블레이드 러너 분위기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dziewczyna anime cyberpunk, neonowe miasto, deszcz, klimat blade runnera"
           }
         },
         "pt-BR" : {
@@ -26953,6 +29875,12 @@
             "value" : "머리를 거칠고 뾰족한 볼륨 스타일로 바꿔줘"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmień jej włosy na coś dzikiego, najeżonego i pełnego objętości"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27009,6 +29937,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "은하수와 성운, 우주적인 색감이 어우러진 경이로운 우주 장면"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zjawiskowa scena kosmiczna z galaktykami, mgławicami, kosmicznymi kolorami"
           }
         },
         "pt-BR" : {
@@ -27069,6 +30003,12 @@
             "value" : "심우주의 나선 은하, 선명한 보라색과 청록빛 별들"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spiralna galaktyka w głębokim kosmosie, intensywne fiolety i turkusowe gwiazdy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27125,6 +30065,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화려하게 담긴 요리를 맛있게 즐기는 발랄한 애니메이션 소녀"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wesoła dziewczyna anime delektująca się kolorowo podanym posiłkiem"
           }
         },
         "pt-BR" : {
@@ -27185,6 +30131,12 @@
             "value" : "전문 푸드 포토그래피, 먹음직스러운 플레이팅"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profesjonalna fotografia kulinarna, apetyczna prezentacja"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27241,6 +30193,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "미래적인 전기차 충전소에 있는 소녀, 깔끔한 라인"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dziewczyna przy futurystycznej stacji ładowania pojazdów elektrycznych, czyste linie"
           }
         },
         "pt-BR" : {
@@ -27301,6 +30259,12 @@
             "value" : "80년대 레트로 신스웨이브 초상화, 야자수, 마이애미 노을"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retro portret synthwave z lat 80., palmy, zachód słońca w Miami"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27357,6 +30321,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "초록빛으로 바꿔줘, 빛나는 에메랄드빛 별, 우주적 에너지"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrób to na zielono, świecąca szmaragdowa gwiazda, kosmiczna energia"
           }
         },
         "pt-BR" : {
@@ -27417,6 +30387,12 @@
             "value" : "태양, 소용돌이치는 태양 플라즈마 표면, 강렬한 디테일"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Słońce, wzburzona powierzchnia plazmy słonecznej, intensywne detale"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27473,6 +30449,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "멀리 있는 블랙홀이 담긴 경이로운 심우주 장면"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zjawiskowa scena głębokiego kosmosu z odległą czarną dziurą"
           }
         },
         "pt-BR" : {
@@ -27533,6 +30515,12 @@
             "value" : "현대 건축 사진, 미니멀하고 황금빛 조명"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotografia nowoczesnej architektury, minimalistyczna, złote światło"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27589,6 +30577,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "편집: 머리를 거친 스타일로 바꿔줘"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edycja: zmień jej włosy na coś dzikiego"
           }
         },
         "pt-BR" : {
@@ -27649,6 +30643,12 @@
             "value" : "편집된 이미지입니다:"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oto twój zedytowany obraz:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27707,6 +30707,12 @@
             "value" : "네온으로 물든 도시 속 사이버펑크 애니메이션 소녀, 비, 블레이드 러너 분위기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dziewczyna anime w stylu cyberpunk w zalanym neonami mieście, deszcz, klimat blade runnera"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27763,6 +30769,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이번엔 선명한 성운이 가득한 경이로운 심우주 은하로 만들어줘"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teraz zrób z tego zjawiskową galaktykę głębokiego kosmosu z żywymi mgławicami"
           }
         },
         "pt-BR" : {

@@ -45,6 +45,12 @@
             "value" : "생성한 이미지를 사진 라이브러리에 저장하려면 Pixie에 접근 권한이 필요합니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie potrzebuje dostępu, aby zapisywać wygenerowane obrazy w bibliotece zdjęć."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -107,6 +113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "기존 이미지를 편집하고 생성한 이미지를 저장하려면 Pixie에 사진 라이브러리 접근 권한이 필요합니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie potrzebuje dostępu do biblioteki zdjęć, aby edytować istniejące obrazy i zapisywać wygenerowane obrazy."
           }
         },
         "pt-BR" : {
