@@ -4418,7 +4418,7 @@
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Czarny"
+            "value" : "Czarne"
           }
         },
         "pt-BR" : {
@@ -24478,7 +24478,7 @@
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kwadrat"
+            "value" : "Kwadratowy"
           }
         },
         "pt-BR" : {
@@ -24542,7 +24542,7 @@
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kwadrat (1024×1024)"
+            "value" : "Kwadratowy (1024×1024)"
           }
         },
         "pt-BR" : {
@@ -28382,7 +28382,7 @@
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Biały"
+            "value" : "Białe"
           }
         },
         "pt-BR" : {
