@@ -10,6 +10,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        AppLogger.info("App launched", category: .launch)
+
         warmUpLaunchServicesReceiptPath()
 
         BGTaskScheduler.shared.register(
