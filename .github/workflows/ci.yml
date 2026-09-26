@@ -28,8 +28,10 @@ jobs:
               - '.github/workflows/ci.yml'
             android:
               - 'android/**'
+              - '.github/workflows/ci.yml'
             ios:
               - 'iOS/**'
+              - '.github/workflows/ci.yml'
 
   cli:
     name: CLI
