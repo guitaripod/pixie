@@ -1,35 +1,75 @@
 {
-  "name": "PixiePocket: KI-Bildgenerator",
-  "subtitle": "Foto & Kunst mit Nano Banana",
-  "keywords": "bildbearbeitung,hintergrund,wallpaper,anime,avatar,sticker,gemini,gpt,chatbot,transparent,bild,png",
-  "promotionalText": "Kein Abo. Credits verfallen nie – kauf einmal ein Paket, nutze es, wann du willst, und behalte, was du nicht ausgibst.",
-  "description": "Bilder in Profiqualität, erstellt im Chat. Du zahlst nur für das, was du wirklich machst. Kein Abo, niemals.\n\nAlle neuen Nutzer starten mit 25 Gratis-Credits – genug, um die Bildgenerierung mit Nano Banana direkt nach dem Öffnen auszuprobieren. Ohne Registrierung.\n\nIM CHAT ZUM FERTIGEN BILD\nBeschreibe, was du willst, verfeinere es Nachricht für Nachricht und sieh zu, wie sich dein Bild entwickelt. Häng ein Foto an und bearbeite es im Gespräch: Haare ändern, Hintergründe tauschen, alles umstylen.\n\nMIT NANO BANANA + GPT IMAGE\nPixiePocket erzeugt Bilder mit Googles Nano Banana (Gemini) und den GPT-Bildmodellen von OpenAI – zwei Engines, ein Chat.\n\nPRO BILD ZAHLEN, NICHT PRO MONAT\nCredits verfallen nie. Einmal ein Paket kaufen und loslegen, wann immer dir danach ist – große Pakete enthalten bis zu 68 % Bonus-Credits. Keine Wochen-Abofalle, keine Verlängerungen, keine überraschenden Abbuchungen.\n\nDIE AUSGABE STEUERN WIE EIN PROFI\n• Stapelweise bis zu 10 Bilder pro Anfrage\n• Qualitätsstufen Niedrig / Mittel / Hoch / Auto\n• Eigene Formate, von quadratisch bis Breitbild\n• Ausgabe als PNG, JPEG oder WebP, mit transparentem Hintergrund\n• Credit-Kosten schon vor dem Erstellen sichtbar\n\nÜBERALL DABEI\nFang anonym an und melde dich später mit Apple, Google oder GitHub an, um deine Bilder auf allen Geräten synchron zu halten.\n\nPRIVAT PER VOREINSTELLUNG\nDeine Bilder gehören nur dir – es gibt keinen öffentlichen Feed, und nichts, was du erstellst, wird jemals anderen Nutzern gezeigt. Deine Prompts und angehängten Fotos werden zur Bilderzeugung an Google Gemini und OpenAI gesendet – du stimmst dem in der App vor deiner ersten Kreation zu und kannst die Einwilligung jederzeit in den Einstellungen widerrufen. Manche Prompts können von der Inhaltsmoderation gefiltert werden.\n\nGoogle, Gemini und Nano Banana sind Marken von Google LLC. Diese App wird von Google oder OpenAI weder unterstützt noch steht sie mit ihnen in Verbindung.",
-  "whatsNew": "• Die öffentliche Galerie ist verschwunden. Deine Bilder gehören nur dir – es gibt keinen Feed, nichts, was du erstellst, wird anderen gezeigt, und es gibt nichts, wovon du dich abmelden müsstest.\n• Ein echter Willkommensgruß: Ein neuer Chat startet jetzt mit Starter-Prompts zum Antippen – kein leerer Bildschirm mehr.\n• Die Bewertungsanfrage erscheint nicht mehr doppelt nach derselben Generierung.\n• Screenshots und die Store-Seite sind jetzt vollständig in neun Sprachen lokalisiert.",
+  "name": "PixiePocket: KI Foto-Editor",
+  "subtitle": "Nano Banana 2 Bewerbungsfoto",
+  "keywords": "restaurieren,kolorieren,figur,3d,retusche,selfie,porträt,frisur,anime,haustier,outfit,hintergrund",
+  "promotionalText": "Neu: Ein-Tipp-Edits. Aus einem Selfie ein Bewerbungsfoto machen, ein altes Foto retten oder zur 3D-Figur werden. 3 Bilder gratis, kein Abo, nie.",
+  "description": "Verwandle jedes Foto mit einem Tipp in etwas Besonderes: ein Bewerbungsfoto, ein restauriertes altes Foto, eine 3D-Figur, ein Anime-Porträt, ein königliches Porträt deines Haustiers. Angetrieben von Googles Nano Banana 2 und Nano Banana Pro. Kein Abo, niemals.\n\nStarte mit 3 kostenlosen Bildern. Keine Registrierung nötig.\n\nEIN TIPP GENÜGT\n• Bewerbungsfoto: ein Studio-Porträt für LinkedIn und Bewerbungen, das trotzdem nach dir aussieht\n• Bewerbungsfoto-Paket: vier Studio-Porträts auf einmal\n• Altes Foto restaurieren: Kratzer raus, Farbe rein\n• 3D-Figur: du als Sammelfigur, samt Verpackung\n• Natürliche Retusche: bessere Haut und bessere Beleuchtung, ganz ohne Filter-Look\n• Weißer Hintergrund: saubere Freisteller für Anzeigen und Profile\n• Anime-Stil, Cover-Foto, neues Outfit, neue Frisur und Reisefoto\n• Königliches Haustier-Porträt: dein Haustier als Adel der Renaissance\n• Halloween-Kostüm: ein gruseliges Kostüm samt Make-up\n\nDANN IM CHAT VERFEINERN\nBitte in einfachen Worten um Änderungen, und jede Nachricht bearbeitet dein letztes Bild: „mach das Sakko marineblau\", „stell sie in ein helles Büro\". Oder beschreibe ein komplett neues Bild von Grund auf.\n\nVORHER UND NACHHER TEILEN\nSpeichere Ergebnisse in Fotos oder teile ein Vorher-Nachher-Bild mit einem Tipp.\n\nPRO BILD ZAHLEN, NICHT PRO MONAT\nCredits verfallen nie. Kauf einmal ein Paket und erstelle, wann immer du willst; größere Pakete bringen bis zu 68 % Bonus-Credits. Keine Wochen-Abofalle, keine Verlängerungen, keine überraschenden Abbuchungen.\n\nWÄHLE DEINE ENGINE\n• Nano Banana 2: schnell und günstig\n• Nano Banana Pro: schärfere Details und Text\n• GPT Image, mit Kontrolle über Größe, Qualität, Format und transparenten Hintergrund\n\nPRIVAT PER VOREINSTELLUNG\nDeine Bilder gehören nur dir: Es gibt keinen öffentlichen Feed. Deine Prompts und Fotos werden zur Bilderzeugung an Google Gemini und OpenAI gesendet; du stimmst dem vor deiner ersten Kreation zu und kannst die Einwilligung jederzeit in den Einstellungen widerrufen. Manche Anfragen können von der Inhaltsmoderation abgelehnt werden – das kostet dich nie Credits.\n\nStarte anonym und melde dich dann mit Apple, Google oder GitHub an, um deine Bilder zwischen iPhone und iPad zu synchronisieren.\n\nGoogle, Gemini und Nano Banana sind Marken von Google LLC. Diese App wird von Google oder OpenAI weder unterstützt noch steht sie mit ihnen in Verbindung.",
+  "whatsNew": "• Ein-Tipp-Edits: Wähle ein Foto und tippe auf Bewerbungsfoto, Bewerbungsfoto-Paket, Altes Foto restaurieren, 3D-Figur, Natürliche Retusche, Weißer Hintergrund, Anime-Stil, Cover-Foto, Neues Outfit, Neue Frisur, Reisefoto, Königliches Haustier-Porträt oder Halloween-Kostüm.\n• Echtes Chat-Editing: Nach jedem Ergebnis bearbeitet deine nächste Nachricht genau dieses Bild. Tippe auf X im Vorschaubild, um neu zu starten.\n• Nano Banana Pro ergänzt Nano Banana 2 und GPT Image für schärfere Details und Text.\n• Neue Nutzer erhalten jetzt 3 statt 1 kostenloses Bild.\n• Speichern-, Teilen- und Vorher/Nachher-Buttons unter jedem Ergebnis.\n• Die Fotoauswahl fragt nicht mehr nach Zugriff auf deine gesamte Mediathek, und um Benachrichtigungen wird erst gebeten, nachdem du ein Bild erstellt hast.\n• Fotos werden kleiner und schneller hochgeladen, und eine vom Modell abgelehnte Anfrage sagt das jetzt klar – und kostet nichts.\n• PixiePocket spricht jetzt Polnisch.",
   "screenshots": [
     {
-      "file": "01_create",
-      "headline": "Bild per Chat erschaffen",
-      "subhead": "Kein Abo – niemals",
-      "screen": "create"
+      "file": "01_headshot",
+      "panel": "beforeafter",
+      "before": "demo_selfie",
+      "after": "demo_headshot",
+      "tag": "Pro headshot",
+      "headline": "Aus jedem Selfie ein Bewerbungsfoto",
+      "subhead": "Ein Tipp, powered by Nano Banana"
     },
     {
-      "file": "02_edit",
-      "headline": "Fotos per Chat bearbeiten",
-      "subhead": "Haare ändern, Hintergrund tauschen, alles neu stylen",
-      "screen": "edit"
+      "file": "02_presets",
+      "screen": "home",
+      "headline": "Ein-Tipp-Edits für jedes Foto",
+      "subhead": "Bewerbungsfotos, Restaurierung, Figuren"
     },
     {
-      "file": "03_store",
-      "headline": "Zahl pro Bild, nicht im Monat",
-      "subhead": "Credits verfallen nie. Starte mit 25 gratis",
-      "screen": "store"
+      "file": "03_restore",
+      "panel": "beforeafter",
+      "before": "demo_oldphoto",
+      "after": "demo_restored",
+      "tag": "Restore old photo",
+      "headline": "Altes Foto zum Leben erwecken",
+      "subhead": "Kratzer weg, Farbe rein"
     },
     {
-      "file": "04_gallery",
-      "headline": "Nano Banana + GPT image",
-      "subhead": "Zwei Engines, ein Chat – privat, synced",
-      "screen": "gallery"
+      "file": "04_figurine",
+      "panel": "beforeafter",
+      "before": "demo_man",
+      "after": "demo_figurine",
+      "tag": "3D figurine",
+      "headline": "Werde zur 3D-Figur",
+      "subhead": "Der virale Look, ein Tipp"
+    },
+    {
+      "file": "05_refine",
+      "screen": "refine",
+      "headline": "Dann im Chat verfeinern",
+      "subhead": "Jede Nachricht bearbeitet dein letztes Bild"
+    },
+    {
+      "file": "06_pack",
+      "screen": "pack",
+      "headline": "Vier Bewerbungsfotos auf einmal",
+      "subhead": "Wähl dein liebstes für LinkedIn"
+    },
+    {
+      "file": "07_pet",
+      "panel": "beforeafter",
+      "before": "demo_dog",
+      "after": "demo_royal_dog",
+      "tag": "Royal pet portrait",
+      "headline": "Königliches Haustier-Porträt",
+      "subhead": "Oder alles andere, was du beschreibst"
+    },
+    {
+      "file": "08_store",
+      "screen": "store",
+      "headline": "Kein Abo. Niemals.",
+      "subhead": "3 Bilder gratis, dann Credits ohne Ablauf"
     }
   ],
-  "supportUrl": "https://x.com/guitaripod"
+  "supportUrl": "https://x.com/guitaripod",
+  "labels": {
+    "before": "Vorher",
+    "after": "Nachher"
+  }
 }

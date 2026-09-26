@@ -1,0 +1,75 @@
+{
+  "name": "PixiePocket: Edytor Zdjęć AI",
+  "subtitle": "Nano Banana 2 Retusz Zdjęć",
+  "keywords": "zdjęcie do cv,stare zdjęcia,koloryzacja,figurka,3d,selfie,portret,fryzura,anime,tło,zwierzak,strój",
+  "promotionalText": "Nowość: edycje jednym dotknięciem. Zrób z selfie zdjęcie do CV, odśwież stare zdjęcie albo zostań figurką 3D. 3 darmowe zdjęcia, bez subskrypcji, nigdy.",
+  "description": "Zamień dowolne zdjęcie w coś wyjątkowego jednym dotknięciem: profesjonalne zdjęcie do CV, odrestaurowane stare zdjęcie, figurkę 3D, portret w stylu anime, królewski portret swojego zwierzaka. Napędzane przez Nano Banana 2 i Nano Banana Pro od Google. Bez subskrypcji, nigdy.\n\nZacznij od 3 darmowych zdjęć. Bez rejestracji.\n\nEDYCJE JEDNYM DOTKNIĘCIEM\n• Zdjęcie do CV: portret studyjny na LinkedIn i do dokumentów, który wciąż wygląda jak ty\n• Pakiet zdjęć do CV: cztery portrety studyjne za jednym razem\n• Odrestauruj stare zdjęcie: rysy znikają, kolor wraca\n• Figurka 3D: ty jako figurka kolekcjonerska, razem z pudełkiem\n• Naturalny retusz: lepsza skóra i światło, bez efektu filtra\n• Białe tło: czyste wycięcia do ogłoszeń i profili\n• Styl anime, okładka magazynu, nowa stylizacja, nowa fryzura i zdjęcie z podróży\n• Królewski portret zwierzaka: twój pupil jako szlachcic z renesansu\n• Strój na Halloween: przerażający kostium i makijaż\n\nPOTEM DOPRACUJ TO NA CZACIE\nPoproś o zmiany własnymi słowami, a każda wiadomość edytuje twoje ostatnie zdjęcie: „zrób ten żakiet granatowy”, „postaw ją w jasnym biurze”. Albo opisz zupełnie nowe zdjęcie od zera.\n\nUDOSTĘPNIJ PRZED I PO\nZapisz efekty w Zdjęciach albo udostępnij zestawienie przed i po jednym dotknięciem.\n\nPŁAĆ ZA ZDJĘCIE, NIE ZA MIESIĄC\nKredyty nigdy nie wygasają. Kup pakiet raz i twórz, kiedy chcesz; większe pakiety dają nawet do 68% kredytów bonusowych. Bez tygodniowej pułapki, bez odnowień, bez niespodziewanych opłat.\n\nWYBIERZ SILNIK\n• Nano Banana 2: szybki i przystępny cenowo\n• Nano Banana Pro: ostrzejsze detale i tekst\n• GPT Image, z kontrolą rozmiaru, jakości, formatu i przezroczystego tła\n\nPRYWATNE DOMYŚLNIE\nTwoje zdjęcia należą tylko do ciebie: nie ma publicznego kanału. Twoje polecenia i zdjęcia są wysyłane do Google Gemini i OpenAI w celu wygenerowania obrazów; zatwierdzasz to przed pierwszą kreacją i możesz cofnąć zgodę w dowolnym momencie w Ustawieniach. Niektóre prośby mogą zostać odrzucone przez moderację treści i nigdy nie kosztują cię kredytów.\n\nZacznij anonimowo, a potem zaloguj się przez Apple, Google lub GitHub, aby synchronizować zdjęcia między iPhone'em a iPadem.\n\nGoogle, Gemini i Nano Banana są znakami towarowymi Google LLC. Ta aplikacja nie jest popierana ani powiązana z Google czy OpenAI.",
+  "whatsNew": "• Edycje jednym dotknięciem: wybierz zdjęcie i dotknij Zdjęcie do CV, Pakiet zdjęć do CV, Odrestauruj stare zdjęcie, Figurka 3D, Naturalny retusz, Białe tło, Styl anime, Okładka magazynu, Nowa stylizacja, Nowa fryzura, Zdjęcie z podróży, Królewski portret zwierzaka lub Strój na Halloween.\n• Prawdziwa edycja na czacie: po każdym wyniku twoja kolejna wiadomość edytuje to samo zdjęcie. Dotknij X na miniaturze, aby zacząć od nowa.\n• Nano Banana Pro dołącza do Nano Banana 2 i GPT Image, dając ostrzejsze detale i tekst.\n• Nowi użytkownicy dostają teraz 3 darmowe zdjęcia zamiast 1.\n• Przyciski Zapisz, Udostępnij i Przed i po pod każdym wynikiem.\n• Wybór zdjęcia nie prosi już o dostęp do całej biblioteki, a o powiadomienia prosimy dopiero po stworzeniu zdjęcia.\n• Zdjęcia wysyłają się mniejsze i szybciej, a odrzucona przez model prośba mówi o tym wyraźnie i nic nie kosztuje.\n• PixiePocket mówi teraz po polsku.",
+  "screenshots": [
+    {
+      "file": "01_headshot",
+      "panel": "beforeafter",
+      "before": "demo_selfie",
+      "after": "demo_headshot",
+      "tag": "Pro headshot",
+      "headline": "Z selfie zrobisz zdjęcie do CV",
+      "subhead": "Jedno dotknięcie, Nano Banana"
+    },
+    {
+      "file": "02_presets",
+      "screen": "home",
+      "headline": "Jednym dotknięciem zmień zdjęcie",
+      "subhead": "Zdjęcia do CV, renowacje, figurki"
+    },
+    {
+      "file": "03_restore",
+      "panel": "beforeafter",
+      "before": "demo_oldphoto",
+      "after": "demo_restored",
+      "tag": "Restore old photo",
+      "headline": "Stare zdjęcia wracają do życia",
+      "subhead": "Rysy znikają, kolor wraca"
+    },
+    {
+      "file": "04_figurine",
+      "panel": "beforeafter",
+      "before": "demo_man",
+      "after": "demo_figurine",
+      "tag": "3D figurine",
+      "headline": "Zostań figurką 3D",
+      "subhead": "Wiralowy wygląd, jednym dotknięciem"
+    },
+    {
+      "file": "05_refine",
+      "screen": "refine",
+      "headline": "Potem dopracuj to na czacie",
+      "subhead": "Każda wiadomość edytuje zdjęcie"
+    },
+    {
+      "file": "06_pack",
+      "screen": "pack",
+      "headline": "Cztery zdjęcia do CV naraz",
+      "subhead": "Wybierz swoje ulubione do LinkedIn"
+    },
+    {
+      "file": "07_pet",
+      "panel": "beforeafter",
+      "before": "demo_dog",
+      "after": "demo_royal_dog",
+      "tag": "Royal pet portrait",
+      "headline": "Królewski portret zwierzaka",
+      "subhead": "Albo cokolwiek innego, co opiszesz"
+    },
+    {
+      "file": "08_store",
+      "screen": "store",
+      "headline": "Bez subskrypcji. Nigdy.",
+      "subhead": "3 darmowe zdjęcia, kredyty bez terminu ważności"
+    }
+  ],
+  "supportUrl": "https://x.com/guitaripod",
+  "labels": {
+    "before": "Przed",
+    "after": "Po"
+  }
+}

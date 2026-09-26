@@ -1,35 +1,75 @@
 {
-  "name": "PixiePocket: AI绘画生成器",
-  "subtitle": "Nano Banana 聊天修图与艺术创作",
-  "keywords": "gemini,gpt,文生图,头像,壁纸,表情包,抠图,透明背景,二次元,动漫,插画,海报,照片,画图,换背景,写真,logo,免费,改图,批量,高清,作图,封面,手绘,涂鸦,美化,p图,漫画,贴纸",
-  "promotionalText": "没有订阅。额度永不过期——买一次，想用的时候再用，没用完的一直留着。",
-  "description": "专业水准的AI图片，用聊天就能做出来。用多少付多少，永远不做订阅。\n\n每位新用户都有25个免费额度，打开应用就能立刻试试 Nano Banana 生成图片，也不用注册账号。\n\n【边聊边改，直到满意】\n把想要的画面说出来，一条一条消息慢慢调整，图片就会越来越接近脑海里的样子。也可以直接发一张照片，用说话的方式修改：换发型、换背景、整体换个风格。\n\n【由 Nano Banana + GPT Image 驱动】\nPixiePocket 使用谷歌的 Nano Banana（Gemini）和 OpenAI 的 GPT 图像模型生成——两个引擎，一个对话。\n\n【按张付费，不按月付费】\n额度永不过期。买一次，想做的时候随时做；额度包越大赠送越多，最高多送 68%。没有周订阅陷阱，没有自动续费，也不会有莫名其妙的扣款。\n\n【像专业人士一样控制输出】\n• 一次请求最多批量生成 10 张\n• 低 / 中 / 高 / 自动 四档质量\n• 尺寸自定，从正方形到宽屏\n• 支持 PNG、JPEG、WebP，可输出透明背景\n• 生成前先看到这次消耗多少额度\n\n【换台设备也能接着做】\n可以先匿名使用，之后用 Apple、Google 或 GitHub 登录，图片便会在多台设备之间同步。\n\n【默认私密】\n你的图片只属于你自己——没有公开信息流，你做的任何东西都不会展示给其他用户。你输入的提示词和上传的照片，会发送给 Google Gemini 和 OpenAI 用于生成图片；首次创作前应用内会请你确认同意，之后随时可以在设置中撤回。部分提示词可能会被内容审核过滤。\n\nGoogle、Gemini 和 Nano Banana 是 Google LLC 的商标。本应用未获 Google 或 OpenAI 认可，也与其没有关联。",
-  "whatsNew": "• 公开图库已下线。你的图片只属于你自己——没有信息流，你做的任何东西都不会展示给别人，也无需任何设置来退出。\n• 全新欢迎体验：新建对话时会出现一组可一键试用的起手提示语，不再是一片空白。\n• 修复同一次生成后评分请求弹出两次的问题。\n• 截图与商店页面已全面支持九种语言。",
+  "name": "PixiePocket: AI证件照修图",
+  "subtitle": "Nano Banana 2 手办修图",
+  "keywords": "头像,修复老照片,上色,精修,自拍,人像,发型,动漫,抠图,宠物,穿搭,复古,旅拍,换装",
+  "promotionalText": "新功能：一键编辑。自拍秒变证件照，老照片修复如新，还能变成3D手办。免费3张起，永不订阅。",
+  "description": "一键把任何照片变成惊艳作品：专业证件照、修复如新的老照片、3D手办、动漫风人像、宠物的皇家肖像。由谷歌 Nano Banana 2 和 Nano Banana Pro 强力驱动。永不订阅。\n\n新用户免费送3张。无需注册即可使用。\n\n【一键预设】\n• 证件照：适合领英和简历的专业影楼风格，又依然是你自己\n• 证件照套装：一次生成四张不同的影楼风证件照\n• 修复老照片：划痕消失，色彩重现\n• 3D手办：把自己变成收藏级手办，连包装盒都不放过\n• 自然精修：肤色光影更好看，却看不出滤镜痕迹\n• 白底抠图：适合闲鱼挂图和各类资料照的干净背景\n• 动漫风、杂志封面、新穿搭、新发型、旅拍大片，应有尽有\n• 宠物皇家肖像：让你家毛孩子秒变文艺复兴贵族\n• 万圣节装扮：略带惊悚的服装和妆容\n\n【然后用聊天继续调整】\n用大白话提要求，每条消息都会在你最新的图上修改：“把西装外套换成藏青色”、“把她放到一间明亮的办公室里”。也可以从零开始，描述一张全新的图。\n\n【分享前后对比】\n把结果存进相册，或者一键分享前后对比图。\n\n【按张计费，不按月扣款】\n额度永不过期。买一次套餐，想用的时候随时用；套餐越大，最高可送68%的赠送额度。没有周订阅套路，没有自动续费，也不会有莫名扣款。\n\n【自由选择引擎】\n• Nano Banana 2：快速又实惠\n• Nano Banana Pro：细节和文字更锐利清晰\n• GPT Image：可调节尺寸、质量、格式，支持透明背景\n\n【默认保护隐私】\n你的图片只属于你自己——没有公开信息流。你输入的提示词和上传的照片，会发送给 Google Gemini 和 OpenAI 用于生成图片；首次创作前你会在应用内确认同意，之后随时可以在设置里撤回。部分请求可能会被内容审核拒绝，这种情况完全不扣除额度。\n\n可以先匿名使用，之后用 Apple、Google 或 GitHub 登录，让图片在 iPhone 和 iPad 之间保持同步。\n\nGoogle、Gemini 和 Nano Banana 是 Google LLC 的商标。本应用未获 Google 或 OpenAI 认可，也与其没有关联。",
+  "whatsNew": "• 一键预设：选好照片，点一下证件照、证件照套装、修复老照片、3D手办、自然精修、白底抠图、动漫风、杂志封面、新穿搭、新发型、旅拍、宠物皇家肖像或万圣节装扮即可。\n• 真正的聊天式编辑：每次生成后，你的下一条消息都会编辑同一张图。点缩略图上的X即可重新开始。\n• Nano Banana Pro 加入 Nano Banana 2 和 GPT Image 阵容，细节和文字更锐利。\n• 新用户现在可获得3张免费图片，而不是1张。\n• 每个结果下方新增保存、分享和前后对比按钮。\n• 选择照片不再需要访问整个相册，通知权限也只会在你生成第一张图后才请求。\n• 照片上传更小更快，模型拒绝的请求现在会明确提示，且不扣除额度。\n• PixiePocket 现已支持波兰语。",
   "screenshots": [
     {
-      "file": "01_create",
-      "headline": "边聊边出图",
-      "subhead": "没有订阅，永远没有",
-      "screen": "create"
+      "file": "01_headshot",
+      "panel": "beforeafter",
+      "before": "demo_selfie",
+      "after": "demo_headshot",
+      "tag": "Pro headshot",
+      "headline": "自拍秒变专业证件照",
+      "subhead": "一键搞定，Nano Banana驱动"
     },
     {
-      "file": "02_edit",
-      "headline": "说话就能改图",
-      "subhead": "换发型、换背景、随意换风格",
-      "screen": "edit"
+      "file": "02_presets",
+      "screen": "home",
+      "headline": "一键搞定各种修图",
+      "subhead": "证件照、老照片修复、手办"
     },
     {
-      "file": "03_store",
-      "headline": "按张付费，不按月",
-      "subhead": "额度不过期，先送 25 个",
-      "screen": "store"
+      "file": "03_restore",
+      "panel": "beforeafter",
+      "before": "demo_oldphoto",
+      "after": "demo_restored",
+      "tag": "Restore old photo",
+      "headline": "老照片瞬间焕然一新",
+      "subhead": "划痕消失，色彩重现"
     },
     {
-      "file": "04_gallery",
-      "headline": "Nano Banana + GPT image",
-      "subhead": "两大引擎，一个对话，iPhone/iPad私密同步",
-      "screen": "gallery"
+      "file": "04_figurine",
+      "panel": "beforeafter",
+      "before": "demo_man",
+      "after": "demo_figurine",
+      "tag": "3D figurine",
+      "headline": "变身3D手办",
+      "subhead": "全网都在玩的一键玩法"
+    },
+    {
+      "file": "05_refine",
+      "screen": "refine",
+      "headline": "然后用聊天继续调整",
+      "subhead": "每条消息都会修改最新的图"
+    },
+    {
+      "file": "06_pack",
+      "screen": "pack",
+      "headline": "一次生成四张证件照",
+      "subhead": "挑一张你最满意的发领英"
+    },
+    {
+      "file": "07_pet",
+      "panel": "beforeafter",
+      "before": "demo_dog",
+      "after": "demo_royal_dog",
+      "tag": "Royal pet portrait",
+      "headline": "给宠物来张皇家画像",
+      "subhead": "或者任何你能描述的画面"
+    },
+    {
+      "file": "08_store",
+      "screen": "store",
+      "headline": "没有订阅，永远没有",
+      "subhead": "免费送3张，额度永不过期"
     }
   ],
-  "supportUrl": "https://x.com/guitaripod"
+  "supportUrl": "https://x.com/guitaripod",
+  "labels": {
+    "before": "之前",
+    "after": "之后"
+  }
 }
