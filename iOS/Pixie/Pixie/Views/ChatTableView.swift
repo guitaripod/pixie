@@ -183,6 +183,11 @@ extension ChatTableView: AssistantMessageCellDelegate {
               let message = dataSource.itemIdentifier(for: indexPath) else { return }
         delegate?.chatTableView(self, didSelectImageForEdit: index, in: message)
     }
+    func assistantMessageCell(_ cell: AssistantMessageCell, didRequest action: ResultAction, from sourceView: UIView) {
+        guard let indexPath = tableView.indexPath(for: cell),
+              let message = dataSource.itemIdentifier(for: indexPath) else { return }
+        delegate?.chatTableView(self, didRequest: action, for: message, from: sourceView)
+    }
 }
 
 
@@ -191,6 +196,13 @@ protocol ChatTableViewDelegate: AnyObject {
     func chatTableView(_ chatTableView: ChatTableView, didTapImageAt index: Int, in message: ChatMessage)
     func chatTableView(_ chatTableView: ChatTableView, didLongPressImageAt index: Int, in message: ChatMessage)
     func chatTableView(_ chatTableView: ChatTableView, didSelectImageForEdit index: Int, in message: ChatMessage)
+    func chatTableView(_ chatTableView: ChatTableView, didRequest action: ResultAction, for message: ChatMessage, from sourceView: UIView)
+}
+
+enum ResultAction {
+    case save
+    case share
+    case beforeAfter
 }
 
 
@@ -406,35 +418,8 @@ class AssistantMessageCell: UITableViewCell {
         imageViews.removeAll()
         if let images = message.images, !images.isEmpty {
             bubbleView.backgroundColor = .clear
-            let imageContainer = UIStackView()
-            imageContainer.axis = .horizontal
-            imageContainer.spacing = 8
-            imageContainer.distribution = .fill
-            imageContainer.alignment = .center
-            for (index, image) in images.enumerated() {
-                let imageView = UIImageView()
-                imageView.contentMode = .scaleAspectFit
-                imageView.clipsToBounds = true
-                imageView.layer.cornerRadius = 12
-                imageView.backgroundColor = .tertiarySystemBackground
-                imageView.isUserInteractionEnabled = true
-                imageView.tag = index
-                let widthConstraint = imageView.widthAnchor.constraint(equalToConstant: 240)
-                widthConstraint.isActive = true
-                let aspectRatio = image.size.height / image.size.width
-                let heightConstraint = imageView.heightAnchor.constraint(equalTo: imageView.widthAnchor, multiplier: aspectRatio)
-                heightConstraint.isActive = true
-                let tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageTapped(_:)))
-                imageView.addGestureRecognizer(tapGesture)
-                if #available(iOS 13.0, *) {
-                    let interaction = UIContextMenuInteraction(delegate: self)
-                    imageView.addInteraction(interaction)
-                }
-                imageView.image = image
-                imageContainer.addArrangedSubview(imageView)
-                imageViews.append(imageView)
-            }
-            contentStackView.addArrangedSubview(imageContainer)
+            contentStackView.addArrangedSubview(makeImageGrid(images))
+            contentStackView.addArrangedSubview(makeActionRow(canCompare: message.sourceImage != nil))
         } else if let text = message.content, !text.isEmpty {
             bubbleView.backgroundColor = .secondarySystemBackground
             let label = UILabel()
@@ -445,6 +430,86 @@ class AssistantMessageCell: UITableViewCell {
             contentStackView.addArrangedSubview(label)
         }
     }
+    /// One result fills the bubble; a pack of results sits in a two-column grid so four
+    /// headshots fit the screen instead of overflowing it.
+    private func makeImageGrid(_ images: [UIImage]) -> UIView {
+        let columns = images.count == 1 ? 1 : 2
+        let totalWidth: CGFloat = 260
+        let spacing: CGFloat = 8
+        let cellWidth = (totalWidth - spacing * CGFloat(columns - 1)) / CGFloat(columns)
+        let grid = UIStackView()
+        grid.axis = .vertical
+        grid.spacing = spacing
+        grid.alignment = .leading
+        var row: UIStackView?
+        for (index, image) in images.enumerated() {
+            if index % columns == 0 {
+                let newRow = UIStackView()
+                newRow.axis = .horizontal
+                newRow.spacing = spacing
+                newRow.alignment = .top
+                grid.addArrangedSubview(newRow)
+                row = newRow
+            }
+            let imageView = UIImageView()
+            imageView.contentMode = .scaleAspectFit
+            imageView.clipsToBounds = true
+            imageView.layer.cornerRadius = 12
+            imageView.backgroundColor = .tertiarySystemBackground
+            imageView.isUserInteractionEnabled = true
+            imageView.tag = index
+            imageView.image = image
+            let aspectRatio = image.size.width > 0 ? image.size.height / image.size.width : 1
+            NSLayoutConstraint.activate([
+                imageView.widthAnchor.constraint(equalToConstant: cellWidth),
+                imageView.heightAnchor.constraint(equalTo: imageView.widthAnchor, multiplier: aspectRatio)
+            ])
+            imageView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(imageTapped(_:))))
+            imageView.addInteraction(UIContextMenuInteraction(delegate: self))
+            row?.addArrangedSubview(imageView)
+            imageViews.append(imageView)
+        }
+        return grid
+    }
+
+    private func makeActionRow(canCompare: Bool) -> UIView {
+        let row = UIStackView()
+        row.axis = .horizontal
+        row.spacing = 8
+        row.addArrangedSubview(makeActionButton(title: nil, accessibilityLabel: String(localized: "Save"), symbol: "square.and.arrow.down", action: .save))
+        row.addArrangedSubview(makeActionButton(title: nil, accessibilityLabel: String(localized: "Share"), symbol: "square.and.arrow.up", action: .share))
+        if canCompare {
+            let title = String(localized: "Before & after")
+            row.addArrangedSubview(makeActionButton(title: title, accessibilityLabel: title, symbol: "rectangle.split.2x1", action: .beforeAfter))
+        }
+        return row
+    }
+
+    private func makeActionButton(title: String?, accessibilityLabel: String, symbol: String, action: ResultAction) -> UIButton {
+        var config = UIButton.Configuration.tinted()
+        config.title = title
+        config.image = UIImage(systemName: symbol)
+        config.imagePadding = 5
+        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 12, weight: .semibold)
+        config.cornerStyle = .capsule
+        config.buttonSize = .small
+        config.baseForegroundColor = .systemPurple
+        config.baseBackgroundColor = .systemPurple
+        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { attributes in
+            var attributes = attributes
+            attributes.font = .systemFont(ofSize: 13, weight: .semibold)
+            return attributes
+        }
+        let button = UIButton(configuration: config)
+        button.accessibilityLabel = accessibilityLabel
+        button.addAction(UIAction { [weak self, weak button] _ in
+            guard let self, let button else { return }
+            HapticManager.shared.impact(.click)
+            self.delegate?.assistantMessageCell(self, didRequest: action, from: button)
+        }, for: .touchUpInside)
+        return button
+    }
+
     @objc private func imageTapped(_ gesture: UITapGestureRecognizer) {
         guard let imageView = gesture.view else { return }
         delegate?.assistantMessageCell(self, didTapImageAt: imageView.tag)
@@ -477,14 +542,12 @@ extension AssistantMessageCell: UIContextMenuInteractionDelegate {
             return previewController
         }) { _ in
             let save = UIAction(title: String(localized: "Save to Photos"), image: UIImage(systemName: "square.and.arrow.down")) { _ in
-                PhotoSavingService.shared.saveImage(image) { result in
-                    DispatchQueue.main.async {
-                        switch result {
-                        case .success:
-                            HapticManager.shared.impact(.success)
-                        case .failure:
-                            HapticManager.shared.impact(.error)
-                        }
+                PhotoSavingService.shared.saveToLibrary([image]) { result in
+                    switch result {
+                    case .success:
+                        HapticManager.shared.impact(.success)
+                    case .failure:
+                        HapticManager.shared.impact(.error)
                     }
                 }
             }
@@ -564,4 +627,5 @@ protocol AssistantMessageCellDelegate: AnyObject {
     func assistantMessageCell(_ cell: AssistantMessageCell, didTapImageAt index: Int)
     func assistantMessageCell(_ cell: AssistantMessageCell, didLongPressImageAt index: Int)
     func assistantMessageCell(_ cell: AssistantMessageCell, didSelectImageForEdit index: Int)
+    func assistantMessageCell(_ cell: AssistantMessageCell, didRequest action: ResultAction, from sourceView: UIView)
 }

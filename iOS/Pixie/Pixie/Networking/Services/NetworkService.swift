@@ -12,6 +12,7 @@ enum NetworkError: LocalizedError {
     case tooManyRequests
     case noConnection
     case invalidResponse
+    case modelDeclined
     var errorDescription: String? {
         switch self {
         case .invalidURL:
@@ -36,6 +37,8 @@ enum NetworkError: LocalizedError {
             return String(localized: "No internet connection")
         case .invalidResponse:
             return String(localized: "Invalid response from server")
+        case .modelDeclined:
+            return String(localized: "The model declined to make this image.")
         }
     }
 }
@@ -148,8 +151,11 @@ class NetworkService: NetworkServiceProtocol {
         }
         guard 200...299 ~= httpResponse.statusCode else {
             if let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
-                if errorResponse.error.code == "insufficient_credits" {
-                    throw NetworkError.insufficientCredits
+                switch errorResponse.error.code {
+                case "insufficient_credits": throw NetworkError.insufficientCredits
+                case "no_image": throw NetworkError.modelDeclined
+                case "moderation_blocked": throw NetworkError.forbidden
+                default: break
                 }
                 throw NetworkError.serverError(errorResponse.error.message)
             }

@@ -8,6 +8,7 @@ struct ChatMessage: Hashable {
     let timestamp: Date
     let metadata: MessageMetadata?
     let editingImage: UIImage?
+    let sourceImage: UIImage?
     
     struct MessageMetadata {
         let model: String?
@@ -41,7 +42,8 @@ struct ChatMessage: Hashable {
          isUser: Bool,
          timestamp: Date = Date(),
          metadata: MessageMetadata? = nil,
-         editingImage: UIImage? = nil) {
+         editingImage: UIImage? = nil,
+         sourceImage: UIImage? = nil) {
         self.id = id
         self.text = text
         self.images = images
@@ -49,8 +51,9 @@ struct ChatMessage: Hashable {
         self.timestamp = timestamp
         self.metadata = metadata
         self.editingImage = editingImage
+        self.sourceImage = sourceImage
     }
-    init(role: Role, content: String? = nil, images: [UIImage]? = nil) {
+    init(role: Role, content: String? = nil, images: [UIImage]? = nil, sourceImage: UIImage? = nil) {
         self.id = UUID().uuidString
         self.text = content
         self.images = images
@@ -58,6 +61,7 @@ struct ChatMessage: Hashable {
         self.timestamp = Date()
         self.metadata = nil
         self.editingImage = nil
+        self.sourceImage = sourceImage
     }
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)

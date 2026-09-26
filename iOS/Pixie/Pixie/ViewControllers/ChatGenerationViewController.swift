@@ -38,11 +38,17 @@ class ChatGenerationViewController: UIViewController {
     }()
     private lazy var balanceChipItem = UIBarButtonItem(customView: balanceChipButton)
     private var notificationObserver: NSObjectProtocol?
+    private var presetLinkObserver: NSObjectProtocol?
+    private var pendingPreset: EditPreset?
     private var layoutManager = AdaptiveLayoutManager(traitCollection: UITraitCollection.current)
     private var leadingConstraint: NSLayoutConstraint!
     private var trailingConstraint: NSLayoutConstraint!
     #if DEBUG
-    enum DemoScenario { case edit, create, empty }
+    enum DemoScenario {
+        case edit, create, empty
+        case home(UIImage)
+        case conversation([ChatMessage])
+    }
     var demoMode: DemoScenario?
     #endif
     override func viewDidLoad() {
@@ -78,6 +84,21 @@ class ChatGenerationViewController: UIViewController {
         if DemoMode.isActive { return }
         #endif
         presentOnboardingIfNeeded()
+        consumePresetLink()
+    }
+
+    /// Starts a preset that arrived through a `pixie://preset/…` link once nothing is
+    /// covering this screen; onboarding, when showing, finishes first. A link always asks
+    /// for a fresh photo rather than spending credits on whatever image was last held.
+    private func consumePresetLink() {
+        guard viewIfLoaded?.window != nil, presentedViewController == nil, !viewModel.isGenerating,
+              let preset = PresetLink.take() else { return }
+        if case .edit = toolbarMode {
+            switchToGenerateMode()
+        }
+        transitionToState(.suggestions, animated: false)
+        pendingPreset = preset
+        presentPhotoPicker()
     }
 
     private func presentOnboardingIfNeeded() {
@@ -95,6 +116,12 @@ class ChatGenerationViewController: UIViewController {
     private var demoApplied = false
 
     private func applyDemoScenario(_ scenario: DemoScenario) {
+        if case let .home(photo) = scenario {
+            toolbarMode = .edit(selectedImage: SelectedImage(image: photo, url: nil, displayName: nil))
+            inputBar.setEditMode(true, selectedImage: photo)
+            suggestionsView.setEditMode(true, photo: photo)
+            return
+        }
         suggestionsView.alpha = 0
         chatView.alpha = 1
         currentState = .chat
@@ -104,16 +131,25 @@ class ChatGenerationViewController: UIViewController {
             messages = DemoChatBuilder.editConversation()
         case .create:
             messages = DemoChatBuilder.createConversation()
-        case .empty:
+        case .empty, .home:
             messages = []
+        case .conversation(let conversation):
+            messages = conversation
         }
         chatView.setMessages(messages, animated: false)
+        if let latest = messages.last(where: { $0.role == .assistant })?.images?.first {
+            toolbarMode = .edit(selectedImage: SelectedImage(image: latest, url: nil, displayName: nil))
+            inputBar.setEditMode(true, selectedImage: latest)
+        }
     }
     #endif
     
     deinit {
         NotificationCenter.default.removeObserver(self)
         if let observer = notificationObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        if let observer = presetLinkObserver {
             NotificationCenter.default.removeObserver(observer)
         }
     }
@@ -249,7 +285,7 @@ class ChatGenerationViewController: UIViewController {
     }
 
     private func estimatedCreditCost() -> Int {
-        if inputBar.selectedModel == .gemini { return CreditStoreViewController.nanoBananaCreditCost }
+        if let fixedCost = inputBar.selectedModel.fixedCost { return fixedCost }
         switch inputBar.selectedQuality.value {
         case "low": return 4
         case "medium": return 16
@@ -269,10 +305,17 @@ class ChatGenerationViewController: UIViewController {
             _ = self.inputBar.becomeFirstResponder()
         }
         suggestionsView.onEditImageTapped = { [weak self] in
+            self?.pendingPreset = nil
             self?.presentPhotoPicker()
         }
         suggestionsView.onImageTapped = { [weak self] image in
-            self?.presentImagePreviewForEdit(image)
+            self?.photoPicked(image)
+        }
+        suggestionsView.onPresetSelected = { [weak self] preset in
+            self?.presetTapped(preset)
+        }
+        inputBar.onClearEditImage = { [weak self] in
+            self?.switchToGenerateMode()
         }
         suggestionsView.onSelectionChanged = { [weak self] in
             self?.inputBar.updateIndicators()
@@ -317,6 +360,7 @@ class ChatGenerationViewController: UIViewController {
                 self?.updateNavigationForGenerating(isGenerating)
                 if !isGenerating {
                     Task { await self?.creditsViewModel.loadBalance() }
+                    self?.consumePresetLink()
                 }
             }
             .store(in: &cancellables)
@@ -334,9 +378,32 @@ class ChatGenerationViewController: UIViewController {
             .sink { progress in
             }
             .store(in: &cancellables)
+        viewModel.generationSucceededPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
+                self?.continueEditingLatestResult()
+            }
+            .store(in: &cancellables)
+    }
+
+    /// After every result the input bar holds that image, so the next message refines it
+    /// the way a chat promises; the ✕ on its thumbnail goes back to making new images.
+    private func continueEditingLatestResult() {
+        guard let latest = viewModel.latestResultImage else { return }
+        toolbarMode = .edit(selectedImage: SelectedImage(image: latest, url: nil, displayName: nil))
+        inputBar.setEditMode(true, selectedImage: latest)
+        inputBar.clear()
+        suggestionsView.setEditMode(true, photo: latest)
     }
     
     private func setupNotificationObserver() {
+        presetLinkObserver = NotificationCenter.default.addObserver(
+            forName: PresetLink.didArrive,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.consumePresetLink()
+        }
         notificationObserver = NotificationCenter.default.addObserver(
             forName: .openChatFromNotification,
             object: nil,
@@ -401,17 +468,10 @@ class ChatGenerationViewController: UIViewController {
             return
         }
         if prompt == "EDIT_MODE" {
-            print("🖋️ ChatGenerationVC: Edit mode detected")
             handleEditImage()
             return
         }
-        if let balance = creditsViewModel.balance?.balance {
-            let estimated = estimatedCreditCost()
-            if balance < estimated {
-                CreditStoreViewController.present(from: self, shortfall: estimated - balance)
-                return
-            }
-        }
+        guard hasCredits(for: estimatedCreditCost()) else { return }
         if currentState == .suggestions {
             print("🖋️ ChatGenerationVC: Transitioning from suggestions to chat")
             suggestionsView.alpha = 0
@@ -440,6 +500,58 @@ class ChatGenerationViewController: UIViewController {
         print("🖋️ ChatGenerationVC: Calling viewModel.generateImages")
         viewModel.generateImages(with: currentOptions)
     }
+    /// Opens the store instead of sending a request the balance cannot cover; an unknown
+    /// balance lets the request through and the server's 402 decides.
+    private func hasCredits(for cost: Int) -> Bool {
+        guard let balance = creditsViewModel.balance?.balance, balance < cost else { return true }
+        CreditStoreViewController.present(from: self, shortfall: cost - balance)
+        return false
+    }
+
+    private func presetTapped(_ preset: EditPreset) {
+        haptics.impact(.click)
+        if case let .edit(selected) = toolbarMode {
+            runPreset(preset, on: selected.image)
+        } else {
+            pendingPreset = preset
+            presentPhotoPicker()
+        }
+    }
+
+    private func runPreset(_ preset: EditPreset, on image: UIImage) {
+        if AIConsentViewController.presentIfNeeded(from: self, onContinue: { [weak self] in
+            self?.runPreset(preset, on: image)
+        }) {
+            return
+        }
+        let model = inputBar.selectedModel.presetModel
+        let cost = (model.fixedCost ?? CreditStoreViewController.nanoBananaCreditCost) * preset.imageCount
+        guard hasCredits(for: cost) else { return }
+        var options = EditOptions()
+        options.prompt = preset.prompt
+        options.model = model.value
+        options.variations = preset.imageCount
+        AppLogger.info("Preset \(preset.id) on \(model.value)", category: .generation)
+        startEdit(of: image, options: options, displayText: preset.title)
+    }
+
+    private func startEdit(of image: UIImage, options: EditOptions, displayText: String?) {
+        if currentState == .suggestions {
+            suggestionsView.alpha = 0
+        }
+        transitionToState(.chat, animated: true)
+        viewModel.editImage(image: image, options: options, displayText: displayText)
+    }
+
+    /// A picked photo goes straight into edit mode, or straight into the preset that asked
+    /// for it; there is no confirmation screen in between.
+    private func photoPicked(_ image: UIImage) {
+        switchToEditMode(with: image, url: nil)
+        guard let preset = pendingPreset else { return }
+        pendingPreset = nil
+        runPreset(preset, on: image)
+    }
+
     private func handleQuickAction(_ action: String) {
         switch action {
         case "Remove background":
@@ -606,49 +718,23 @@ class ChatGenerationViewController: UIViewController {
             navigationItem.rightBarButtonItems = [settingsButton, balanceChipItem, galleryButton]
         }
     }
+    /// The system photo picker runs out of process and needs no library permission, so
+    /// picking a photo never starts with a permission prompt.
     private func presentPhotoPicker() {
-        PHPhotoLibrary.requestAuthorization(for: .readWrite) { [weak self] status in
-            DispatchQueue.main.async {
-                switch status {
-                case .authorized, .limited:
-                    self?.suggestionsView.refreshRecentImages()
-                    var config = PHPickerConfiguration()
-                    config.selectionLimit = 1
-                    config.filter = .images
-                    let picker = PHPickerViewController(configuration: config)
-                    picker.delegate = self
-                    self?.present(picker, animated: true)
-                case .denied, .restricted:
-                    self?.showPhotoPermissionAlert()
-                case .notDetermined:
-                    break
-                @unknown default:
-                    break
-                }
-            }
-        }
+        var config = PHPickerConfiguration()
+        config.selectionLimit = 1
+        config.filter = .images
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = self
+        present(picker, animated: true)
     }
-    
-    private func showPhotoPermissionAlert() {
-        let alert = UIAlertController(
-            title: String(localized: "Photo Access Required"),
-            message: String(localized: "Please allow access to your photos to select images for editing."),
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
-        alert.addAction(UIAlertAction(title: String(localized: "Open Settings"), style: .default) { _ in
-            if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
-                UIApplication.shared.open(settingsURL)
-            }
-        })
-        present(alert, animated: true)
-    }
+
     private func switchToEditMode(with image: UIImage, url: URL?) {
         haptics.impact(.click)
         toolbarMode = .edit(selectedImage: SelectedImage(image: image, url: url, displayName: nil))
         inputBar.setEditMode(true, selectedImage: image)
         inputBar.clear()
-        suggestionsView.setEditMode(true)
+        suggestionsView.setEditMode(true, photo: image)
     }
     private func switchToGenerateMode() {
         haptics.impact(.click)
@@ -676,20 +762,9 @@ class ChatGenerationViewController: UIViewController {
     private func handleEditImage() {
         guard case let .edit(selectedImage) = toolbarMode else { return }
         let editOptions = inputBar.getEditOptions()
-        let message = ChatMessage(
-            id: UUID().uuidString,
-            text: String(localized: "Edit: \(editOptions.prompt)"),
-            images: [selectedImage.image],
-            isUser: true,
-            timestamp: Date(),
-            metadata: nil
-        )
-        if currentState == .suggestions {
-            suggestionsView.alpha = 0
-        }
-        transitionToState(.chat, animated: true)
-        chatView.addMessage(message)
-        viewModel.editImage(image: selectedImage.image, options: editOptions)
+        guard !editOptions.prompt.isEmpty, hasCredits(for: estimatedCreditCost()) else { return }
+        startEdit(of: selectedImage.image, options: editOptions, displayText: editOptions.prompt)
+        inputBar.clear()
     }
     @objc private func keyboardWillShow(_ notification: Notification) {
         guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
@@ -743,17 +818,20 @@ extension ChatGenerationViewController: UIGestureRecognizerDelegate {
 extension ChatGenerationViewController: PHPickerViewControllerDelegate {
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
         picker.dismiss(animated: true)
-        guard let result = results.first else { return }
+        guard let result = results.first else {
+            pendingPreset = nil
+            return
+        }
         result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
-            if let image = image as? UIImage {
-                DispatchQueue.main.async {
-                    self?.handleImageSelected(image)
+            DispatchQueue.main.async {
+                guard let image = image as? UIImage else {
+                    self?.pendingPreset = nil
+                    AppLogger.error("Picked photo could not be loaded: \(error?.localizedDescription ?? "no image")", category: .ui)
+                    return
                 }
+                self?.photoPicked(image)
             }
         }
-    }
-    private func handleImageSelected(_ image: UIImage) {
-        presentImagePreviewForEdit(image)
     }
 }
 
@@ -778,11 +856,31 @@ extension ChatGenerationViewController: ChatTableViewDelegate {
         let image = images[index]
         switchToEditMode(with: image, url: nil)
     }
+    func chatTableView(_ chatTableView: ChatTableView, didRequest action: ResultAction, for message: ChatMessage, from sourceView: UIView) {
+        guard let images = message.images, let first = images.first else { return }
+        switch action {
+        case .save:
+            PhotoSavingService.shared.saveToLibrary(images) { [weak self] result in
+                switch result {
+                case .success:
+                    self?.showBatchSaveSuccess(count: images.count)
+                case .failure(let error):
+                    self?.showBatchSaveError(error)
+                }
+            }
+        case .share:
+            ImageSharingService.shared.shareImages(images, from: self, sourceView: sourceView)
+        case .beforeAfter:
+            guard let source = message.sourceImage else { return }
+            let composite = BeforeAfterComposer.compose(before: source, after: first)
+            ImageSharingService.shared.shareImage(composite, from: self, sourceView: sourceView)
+        }
+    }
     private func showBatchSaveSuccess(count: Int) {
         haptics.impact(.success)
         let alert = UIAlertController(
             title: String(localized: "Saved!"),
-            message: String(localized: "\(count) image\(count > 1 ? "s" : "") saved to your Pixie album"),
+            message: String(localized: "Saved to Photos"),
             preferredStyle: .alert
         )
         present(alert, animated: true)

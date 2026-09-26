@@ -19,6 +19,7 @@ enum GenerationError: LocalizedError {
     case serverError(code: Int)
     case invalidImage
     case fileTooLarge
+    case modelDeclined
     case unknown(String)
     
     var errorDescription: String? {
@@ -39,6 +40,8 @@ enum GenerationError: LocalizedError {
             return String(localized: "Invalid image. Please select a different image.")
         case .fileTooLarge:
             return String(localized: "Image file too large. Maximum size is 50MB.")
+        case .modelDeclined:
+            return String(localized: "Nano Banana couldn't make this one. Try rewording it; its safety filter sometimes blocks photos of people. You weren't charged.")
         case .unknown(let message):
             return message
         }
@@ -190,8 +193,8 @@ class GenerationService {
             
             do {
                 let imageData = try await self.loadImageData(from: imageUri)
-                let imageBase64 = imageData.base64EncodedString()
-                let imageDataUrl = "data:image/png;base64,\(imageBase64)"
+                let mimeType = ImageUploadPreparer.mimeType(forFileExtension: imageUri.pathExtension)
+                let imageDataUrl = "data:\(mimeType);base64,\(imageData.base64EncodedString())"
                 
                 progressSubject.send(0.3)
                 delegate?.generationService(self, didUpdateProgress: 0.3)
@@ -323,6 +326,8 @@ class GenerationService {
                 return .serverError(code: code)
             case .noConnection:
                 return .networkError
+            case .modelDeclined:
+                return .modelDeclined
             case .invalidResponse:
                 return .unknown(String(localized: "Invalid response from server"))
             default:

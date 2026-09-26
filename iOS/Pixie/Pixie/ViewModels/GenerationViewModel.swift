@@ -30,9 +30,14 @@ class GenerationViewModel: ObservableObject {
     private var generationStartTime: Date?
     private var currentLiveActivity: Activity<ImageGenerationAttributes>?
     private let generationSucceededSubject = PassthroughSubject<Void, Never>()
+    private var pendingSourceImage: UIImage?
 
     var generationSucceededPublisher: AnyPublisher<Void, Never> {
         generationSucceededSubject.eraseToAnyPublisher()
+    }
+
+    var latestResultImage: UIImage? {
+        messages.last { $0.role == .assistant && !($0.images ?? []).isEmpty }?.images?.first
     }
 
     var messagesPublisher: AnyPublisher<[ChatMessage], Never> {
@@ -271,6 +276,8 @@ class GenerationViewModel: ObservableObject {
         isGenerating = true
         error = nil
         generationStartTime = Date()
+        pendingSourceImage = nil
+        Task { @MainActor in NotificationPermission.requestIfUseful() }
         
         let metadata = ChatMessage.MessageMetadata(
             model: options.model,
@@ -315,7 +322,7 @@ class GenerationViewModel: ObservableObject {
         activeBackgroundTaskId = taskId
     }
     
-    func editImage(image: UIImage, options: EditOptions) {
+    func editImage(image: UIImage, options: EditOptions, displayText: String? = nil) {
         guard let imageUri = saveTemporaryImage(image) else {
             error = .invalidImage
             return
@@ -323,6 +330,9 @@ class GenerationViewModel: ObservableObject {
         
         isGenerating = true
         error = nil
+        generationStartTime = Date()
+        pendingSourceImage = image
+        Task { @MainActor in NotificationPermission.requestIfUseful() }
         
         let metadata = ChatMessage.MessageMetadata(
             model: options.model,
@@ -339,7 +349,7 @@ class GenerationViewModel: ObservableObject {
         
         let userMessage = ChatMessage(
             id: UUID().uuidString,
-            text: String(localized: "Edit: \(options.prompt)"),
+            text: displayText ?? String(localized: "Edit: \(options.prompt)"),
             images: nil,
             isUser: true,
             timestamp: Date(),
@@ -358,8 +368,7 @@ class GenerationViewModel: ObservableObject {
         )
         messages.append(loadingMessage)
         
-        // Start Live Activity for edit
-        startLiveActivityForGeneration(prompt: options.prompt, isEdit: true, editImage: image)
+        startLiveActivityForGeneration(prompt: displayText ?? options.prompt, isEdit: true, editImage: image)
         
         let taskId = generationService.editImage(
             imageUri: imageUri,
@@ -447,8 +456,10 @@ class GenerationViewModel: ObservableObject {
             let assistantMessage = ChatMessage(
                 role: .assistant,
                 content: String(localized: "Here are your generated images:"),
-                images: images
+                images: images,
+                sourceImage: pendingSourceImage
             )
+            pendingSourceImage = nil
             messages.append(assistantMessage)
             hapticManager.impact(.success)
             generationSucceededSubject.send(())
@@ -514,16 +525,16 @@ class GenerationViewModel: ObservableObject {
     
     
     private func saveTemporaryImage(_ image: UIImage) -> URL? {
-        guard let data = image.pngData() else { return nil }
-        
-        let tempDirectory = FileManager.default.temporaryDirectory
-        let fileName = UUID().uuidString + ".png"
-        let fileURL = tempDirectory.appendingPathComponent(fileName)
-        
+        guard let prepared = ImageUploadPreparer.prepare(image) else { return nil }
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension(prepared.fileExtension)
         do {
-            try data.write(to: fileURL)
+            try prepared.data.write(to: fileURL)
+            AppLogger.info("Prepared edit upload: \(prepared.data.count / 1024) KB \(prepared.mimeType)", category: .generation)
             return fileURL
         } catch {
+            AppLogger.error("Could not stage the edit upload: \(error.localizedDescription)", category: .generation)
             return nil
         }
     }

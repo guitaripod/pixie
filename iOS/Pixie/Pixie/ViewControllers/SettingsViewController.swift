@@ -3,6 +3,8 @@ import MidgarKit
 import UIKit
 
 class SettingsViewController: UIViewController {
+    private static let selectableModels: [ImageModel] = [.gemini, .geminiPro, .openai]
+
     
     private let tableView = UITableView(frame: .zero, style: .grouped)
     private let authenticationManager = AuthenticationManager.shared
@@ -337,14 +339,10 @@ extension SettingsViewController: UITableViewDataSource {
         case .model:
             label.text = String(localized: "AI Model")
 
-            let segmentedControl = UISegmentedControl(items: ["Gemini", "OpenAI GPT"])
+            let segmentedControl = UISegmentedControl(items: Self.selectableModels.map(\.displayName))
             segmentedControl.translatesAutoresizingMaskIntoConstraints = false
-
-            switch configurationManager.defaultModel {
-            case "gemini-2.5-flash": segmentedControl.selectedSegmentIndex = 0
-            case "gpt-image-1": segmentedControl.selectedSegmentIndex = 1
-            default: segmentedControl.selectedSegmentIndex = 0
-            }
+            let defaultModel = ImageModel(rawValue: configurationManager.defaultModel) ?? .gemini
+            segmentedControl.selectedSegmentIndex = Self.selectableModels.firstIndex(of: defaultModel) ?? 0
 
             segmentedControl.addTarget(self, action: #selector(modelChanged(_:)), for: .valueChanged)
             containerView.addSubview(segmentedControl)
@@ -834,8 +832,9 @@ extension SettingsViewController: UITableViewDelegate {
 
     @objc private func modelChanged(_ sender: UISegmentedControl) {
         haptics.impact(.click)
-        let models = ["gemini-2.5-flash", "gpt-image-1"]
-        configurationManager.defaultModel = models[sender.selectedSegmentIndex]
+        let index = sender.selectedSegmentIndex
+        guard Self.selectableModels.indices.contains(index) else { return }
+        configurationManager.defaultModel = Self.selectableModels[index].value
         tableView.reloadData()
     }
 

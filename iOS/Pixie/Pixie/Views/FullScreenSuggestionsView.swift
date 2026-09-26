@@ -26,7 +26,12 @@ class FullScreenSuggestionsView: UIView {
     var onEditImageTapped: (() -> Void)?
     var onSelectionChanged: (() -> Void)?
     var onImageTapped: ((UIImage) -> Void)?
+    var onPresetSelected: ((EditPreset) -> Void)?
+    private static let addImageItem = "add_image"
+    private static let selectedPhotoItem = "selected_photo"
     private var recentImages: [UIImage] = []
+    private var selectedPhoto: UIImage?
+    private let presets = EditPreset.all()
     private var selectedCreativeCategory = 0
     private var selectedModifierCategory = 0
     private var isEditMode = false
@@ -66,7 +71,7 @@ class FullScreenSuggestionsView: UIView {
         QuickAction(icon: "theatermasks", title: String(localized: "Dramatic"), prompt: "Add dramatic mood with high contrast and intense emotions", color: UIColor(red: 0.64, green: 0.08, blue: 0.08, alpha: 1))
     ]
     private let creativePrompts = [
-        CreativePrompt(category: String(localized: "Fantasy"), emoji: "🐉", prompts: [
+        CreativePrompt(category: String(localized: "Fantasy"), symbol: "moon.stars.fill", prompts: [
             "Majestic dragon soaring through cloudy skies, fantasy art style",
             "Futuristic city with flying cars and neon lights at night",
             "Magical forest with glowing mushrooms and fairy lights",
@@ -74,7 +79,7 @@ class FullScreenSuggestionsView: UIView {
             "Steampunk airship floating above Victorian London",
             "Enchanted castle on floating island in the clouds"
         ], color: UIColor(red: 0.58, green: 0.2, blue: 0.92, alpha: 1)),
-        CreativePrompt(category: String(localized: "Nature"), emoji: "🌿", prompts: [
+        CreativePrompt(category: String(localized: "Nature"), symbol: "leaf.fill", prompts: [
             "Majestic eagle soaring over mountain peaks at sunrise",
             "Underwater coral reef teeming with colorful tropical fish",
             "Northern lights dancing over a frozen lake in winter",
@@ -82,7 +87,7 @@ class FullScreenSuggestionsView: UIView {
             "Butterfly garden with hundreds of colorful butterflies",
             "Thunderstorm over dramatic desert landscape"
         ], color: UIColor(red: 0.02, green: 0.59, blue: 0.41, alpha: 1)),
-        CreativePrompt(category: String(localized: "Abstract"), emoji: "🎨", prompts: [
+        CreativePrompt(category: String(localized: "Abstract"), symbol: "paintpalette.fill", prompts: [
             "Vibrant abstract painting with swirling colors and geometric shapes",
             "Minimalist composition with bold colors and clean lines",
             "Surreal dreamscape with floating objects and impossible geometry",
@@ -90,7 +95,7 @@ class FullScreenSuggestionsView: UIView {
             "Impressionist painting of a sunset over lavender fields",
             "Fractal patterns with infinite complexity and vivid colors"
         ], color: UIColor(red: 0.86, green: 0.15, blue: 0.15, alpha: 1)),
-        CreativePrompt(category: String(localized: "Urban"), emoji: "🏙️", prompts: [
+        CreativePrompt(category: String(localized: "Urban"), symbol: "building.2.fill", prompts: [
             "High fashion photoshoot in minimalist studio setting",
             "Cozy coffee shop interior with warm lighting and plants",
             "Street style fashion photography in urban setting",
@@ -98,7 +103,7 @@ class FullScreenSuggestionsView: UIView {
             "Modern home office with scandinavian design aesthetic",
             "Bustling city street at night with neon signs"
         ], color: UIColor(red: 0.86, green: 0.15, blue: 0.47, alpha: 1)),
-        CreativePrompt(category: String(localized: "Tech"), emoji: "🤖", prompts: [
+        CreativePrompt(category: String(localized: "Tech"), symbol: "cpu.fill", prompts: [
             "Advanced AI robot assistant helping in modern home",
             "Holographic interface displaying complex data visualization",
             "Electric vehicle charging station of the future",
@@ -155,6 +160,7 @@ class FullScreenSuggestionsView: UIView {
         collectionView.register(SectionHeaderView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: SectionHeaderView.reuseIdentifier)
         collectionView.register(CreativePromptsHeaderView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: CreativePromptsHeaderView.reuseIdentifier)
         collectionView.register(ImageCell.self, forCellWithReuseIdentifier: ImageCell.reuseIdentifier)
+        collectionView.register(PresetCell.self, forCellWithReuseIdentifier: PresetCell.reuseIdentifier)
         collectionView.register(QuickActionCell.self, forCellWithReuseIdentifier: QuickActionCell.reuseIdentifier)
         collectionView.register(PromptCardCell.self, forCellWithReuseIdentifier: PromptCardCell.reuseIdentifier)
         collectionView.register(StylePresetCell.self, forCellWithReuseIdentifier: StylePresetCell.reuseIdentifier)
@@ -162,12 +168,14 @@ class FullScreenSuggestionsView: UIView {
         collectionView.register(CategoryChipCell.self, forCellWithReuseIdentifier: CategoryChipCell.reuseIdentifier)
     }
     private func createLayout() -> UICollectionViewLayout {
-        let layout = UICollectionViewCompositionalLayout { [weak self] sectionIndex, _ in
+        let layout = UICollectionViewCompositionalLayout { [weak self] sectionIndex, environment in
             guard let self = self,
                   let section = SuggestionsSection(rawValue: sectionIndex) else { return nil }
             switch section {
             case .editImage:
                 return self.createEditImageSection()
+            case .presets:
+                return self.createPresetsSection(containerWidth: environment.container.effectiveContentSize.width)
             case .quickActions:
                 return self.createQuickActionsSection()
             case .creativePrompts:
@@ -194,6 +202,22 @@ class FullScreenSuggestionsView: UIView {
         section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
         let headerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(60))
         let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: headerSize, elementKind: UICollectionView.elementKindSectionHeader, alignment: .top)
+        section.boundarySupplementaryItems = [header]
+        return section
+    }
+    private func createPresetsSection(containerWidth: CGFloat) -> NSCollectionLayoutSection {
+        let columns = max(2, min(4, Int((containerWidth - 32) / 180)))
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0 / CGFloat(columns)), heightDimension: .fractionalHeight(1.0))
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5)
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(128))
+        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: Array(repeating: item, count: columns))
+        let section = NSCollectionLayoutSection(group: group)
+        section.interGroupSpacing = 10
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 11, bottom: 0, trailing: 11)
+        let headerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(60))
+        let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: headerSize, elementKind: UICollectionView.elementKindSectionHeader, alignment: .top)
+        header.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5)
         section.boundarySupplementaryItems = [header]
         return section
     }
@@ -263,13 +287,18 @@ class FullScreenSuggestionsView: UIView {
             switch SuggestionsSection(rawValue: indexPath.section) {
             case .editImage:
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ImageCell.reuseIdentifier, for: indexPath) as! ImageCell
-                if indexPath.item == 0 {
-                    cell.configure(with: nil, isAddButton: true)
+                if let marker = item as? String, marker == Self.selectedPhotoItem {
+                    cell.configure(with: self.selectedPhoto, isSelectedPhoto: true)
+                } else if let image = item as? UIImage {
+                    cell.configure(with: image)
                 } else {
-                    let imageIndex = indexPath.item - 1
-                    if imageIndex < self.recentImages.count {
-                        cell.configure(with: self.recentImages[imageIndex])
-                    }
+                    cell.configure(with: nil, isAddButton: true)
+                }
+                return cell
+            case .presets:
+                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PresetCell.reuseIdentifier, for: indexPath) as! PresetCell
+                if let preset = item as? EditPreset {
+                    cell.configure(with: preset)
                 }
                 return cell
             case .quickActions:
@@ -335,9 +364,19 @@ class FullScreenSuggestionsView: UIView {
                 let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: SectionHeaderView.reuseIdentifier, for: indexPath) as! SectionHeaderView
                 switch SuggestionsSection(rawValue: indexPath.section) {
                 case .editImage:
-                    header.configure(title: String(localized: "Edit an Image"), subtitle: String(localized: "Transform your photos with AI"))
+                    if self.selectedPhoto != nil {
+                        header.configure(title: String(localized: "Your photo"), subtitle: String(localized: "Tap an edit below, or describe your own"))
+                    } else {
+                        header.configure(title: String(localized: "Start with a photo"), subtitle: String(localized: "Pick one, then tap an edit"))
+                    }
+                case .presets:
+                    header.configure(title: String(localized: "One-tap edits"), subtitle: String(localized: "Powered by Nano Banana"))
                 case .quickActions:
-                    header.configure(title: String(localized: "Quick Actions"), subtitle: String(localized: "Start with popular templates"))
+                    if self.isEditMode {
+                        header.configure(title: String(localized: "Mix your own edit"), subtitle: String(localized: "Tap ideas to build a prompt"))
+                    } else {
+                        header.configure(title: String(localized: "Create from text"), subtitle: String(localized: "Start from a template"))
+                    }
                 case .stylePresets:
                     header.configure(title: String(localized: "Style Presets"), subtitle: String(localized: "Apply to any prompt with ' + style'"))
                 case .promptModifiers:
@@ -353,9 +392,15 @@ class FullScreenSuggestionsView: UIView {
     private func applySnapshot() {
         var snapshot = NSDiffableDataSourceSnapshot<SuggestionsSection, AnyHashable>()
         snapshot.appendSections([.editImage])
-        var editItems: [AnyHashable] = ["add_image" as AnyHashable]
+        var editItems: [AnyHashable] = []
+        if selectedPhoto != nil {
+            editItems.append(Self.selectedPhotoItem as AnyHashable)
+        }
+        editItems.append(Self.addImageItem as AnyHashable)
         editItems.append(contentsOf: recentImages.prefix(10).map { $0 as AnyHashable })
         snapshot.appendItems(editItems, toSection: .editImage)
+        snapshot.appendSections([.presets])
+        snapshot.appendItems(presets.map { $0 as AnyHashable }, toSection: .presets)
         snapshot.appendSections([.quickActions])
         let actions = isEditMode ? editModeQuickActions : quickActions
         snapshot.appendItems(actions.map { $0 as AnyHashable }, toSection: .quickActions)
@@ -416,14 +461,15 @@ extension FullScreenSuggestionsView: UICollectionViewDelegate {
         haptics.impact(.click)
         switch SuggestionsSection(rawValue: indexPath.section) {
         case .editImage:
-            if indexPath.item == 0 {
+            let item = dataSource.itemIdentifier(for: indexPath)
+            if let image = item as? UIImage {
+                onImageTapped?(image)
+            } else if let marker = item as? String, marker == Self.addImageItem {
                 onEditImageTapped?()
-            } else {
-                let imageIndex = indexPath.item - 1
-                if imageIndex < recentImages.count {
-                    let image = recentImages[imageIndex]
-                    onImageTapped?(image)
-                }
+            }
+        case .presets:
+            if let preset = dataSource.itemIdentifier(for: indexPath) as? EditPreset {
+                onPresetSelected?(preset)
             }
         case .quickActions:
             let actions = isEditMode ? editModeQuickActions : quickActions
@@ -449,7 +495,7 @@ extension FullScreenSuggestionsView: UICollectionViewDelegate {
                     title: prompts[indexPath.item],
                     prompt: prompts[indexPath.item],
                     color: creative.color,
-                    icon: creative.emoji
+                    icon: creative.symbol
                 )
                 selectedSuggestionsManager?.toggleSelection(suggestion)
                 applySnapshot()
@@ -517,9 +563,16 @@ extension FullScreenSuggestionsView: UICollectionViewDelegate {
     func refreshView() {
         applySnapshot()
     }
-    func setEditMode(_ editMode: Bool) {
+    func setEditMode(_ editMode: Bool, photo: UIImage? = nil) {
         isEditMode = editMode
+        selectedPhoto = editMode ? photo : nil
         applySnapshot()
+        var snapshot = dataSource.snapshot()
+        snapshot.reloadSections([.editImage, .quickActions])
+        dataSource.apply(snapshot, animatingDifferences: false)
+        if editMode {
+            collectionView.setContentOffset(CGPoint(x: 0, y: -collectionView.adjustedContentInset.top), animated: true)
+        }
     }
     
     var contentInset: UIEdgeInsets {
@@ -542,6 +595,7 @@ extension FullScreenSuggestionsView: UICollectionViewDelegate {
 
 enum SuggestionsSection: Int, CaseIterable {
     case editImage
+    case presets
     case quickActions
     case creativePrompts
     case stylePresets
@@ -558,7 +612,7 @@ struct QuickAction: Hashable {
 
 struct CreativePrompt: Hashable {
     let category: String
-    let emoji: String
+    let symbol: String
     let prompts: [String]
     let color: UIColor
 }

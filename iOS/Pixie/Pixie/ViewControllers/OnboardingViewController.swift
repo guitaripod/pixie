@@ -18,22 +18,22 @@ final class OnboardingViewController: UIViewController {
 
     private let pages: [OnboardingPage] = [
         OnboardingPage(
-            symbol: "bubble.left.and.text.bubble.right.fill",
+            symbol: "wand.and.stars",
             tint: .systemPurple,
-            title: String(localized: "Chat your way\nto the image"),
-            body: String(localized: "Describe what you want in plain words. Refine it message by message and watch your image evolve — powered by Google Nano Banana and OpenAI.")
+            title: String(localized: "Edit any photo\nin one tap"),
+            body: String(localized: "Pick a photo, then tap an edit: a pro headshot, a restored old photo, a 3D figurine and more. Powered by Google's Nano Banana.")
         ),
         OnboardingPage(
-            symbol: "wand.and.stars",
+            symbol: "bubble.left.and.text.bubble.right.fill",
             tint: .systemPink,
-            title: String(localized: "Edit photos\nby talking"),
-            body: String(localized: "Attach any photo and change it with a sentence: swap the background, restyle it, remove objects, make it transparent. No layers, no tools.")
+            title: String(localized: "Then refine it\nby chat"),
+            body: String(localized: "Ask for changes in plain words, and each message edits your latest image. Or describe a brand-new picture from scratch.")
         ),
         OnboardingPage(
             symbol: "sparkles",
             tint: .systemOrange,
-            title: String(localized: "25 free credits\nto start"),
-            body: String(localized: "You can create right now — no sign-up. Pay only for what you make with credit packs that never expire. No subscription, ever.")
+            title: String(localized: "3 free images\nto start"),
+            body: String(localized: "Create right now, no sign-up. After that, pay only for what you make with credit packs that never expire. No subscription, ever.")
         ),
     ]
 

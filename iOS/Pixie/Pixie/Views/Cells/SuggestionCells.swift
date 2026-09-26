@@ -118,13 +118,16 @@ class CreativePromptsHeaderView: UICollectionReusableView {
         stackView.addArrangedSubview(leadingPadding)
         for (index, category) in categories.enumerated() {
             let button = UIButton(type: .custom)
-            button.setTitle("\(category.emoji) \(category.category)", for: .normal)
+            button.setTitle(category.category, for: .normal)
+            button.setImage(UIImage(systemName: category.symbol), for: .normal)
             button.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
             button.tag = index
             button.layer.cornerRadius = 18
             button.layer.borderWidth = 1
             var config = UIButton.Configuration.plain()
             config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
+            config.imagePadding = 6
+            config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 13, weight: .semibold)
             button.configuration = config
             updateButtonAppearance(button, isSelected: index == selectedIndex, color: category.color)
             button.addAction(UIAction { [weak self] _ in
@@ -156,11 +159,13 @@ class CreativePromptsHeaderView: UICollectionReusableView {
             if isSelected {
                 button.backgroundColor = color
                 button.setTitleColor(.white, for: .normal)
+                button.tintColor = .white
                 button.layer.borderColor = color.cgColor
                 button.transform = CGAffineTransform(scaleX: 1.05, y: 1.05)
             } else {
                 button.backgroundColor = .clear
                 button.setTitleColor(.label, for: .normal)
+                button.tintColor = color
                 button.layer.borderColor = UIColor.separator.cgColor
                 button.transform = .identity
             }
@@ -218,7 +223,9 @@ class ImageCell: UICollectionViewCell {
             label.trailingAnchor.constraint(equalTo: overlayView.trailingAnchor, constant: -8)
         ])
     }
-    func configure(with image: UIImage?, isAddButton: Bool = false) {
+    func configure(with image: UIImage?, isAddButton: Bool = false, isSelectedPhoto: Bool = false) {
+        contentView.layer.borderWidth = isSelectedPhoto ? 3 : 0
+        contentView.layer.borderColor = UIColor.systemPurple.cgColor
         if isAddButton {
             imageView.image = nil
             overlayView.isHidden = false

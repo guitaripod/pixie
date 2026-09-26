@@ -14,7 +14,8 @@ class ChatInputBar: UIView {
     }
     private let indicatorStackView = UIStackView()
     private let promptTextView = UITextView()
-    private let modelSelector = UISegmentedControl(items: ["Gemini", "OpenAI GPT"])
+    private static let selectableModels: [ImageModel] = [.gemini, .geminiPro, .openai]
+    private let modelSelector = UISegmentedControl(items: ChatInputBar.selectableModels.map(\.displayName))
     private let sizeSelector = UISegmentedControl(items: [String(localized: "Auto"), String(localized: "Square"), String(localized: "Landscape"), String(localized: "Portrait")])
     private let qualitySelector = UISegmentedControl(items: [String(localized: "Auto"), String(localized: "Low"), String(localized: "Medium"), String(localized: "High")])
     private let advancedOptionsButton = UIButton(type: .system)
@@ -29,6 +30,22 @@ class ChatInputBar: UIView {
     private let expandedImageContainer = UIView()
     private let expandedSelectedImageView = UIImageView()
     private let selectedImageView = UIImageView()
+    private lazy var clearImageButton: UIButton = {
+        var config = UIButton.Configuration.plain()
+        config.image = UIImage(systemName: "xmark.circle.fill")
+        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 18, weight: .semibold)
+        config.baseForegroundColor = .secondaryLabel
+        config.contentInsets = .zero
+        let button = UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
+            HapticManager.shared.impact(.click)
+            self?.onClearEditImage?()
+        })
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.backgroundColor = .systemBackground
+        button.layer.cornerRadius = 11
+        button.accessibilityLabel = String(localized: "Remove photo")
+        return button
+    }()
     private let editPromptLabel = UILabel()
     private let fidelitySelector = UISegmentedControl(items: [String(localized: "Low"), String(localized: "High")])
     private(set) var isExpanded = false
@@ -40,13 +57,14 @@ class ChatInputBar: UIView {
     private var promptTextViewTopToHandleConstraint: NSLayoutConstraint!
     private var promptTextViewTopToImageConstraint: NSLayoutConstraint!
     var onSend: ((String) -> Void)?
+    var onClearEditImage: (() -> Void)?
     var onExpandedChanged: ((Bool) -> Void)?
     var currentPrompt: String? {
         let basePrompt = promptTextView.text
         return selectedSuggestionsManager?.composePrompt(basePrompt: basePrompt ?? "") ?? basePrompt
     }
     var selectedModel: ImageModel {
-        let models: [ImageModel] = [.gemini, .openai]
+        let models = ChatInputBar.selectableModels
         let index = modelSelector.selectedSegmentIndex
         guard index >= 0 && index < models.count else { return .gemini }
         return models[index]
@@ -691,6 +709,7 @@ class ChatInputBar: UIView {
             }
             generateButton.setTitle(String(localized: "Generate"), for: .normal)
             selectedImageView.removeFromSuperview()
+            clearImageButton.removeFromSuperview()
             expandedImageContainer.isHidden = true
             expandedSelectedImageView.image = nil
             promptTextViewTopToImageConstraint.isActive = false
@@ -700,17 +719,23 @@ class ChatInputBar: UIView {
     }
     private func setupEditModeCollapsedView() {
         guard let image = selectedImage else { return }
-        selectedImageView.translatesAutoresizingMaskIntoConstraints = false
         selectedImageView.image = image
+        guard selectedImageView.superview == nil else { return }
+        selectedImageView.translatesAutoresizingMaskIntoConstraints = false
         selectedImageView.contentMode = .scaleAspectFill
         selectedImageView.clipsToBounds = true
         selectedImageView.layer.cornerRadius = 8
         collapsedView.addSubview(selectedImageView)
+        collapsedView.addSubview(clearImageButton)
         NSLayoutConstraint.activate([
             selectedImageView.leadingAnchor.constraint(equalTo: collapsedView.leadingAnchor, constant: 16),
             selectedImageView.centerYAnchor.constraint(equalTo: collapsedView.centerYAnchor),
             selectedImageView.widthAnchor.constraint(equalToConstant: 56),
-            selectedImageView.heightAnchor.constraint(equalToConstant: 56)
+            selectedImageView.heightAnchor.constraint(equalToConstant: 56),
+            clearImageButton.centerXAnchor.constraint(equalTo: selectedImageView.trailingAnchor, constant: -2),
+            clearImageButton.centerYAnchor.constraint(equalTo: selectedImageView.topAnchor, constant: 2),
+            clearImageButton.widthAnchor.constraint(equalToConstant: 22),
+            clearImageButton.heightAnchor.constraint(equalToConstant: 22)
         ])
     }
     private func addFidelitySection() {
@@ -747,11 +772,8 @@ class ChatInputBar: UIView {
     func applyDefaults() {
         let config = ConfigurationManager.shared
 
-        switch config.defaultModel {
-        case "gemini-2.5-flash": modelSelector.selectedSegmentIndex = 0
-        case "gpt-image-1": modelSelector.selectedSegmentIndex = 1
-        default: modelSelector.selectedSegmentIndex = 0
-        }
+        let defaultModel = ImageModel(rawValue: config.defaultModel) ?? .gemini
+        modelSelector.selectedSegmentIndex = ChatInputBar.selectableModels.firstIndex(of: defaultModel) ?? 0
 
         updateUIForModel()
 

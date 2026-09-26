@@ -27,7 +27,6 @@ class BackgroundTaskManager: NSObject {
     override init() {
         super.init()
         registerBackgroundTasks()
-        requestNotificationPermission()
     }
     
     private func registerBackgroundTasks() {
@@ -37,15 +36,6 @@ class BackgroundTaskManager: NSObject {
         ) { [weak self] task in
             self?.handleBackgroundTask(task as! BGProcessingTask)
         }
-    }
-    
-    private func requestNotificationPermission() {
-        #if DEBUG
-        if DemoMode.isActive { return }
-        #endif
-        UNUserNotificationCenter.current().requestAuthorization(
-            options: [.alert, .badge, .sound]
-        ) { _, _ in }
     }
     
     func scheduleBackgroundGeneration(

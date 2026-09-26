@@ -8,6 +8,13 @@ enum DemoMode: String {
     case empty
     case store
     case onboarding
+    case home
+    case headshot
+    case restore
+    case figurine
+    case pack
+    case pet
+    case refine
 
     static var current: DemoMode? {
         guard let raw = ProcessInfo.processInfo.environment["PX_DEMO"] else { return nil }
@@ -157,6 +164,50 @@ enum DemoChatBuilder {
     }
 }
 
+extension DemoChatBuilder {
+    static func presetConversation(presetID: String, before: String, after: [String]) -> [ChatMessage] {
+        let preset = EditPreset.preset(id: presetID)
+        let source = DemoMode.image(before)
+        let request = ChatMessage(
+            id: "demo-preset-\(presetID)",
+            text: preset?.title,
+            images: nil,
+            isUser: true,
+            timestamp: Date().addingTimeInterval(-30),
+            metadata: nil,
+            editingImage: source
+        )
+        let result = ChatMessage(
+            role: .assistant,
+            content: String(localized: "Here are your generated images:"),
+            images: after.map(DemoMode.image),
+            sourceImage: source
+        )
+        return [request, result]
+    }
+
+    static func refineConversation() -> [ChatMessage] {
+        let first = presetConversation(presetID: "headshot", before: "demo_selfie", after: ["demo_headshot"])
+        let headshot = DemoMode.image("demo_headshot")
+        let followUp = ChatMessage(
+            id: "demo-refine",
+            text: String(localized: "Now put her in a bright modern office"),
+            images: nil,
+            isUser: true,
+            timestamp: Date().addingTimeInterval(-10),
+            metadata: nil,
+            editingImage: headshot
+        )
+        let refined = ChatMessage(
+            role: .assistant,
+            content: String(localized: "Here are your generated images:"),
+            images: [DemoMode.image("demo_refined")],
+            sourceImage: headshot
+        )
+        return first + [followUp, refined]
+    }
+}
+
 enum DemoRootBuilder {
     static func makeRootViewController(for mode: DemoMode) -> UIViewController {
         DemoContent.seedImageCache()
@@ -182,7 +233,27 @@ enum DemoRootBuilder {
             return UINavigationController(rootViewController: storeVC)
         case .onboarding:
             return OnboardingViewController()
+        case .home:
+            return chat(.home(DemoMode.image("demo_selfie")))
+        case .headshot:
+            return chat(.conversation(DemoChatBuilder.presetConversation(presetID: "headshot", before: "demo_selfie", after: ["demo_headshot"])))
+        case .restore:
+            return chat(.conversation(DemoChatBuilder.presetConversation(presetID: "restore", before: "demo_oldphoto", after: ["demo_restored"])))
+        case .figurine:
+            return chat(.conversation(DemoChatBuilder.presetConversation(presetID: "figurine", before: "demo_man", after: ["demo_figurine"])))
+        case .pack:
+            return chat(.conversation(DemoChatBuilder.presetConversation(presetID: "headshot-pack", before: "demo_man", after: ["demo_pack_1", "demo_pack_2", "demo_pack_3", "demo_pack_4"])))
+        case .pet:
+            return chat(.conversation(DemoChatBuilder.presetConversation(presetID: "pet-portrait", before: "demo_dog", after: ["demo_royal_dog"])))
+        case .refine:
+            return chat(.conversation(DemoChatBuilder.refineConversation()))
         }
+    }
+
+    private static func chat(_ scenario: ChatGenerationViewController.DemoScenario) -> UIViewController {
+        let chatVC = ChatGenerationViewController()
+        chatVC.demoMode = scenario
+        return UINavigationController(rootViewController: chatVC)
     }
 }
 #endif

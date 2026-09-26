@@ -56,6 +56,47 @@ class PhotoSavingService {
         }
     }
     
+    /// Saves images with whatever access the user granted. Add-only access, the usual
+    /// answer to the save prompt, can neither create the Pixie album nor read the new
+    /// asset back, so the album is used only with full access and success comes from the
+    /// write itself.
+    func saveToLibrary(_ images: [UIImage], completion: @escaping (Result<Void, PhotoSavingError>) -> Void) {
+        checkPhotoLibraryPermission { [weak self] granted in
+            guard let self, granted else {
+                completion(.failure(.permissionDenied))
+                return
+            }
+            guard PHPhotoLibrary.authorizationStatus(for: .readWrite) == .authorized else {
+                self.writeAssets(images, into: nil, completion: completion)
+                return
+            }
+            self.ensureAlbumExists { result in
+                self.writeAssets(images, into: try? result.get(), completion: completion)
+            }
+        }
+    }
+
+    private func writeAssets(
+        _ images: [UIImage],
+        into album: PHAssetCollection?,
+        completion: @escaping (Result<Void, PhotoSavingError>) -> Void
+    ) {
+        PHPhotoLibrary.shared().performChanges({
+            let placeholders = images.compactMap { PHAssetChangeRequest.creationRequestForAsset(from: $0).placeholderForCreatedAsset }
+            if let album, let albumRequest = PHAssetCollectionChangeRequest(for: album) {
+                albumRequest.addAssets(placeholders as NSArray)
+            }
+        }) { success, error in
+            DispatchQueue.main.async {
+                if success {
+                    completion(.success(()))
+                } else {
+                    completion(.failure(.saveFailed(error?.localizedDescription ?? String(localized: "Unknown error"))))
+                }
+            }
+        }
+    }
+
     private func checkPhotoLibraryPermission(completion: @escaping (Bool) -> Void) {
         let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
         

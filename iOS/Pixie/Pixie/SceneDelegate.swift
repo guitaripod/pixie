@@ -50,6 +50,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
     
     private func handleUniversalLink(_ url: URL) {
+        if PresetLink.handle(url) { return }
         _ = AuthenticationManager.shared.handleUniversalLink(url)
     }
     
@@ -57,6 +58,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     private func checkAuthenticationState() async {
         #if DEBUG
         if DebugUtils.isRunningInSimulator {
+            adoptSimulatorAPIKey()
             showMainInterface()
             return
         }
@@ -78,6 +80,16 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         showAuthenticationInterface()
     }
     
+    #if DEBUG
+    /// Lets a simulator run talk to the live backend as a real account: launch with
+    /// `SIMCTL_CHILD_PX_API_KEY=<key>` and every request uses that key.
+    private func adoptSimulatorAPIKey() {
+        guard let key = ProcessInfo.processInfo.environment["PX_API_KEY"], !key.isEmpty else { return }
+        ConfigurationManager.shared.apiKey = key
+        AppContainer.shared.updateNetworkServiceAPIKey()
+    }
+    #endif
+
     func showAuthenticationInterface() {
         let authViewController = AuthenticationViewController()
         let navigationController = UINavigationController(rootViewController: authViewController)

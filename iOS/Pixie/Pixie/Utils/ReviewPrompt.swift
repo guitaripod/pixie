@@ -24,6 +24,10 @@ enum ReviewPrompt {
     private static let rollingYear: TimeInterval = 365 * 24 * 60 * 60
     private static let askDelay: Duration = .milliseconds(1500)
 
+    static var successfulGenerationCount: Int {
+        UserDefaults.standard.integer(forKey: Keys.successCount)
+    }
+
     /// Call when a generation returns at least one image.
     static func recordSuccess() {
         migrateLegacyStateIfNeeded()
