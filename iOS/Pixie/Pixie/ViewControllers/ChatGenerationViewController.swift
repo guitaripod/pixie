@@ -82,6 +82,11 @@ class ChatGenerationViewController: UIViewController {
             applyDemoScenario(demoMode)
         }
         if DemoMode.isActive { return }
+        if let prompt = ProcessInfo.processInfo.environment["PX_AUTOGENERATE"], !demoApplied {
+            demoApplied = true
+            autogenerate(prompt)
+            return
+        }
         #endif
         presentOnboardingIfNeeded()
         consumePresetLink()
@@ -114,6 +119,19 @@ class ChatGenerationViewController: UIViewController {
 
     #if DEBUG
     private var demoApplied = false
+
+    #if DEBUG
+    /// `PX_AUTOGENERATE=<prompt>` starts a generation as soon as the chat appears, skipping the
+    /// consent and balance checks; with `PX_FAKE_GENERATION` it exercises the whole result path,
+    /// Live Activity included, without a server.
+    private func autogenerate(_ prompt: String) {
+        transitionToState(.chat, animated: false)
+        viewModel.prompt = prompt
+        currentOptions.prompt = prompt
+        currentOptions.model = ImageModel.gemini.value
+        viewModel.generateImages(with: currentOptions)
+    }
+    #endif
 
     private func applyDemoScenario(_ scenario: DemoScenario) {
         if case let .home(photo) = scenario {

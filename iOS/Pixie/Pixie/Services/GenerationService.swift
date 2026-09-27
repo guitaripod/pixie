@@ -118,7 +118,25 @@ class GenerationService {
         )
 
         let taskId = UUID().uuidString
-        
+
+        #if DEBUG
+        if let fake = FakeGeneration.current {
+            currentTask = Task { [weak self] in
+                try? await Task.sleep(for: .seconds(fake.seconds))
+                guard let self, !Task.isCancelled else { return }
+                if fake.fails {
+                    self.stateSubject.send(.failed(error: .networkError))
+                    completion(.failure(.networkError))
+                } else {
+                    let images = [DemoMode.image("art01")]
+                    self.stateSubject.send(.completed(images: images))
+                    completion(.success(images))
+                }
+            }
+            return taskId
+        }
+        #endif
+
         currentTask = Task { [weak self] in
             guard let self = self else { return }
             
@@ -339,3 +357,18 @@ class GenerationService {
     }
 }
 
+#if DEBUG
+/// `PX_FAKE_GENERATION=<seconds>` answers a text generation with a demo image after that long,
+/// and `<seconds>,fail` with a network error, so the result path can be run without a server.
+struct FakeGeneration {
+    let seconds: Double
+    let fails: Bool
+
+    static var current: FakeGeneration? {
+        guard let raw = ProcessInfo.processInfo.environment["PX_FAKE_GENERATION"] else { return nil }
+        let parts = raw.split(separator: ",")
+        guard let seconds = parts.first.flatMap({ Double($0) }) else { return nil }
+        return FakeGeneration(seconds: seconds, fails: parts.dropFirst().contains("fail"))
+    }
+}
+#endif

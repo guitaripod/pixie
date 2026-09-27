@@ -1,7 +1,6 @@
 import Foundation
 import Combine
 import UIKit
-import ActivityKit
 
 class GenerationViewModel: ObservableObject {
     
@@ -22,13 +21,11 @@ class GenerationViewModel: ObservableObject {
     private let generationService: GenerationService
     private let imageRepository: ImageRepositoryProtocol
     private let hapticManager: HapticManager
-    private let backgroundTaskManager = BackgroundTaskManager.shared
     private var cancellables = Set<AnyCancellable>()
     private var currentChatId: String
     private var activeBackgroundTaskId: String?
-    private var appStateObserver: NSObjectProtocol?
     private var generationStartTime: Date?
-    private var currentLiveActivity: Activity<ImageGenerationAttributes>?
+    private var liveRun: UUID?
     private let generationSucceededSubject = PassthroughSubject<Void, Never>()
     private var pendingSourceImage: UIImage?
 
@@ -66,13 +63,11 @@ class GenerationViewModel: ObservableObject {
         self.currentChatId = chatId ?? UUID().uuidString
         
         setupBindings()
-        setupAppStateObserver()
     }
     
     deinit {
-        if let observer = appStateObserver {
-            NotificationCenter.default.removeObserver(observer)
-        }
+        let run = liveRun
+        Task { @MainActor in GenerationActivity.shared.cancel(run) }
     }
     
     private func setupBindings() {
@@ -89,179 +84,7 @@ class GenerationViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    private func setupAppStateObserver() {
-        print("🔔 GenerationViewModel: Setting up app state observer")
-        
-        appStateObserver = NotificationCenter.default.addObserver(
-            forName: UIApplication.didEnterBackgroundNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                print("🔔 GenerationViewModel: App entered background notification received")
-                print("🔔 GenerationViewModel: App state = \(UIApplication.shared.applicationState.rawValue)")
-                print("🔔 GenerationViewModel: isGenerating = \(self?.isGenerating ?? false)")
-                
-                guard UIApplication.shared.applicationState == .background else {
-                    print("🔔 GenerationViewModel: App not actually in background, ignoring")
-                    return
-                }
-                
-                guard let self = self else { return }
-                
-                if self.isGenerating && self.generationStartTime != nil {
-                    let timeSinceStart = Date().timeIntervalSince(self.generationStartTime ?? Date())
-                    print("🔔 GenerationViewModel: Time since generation start: \(timeSinceStart)s")
-                    
-                    if timeSinceStart > 0.5 {
-                        print("🔔 GenerationViewModel: Calling handleAppEnteredBackground")
-                        self.handleAppEnteredBackground()
-                    } else {
-                        print("🔔 GenerationViewModel: Generation just started, ignoring background")
-                    }
-                } else {
-                    print("🔔 GenerationViewModel: Not generating, ignoring background notification")
-                }
-            }
-        }
-    }
-    
-    private func handleAppEnteredBackground() {
-        print("🌙 GenerationViewModel: handleAppEnteredBackground called")
-        print("🌙 GenerationViewModel: isGenerating = \(isGenerating)")
-        print("🌙 GenerationViewModel: toolbarMode = \(toolbarMode)")
-        print("🌙 GenerationViewModel: prompt = \(prompt)")
-        
-        guard isGenerating else {
-            print("🌙 GenerationViewModel: Not generating, returning")
-            return
-        }
-        
-        // Don't cancel the existing generation - Live Activity is already running
-        print("🌙 GenerationViewModel: Generation continuing in background with existing Live Activity")
-        
-        // Update the Live Activity to show it's in background
-        if let activity = currentLiveActivity {
-            Task {
-                let backgroundState = ImageGenerationAttributes.ContentState(
-                    progress: 0.5,
-                    status: .generating,
-                    estimatedTimeRemaining: nil,
-                    errorMessage: nil
-                )
-                await activity.update(ActivityContent(state: backgroundState, staleDate: Date().addingTimeInterval(60 * 30)))
-            }
-        }
-    }
-    
-    private func startLiveActivityForGeneration(prompt: String, isEdit: Bool, editImage: UIImage? = nil) {
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
-            print("❌ Live Activities are not enabled")
-            return
-        }
-        
-        let taskId = UUID().uuidString
-        
-        // Truncate prompt if too long to avoid size issues
-        var truncatedPrompt = prompt
-        if prompt.count > 50 {
-            truncatedPrompt = String(prompt.prefix(47)) + "..."
-        }
-        
-        // Create thumbnail data for edit image if provided
-        var thumbnailData: Data? = nil
-        if let image = editImage {
-            // Create a very small thumbnail for the Live Activity
-            let maxSize: CGFloat = 20  // Very small - 20x20 pixels
-            let scale = min(maxSize / image.size.width, maxSize / image.size.height)
-            let thumbnailSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
-            
-            // Use UIGraphicsImageRenderer for better performance and quality
-            let renderer = UIGraphicsImageRenderer(size: thumbnailSize)
-            let thumbnail = renderer.image { context in
-                image.draw(in: CGRect(origin: .zero, size: thumbnailSize))
-            }
-            
-            // Try multiple compression levels to get under 2KB
-            let compressionQualities: [CGFloat] = [0.1, 0.05, 0.02, 0.01]
-            
-            for quality in compressionQualities {
-                if let data = thumbnail.jpegData(compressionQuality: quality) {
-                    if data.count < 2000 {  // Target under 2KB for the image
-                        thumbnailData = data
-                        break
-                    }
-                }
-            }
-            
-            // If still too large, make it even smaller
-            if thumbnailData == nil || (thumbnailData?.count ?? 0) > 2000 {
-                let tinySize = CGSize(width: 15, height: 15)  // Even smaller
-                let tinyRenderer = UIGraphicsImageRenderer(size: tinySize)
-                let tinyThumbnail = tinyRenderer.image { context in
-                    image.draw(in: CGRect(origin: .zero, size: tinySize))
-                }
-                
-                thumbnailData = tinyThumbnail.jpegData(compressionQuality: 0.01)
-            }
-            
-            // Calculate total size and ensure it's under limits
-            let promptSize = truncatedPrompt.data(using: .utf8)?.count ?? 0
-            let taskIdSize = 36  // UUID string size
-            let chatIdSize = 36  // UUID string size
-            let imageSize = thumbnailData?.count ?? 0
-            let estimatedTotalSize = promptSize + taskIdSize + chatIdSize + imageSize + 100  // Add buffer for encoding overhead
-            
-            // If total is still too large, skip the image
-            if estimatedTotalSize > 15000 {  // Conservative limit
-                thumbnailData = nil
-            }
-        }
-        
-        let attributes = ImageGenerationAttributes(
-            prompt: truncatedPrompt,
-            taskId: taskId,
-            chatId: currentChatId,
-            isEdit: isEdit,
-            editImageData: thumbnailData
-        )
-        
-        let initialState = ImageGenerationAttributes.ContentState(
-            progress: 0.1,
-            status: .processing,
-            estimatedTimeRemaining: nil,
-            errorMessage: nil
-        )
-        
-        let content = ActivityContent(state: initialState, staleDate: Date().addingTimeInterval(60 * 30))
-        
-        do {
-            let activity = try Activity.request(
-                attributes: attributes,
-                content: content,
-                pushType: nil
-            )
-            
-            print("✅ Live Activity started at generation begin: \(activity.id)")
-            currentLiveActivity = activity
-            
-            // Update to generating status after a short delay
-            Task {
-                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s
-                let generatingState = ImageGenerationAttributes.ContentState(
-                    progress: 0.5,
-                    status: .generating,
-                    estimatedTimeRemaining: nil,
-                    errorMessage: nil
-                )
-                await activity.update(ActivityContent(state: generatingState, staleDate: Date().addingTimeInterval(60 * 30)))
-            }
-                
-        } catch {
-            print("❌ Failed to start Live Activity: \(error)")
-        }
-    }
-    
+    @MainActor
     func generateImages(with options: GenerationOptions) {
         print("📸 GenerationViewModel: Starting generateImages")
         print("📸 GenerationViewModel: Prompt: \(prompt)")
@@ -305,8 +128,9 @@ class GenerationViewModel: ObservableObject {
         
         print("📸 GenerationViewModel: Calling generationService.generateImages")
         
-        // Start Live Activity immediately when generation begins
-        startLiveActivityForGeneration(prompt: prompt, isEdit: false)
+        liveRun = GenerationActivity.shared.begin(
+            chatId: currentChatId, prompt: prompt, isEdit: false,
+            model: ImageModel(rawValue: options.model), source: nil)
         
         let taskId = generationService.generateImages(
             prompt: prompt,
@@ -322,6 +146,7 @@ class GenerationViewModel: ObservableObject {
         activeBackgroundTaskId = taskId
     }
     
+    @MainActor
     func editImage(image: UIImage, options: EditOptions, displayText: String? = nil) {
         guard let imageUri = saveTemporaryImage(image) else {
             error = .invalidImage
@@ -368,7 +193,9 @@ class GenerationViewModel: ObservableObject {
         )
         messages.append(loadingMessage)
         
-        startLiveActivityForGeneration(prompt: displayText ?? options.prompt, isEdit: true, editImage: image)
+        liveRun = GenerationActivity.shared.begin(
+            chatId: currentChatId, prompt: displayText ?? options.prompt, isEdit: true,
+            model: ImageModel(rawValue: options.model), source: image)
         
         let taskId = generationService.editImage(
             imageUri: imageUri,
@@ -383,7 +210,10 @@ class GenerationViewModel: ObservableObject {
         activeBackgroundTaskId = taskId
     }
     
+    @MainActor
     func cancelGeneration() {
+        GenerationActivity.shared.cancel(liveRun)
+        liveRun = nil
         generationService.cancel()
         isGenerating = false
         messages.removeAll { $0.role == .loading }
@@ -444,6 +274,7 @@ class GenerationViewModel: ObservableObject {
         }
     }
     
+    @MainActor
     private func handleGenerationResult(_ result: Result<[UIImage], GenerationError>) {
         print("🎨 GenerationViewModel: handleGenerationResult called")
         print("🎨 GenerationViewModel: Result: \(result)")
@@ -467,25 +298,8 @@ class GenerationViewModel: ObservableObject {
                 Task { @MainActor in ReviewPrompt.recordSuccess() }
             }
 
-            // Update Live Activity if in background
-            if let activity = currentLiveActivity {
-                Task {
-                    let finalState = ImageGenerationAttributes.ContentState(
-                        progress: 1.0,
-                        status: .completed,
-                        estimatedTimeRemaining: nil,
-                        errorMessage: nil
-                    )
-                    await activity.update(ActivityContent(state: finalState, staleDate: nil))
-                    
-                    // Notification handled by BackgroundTaskManager
-                    
-                    // End activity after a delay
-                    try? await Task.sleep(nanoseconds: 2_000_000_000)
-                    await activity.end(nil, dismissalPolicy: .default)
-                }
-                currentLiveActivity = nil
-            }
+            GenerationActivity.shared.succeed(liveRun, images: images)
+            liveRun = nil
             
         case .failure(let error):
             print("🎨 GenerationViewModel: Failure with error: \(error)")
@@ -498,25 +312,8 @@ class GenerationViewModel: ObservableObject {
             )
             messages.append(errorMessage)
             
-            // Update Live Activity if in background
-            if let activity = currentLiveActivity {
-                Task {
-                    let finalState = ImageGenerationAttributes.ContentState(
-                        progress: 0.0,
-                        status: .failed,
-                        estimatedTimeRemaining: nil,
-                        errorMessage: error.localizedDescription
-                    )
-                    await activity.update(ActivityContent(state: finalState, staleDate: nil))
-                    
-                    // Notification handled by BackgroundTaskManager
-                    
-                    // End activity after a delay
-                    try? await Task.sleep(nanoseconds: 2_000_000_000)
-                    await activity.end(nil, dismissalPolicy: .default)
-                }
-                currentLiveActivity = nil
-            }
+            GenerationActivity.shared.fail(liveRun, error: error)
+            liveRun = nil
         }
         
         print("🎨 GenerationViewModel: Setting isGenerating = false")

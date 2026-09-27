@@ -51,6 +51,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     private func handleUniversalLink(_ url: URL) {
         if PresetLink.handle(url) { return }
+        if url.scheme == "pixie", url.host == "chat" {
+            NotificationCenter.default.post(
+                name: .openChatFromNotification, object: nil,
+                userInfo: ["chatId": url.lastPathComponent])
+            return
+        }
         _ = AuthenticationManager.shared.handleUniversalLink(url)
     }
     

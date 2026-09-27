@@ -1,5 +1,4 @@
 import UIKit
-import BackgroundTasks
 import UserNotifications
 import RevenueCat
 
@@ -14,23 +13,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         warmUpLaunchServicesReceiptPath()
 
-        BGTaskScheduler.shared.register(
-            forTaskWithIdentifier: "com.guitaripod.Pixie.image-generation",
-            using: nil
-        ) { task in
-            BackgroundTaskManager.shared.handleBackgroundTask(task as! BGProcessingTask)
-        }
-        
         UNUserNotificationCenter.current().delegate = self
         
         let categories = createNotificationCategories()
         UNUserNotificationCenter.current().setNotificationCategories(categories)
         
-        _ = BackgroundTaskManager.shared
-        
         URLCache.shared.removeAllCachedResponses()
         
         _ = RevenueCatManager.shared
+        _ = GenerationActivity.shared
         
         let keychainManager = AppContainer.shared.keychainManager
         if let user = try? keychainManager.getCodable(forKey: KeychainKeys.userProfile, type: User.self) {
@@ -101,4 +92,8 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         
         completionHandler()
     }
+}
+
+extension Notification.Name {
+    static let openChatFromNotification = Notification.Name("openChatFromNotification")
 }

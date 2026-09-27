@@ -1,308 +1,226 @@
 import ActivityKit
-import WidgetKit
 import SwiftUI
 import UIKit
+import WidgetKit
 
 @available(iOS 16.2, *)
 struct ImageGenerationLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: ImageGenerationAttributes.self) { context in
-            LockScreenLiveActivityView(context: context)
+            LockScreenView(card: Card(context))
                 .activityBackgroundTint(Color(UIColor.systemBackground))
                 .activitySystemActionForegroundColor(Color(UIColor.label))
-            
         } dynamicIsland: { context in
-            DynamicIsland {
+            let card = Card(context)
+            return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    HStack {
-                        Image(systemName: context.attributes.isEdit ? "wand.and.stars" : "sparkles")
-                            .foregroundColor(.purple)
-                            .font(.title2)
-                    }
+                    Thumbnail(card: card, side: 48)
+                        .padding(.leading, 4)
                 }
-                
                 DynamicIslandExpandedRegion(.trailing) {
-                    if context.attributes.isEdit, let imageData = context.attributes.editImageData,
-                       let uiImage = UIImage(data: imageData) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .interpolation(.none)  // Prevent blurring on small images
-                            .scaledToFill()
-                            .frame(width: 45, height: 45)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.purple.opacity(0.3), lineWidth: 1)
-                            )
-                    } else {
-                        ProgressView(value: context.state.progress)
-                            .progressViewStyle(.circular)
-                            .tint(.purple)
-                            .scaleEffect(0.8)
-                    }
+                    TrailingMark(card: card, font: .title3)
+                        .padding(.trailing, 4)
                 }
-                
                 DynamicIslandExpandedRegion(.center) {
-                    if context.state.status == .completed || context.state.status == .failed {
-                        VStack(spacing: 4) {
-                            Text(context.state.status == .completed ? "Ready to view!" : "Generation failed")
-                                .font(.headline)
-                                .foregroundColor(statusColor(for: context.state.status))
-                            Text(context.attributes.prompt)
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                                .lineLimit(1)
-                        }
-                    } else {
-                        Text(context.attributes.prompt)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(card.title)
                             .font(.headline)
+                            .foregroundStyle(card.tint)
+                            .lineLimit(1)
+                        Text(card.detail)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                             .lineLimit(2)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                
                 DynamicIslandExpandedRegion(.bottom) {
-                    if context.state.status == .completed {
-                        HStack {
-                            Label("Tap to view", systemImage: "hand.tap.fill")
-                                .font(.caption)
-                                .foregroundColor(.purple)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundColor(.purple)
-                        }
-                    } else if let error = context.state.errorMessage {
-                        Text(error)
-                            .font(.caption)
-                            .foregroundColor(.red)
-                            .lineLimit(2)
-                    } else {
-                        HStack {
-                            Label(statusText(for: context.state.status), systemImage: statusIcon(for: context.state.status))
-                                .font(.caption)
-                                .foregroundColor(statusColor(for: context.state.status))
-                            
-                            Spacer()
-                            
-                            if let timeRemaining = context.state.estimatedTimeRemaining {
-                                Text("\(timeRemaining)s")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
+                    Footer(card: card)
+                        .padding(.horizontal, 4)
                 }
             } compactLeading: {
-                Image(systemName: statusIcon(for: context.state.status))
-                    .foregroundColor(statusColor(for: context.state.status))
-                    .font(.caption)
+                Thumbnail(card: card, side: 22)
             } compactTrailing: {
-                if context.state.status == .completed || context.state.status == .failed {
-                    Image(systemName: context.state.status == .completed ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundColor(statusColor(for: context.state.status))
-                        .font(.caption)
-                } else if context.attributes.isEdit, let imageData = context.attributes.editImageData,
-                          let uiImage = UIImage(data: imageData) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .interpolation(.none)  // Prevent blurring on small images
-                        .scaledToFill()
-                        .frame(width: 24, height: 24)
-                        .clipShape(Circle())
-                } else {
-                    ProgressView(value: context.state.progress)
-                        .progressViewStyle(.circular)
-                        .tint(.purple)
-                        .scaleEffect(0.6)
-                }
+                TrailingMark(card: card, font: .caption)
             } minimal: {
-                if context.state.status == .completed || context.state.status == .failed {
-                    Image(systemName: context.state.status == .completed ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundColor(statusColor(for: context.state.status))
-                        .font(.caption)
+                if card.isWorking {
+                    ProgressView(
+                        timerInterval: card.state.startedAt...card.state.expectedEnd,
+                        countsDown: false, label: { EmptyView() }, currentValueLabel: { EmptyView() }
+                    )
+                    .progressViewStyle(.circular)
+                    .tint(.purple)
                 } else {
-                    ProgressView(value: context.state.progress)
-                        .progressViewStyle(.circular)
-                        .tint(.purple)
-                        .scaleEffect(0.6)
+                    Thumbnail(card: card, side: 22)
                 }
             }
             .widgetURL(URL(string: "pixie://chat/\(context.attributes.chatId)"))
             .keylineTint(.purple)
         }
     }
-    
-    private func statusText(for status: GenerationStatus) -> String {
-        switch status {
-        case .queued:
-            return String(localized: "Queued")
-        case .processing:
-            return String(localized: "Processing")
-        case .generating:
-            return String(localized: "Generating")
-        case .completed:
-            return String(localized: "Completed")
-        case .failed:
-            return String(localized: "Failed")
+}
+
+private struct Card {
+    let attributes: ImageGenerationAttributes
+    let state: ImageGenerationAttributes.ContentState
+    let isStale: Bool
+
+    init(_ context: ActivityViewContext<ImageGenerationAttributes>) {
+        attributes = context.attributes
+        state = context.state
+        isStale = context.isStale
+    }
+
+    var phase: ImageGenerationAttributes.ContentState.Phase {
+        state.phase == .working && isStale ? .paused : state.phase
+    }
+
+    var isWorking: Bool { phase == .working }
+
+    var title: String {
+        switch phase {
+        case .working:
+            return attributes.isEdit ? String(localized: "Editing Image") : String(localized: "Generating Image")
+        case .ready: return String(localized: "Ready to view!")
+        case .failed: return String(localized: "Generation failed")
+        case .paused: return String(localized: "Open Pixie to finish")
         }
     }
-    
-    private func statusIcon(for status: GenerationStatus) -> String {
-        switch status {
-        case .queued:
-            return "clock"
-        case .processing:
-            return "gearshape.2"
-        case .generating:
-            return "sparkles"
-        case .completed:
-            return "checkmark.circle"
-        case .failed:
-            return "exclamationmark.triangle"
+
+    var detail: String {
+        phase == .failed ? state.message ?? attributes.prompt : attributes.prompt
+    }
+
+    var tint: Color {
+        switch phase {
+        case .working: return .primary
+        case .ready: return .green
+        case .failed: return .red
+        case .paused: return .orange
         }
     }
-    
-    private func statusColor(for status: GenerationStatus) -> Color {
-        switch status {
-        case .queued:
-            return .orange
-        case .processing, .generating:
-            return .purple
-        case .completed:
-            return .green
-        case .failed:
-            return .red
+
+    var symbol: String {
+        switch phase {
+        case .working: return attributes.isEdit ? "wand.and.stars" : "sparkles"
+        case .ready: return "checkmark.circle.fill"
+        case .failed: return "exclamationmark.triangle.fill"
+        case .paused: return "pause.circle.fill"
         }
+    }
+
+    var picture: UIImage? {
+        let name = phase == .ready ? state.resultFile ?? attributes.sourceFile : attributes.sourceFile
+        guard let name, let url = GenerationActivityFiles.url(for: name) else { return nil }
+        return UIImage(contentsOfFile: url.path)
     }
 }
 
-struct LockScreenLiveActivityView: View {
-    let context: ActivityViewContext<ImageGenerationAttributes>
-    
+private struct Thumbnail: View {
+    let card: Card
+    let side: CGFloat
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                HStack(spacing: 4) {
-                    Image(systemName: context.attributes.isEdit ? "wand.and.stars" : "sparkles")
-                        .foregroundColor(.purple)
-                    Text(context.attributes.isEdit ? "Editing Image" : "Generating Image")
-                        .font(.headline)
-                }
-                
-                Spacer()
-                
-                if context.attributes.isEdit, let imageData = context.attributes.editImageData,
-                   let uiImage = UIImage(data: imageData) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .interpolation(.none)  // Prevent blurring on small images
-                        .scaledToFill()
-                        .frame(width: 36, height: 36)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.purple.opacity(0.3), lineWidth: 1)
-                        )
-                } else if context.state.status != .completed && context.state.status != .failed {
-                    ProgressView()
-                        .progressViewStyle(.circular)
-                        .scaleEffect(0.8)
-                        .tint(.purple)
-                }
-            }
-            
-            Text(context.attributes.prompt)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .lineLimit(2)
-            
-            HStack {
-                Label(statusText(for: context.state.status), systemImage: statusIcon(for: context.state.status))
-                    .font(.caption)
-                    .foregroundColor(statusColor(for: context.state.status))
-                
-                Spacer()
-                
-                if context.state.status != .completed && context.state.status != .failed {
-                    ProgressBar(progress: context.state.progress)
-                        .frame(width: 100, height: 4)
-                    
-                    if let timeRemaining = context.state.estimatedTimeRemaining {
-                        Text("\(timeRemaining)s")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+        if let picture = card.picture {
+            Image(uiImage: picture)
+                .resizable()
+                .scaledToFill()
+                .frame(width: side, height: side)
+                .clipShape(RoundedRectangle(cornerRadius: side * 0.24, style: .continuous))
+                .overlay(alignment: .bottomTrailing) {
+                    if !card.isWorking, side >= 40 {
+                        Image(systemName: card.symbol)
+                            .font(.system(size: side * 0.3, weight: .bold))
+                            .foregroundStyle(.white, card.tint)
+                            .offset(x: side * 0.1, y: side * 0.1)
                     }
                 }
-            }
-            
-            if let error = context.state.errorMessage {
-                Text(error)
-                    .font(.caption)
-                    .foregroundColor(.red)
-                    .lineLimit(1)
-            }
-        }
-        .padding()
-    }
-    
-    private func statusText(for status: GenerationStatus) -> String {
-        switch status {
-        case .queued:
-            return String(localized: "Queued")
-        case .processing:
-            return String(localized: "Processing")
-        case .generating:
-            return String(localized: "Generating")
-        case .completed:
-            return String(localized: "Completed")
-        case .failed:
-            return String(localized: "Failed")
-        }
-    }
-    
-    private func statusIcon(for status: GenerationStatus) -> String {
-        switch status {
-        case .queued:
-            return "clock"
-        case .processing:
-            return "gearshape.2"
-        case .generating:
-            return "sparkles"
-        case .completed:
-            return "checkmark.circle"
-        case .failed:
-            return "exclamationmark.triangle"
-        }
-    }
-    
-    private func statusColor(for status: GenerationStatus) -> Color {
-        switch status {
-        case .queued:
-            return .orange
-        case .processing, .generating:
-            return .purple
-        case .completed:
-            return .green
-        case .failed:
-            return .red
+                .accessibilityHidden(true)
+        } else {
+            Image(systemName: card.symbol)
+                .font(.system(size: side * 0.55, weight: .semibold))
+                .foregroundStyle(card.isWorking ? .purple : card.tint)
+                .frame(width: side, height: side)
+                .accessibilityHidden(true)
         }
     }
 }
 
-struct ProgressBar: View {
-    let progress: Double
-    
+private struct TrailingMark: View {
+    let card: Card
+    let font: Font
+
     var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(Color.gray.opacity(0.3))
-                
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(Color.purple)
-                    .frame(width: geometry.size.width * CGFloat(progress))
-                    .animation(.linear(duration: 0.3), value: progress)
+        switch card.phase {
+        case .working:
+            Text(timerInterval: card.state.startedAt...Date.distantFuture, countsDown: false)
+                .font(font.weight(.semibold))
+                .monospacedDigit()
+                .foregroundStyle(.purple)
+                .multilineTextAlignment(.trailing)
+                .frame(maxWidth: 52)
+        case .ready, .failed, .paused:
+            Image(systemName: card.symbol)
+                .font(font)
+                .foregroundStyle(card.tint)
+                .accessibilityLabel(card.title)
+        }
+    }
+}
+
+private struct Footer: View {
+    let card: Card
+
+    var body: some View {
+        switch card.phase {
+        case .working:
+            VStack(spacing: 6) {
+                ProgressView(
+                    timerInterval: card.state.startedAt...card.state.expectedEnd,
+                    countsDown: false, label: { EmptyView() }, currentValueLabel: { EmptyView() }
+                )
+                .tint(.purple)
+                if let model = card.attributes.modelName {
+                    Text(model)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        case .ready:
+            Label(String(localized: "Tap to view"), systemImage: "hand.tap.fill")
+                .font(.caption)
+                .foregroundStyle(.purple)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        case .failed, .paused:
+            EmptyView()
+        }
+    }
+}
+
+private struct LockScreenView: View {
+    let card: Card
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            Thumbnail(card: card, side: 56)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(card.title)
+                        .font(.headline)
+                        .foregroundStyle(card.tint)
+                        .lineLimit(1)
+                    Spacer(minLength: 8)
+                    TrailingMark(card: card, font: .subheadline)
+                }
+                Text(card.detail)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                Footer(card: card)
+                    .padding(.top, 2)
             }
         }
+        .padding(16)
     }
 }
