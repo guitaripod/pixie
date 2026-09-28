@@ -370,7 +370,7 @@ class FullScreenSuggestionsView: UIView {
                         header.configure(title: String(localized: "Start with a photo"), subtitle: String(localized: "Pick one, then tap an edit"))
                     }
                 case .presets:
-                    header.configure(title: String(localized: "One-tap edits"), subtitle: String(localized: "Powered by Nano Banana"))
+                    header.configure(title: String(localized: "One-tap edits"), subtitle: String(localized: "Headshots, restores, figurines and more"))
                 case .quickActions:
                     if self.isEditMode {
                         header.configure(title: String(localized: "Mix your own edit"), subtitle: String(localized: "Tap ideas to build a prompt"))

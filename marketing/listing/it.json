@@ -1,6 +1,6 @@
 {
-  "name": "PixiePocket: Editor Foto IA",
-  "subtitle": "Nano Banana 2 Foto Profilo",
+  "name": "PixiePocket: AI Image Maker",
+  "subtitle": "Editor Foto IA",
   "keywords": "restaurare,colorare,vecchia,figurina,3d,ritocco,selfie,ritratto,capelli,anime,sfondo,animale,abito",
   "promotionalText": "Nuovo: modifiche con un tocco. Trasforma un selfie in foto profilo, ridai vita a una foto vecchia o diventa figurina 3D. 3 immagini gratis, senza abbonamento, mai.",
   "description": "Trasforma qualsiasi foto in qualcosa di incredibile con un tocco: una foto profilo professionale, una vecchia foto restaurata, una figurina 3D, un ritratto anime, un ritratto reale del tuo animale. Con la potenza di Nano Banana 2 e Nano Banana Pro di Google. Senza abbonamento, mai.\n\nInizia con 3 immagini gratis. Nessuna registrazione richiesta.\n\nMODIFICHE CON UN TOCCO\n• Foto profilo: un ritratto da studio per LinkedIn e CV che continua a somigliarti\n• Pacchetto foto profilo: quattro ritratti da studio in un colpo solo\n• Restaura foto vecchia: via i graffi, dentro il colore\n• Figurina 3D: tu trasformato in action figure da collezione, scatola inclusa\n• Ritocco naturale: pelle e luce migliori, senza effetto filtro\n• Sfondo bianco: ritagli puliti per annunci e profili\n• Stile anime, copertina da rivista, nuovo outfit, nuova pettinatura e foto di viaggio\n• Ritratto reale del tuo animale: il tuo animale come nobiltà rinascimentale\n• Costume di Halloween: un costume e un trucco da brivido\n\nPOI PERFEZIONA IN CHAT\nChiedi modifiche con parole tue, e ogni messaggio modifica la tua ultima immagine: «rendi blu navy il blazer», «mettila in un ufficio luminoso». Oppure descrivi un'immagine del tutto nuova da zero.\n\nCONDIVIDI IL PRIMA E DOPO\nSalva i risultati in Foto o condividi un prima e dopo affiancato con un tocco.\n\nPAGHI A IMMAGINE, NON AL MESE\nI crediti non scadono mai. Compra un pacchetto una volta sola e crea quando vuoi; i pacchetti più grandi includono fino al 68% di crediti bonus. Nessuna trappola settimanale, nessun rinnovo, nessun addebito a sorpresa.\n\nSCEGLI IL TUO MOTORE\n• Nano Banana 2: veloce ed economico\n• Nano Banana Pro: dettagli e testo più nitidi\n• GPT Image, con controllo di dimensione, qualità, formato e sfondo trasparente\n\nPRIVATA PER IMPOSTAZIONE PREDEFINITA\nLe tue immagini sono solo tue: non esiste un feed pubblico. I tuoi prompt e le tue foto vengono inviati a Google Gemini e a OpenAI per generare le immagini; lo approvi prima della tua prima creazione e puoi revocare il consenso quando vuoi nelle Impostazioni. Alcune richieste possono essere rifiutate dalla moderazione dei contenuti, e questo non ti costa mai crediti.\n\nInizia in modo anonimo, poi accedi con Apple, Google o GitHub per mantenere le tue immagini sincronizzate tra iPhone e iPad.\n\nGoogle, Gemini e Nano Banana sono marchi di Google LLC. Questa app non è approvata da Google o OpenAI né affiliata a queste aziende.",
@@ -13,7 +13,7 @@
       "after": "demo_headshot",
       "tag": "Pro headshot",
       "headline": "Da selfie a foto profilo pro",
-      "subhead": "Un tocco, con Nano Banana"
+      "subhead": "Un tocco, risultato pro"
     },
     {
       "file": "02_presets",
@@ -61,10 +61,10 @@
       "subhead": "O qualsiasi altra cosa tu descriva"
     },
     {
-      "file": "08_store",
-      "screen": "store",
+      "file": "08_gallery",
+      "screen": "gallery",
       "headline": "Nessun abbonamento. Mai.",
-      "subhead": "3 immagini gratis, crediti senza scadenza"
+      "subhead": "Profili, restauri, figurine e altro"
     }
   ],
   "supportUrl": "https://x.com/guitaripod",

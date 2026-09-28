@@ -290,7 +290,7 @@ class ChatGenerationViewController: UIViewController {
             balanceChipButton.configuration?.title = nil
             return
         }
-        let isLow = balance < CreditStoreViewController.nanoBananaCreditCost
+        let isLow = balance < CreditStoreViewController.defaultImageCreditCost
         var container = AttributeContainer()
         container.font = UIFont.monospacedDigitSystemFont(ofSize: 15, weight: .semibold)
         container.foregroundColor = isLow ? .systemOrange : .label
@@ -543,7 +543,7 @@ class ChatGenerationViewController: UIViewController {
             return
         }
         let model = inputBar.selectedModel.presetModel
-        let cost = (model.fixedCost ?? CreditStoreViewController.nanoBananaCreditCost) * preset.imageCount
+        let cost = (model.fixedCost ?? CreditStoreViewController.defaultImageCreditCost) * preset.imageCount
         guard hasCredits(for: cost) else { return }
         var options = EditOptions()
         options.prompt = preset.prompt

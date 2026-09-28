@@ -21,7 +21,7 @@ final class OnboardingViewController: UIViewController {
             symbol: "wand.and.stars",
             tint: .systemPurple,
             title: String(localized: "Edit any photo\nin one tap"),
-            body: String(localized: "Pick a photo, then tap an edit: a pro headshot, a restored old photo, a 3D figurine and more. Powered by Google's Nano Banana.")
+            body: String(localized: "Pick a photo, then tap an edit: a pro headshot, a restored old photo, a 3D figurine and more.")
         ),
         OnboardingPage(
             symbol: "bubble.left.and.text.bubble.right.fill",

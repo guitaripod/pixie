@@ -41,7 +41,7 @@ enum GenerationError: LocalizedError {
         case .fileTooLarge:
             return String(localized: "Image file too large. Maximum size is 50MB.")
         case .modelDeclined:
-            return String(localized: "Nano Banana couldn't make this one. Try rewording it; its safety filter sometimes blocks photos of people. You weren't charged.")
+            return String(localized: "The model couldn't make this one. Try rewording it; its safety filter sometimes blocks photos of people. You weren't charged.")
         case .unknown(let message):
             return message
         }

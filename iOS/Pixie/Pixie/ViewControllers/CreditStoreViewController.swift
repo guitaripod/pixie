@@ -16,7 +16,7 @@ struct StorePackDisplay {
 }
 
 final class CreditStoreViewController: UIViewController {
-    static let nanoBananaCreditCost = 21
+    static let defaultImageCreditCost = 21
 
     private let viewModel = CreditsViewModel()
     private let shortfall: Int?
@@ -125,16 +125,13 @@ final class CreditStoreViewController: UIViewController {
     }()
 
     private lazy var footerStack: UIStackView = {
-        let restore = UIButton(configuration: plainFooterConfiguration(title: String(localized: "Restore Purchases")), primaryAction: UIAction { [weak self] _ in
-            self?.restorePurchases()
-        })
         let privacy = UIButton(configuration: plainFooterConfiguration(title: String(localized: "Privacy")), primaryAction: UIAction { [weak self] _ in
             self?.open(url: "https://mako.midgarcorp.cc/privacy/pixie")
         })
         let terms = UIButton(configuration: plainFooterConfiguration(title: String(localized: "Terms")), primaryAction: UIAction { [weak self] _ in
             self?.open(url: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")
         })
-        let stack = UIStackView(arrangedSubviews: [restore, privacy, terms])
+        let stack = UIStackView(arrangedSubviews: [privacy, terms])
         stack.axis = .horizontal
         stack.spacing = 18
         stack.distribution = .equalCentering
@@ -371,25 +368,6 @@ final class CreditStoreViewController: UIViewController {
         }
     }
 
-    private func restorePurchases() {
-        HapticsManager.shared.impact(.light)
-        Task {
-            let result = await purchaseManager.restorePurchases()
-            await MainActor.run {
-                let message: String
-                switch result {
-                case .success(let restored):
-                    message = restored.isEmpty ? String(localized: "No purchases found to restore.") : String(localized: "Restored \(restored.count) purchase(s).")
-                case .failure(let error):
-                    message = error.localizedDescription
-                }
-                let alert = UIAlertController(title: String(localized: "Restore Purchases"), message: message, preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
-                self.present(alert, animated: true)
-            }
-        }
-    }
-
     private func open(url: String) {
         guard let url = URL(string: url) else { return }
         UIApplication.shared.open(url)
@@ -453,7 +431,7 @@ final class PackCardView: UIControl {
         let imagesLabel = UILabel()
         imagesLabel.font = .preferredFont(forTextStyle: .caption1)
         imagesLabel.textColor = .tertiaryLabel
-        imagesLabel.text = String(localized: "≈ \(pack.imageEstimate) Nano Banana images")
+        imagesLabel.text = String(localized: "≈ \(pack.imageEstimate) images")
 
         let leftStack = UIStackView(arrangedSubviews: [nameLabel, creditsLabel, imagesLabel])
         leftStack.axis = .vertical

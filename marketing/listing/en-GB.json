@@ -1,6 +1,6 @@
 {
-  "name": "PixiePocket: Banana AI Photo",
-  "subtitle": "Nano Banana 2 Headshot Editor",
+  "name": "PixiePocket: AI Image Maker",
+  "subtitle": "AI Photo Editor",
   "keywords": "linkedin,cv,profile,vintage,repair,damaged,colourise,cartoon,toy,collectible,avatar,studio,enhance",
   "promotionalText": "New: one-tap edits. Turn a selfie into a headshot, revive an old photo or become a 3D figurine. 3 free images, no subscription, ever.",
   "description": "Turn any photo into something amazing with one tap: a professional headshot, a restored old photo, a 3D figurine, an anime portrait, a royal portrait of your pet. Powered by Google's Nano Banana 2 and Nano Banana Pro. No subscription, ever.\n\nStart with 3 free images. No sign-up required.\n\nONE-TAP EDITS\n• Headshot: a studio portrait for LinkedIn and CVs that still looks like you\n• Headshot pack: four studio headshots in one go\n• Restore old photo: scratches out, colour in\n• 3D figurine: you as a collectible figure, box and all\n• Natural retouch: better skin and light, no filter look\n• White background: clean cutouts for listings and profiles\n• Anime style, magazine cover, new outfit, new hairstyle and travel photo\n• Royal pet portrait: your pet as Renaissance nobility\n• Halloween costume: a spooky costume and make-up\n\nTHEN REFINE IT BY CHAT\nAsk for changes in plain words and each message edits your latest image: “make the blazer navy”, “put her in a bright office”. Or describe a brand-new picture from scratch.\n\nSHARE THE BEFORE AND AFTER\nSave results to Photos, or share a side-by-side before-and-after in one tap.\n\nPAY PER IMAGE, NOT PER MONTH\nCredits never expire. Buy a pack once and create whenever you like; bigger packs carry up to 68% bonus credits. No weekly trap, no renewals, no surprise charges.\n\nCHOOSE YOUR ENGINE\n• Nano Banana 2: fast and affordable\n• Nano Banana Pro: sharper detail and text\n• GPT Image, with size, quality, format and transparent-background controls\n\nPRIVATE BY DEFAULT\nYour images are yours alone: there is no public feed. Your prompts and photos are sent to Google Gemini and OpenAI to create your images; you approve this before your first creation and can withdraw consent any time in Settings. Some requests may be declined by content moderation, and those never cost you credits.\n\nStart anonymously, then sign in with Apple, Google or GitHub to keep your images in sync across iPhone and iPad.\n\nGoogle, Gemini and Nano Banana are trademarks of Google LLC. This app is not endorsed by or affiliated with Google or OpenAI.",
@@ -13,7 +13,7 @@
       "after": "demo_headshot",
       "tag": "Pro headshot",
       "headline": "Turn any selfie into a headshot",
-      "subhead": "One tap, powered by Nano Banana"
+      "subhead": "One tap, pro result"
     },
     {
       "file": "02_presets",
@@ -61,10 +61,10 @@
       "subhead": "Or anything else you can describe"
     },
     {
-      "file": "08_store",
-      "screen": "store",
+      "file": "08_gallery",
+      "screen": "gallery",
       "headline": "No subscription. Ever.",
-      "subhead": "3 free images, then credits that never expire"
+      "subhead": "Headshots, restores, figurines and more"
     }
   ],
   "supportUrl": "https://x.com/guitaripod",
