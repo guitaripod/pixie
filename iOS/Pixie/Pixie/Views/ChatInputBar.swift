@@ -58,6 +58,7 @@ class ChatInputBar: UIView {
     private var promptTextViewTopToImageConstraint: NSLayoutConstraint!
     var onSend: ((String) -> Void)?
     var onClearEditImage: (() -> Void)?
+    var onCostInputsChanged: (() -> Void)?
     var onExpandedChanged: ((Bool) -> Void)?
     var currentPrompt: String? {
         let basePrompt = promptTextView.text
@@ -574,6 +575,7 @@ class ChatInputBar: UIView {
     }
 
     @objc private func updateCredits() {
+        defer { onCostInputsChanged?() }
         if let fixedCost = selectedModel.fixedCost {
             creditsLabel.text = String(localized: "\(fixedCost) credits")
             return

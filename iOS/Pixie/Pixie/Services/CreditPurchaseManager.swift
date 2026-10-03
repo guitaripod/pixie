@@ -140,6 +140,7 @@ class CreditPurchaseManager {
             let response: RevenueCatPurchaseValidationResponse = try await apiService.validateRevenueCatPurchase(request)
             
             if response.success {
+                WelcomeCredits().markCreditsAdded()
                 await creditsViewModel.loadBalance()
                 
                 return .success(CreditPurchaseResult(

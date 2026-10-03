@@ -31,7 +31,15 @@ class CreditsViewModel: ObservableObject {
     func loadBalance() async {
         isLoadingBalance = true
         errorMessage = nil
-        
+
+        #if DEBUG
+        if let raw = ProcessInfo.processInfo.environment["PX_FAKE_BALANCE"], let fake = Int(raw) {
+            balance = CreditBalance(balance: fake, currency: "credits")
+            isLoadingBalance = false
+            return
+        }
+        #endif
+
         do {
             let balance = try await apiService.getCreditBalance()
             self.balance = balance

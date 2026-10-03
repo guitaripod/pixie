@@ -63,7 +63,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     @MainActor
     private func checkAuthenticationState() async {
         #if DEBUG
-        if DebugUtils.isRunningInSimulator {
+        if DebugUtils.isRunningInSimulator && !Self.simulatesBootstrapFailure {
             adoptSimulatorAPIKey()
             showMainInterface()
             return
@@ -73,19 +73,48 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         }
         #endif
 
-        if (try? await AuthenticationManager.shared.restoreSession()) != nil {
+        if !isSimulatingBootstrapFailure, (try? await AuthenticationManager.shared.restoreSession()) != nil {
             showMainInterface()
             return
         }
 
-        if (try? await AuthenticationManager.shared.bootstrapAnonymous()) != nil {
+        if await bootstrapAnonymousUser() {
             showMainInterface()
             return
         }
 
-        showAuthenticationInterface()
+        showLaunchFailureInterface()
     }
-    
+
+    @MainActor
+    private func bootstrapAnonymousUser() async -> Bool {
+        #if DEBUG
+        if Self.simulatesBootstrapFailure {
+            guard Self.debugBootstrapFailuresRemaining == 0 else {
+                Self.debugBootstrapFailuresRemaining -= 1
+                AppLogger.warning("Simulated anonymous bootstrap failure", category: .auth)
+                return false
+            }
+            return true
+        }
+        #endif
+        do {
+            try await AuthenticationManager.shared.bootstrapAnonymous()
+            return true
+        } catch {
+            AppLogger.warning("Anonymous bootstrap failed: \(error.localizedDescription)", category: .auth)
+            return false
+        }
+    }
+
+    #if DEBUG
+    private static var debugBootstrapFailuresRemaining = Int(ProcessInfo.processInfo.environment["PX_FAIL_BOOTSTRAP"] ?? "") ?? 0
+    private static let simulatesBootstrapFailure = ProcessInfo.processInfo.environment["PX_FAIL_BOOTSTRAP"] != nil
+    private var isSimulatingBootstrapFailure: Bool { Self.simulatesBootstrapFailure }
+    #else
+    private var isSimulatingBootstrapFailure: Bool { false }
+    #endif
+
     #if DEBUG
     /// Lets a simulator run talk to the live backend as a real account: launch with
     /// `SIMCTL_CHILD_PX_API_KEY=<key>` and every request uses that key.
@@ -100,23 +129,41 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let authViewController = AuthenticationViewController()
         let navigationController = UINavigationController(rootViewController: authViewController)
         navigationController.navigationBar.isHidden = true
-        
+        replaceRoot(with: navigationController)
+    }
+
+    /// First launch with no way to create the anonymous identity: offers Try Again (also
+    /// fired when connectivity returns) and keeps sign-in as the secondary path.
+    private func showLaunchFailureInterface() {
+        let failure = LaunchFailureViewController(
+            onRetry: { [weak self] in
+                guard let self else { return false }
+                let succeeded = await self.bootstrapAnonymousUser()
+                if succeeded { self.showMainInterface() }
+                return succeeded
+            },
+            onSignIn: { [weak self] in
+                self?.showAuthenticationInterface()
+            }
+        )
+        replaceRoot(with: failure)
+    }
+
+    private func replaceRoot(with viewController: UIViewController) {
         if let splashView = window?.rootViewController?.view as? SplashView {
-            // Set the navigation controller as root first
-            window?.rootViewController = navigationController
-            
-            // Add splash view on top for animation
+            window?.rootViewController = viewController
             window?.addSubview(splashView)
             splashView.frame = window!.bounds
-            
             splashView.animateOut {
                 splashView.removeFromSuperview()
             }
         } else {
-            window?.rootViewController = navigationController
+            UIView.transition(with: window!, duration: 0.3, options: .transitionCrossDissolve) {
+                self.window?.rootViewController = viewController
+            }
         }
     }
-    
+
     func showMainInterface() {
         print("DEBUG: Showing main interface")
         

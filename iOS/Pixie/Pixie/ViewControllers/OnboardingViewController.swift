@@ -11,6 +11,7 @@ private struct OnboardingPage {
     let tint: UIColor
     let title: String
     let body: String
+    var showsConsent = false
 }
 
 final class OnboardingViewController: UIViewController {
@@ -33,11 +34,23 @@ final class OnboardingViewController: UIViewController {
             symbol: "sparkles",
             tint: .systemOrange,
             title: String(localized: "3 free images\nto start"),
-            body: String(localized: "Create right now, no sign-up. After that, pay only for what you make with credit packs that never expire. No subscription, ever.")
+            body: String(localized: "Create right now, no sign-up. After that, pay only for what you make with credit packs that never expire. No subscription, ever."),
+            showsConsent: !CloudAIConsent.isGranted
         ),
     ]
 
+    private var needsConsent: Bool { pages.last?.showsConsent ?? false }
+
     private var pageIndex = 0
+
+    private var initialPage: Int {
+        #if DEBUG
+        if let raw = ProcessInfo.processInfo.environment["PX_ONBOARDING_PAGE"], let page = Int(raw), pages.indices.contains(page) {
+            return page
+        }
+        #endif
+        return 0
+    }
 
     private lazy var pageController: UIPageViewController = {
         let controller = UIPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal)
@@ -114,7 +127,7 @@ final class OnboardingViewController: UIViewController {
             skipButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
         ])
 
-        setPage(0, direction: .forward, animated: false)
+        setPage(initialPage, direction: .forward, animated: false)
         updateChrome()
     }
 
@@ -131,6 +144,7 @@ final class OnboardingViewController: UIViewController {
     private func advance() {
         HapticsManager.shared.impact(.light)
         if pageIndex >= pages.count - 1 {
+            if needsConsent { CloudAIConsent.grant() }
             finish()
         } else {
             setPage(pageIndex + 1, direction: .forward, animated: true)
@@ -145,8 +159,10 @@ final class OnboardingViewController: UIViewController {
     private func updateChrome() {
         pageControl.currentPage = pageIndex
         let isLast = pageIndex == pages.count - 1
-        primaryButton.configuration?.title = isLast ? String(localized: "Start Creating") : String(localized: "Continue")
-        skipButton.isHidden = isLast
+        let primaryTitle = isLast ? (needsConsent ? String(localized: "Agree & Start Creating") : String(localized: "Start Creating")) : String(localized: "Continue")
+        primaryButton.configuration?.title = primaryTitle
+        skipButton.configuration?.title = isLast ? String(localized: "Not Now") : String(localized: "Skip")
+        skipButton.isHidden = isLast && !needsConsent
     }
 }
 
@@ -212,17 +228,48 @@ private final class OnboardingPageContentViewController: UIViewController {
         bodyLabel.numberOfLines = 0
         bodyLabel.textAlignment = .center
 
-        let stack = UIStackView(arrangedSubviews: [iconContainer, titleLabel, bodyLabel])
+        var arranged: [UIView] = [iconContainer, titleLabel, bodyLabel]
+        let consentCard = page.showsConsent ? makeConsentCard() : nil
+        if let consentCard { arranged.append(consentCard) }
+
+        let stack = UIStackView(arrangedSubviews: arranged)
         stack.axis = .vertical
         stack.spacing = 24
         stack.alignment = .center
         stack.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(stack)
 
+        consentCard?.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        CenteredScrollContent.make(containing: stack, in: view, horizontalInset: 36)
+    }
+
+    /// The same third-party disclosure the consent sheet shows, so tapping the primary
+    /// button on this page is an informed, explicit agreement.
+    private func makeConsentCard() -> UIView {
+        let card = GlassMaterial.cardView(cornerRadius: 20)
+
+        let icon = UIImageView(image: UIImage(systemName: "cloud.fill"))
+        icon.tintColor = .systemPurple
+        icon.setContentHuggingPriority(.required, for: .horizontal)
+        icon.setContentCompressionResistancePriority(.required, for: .horizontal)
+
+        let label = UILabel()
+        label.text = CloudAIConsent.disclosure
+        label.font = .preferredFont(forTextStyle: .footnote)
+        label.textColor = .secondaryLabel
+        label.numberOfLines = 0
+
+        let row = UIStackView(arrangedSubviews: [icon, label])
+        row.axis = .horizontal
+        row.alignment = .top
+        row.spacing = 12
+        row.translatesAutoresizingMaskIntoConstraints = false
+        card.contentView.addSubview(row)
         NSLayoutConstraint.activate([
-            stack.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor, constant: -20),
-            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 36),
-            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -36),
+            row.topAnchor.constraint(equalTo: card.contentView.topAnchor, constant: 14),
+            row.bottomAnchor.constraint(equalTo: card.contentView.bottomAnchor, constant: -14),
+            row.leadingAnchor.constraint(equalTo: card.contentView.leadingAnchor, constant: 14),
+            row.trailingAnchor.constraint(equalTo: card.contentView.trailingAnchor, constant: -14),
         ])
+        return card
     }
 }

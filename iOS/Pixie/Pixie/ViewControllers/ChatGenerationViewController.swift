@@ -290,16 +290,24 @@ class ChatGenerationViewController: UIViewController {
             balanceChipButton.configuration?.title = nil
             return
         }
-        let isLow = balance < CreditStoreViewController.defaultImageCreditCost
+        let imageCost = estimatedCreditCost()
+        let isLow = balance < imageCost
+        let freeImages = WelcomeCredits().isOnWelcomeGrant(balance: balance)
+            ? WelcomeCredits.freeImages(balance: balance, imageCost: imageCost) : nil
         var container = AttributeContainer()
         container.font = UIFont.monospacedDigitSystemFont(ofSize: 15, weight: .semibold)
         container.foregroundColor = isLow ? .systemOrange : .label
-        balanceChipButton.configuration?.attributedTitle = AttributedString(
-            NumberFormatter.localizedString(from: NSNumber(value: balance), number: .decimal),
-            attributes: container
-        )
+        let title = freeImages.map { String(localized: "\($0) free") }
+            ?? NumberFormatter.localizedString(from: NSNumber(value: balance), number: .decimal)
+        balanceChipButton.configuration?.attributedTitle = AttributedString(title, attributes: container)
+        balanceChipButton.accessibilityLabel = freeImages.map { String(localized: "\($0) free images left") }
+            ?? String(localized: "\(balance) credits")
         balanceChipButton.configuration?.image = UIImage(systemName: isLow ? "exclamationmark.circle.fill" : "sparkles")
         balanceChipButton.configuration?.baseForegroundColor = isLow ? .systemOrange : .systemPurple
+    }
+
+    private func refreshBalanceChip() {
+        updateBalanceChip(creditsViewModel.balance?.balance)
     }
 
     private func estimatedCreditCost() -> Int {
@@ -334,6 +342,9 @@ class ChatGenerationViewController: UIViewController {
         }
         inputBar.onClearEditImage = { [weak self] in
             self?.switchToGenerateMode()
+        }
+        inputBar.onCostInputsChanged = { [weak self] in
+            self?.refreshBalanceChip()
         }
         suggestionsView.onSelectionChanged = { [weak self] in
             self?.inputBar.updateIndicators()
@@ -739,6 +750,13 @@ class ChatGenerationViewController: UIViewController {
     /// The system photo picker runs out of process and needs no library permission, so
     /// picking a photo never starts with a permission prompt.
     private func presentPhotoPicker() {
+        if AIConsentViewController.presentIfNeeded(from: self, onContinue: { [weak self] in
+            self?.presentPhotoPicker()
+        }, onDeclined: { [weak self] in
+            self?.pendingPreset = nil
+        }) {
+            return
+        }
         var config = PHPickerConfiguration()
         config.selectionLimit = 1
         config.filter = .images

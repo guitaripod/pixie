@@ -11,6 +11,10 @@ enum CloudAIConsent {
         UserDefaults.standard.set(true, forKey: key)
     }
 
+    static var disclosure: String {
+        String(localized: "Pixie sends your prompts and any photos you attach to Google Gemini and OpenAI to create your images. Automated moderation checks every request. Nothing is used to identify you, and you can withdraw consent anytime in Settings.")
+    }
+
     static func withdraw() {
         UserDefaults.standard.set(false, forKey: key)
     }
@@ -18,11 +22,13 @@ enum CloudAIConsent {
 
 final class AIConsentViewController: UIViewController {
     var onContinue: (() -> Void)?
+    var onDeclined: (() -> Void)?
 
-    static func presentIfNeeded(from presenter: UIViewController, onContinue: @escaping () -> Void) -> Bool {
+    static func presentIfNeeded(from presenter: UIViewController, onContinue: @escaping () -> Void, onDeclined: (() -> Void)? = nil) -> Bool {
         guard !CloudAIConsent.isGranted else { return false }
         let consent = AIConsentViewController()
         consent.onContinue = onContinue
+        consent.onDeclined = onDeclined
         consent.modalPresentationStyle = .pageSheet
         if let sheet = consent.sheetPresentationController {
             sheet.detents = [.medium()]
@@ -49,7 +55,7 @@ final class AIConsentViewController: UIViewController {
 
     private lazy var bodyLabel: UILabel = {
         let label = UILabel()
-        label.text = String(localized: "Pixie sends your prompts and any photos you attach to Google Gemini and OpenAI to create your images. Automated moderation checks every request. Nothing is used to identify you, and you can withdraw consent anytime in Settings.")
+        label.text = CloudAIConsent.disclosure
         label.font = .preferredFont(forTextStyle: .subheadline)
         label.textColor = .secondaryLabel
         label.textAlignment = .center
@@ -83,6 +89,13 @@ final class AIConsentViewController: UIViewController {
             self?.dismiss(animated: true)
         })
     }()
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if isBeingDismissed, !CloudAIConsent.isGranted {
+            onDeclined?()
+        }
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
