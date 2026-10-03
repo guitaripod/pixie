@@ -229,6 +229,7 @@ private final class OnboardingPageContentViewController: UIViewController {
         bodyLabel.textAlignment = .center
 
         var arranged: [UIView] = [iconContainer, titleLabel, bodyLabel]
+        iconContainer.isHidden = page.showsConsent && UIScreen.main.bounds.height < 700
         let consentCard = page.showsConsent ? makeConsentCard() : nil
         if let consentCard { arranged.append(consentCard) }
 
