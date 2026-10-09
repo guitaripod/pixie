@@ -84,8 +84,8 @@ class CompressionSelectorViewController: UIViewController {
         NSLayoutConstraint.activate([
             // Container
             containerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            containerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            containerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            containerView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
+            containerView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
             
             // Title and Value in same row
             titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
@@ -102,8 +102,8 @@ class CompressionSelectorViewController: UIViewController {
             
             // Description
             descriptionLabel.topAnchor.constraint(equalTo: containerView.bottomAnchor, constant: 12),
-            descriptionLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32),
-            descriptionLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -32)
+            descriptionLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 32),
+            descriptionLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32)
         ])
     }
     

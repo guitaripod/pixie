@@ -77,8 +77,8 @@ class TransactionHistoryViewController: UIViewController {
         NSLayoutConstraint.activate([
             emptyStateView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emptyStateView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            emptyStateView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
-            emptyStateView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40)
+            emptyStateView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 40),
+            emptyStateView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -40)
         ])
     }
     

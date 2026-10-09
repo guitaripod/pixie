@@ -50,8 +50,8 @@ class ImagePreviewViewController: UIViewController {
     private func setupConstraints() {
         var constraints = [
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             imageView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             imageView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),

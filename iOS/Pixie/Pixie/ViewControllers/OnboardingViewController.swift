@@ -16,6 +16,7 @@ private struct OnboardingPage {
 
 final class OnboardingViewController: UIViewController {
     var onFinished: (() -> Void)?
+    private static let maxButtonWidth: CGFloat = 420
 
     private let pages: [OnboardingPage] = [
         OnboardingPage(
@@ -110,20 +111,24 @@ final class OnboardingViewController: UIViewController {
         view.addSubview(primaryButton)
         view.addSubview(skipButton)
 
+        let primaryButtonFillWidth = primaryButton.widthAnchor.constraint(equalTo: view.safeAreaLayoutGuide.widthAnchor, constant: -56)
+        primaryButtonFillWidth.priority = .defaultHigh
+
         NSLayoutConstraint.activate([
             pageController.view.topAnchor.constraint(equalTo: view.topAnchor),
             pageController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             pageController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             pageController.view.bottomAnchor.constraint(equalTo: pageControl.topAnchor, constant: -16),
 
-            pageControl.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            pageControl.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
             pageControl.bottomAnchor.constraint(equalTo: primaryButton.topAnchor, constant: -20),
 
-            primaryButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
-            primaryButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
+            primaryButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+            primaryButton.widthAnchor.constraint(lessThanOrEqualToConstant: Self.maxButtonWidth),
+            primaryButtonFillWidth,
             primaryButton.bottomAnchor.constraint(equalTo: skipButton.topAnchor, constant: -4),
 
-            skipButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            skipButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
             skipButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
         ])
 
@@ -187,6 +192,7 @@ extension OnboardingViewController: UIPageViewControllerDataSource, UIPageViewCo
 private final class OnboardingPageContentViewController: UIViewController {
     let index: Int
     private let page: OnboardingPage
+    private var iconContainer: UIView?
 
     init(page: OnboardingPage, index: Int) {
         self.page = page
@@ -229,7 +235,7 @@ private final class OnboardingPageContentViewController: UIViewController {
         bodyLabel.textAlignment = .center
 
         var arranged: [UIView] = [iconContainer, titleLabel, bodyLabel]
-        iconContainer.isHidden = page.showsConsent && UIScreen.main.bounds.height < 700
+        self.iconContainer = iconContainer
         let consentCard = page.showsConsent ? makeConsentCard() : nil
         if let consentCard { arranged.append(consentCard) }
 
@@ -242,6 +248,20 @@ private final class OnboardingPageContentViewController: UIViewController {
         consentCard?.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         CenteredScrollContent.make(containing: stack, in: view, horizontalInset: 36)
     }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        hideIconWhenWindowIsShort()
+    }
+
+    /// The consent page needs the room its disclosure takes, so its icon gives way whenever
+    /// the window is shorter than a compact phone, whichever display or orientation it is on.
+    private func hideIconWhenWindowIsShort() {
+        guard page.showsConsent, let windowHeight = view.window?.bounds.height else { return }
+        iconContainer?.isHidden = windowHeight < Self.minimumHeightForConsentIcon
+    }
+
+    private static let minimumHeightForConsentIcon: CGFloat = 700
 
     /// The same third-party disclosure the consent sheet shows, so tapping the primary
     /// button on this page is an informed, explicit agreement.

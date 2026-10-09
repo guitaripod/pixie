@@ -43,23 +43,15 @@ final class GalleryViewController: UIViewController {
         navigationController?.navigationBar.isHidden = false
         navigationItem.largeTitleDisplayMode = .never
         title = String(localized: "My Images")
-
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(systemName: "chevron.left"),
-            style: .plain,
-            target: self,
-            action: #selector(backButtonTapped)
-        )
-    }
-
-    @objc private func backButtonTapped() {
-        HapticsManager.shared.impact(.light)
-        navigationController?.popViewController(animated: true)
     }
 }
 
 extension GalleryViewController: GalleryPageViewControllerDelegate {
     func galleryPageDidSelectImage(_ viewController: GalleryPageViewController, image: ImageMetadata) {
+        presentDetail(for: image)
+    }
+
+    func presentDetail(for image: ImageMetadata) {
         let previewVC = ImageDetailViewController(image: image)
         previewVC.delegate = self
         
@@ -88,6 +80,16 @@ extension GalleryViewController: ImageDetailViewControllerDelegate {
 }
 
 private extension GalleryViewController {
+    /// Back to the chat that edits the picked image: the chat column beside the sidebar when
+    /// there are two columns, a pop of the single column otherwise.
+    func returnToChat() {
+        if let split = splitViewController as? MainSplitViewController, !split.isCollapsed {
+            split.navigateToSection(.chat)
+        } else {
+            navigationController?.popViewController(animated: true)
+        }
+    }
+
     func handleImageAction(_ action: ImageAction, for image: ImageMetadata) {
         switch action {
         case .useForEdit:
@@ -97,7 +99,7 @@ private extension GalleryViewController {
                 object: nil,
                 userInfo: ["image": image]
             )
-            navigationController?.popViewController(animated: true)
+            returnToChat()
             
         case .copyPrompt:
             HapticsManager.shared.notification(.success)

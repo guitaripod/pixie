@@ -46,7 +46,7 @@ class HapticManager {
     }
     
     func impact(_ type: HapticType) {
-        guard UIDevice.current.userInterfaceIdiom == .phone else { return }
+        guard UIDevice.current.userInterfaceIdiom == .phone else { return } // duo-audit:ignore haptics policy: only iPhone hardware has a Taptic Engine
         
         switch type {
         case .click:
@@ -71,12 +71,12 @@ class HapticManager {
     }
     
     func notification(_ type: UINotificationFeedbackGenerator.FeedbackType) {
-        guard UIDevice.current.userInterfaceIdiom == .phone else { return }
+        guard UIDevice.current.userInterfaceIdiom == .phone else { return } // duo-audit:ignore haptics policy: only iPhone hardware has a Taptic Engine
         notification.notificationOccurred(type)
     }
     
     func selectionChanged() {
-        guard UIDevice.current.userInterfaceIdiom == .phone else { return }
+        guard UIDevice.current.userInterfaceIdiom == .phone else { return } // duo-audit:ignore haptics policy: only iPhone hardware has a Taptic Engine
         selection.selectionChanged()
     }
     

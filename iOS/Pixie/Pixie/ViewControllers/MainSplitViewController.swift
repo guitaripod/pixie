@@ -9,6 +9,11 @@ class MainSplitViewController: UISplitViewController {
     private var creditsViewController: CreditsMainViewController?
     private var settingsViewController: SettingsViewController?
     private var adminViewController: AdminDashboardViewController?
+    private var selectedSection: SidebarSection = .chat
+    #if DEBUG
+    var demoLaunch: DemoLaunch?
+    private var demoLaunched = false
+    #endif
     
     init() {
         super.init(style: .doubleColumn)
@@ -24,9 +29,9 @@ class MainSplitViewController: UISplitViewController {
         preferredDisplayMode = .oneBesideSecondary
         preferredSplitBehavior = .tile
         presentsWithGesture = true
-        preferredPrimaryColumnWidth = 320
+        preferredPrimaryColumnWidth = Self.regularPrimaryColumnWidth
         minimumPrimaryColumnWidth = 280
-        maximumPrimaryColumnWidth = 400
+        maximumPrimaryColumnWidth = Self.regularMaximumPrimaryColumnWidth
         
         setupViewControllers()
         setupDelegate()
@@ -34,11 +39,40 @@ class MainSplitViewController: UISplitViewController {
         displayModeButtonVisibility = .automatic
     }
     
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        alignColumnsToFold()
+    }
+
+    /// With the device folded like a book the sidebar fills the page left of the fold and the
+    /// detail column the page right of it, so no column straddles the fold. Otherwise the
+    /// columns keep their usual widths.
+    private func alignColumnsToFold() {
+        guard !isCollapsed else { return }
+        let fold = FoldGeometry.activeFold(in: view)
+        let verticalFold = fold?.orientation == .vertical ? fold : nil
+        let primaryWidth = verticalFold?.frame.minX ?? Self.regularPrimaryColumnWidth
+        let detailInset = verticalFold.map { $0.frame.width } ?? 0
+        if abs(preferredPrimaryColumnWidth - primaryWidth) > 0.5 {
+            maximumPrimaryColumnWidth = max(Self.regularMaximumPrimaryColumnWidth, primaryWidth)
+            preferredPrimaryColumnWidth = primaryWidth
+        }
+        if abs(detailNavigationController.additionalSafeAreaInsets.left - detailInset) > 0.5 {
+            detailNavigationController.additionalSafeAreaInsets.left = detailInset
+        }
+    }
+
+    private static let regularPrimaryColumnWidth: CGFloat = 320
+    private static let regularMaximumPrimaryColumnWidth: CGFloat = 400
+
     private func setupViewControllers() {
         sidebarViewController = SidebarViewController()
         sidebarViewController.delegate = self
         
         chatViewController = ChatGenerationViewController()
+        #if DEBUG
+        chatViewController.demoMode = demoLaunch?.scenario
+        #endif
         detailNavigationController = UINavigationController(rootViewController: chatViewController)
         
         setViewController(sidebarViewController, for: .primary)
@@ -67,12 +101,12 @@ class MainSplitViewController: UISplitViewController {
         }
     }
     
-    func showViewController(_ viewController: UIViewController) {
+    func showViewController(_ viewController: UIViewController, animated: Bool = true) {
         if isCollapsed {
             if !detailNavigationController.viewControllers.contains(where: { $0 === viewController }) {
-                detailNavigationController.pushViewController(viewController, animated: true)
+                detailNavigationController.pushViewController(viewController, animated: animated)
             } else {
-                detailNavigationController.popToViewController(viewController, animated: true)
+                detailNavigationController.popToViewController(viewController, animated: animated)
             }
         } else {
             if detailNavigationController.viewControllers.first !== viewController {
@@ -81,39 +115,70 @@ class MainSplitViewController: UISplitViewController {
         }
     }
     
-    func navigateToSection(_ section: SidebarSection) {
-        let viewController: UIViewController
-        
+    func navigateToSection(_ section: SidebarSection, animated: Bool = true) {
+        selectedSection = section
+        sidebarViewController.select(section)
+        showViewController(viewController(for: section), animated: animated)
+    }
+
+    private func viewController(for section: SidebarSection) -> UIViewController {
         switch section {
         case .chat:
-            viewController = chatViewController
+            return chatViewController
             
         case .gallery:
             if galleryViewController == nil {
                 galleryViewController = GalleryViewController()
             }
-            viewController = galleryViewController!
+            return galleryViewController!
             
         case .credits:
             if creditsViewController == nil {
                 creditsViewController = CreditsMainViewController()
             }
-            viewController = creditsViewController!
+            return creditsViewController!
             
         case .settings:
             if settingsViewController == nil {
                 settingsViewController = SettingsViewController()
             }
-            viewController = settingsViewController!
+            return settingsViewController!
             
         case .admin:
             if adminViewController == nil {
                 adminViewController = AdminDashboardViewController()
             }
-            viewController = adminViewController!
+            return adminViewController!
         }
-        
-        showViewController(viewController)
+    }
+
+    private func section(of viewController: UIViewController) -> SidebarSection {
+        switch viewController {
+        case is GalleryViewController: return .gallery
+        case is CreditsMainViewController: return .credits
+        case is SettingsViewController: return .settings
+        case is AdminDashboardViewController: return .admin
+        default: return .chat
+        }
+    }
+
+    /// Folding to a single column keeps the person where they were: the chat becomes the root
+    /// again with the section they were viewing pushed on top, so Back leads to the chat.
+    private func restoreCollapsedStack() {
+        let stack = detailNavigationController.viewControllers
+        guard let first = stack.first, first !== chatViewController else { return }
+        detailNavigationController.setViewControllers([chatViewController] + stack, animated: false)
+    }
+
+    /// Unfolding to two columns keeps the person where they were: the section on top of the
+    /// chat becomes the detail column and the sidebar selects it.
+    private func restoreExpandedStack() {
+        let stack = detailNavigationController.viewControllers
+        guard stack.first === chatViewController, stack.count > 1 else { return }
+        let remaining = Array(stack.dropFirst())
+        selectedSection = section(of: remaining[0])
+        detailNavigationController.setViewControllers(remaining, animated: false)
+        sidebarViewController.select(selectedSection)
     }
 }
 
@@ -122,6 +187,14 @@ extension MainSplitViewController: UISplitViewControllerDelegate {
     func splitViewController(_ svc: UISplitViewController,
                              topColumnForCollapsingToProposedTopColumn proposedTopColumn: UISplitViewController.Column) -> UISplitViewController.Column {
         return .secondary
+    }
+
+    func splitViewControllerDidCollapse(_ svc: UISplitViewController) {
+        restoreCollapsedStack()
+    }
+
+    func splitViewControllerDidExpand(_ svc: UISplitViewController) {
+        restoreExpandedStack()
     }
 
     func splitViewController(_ splitViewController: UISplitViewController,
@@ -135,3 +208,17 @@ extension MainSplitViewController: SidebarViewControllerDelegate {
         navigateToSection(section)
     }
 }
+
+#if DEBUG
+extension MainSplitViewController {
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        guard let demoLaunch, !demoLaunched else { return }
+        demoLaunched = true
+        if demoLaunch.section != .chat {
+            navigateToSection(demoLaunch.section, animated: false)
+        }
+        demoLaunch.afterLaunch?(self, detailNavigationController)
+    }
+}
+#endif

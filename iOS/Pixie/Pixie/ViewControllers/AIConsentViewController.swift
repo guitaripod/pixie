@@ -110,8 +110,8 @@ final class AIConsentViewController: UIViewController {
 
         NSLayoutConstraint.activate([
             stack.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
-            stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
-            stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
+            stack.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 28),
+            stack.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -28),
             continueButton.widthAnchor.constraint(equalTo: stack.widthAnchor),
         ])
     }

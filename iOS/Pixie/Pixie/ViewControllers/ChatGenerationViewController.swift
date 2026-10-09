@@ -23,6 +23,7 @@ class ChatGenerationViewController: UIViewController {
     private var suggestionsBottomConstraint: NSLayoutConstraint!
     private var chatBottomConstraint: NSLayoutConstraint!
     private let offlineBanner = OfflineBanner()
+    private let keyboardTracker = KeyboardOverlapView()
     private let creditsViewModel = CreditsViewModel()
     private lazy var balanceChipButton: UIButton = {
         var config = UIButton.Configuration.plain()
@@ -40,13 +41,13 @@ class ChatGenerationViewController: UIViewController {
     private var notificationObserver: NSObjectProtocol?
     private var presetLinkObserver: NSObjectProtocol?
     private var pendingPreset: EditPreset?
-    private var layoutManager = AdaptiveLayoutManager(traitCollection: UITraitCollection.current)
     private var leadingConstraint: NSLayoutConstraint!
     private var trailingConstraint: NSLayoutConstraint!
     #if DEBUG
     enum DemoScenario {
-        case edit, create, empty
+        case edit, create, empty, fresh
         case home(UIImage)
+        case compose(UIImage, String)
         case conversation([ChatMessage])
     }
     var demoMode: DemoScenario?
@@ -62,7 +63,11 @@ class ChatGenerationViewController: UIViewController {
         setupKeyboardCommands()
         setupDragAndDrop()
         transitionToState(.suggestions, animated: false)
-        layoutManager.delegate = self
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        inputBar.refitExpandedHeight()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -134,10 +139,21 @@ class ChatGenerationViewController: UIViewController {
     #endif
 
     private func applyDemoScenario(_ scenario: DemoScenario) {
+        if case .fresh = scenario {
+            return
+        }
         if case let .home(photo) = scenario {
             toolbarMode = .edit(selectedImage: SelectedImage(image: photo, url: nil, displayName: nil))
             inputBar.setEditMode(true, selectedImage: photo)
             suggestionsView.setEditMode(true, photo: photo)
+            return
+        }
+        if case let .compose(photo, prompt) = scenario {
+            toolbarMode = .edit(selectedImage: SelectedImage(image: photo, url: nil, displayName: nil))
+            inputBar.setEditMode(true, selectedImage: photo)
+            suggestionsView.setEditMode(true, photo: photo)
+            inputBar.setText(prompt)
+            inputBar.expand()
             return
         }
         suggestionsView.alpha = 0
@@ -149,7 +165,7 @@ class ChatGenerationViewController: UIViewController {
             messages = DemoChatBuilder.editConversation()
         case .create:
             messages = DemoChatBuilder.createConversation()
-        case .empty, .home:
+        case .empty, .home, .fresh, .compose:
             messages = []
         case .conversation(let conversation):
             messages = conversation
@@ -186,13 +202,35 @@ class ChatGenerationViewController: UIViewController {
         view.addSubview(inputBar)
         offlineBanner.alpha = 0
         view.addSubview(offlineBanner)
+        installKeyboardTracker()
+    }
+
+    /// With no keyboard the guide rests on the bottom safe area, so anything that tall or shorter
+    /// is the resting state and not a keyboard.
+    private func keyboardOverlapChanged(_ guideHeight: CGFloat) {
+        let covered = guideHeight > view.safeAreaInsets.bottom ? guideHeight : 0
+        chatView.adjustForKeyboard(height: covered, duration: 0)
+    }
+
+    /// Reports how much of this view the keyboard covers, read from the keyboard layout guide
+    /// so it follows the keyboard in every window size and pose.
+    private func installKeyboardTracker() {
+        keyboardTracker.translatesAutoresizingMaskIntoConstraints = false
+        keyboardTracker.isUserInteractionEnabled = false
+        keyboardTracker.onHeightChange = { [weak self] height in
+            self?.keyboardOverlapChanged(height)
+        }
+        view.insertSubview(keyboardTracker, at: 0)
+        NSLayoutConstraint.activate([
+            keyboardTracker.topAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor),
+            keyboardTracker.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            keyboardTracker.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            keyboardTracker.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
     }
     private func setupConstraints() {
-        let layout = AdaptiveLayout(traitCollection: traitCollection)
-        let insets = layout.contentInsets
-
-        leadingConstraint = inputBar.leadingAnchor.constraint(equalTo: view.leadingAnchor)
-        trailingConstraint = inputBar.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        leadingConstraint = inputBar.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor)
+        trailingConstraint = inputBar.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         
         NSLayoutConstraint.activate([
             leadingConstraint,
@@ -203,23 +241,23 @@ class ChatGenerationViewController: UIViewController {
         let bannerTopConstraint = offlineBanner.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -36)
         offlineBanner.setTopConstraint(bannerTopConstraint)
         NSLayoutConstraint.activate([
-            offlineBanner.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            offlineBanner.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            offlineBanner.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            offlineBanner.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             bannerTopConstraint
         ])
 
         suggestionsBottomConstraint = suggestionsView.bottomAnchor.constraint(equalTo: inputBar.topAnchor)
         NSLayoutConstraint.activate([
             suggestionsView.topAnchor.constraint(equalTo: offlineBanner.bottomAnchor),
-            suggestionsView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            suggestionsView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            suggestionsView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            suggestionsView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             suggestionsBottomConstraint
         ])
         chatBottomConstraint = chatView.bottomAnchor.constraint(equalTo: inputBar.topAnchor)
         NSLayoutConstraint.activate([
             chatView.topAnchor.constraint(equalTo: offlineBanner.bottomAnchor),
-            chatView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            chatView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            chatView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            chatView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             chatBottomConstraint
         ])
     }
@@ -282,7 +320,7 @@ class ChatGenerationViewController: UIViewController {
     private func updateBalanceChip(_ balance: Int?) {
         #if DEBUG
         if DemoMode.isActive {
-            balanceChipButton.configuration?.title = "1,372"
+            balanceChipButton.configuration?.title = NumberFormatter.localizedString(from: NSNumber(value: DemoContent.balance), number: .decimal)
             return
         }
         #endif
@@ -356,8 +394,6 @@ class ChatGenerationViewController: UIViewController {
         tapGesture.cancelsTouchesInView = false
         tapGesture.delegate = self
         view.addGestureRecognizer(tapGesture)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(imageSelectedForEdit(_:)), name: Notification.Name("ImageSelectedForEdit"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
     }
@@ -802,16 +838,6 @@ class ChatGenerationViewController: UIViewController {
         startEdit(of: selectedImage.image, options: editOptions, displayText: editOptions.prompt)
         inputBar.clear()
     }
-    @objc private func keyboardWillShow(_ notification: Notification) {
-        guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
-              let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval else { return }
-        let keyboardHeight = keyboardFrame.height
-        chatView.adjustForKeyboard(height: keyboardHeight, duration: duration)
-    }
-    @objc private func keyboardWillHide(_ notification: Notification) {
-        guard let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval else { return }
-        chatView.adjustForKeyboard(height: 0, duration: duration)
-    }
     @objc private func imageSelectedForEdit(_ notification: Notification) {
         guard let imageMetadata = notification.userInfo?["image"] as? ImageMetadata else { return }
         
@@ -992,7 +1018,6 @@ extension ChatGenerationViewController {
         
         if traitCollection.horizontalSizeClass != previousTraitCollection?.horizontalSizeClass ||
            traitCollection.verticalSizeClass != previousTraitCollection?.verticalSizeClass {
-            layoutManager.updateLayout(for: traitCollection)
             updateLayoutForSizeClass()
         }
     }
@@ -1032,12 +1057,10 @@ extension ChatGenerationViewController {
                                   input: "L",
                                   modifierFlags: .command))
         
-        if UIDevice.isPad {
-            addKeyCommand(UIKeyCommand(title: String(localized: "Toggle Sidebar"),
-                                      action: #selector(toggleSidebarShortcut),
-                                      input: "\\",
-                                      modifierFlags: .command))
-        }
+        addKeyCommand(UIKeyCommand(title: String(localized: "Toggle Sidebar"),
+                                  action: #selector(toggleSidebarShortcut),
+                                  input: "\\",
+                                  modifierFlags: .command))
     }
     
     @objc private func generateWithKeyboard() {
@@ -1078,20 +1101,12 @@ extension ChatGenerationViewController {
     }
     
     private func setupDragAndDrop() {
-        if UIDevice.isPad {
-            view.addInteraction(UIDropInteraction(delegate: self))
-            chatView.addInteraction(UIDragInteraction(delegate: self))
-        }
+        view.addInteraction(UIDropInteraction(delegate: self))
+        chatView.addInteraction(UIDragInteraction(delegate: self))
     }
     
     override var canBecomeFirstResponder: Bool {
         return true
-    }
-}
-
-extension ChatGenerationViewController: AdaptiveLayoutDelegate {
-    func layoutDidChange(to layout: AdaptiveLayout) {
-        updateLayoutForSizeClass()
     }
 }
 
@@ -1125,5 +1140,17 @@ extension ChatGenerationViewController: UIDragInteractionDelegate {
         let dragItem = UIDragItem(itemProvider: provider)
         dragItem.localObject = image
         return [dragItem]
+    }
+}
+
+private final class KeyboardOverlapView: UIView {
+    var onHeightChange: ((CGFloat) -> Void)?
+    private var reportedHeight: CGFloat = 0
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        guard bounds.height != reportedHeight else { return }
+        reportedHeight = bounds.height
+        onHeightChange?(bounds.height)
     }
 }

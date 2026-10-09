@@ -335,8 +335,8 @@ class AuthenticationViewController: UIViewController {
     private func setupConstraints() {
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             
             contentStackView.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 20),
@@ -383,8 +383,8 @@ class AuthenticationViewController: UIViewController {
             termsLabel.trailingAnchor.constraint(equalTo: buttonContainerView.trailingAnchor, constant: -24),
             termsLabel.bottomAnchor.constraint(equalTo: buttonContainerView.bottomAnchor),
             
-            errorCard.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            errorCard.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            errorCard.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 24),
+            errorCard.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -24),
             errorCard.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -100),
             
             errorLabel.topAnchor.constraint(equalTo: errorCard.topAnchor, constant: 12),

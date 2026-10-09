@@ -65,7 +65,7 @@ class ChatTableView: UIView {
                 return cell
             case .assistant:
                 let cell = tableView.dequeueReusableCell(withIdentifier: AssistantMessageCell.identifier, for: indexPath) as! AssistantMessageCell
-                cell.configure(with: message)
+                cell.configure(with: message, maxImageHeight: self?.maxResultImageHeight ?? 0)
                 cell.delegate = self
                 return cell
             case .loading:
@@ -76,6 +76,40 @@ class ChatTableView: UIView {
         }
         dataSource.defaultRowAnimation = .fade
     }
+    /// A result never takes more than this share of the chat's height, so in a short window
+    /// (a landscape phone, a window made short by the fold) it still fits beside its actions.
+    private var maxResultImageHeight: CGFloat {
+        tableView.bounds.height * Self.resultImageHeightShare
+    }
+    private static let resultImageHeightShare: CGFloat = 0.75
+    private var laidOutHeight: CGFloat = 0
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        guard abs(bounds.height - laidOutHeight) > 1 else { return }
+        let hadLayout = laidOutHeight > 0
+        laidOutHeight = bounds.height
+        guard hadLayout else { return }
+        let wasAtBottom = isShowingLastMessage
+        let anchor = tableView.indexPathsForVisibleRows?.first
+        var snapshot = dataSource.snapshot()
+        snapshot.reloadItems(snapshot.itemIdentifiers.filter { $0.role == .assistant })
+        dataSource.apply(snapshot, animatingDifferences: false)
+        tableView.layoutIfNeeded()
+        if wasAtBottom {
+            scrollToBottom(animated: false)
+        } else if let anchor {
+            tableView.scrollToRow(at: anchor, at: .top, animated: false)
+        }
+    }
+
+    private var isShowingLastMessage: Bool {
+        guard tableView.numberOfSections > 0 else { return false }
+        let lastRow = tableView.numberOfRows(inSection: 0) - 1
+        guard lastRow >= 0 else { return false }
+        return tableView.indexPathsForVisibleRows?.contains(IndexPath(row: lastRow, section: 0)) ?? false
+    }
+
     func setMessages(_ messages: [ChatMessage], animated: Bool = true) {
         var snapshot = NSDiffableDataSourceSnapshot<Section, ChatMessage>()
         snapshot.appendSections([.messages])
@@ -413,12 +447,12 @@ class AssistantMessageCell: UITableViewCell {
             contentStackView.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: -12)
         ])
     }
-    func configure(with message: ChatMessage) {
+    func configure(with message: ChatMessage, maxImageHeight: CGFloat = 0) {
         contentStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
         imageViews.removeAll()
         if let images = message.images, !images.isEmpty {
             bubbleView.backgroundColor = .clear
-            contentStackView.addArrangedSubview(makeImageGrid(images))
+            contentStackView.addArrangedSubview(makeImageGrid(images, maxImageHeight: maxImageHeight))
             contentStackView.addArrangedSubview(makeActionRow(canCompare: message.sourceImage != nil))
         } else if let text = message.content, !text.isEmpty {
             bubbleView.backgroundColor = .secondarySystemBackground
@@ -432,11 +466,13 @@ class AssistantMessageCell: UITableViewCell {
     }
     /// One result fills the bubble; a pack of results sits in a two-column grid so four
     /// headshots fit the screen instead of overflowing it.
-    private func makeImageGrid(_ images: [UIImage]) -> UIView {
+    private func makeImageGrid(_ images: [UIImage], maxImageHeight: CGFloat) -> UIView {
         let columns = images.count == 1 ? 1 : 2
         let totalWidth: CGFloat = 260
         let spacing: CGFloat = 8
         let cellWidth = (totalWidth - spacing * CGFloat(columns - 1)) / CGFloat(columns)
+        let rows = (images.count + columns - 1) / columns
+        let maxRowHeight = (maxImageHeight - spacing * CGFloat(rows - 1)) / CGFloat(rows)
         let grid = UIStackView()
         grid.axis = .vertical
         grid.spacing = spacing
@@ -460,8 +496,9 @@ class AssistantMessageCell: UITableViewCell {
             imageView.tag = index
             imageView.image = image
             let aspectRatio = image.size.width > 0 ? image.size.height / image.size.width : 1
+            let width = maxImageHeight > 0 ? min(cellWidth, maxRowHeight / aspectRatio) : cellWidth
             NSLayoutConstraint.activate([
-                imageView.widthAnchor.constraint(equalToConstant: cellWidth),
+                imageView.widthAnchor.constraint(equalToConstant: width),
                 imageView.heightAnchor.constraint(equalTo: imageView.widthAnchor, multiplier: aspectRatio)
             ])
             imageView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(imageTapped(_:))))

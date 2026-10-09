@@ -77,8 +77,8 @@ class AdminAdjustmentHistoryViewController: UIViewController {
             
             emptyStateLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emptyStateLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            emptyStateLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32),
-            emptyStateLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -32)
+            emptyStateLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 32),
+            emptyStateLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32)
         ])
     }
     

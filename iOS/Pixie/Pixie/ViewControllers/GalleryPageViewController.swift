@@ -19,11 +19,9 @@ final class GalleryPageViewController: UIViewController {
     private let loadingView = UIActivityIndicatorView(style: .large)
     
     private var dataSource: UICollectionViewDiffableDataSource<Int, ImageMetadata>!
-    private var layoutManager = AdaptiveLayoutManager(traitCollection: UITraitCollection.current)
     
     init() {
-        let layout = Self.createLayout(for: UITraitCollection.current)
-        self.collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        self.collectionView = UICollectionView(frame: .zero, collectionViewLayout: Self.createLayout())
         
         super.init(nibName: nil, bundle: nil)
     }
@@ -40,7 +38,6 @@ final class GalleryPageViewController: UIViewController {
         setupRefreshControl()
         setupDragAndDrop()
         loadInitialData()
-        layoutManager.delegate = self
 
         NotificationCenter.default.addObserver(self, selector: #selector(galleryNeedsRefresh), name: .galleryNeedsRefresh, object: nil)
     }
@@ -55,56 +52,43 @@ final class GalleryPageViewController: UIViewController {
     }
 
     
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        
-        if traitCollection.horizontalSizeClass != previousTraitCollection?.horizontalSizeClass ||
-           traitCollection.verticalSizeClass != previousTraitCollection?.verticalSizeClass {
-            layoutManager.updateLayout(for: traitCollection)
-            collectionView.setCollectionViewLayout(Self.createLayout(for: traitCollection), animated: true)
+    private static let narrowGalleryWidth: CGFloat = 480
+
+    private static func createLayout() -> UICollectionViewLayout {
+        UICollectionViewCompositionalLayout { _, environment in
+            let layout = AdaptiveLayout(traitCollection: environment.traitCollection)
+            let insets = environment.container.effectiveContentSize.width < Self.narrowGalleryWidth ? UIEdgeInsets.zero : layout.contentInsets
+            let columns = layout.galleryColumns(containerWidth: environment.container.effectiveContentSize.width - insets.left - insets.right)
+            let spacing: CGFloat = environment.traitCollection.isRegularWidth ? 2 : 1
+
+            let itemSize = NSCollectionLayoutSize(
+                widthDimension: .fractionalWidth(1.0 / CGFloat(columns)),
+                heightDimension: .fractionalWidth(1.0 / CGFloat(columns))
+            )
+            let item = NSCollectionLayoutItem(layoutSize: itemSize)
+
+            let groupSize = NSCollectionLayoutSize(
+                widthDimension: .fractionalWidth(1.0),
+                heightDimension: .fractionalWidth(1.0 / CGFloat(columns))
+            )
+            let group = NSCollectionLayoutGroup.horizontal(
+                layoutSize: groupSize,
+                subitem: item,
+                count: columns
+            )
+            group.interItemSpacing = .fixed(spacing)
+
+            let section = NSCollectionLayoutSection(group: group)
+            section.interGroupSpacing = spacing
+            section.contentInsetsReference = .safeArea
+            section.contentInsets = NSDirectionalEdgeInsets(
+                top: insets.top,
+                leading: insets.left,
+                bottom: 80 + insets.bottom,
+                trailing: insets.right
+            )
+            return section
         }
-    }
-    
-    private static func createLayout(for traitCollection: UITraitCollection) -> UICollectionViewLayout {
-        let layout = AdaptiveLayout(traitCollection: traitCollection)
-        let columns = CGFloat(layout.galleryColumns)
-        let spacing: CGFloat = UIDevice.isPad ? 2 : 1
-        let insets = layout.contentInsets
-        
-        let itemSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0 / columns),
-            heightDimension: .fractionalWidth(1.0 / columns)
-        )
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        
-        let groupSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .fractionalWidth(1.0 / columns)
-        )
-        
-        let group = NSCollectionLayoutGroup.horizontal(
-            layoutSize: groupSize,
-            subitem: item,
-            count: Int(columns)
-        )
-        group.interItemSpacing = .fixed(spacing)
-        
-        let section = NSCollectionLayoutSection(group: group)
-        section.interGroupSpacing = spacing
-        section.contentInsets = NSDirectionalEdgeInsets(
-            top: insets.top,
-            leading: insets.left,
-            bottom: 80 + insets.bottom,
-            trailing: insets.right
-        )
-        
-        let layoutConfig = UICollectionViewCompositionalLayout(section: section)
-        
-        let config = UICollectionViewCompositionalLayoutConfiguration()
-        config.interSectionSpacing = 0
-        layoutConfig.configuration = config
-        
-        return layoutConfig
     }
     
     private func setupUI() {
@@ -133,8 +117,8 @@ final class GalleryPageViewController: UIViewController {
             
             emptyStateView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emptyStateView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            emptyStateView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32),
-            emptyStateView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -32)
+            emptyStateView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 32),
+            emptyStateView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32)
         ])
         
         emptyStateView.configure(for: .personal)
@@ -414,8 +398,8 @@ extension GalleryPageViewController: UICollectionViewDelegate {
             imageView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor)
         ])
         
-        let maxWidth: CGFloat = UIScreen.main.bounds.width - 40
-        let maxHeight: CGFloat = UIScreen.main.bounds.height * 0.7
+        let maxWidth: CGFloat = view.bounds.width - 40
+        let maxHeight: CGFloat = view.bounds.height * 0.7
         
         if let cachedImage = ImageCache.shared.image(for: image.url) {
             imageView.image = cachedImage
@@ -512,16 +496,8 @@ extension GalleryPageViewController: UICollectionViewDataSourcePrefetching {
     }
     
     private func setupDragAndDrop() {
-        if UIDevice.isPad {
-            collectionView.dragDelegate = self
-            collectionView.dragInteractionEnabled = true
-        }
-    }
-}
-
-extension GalleryPageViewController: AdaptiveLayoutDelegate {
-    func layoutDidChange(to layout: AdaptiveLayout) {
-        collectionView.setCollectionViewLayout(Self.createLayout(for: traitCollection), animated: true)
+        collectionView.dragDelegate = self
+        collectionView.dragInteractionEnabled = true
     }
 }
 

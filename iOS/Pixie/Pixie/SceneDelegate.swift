@@ -24,7 +24,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let splashViewController = UIViewController()
         splashViewController.modalPresentationStyle = .fullScreen
-        let splashView = SplashView(frame: UIScreen.main.bounds)
+        let splashView = SplashView(frame: windowScene.coordinateSpace.bounds)
         splashViewController.view = splashView
         window?.rootViewController = splashViewController
         
@@ -169,12 +169,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         let rootViewController: UIViewController
         
-        if UIDevice.isPad {
-            rootViewController = MainSplitViewController()
-        } else {
-            let chatViewController = ChatGenerationViewController()
-            rootViewController = UINavigationController(rootViewController: chatViewController)
-        }
+        rootViewController = MainSplitViewController()
         
         if let splashView = window?.rootViewController?.view as? SplashView {
             window?.rootViewController = rootViewController

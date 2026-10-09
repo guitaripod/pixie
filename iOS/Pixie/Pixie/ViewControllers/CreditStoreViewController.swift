@@ -179,8 +179,8 @@ final class CreditStoreViewController: UIViewController {
 
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.topAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: bottomBar.topAnchor, constant: -4),
 
             contentStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 16),
@@ -189,8 +189,8 @@ final class CreditStoreViewController: UIViewController {
             contentStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -16),
             contentStack.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -40),
 
-            bottomBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            bottomBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            bottomBar.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
+            bottomBar.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
             bottomBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
             ctaButton.widthAnchor.constraint(equalTo: bottomBar.widthAnchor),
         ])
@@ -375,7 +375,7 @@ final class CreditStoreViewController: UIViewController {
 
     #if DEBUG
     private func applyDemoPacks() {
-        balanceLabel.text = String(localized: "Current balance: \(132) credits")
+        balanceLabel.text = String(localized: "Current balance: \(DemoContent.balance) credits")
         packs = [
             StorePackDisplay(id: "starter", name: "Starter", baseCredits: 150, bonusCredits: 0, price: "$2.99", rcPackage: nil),
             StorePackDisplay(id: "basic", name: "Basic", baseCredits: 475, bonusCredits: 75, price: "$9.99", rcPackage: nil),

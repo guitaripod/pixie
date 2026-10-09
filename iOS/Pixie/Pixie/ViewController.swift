@@ -63,12 +63,12 @@ class ViewController: UIViewController {
         
         NSLayoutConstraint.activate([
             titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 40),
-            titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            titleLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
+            titleLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
             
             userInfoLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
-            userInfoLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            userInfoLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            userInfoLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
+            userInfoLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
             
             logoutButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             logoutButton.centerYAnchor.constraint(equalTo: view.centerYAnchor),

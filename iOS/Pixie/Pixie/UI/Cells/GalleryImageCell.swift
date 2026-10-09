@@ -43,9 +43,7 @@ final class GalleryImageCell: UICollectionViewCell {
         contentView.backgroundColor = .black
         contentView.clipsToBounds = true
         
-        if UIDevice.isPad {
-            setupPointerInteraction()
-        }
+        setupPointerInteraction()
         
         imageView.contentMode = .scaleAspectFill
         imageView.backgroundColor = .systemGray6

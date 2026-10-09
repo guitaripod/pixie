@@ -110,6 +110,11 @@ class SidebarViewController: UIViewController {
         }
     }
     
+    func select(_ section: SidebarSection) {
+        guard isViewLoaded, let item = sections.firstIndex(of: section) else { return }
+        collectionView.selectItem(at: IndexPath(item: item, section: 0), animated: false, scrollPosition: [])
+    }
+
     func refreshSections() {
         setupSections()
         applyInitialSnapshot()

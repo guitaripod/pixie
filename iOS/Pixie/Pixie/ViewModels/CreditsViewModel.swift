@@ -33,6 +33,11 @@ class CreditsViewModel: ObservableObject {
         errorMessage = nil
 
         #if DEBUG
+        if DemoMode.isActive {
+            balance = CreditBalance(balance: DemoContent.balance, currency: "credits")
+            isLoadingBalance = false
+            return
+        }
         if let raw = ProcessInfo.processInfo.environment["PX_FAKE_BALANCE"], let fake = Int(raw) {
             balance = CreditBalance(balance: fake, currency: "credits")
             isLoadingBalance = false
@@ -54,6 +59,14 @@ class CreditsViewModel: ObservableObject {
     func loadTransactions(limit: Int = 20) async {
         isLoadingTransactions = true
         errorMessage = nil
+
+        #if DEBUG
+        if DemoMode.isActive {
+            transactions = DemoContent.mockTransactions()
+            isLoadingTransactions = false
+            return
+        }
+        #endif
         
         do {
             let response = try await apiService.getCreditTransactions(limit: limit)

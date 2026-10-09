@@ -10,7 +10,19 @@ class ChatInputBar: UIView {
     private let expandedView = UIView()
     
     private var contentPadding: CGFloat {
-        return UIDevice.isPad ? 60 : 20
+        return traitCollection.isRegularWidth ? 60 : 20
+    }
+    private var paddedConstraints: [(constraint: NSLayoutConstraint, sign: CGFloat)] = []
+
+    private func padded(_ constraint: NSLayoutConstraint, sign: CGFloat) -> NSLayoutConstraint {
+        paddedConstraints.append((constraint, sign))
+        return constraint
+    }
+
+    private func updatePadding() {
+        for entry in paddedConstraints {
+            entry.constraint.constant = entry.sign * contentPadding
+        }
     }
     private let indicatorStackView = UIStackView()
     private let promptTextView = UITextView()
@@ -105,6 +117,9 @@ class ChatInputBar: UIView {
     }
     func collapse() {
         setExpanded(false, animated: true)
+    }
+    func expand() {
+        setExpanded(true, animated: false)
     }
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -211,7 +226,7 @@ class ChatInputBar: UIView {
             stackView.centerYAnchor.constraint(equalTo: collapsedView.centerYAnchor, constant: -17),
             tapLabel.topAnchor.constraint(equalTo: stackView.bottomAnchor, constant: 4),
             tapLabel.centerXAnchor.constraint(equalTo: collapsedView.centerXAnchor),
-            indicatorStackView.trailingAnchor.constraint(equalTo: collapsedView.trailingAnchor, constant: -contentPadding),
+            padded(indicatorStackView.trailingAnchor.constraint(equalTo: collapsedView.trailingAnchor, constant: -contentPadding), sign: -1),
             indicatorStackView.centerYAnchor.constraint(equalTo: collapsedView.centerYAnchor, constant: -12)
         ])
     }
@@ -341,42 +356,42 @@ class ChatInputBar: UIView {
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             expandedImageContainer.topAnchor.constraint(equalTo: expandedDragHandleArea.bottomAnchor, constant: 8),
-            expandedImageContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
-            expandedImageContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
+            padded(expandedImageContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding), sign: 1),
+            padded(expandedImageContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding), sign: -1),
             expandedImageContainer.heightAnchor.constraint(equalToConstant: 180),
             expandedSelectedImageView.topAnchor.constraint(equalTo: expandedImageContainer.topAnchor, constant: 8),
             expandedSelectedImageView.leadingAnchor.constraint(equalTo: expandedImageContainer.leadingAnchor, constant: 8),
             expandedSelectedImageView.trailingAnchor.constraint(equalTo: expandedImageContainer.trailingAnchor, constant: -8),
             expandedSelectedImageView.bottomAnchor.constraint(equalTo: expandedImageContainer.bottomAnchor, constant: -8),
-            promptTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
-            promptTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
+            padded(promptTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding), sign: 1),
+            padded(promptTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding), sign: -1),
             promptTextView.heightAnchor.constraint(greaterThanOrEqualToConstant: 100),
             modelLabel.topAnchor.constraint(equalTo: promptTextView.bottomAnchor, constant: 16),
-            modelLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
+            padded(modelLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding), sign: 1),
             modelSelector.topAnchor.constraint(equalTo: modelLabel.bottomAnchor, constant: 8),
-            modelSelector.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
-            modelSelector.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
+            padded(modelSelector.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding), sign: 1),
+            padded(modelSelector.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding), sign: -1),
             sizeLabel.topAnchor.constraint(equalTo: modelSelector.bottomAnchor, constant: 16),
-            sizeLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
+            padded(sizeLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding), sign: 1),
             sizeSelector.topAnchor.constraint(equalTo: sizeLabel.bottomAnchor, constant: 8),
-            sizeSelector.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
-            sizeSelector.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
+            padded(sizeSelector.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding), sign: 1),
+            padded(sizeSelector.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding), sign: -1),
             qualityLabel.topAnchor.constraint(equalTo: sizeSelector.bottomAnchor, constant: 16),
-            qualityLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
+            padded(qualityLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding), sign: 1),
             qualitySelector.topAnchor.constraint(equalTo: qualityLabel.bottomAnchor, constant: 8),
-            qualitySelector.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
-            qualitySelector.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
+            padded(qualitySelector.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding), sign: 1),
+            padded(qualitySelector.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding), sign: -1),
             advancedOptionsButton.topAnchor.constraint(equalTo: qualitySelector.bottomAnchor, constant: 16),
-            advancedOptionsButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
-            advancedOptionsButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
+            padded(advancedOptionsButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding), sign: 1),
+            padded(advancedOptionsButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding), sign: -1),
             advancedOptionsContainer.topAnchor.constraint(equalTo: advancedOptionsButton.bottomAnchor, constant: 12),
-            advancedOptionsContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
-            advancedOptionsContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
-            creditsLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
-            creditsLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
+            padded(advancedOptionsContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding), sign: 1),
+            padded(advancedOptionsContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding), sign: -1),
+            padded(creditsLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding), sign: 1),
+            padded(creditsLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding), sign: -1),
             generateButton.topAnchor.constraint(equalTo: creditsLabel.bottomAnchor, constant: 12),
-            generateButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding),
-            generateButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding),
+            padded(generateButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: contentPadding), sign: 1),
+            padded(generateButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -contentPadding), sign: -1),
             generateButton.heightAnchor.constraint(equalToConstant: 56),
             generateButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -contentPadding)
         ])
@@ -499,7 +514,17 @@ class ChatInputBar: UIView {
         let safeAreaTop = window.safeAreaInsets.top
         let screenHeight = window.bounds.height
         let expandedHeight = screenHeight - safeAreaTop
-        return expandedHeight
+        guard let fold = FoldGeometry.activeFold(in: window), fold.orientation == .horizontal else { return expandedHeight }
+        return min(expandedHeight, screenHeight - fold.frame.maxY)
+    }
+
+    /// Keeps an open panel inside the stable bottom region when the device is folded like a
+    /// laptop, and lets it grow back when it is opened flat again.
+    func refitExpandedHeight() {
+        guard isExpanded else { return }
+        let height = calculateExpandedHeight()
+        guard abs(heightConstraint.constant - height) > 0.5 else { return }
+        heightConstraint.constant = height
     }
     private func setExpanded(_ expanded: Bool, animated: Bool) {
         isExpanded = expanded
@@ -835,6 +860,9 @@ class ChatInputBar: UIView {
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         updateBorderColors()
+        if traitCollection.horizontalSizeClass != previousTraitCollection?.horizontalSizeClass {
+            updatePadding()
+        }
     }
     private func updateBorderColors() {
         promptTextView.layer.borderColor = UIColor.separator.cgColor

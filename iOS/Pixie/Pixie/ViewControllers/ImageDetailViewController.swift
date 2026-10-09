@@ -27,18 +27,18 @@ final class ImageDetailViewController: UIViewController {
         setupUI()
         loadImage()
         
-        if UIDevice.isPad {
-            preferredContentSize = CGSize(width: 800, height: 900)
-            setupKeyboardCommands()
-        }
+        preferredContentSize = CGSize(width: 800, height: 900)
+        setupKeyboardCommands()
     }
     
+    private var maxImageHeight: CGFloat {
+        traitCollection.isRegularWidth ? 600 : 400
+    }
+
     private func setupUI() {
         view.backgroundColor = .systemBackground
         
-        if UIDevice.isPad {
-            navigationItem.largeTitleDisplayMode = .never
-        }
+        navigationItem.largeTitleDisplayMode = .never
         
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(scrollView)
@@ -70,14 +70,13 @@ final class ImageDetailViewController: UIViewController {
         
         let layout = AdaptiveLayout(traitCollection: traitCollection)
         let insets = layout.contentInsets
-        let maxImageHeight: CGFloat = UIDevice.isPad ? 600 : 400
         
         imageHeightConstraint = imageScrollView.heightAnchor.constraint(lessThanOrEqualToConstant: maxImageHeight)
         
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
             contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
@@ -190,9 +189,7 @@ final class ImageDetailViewController: UIViewController {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.heightAnchor.constraint(equalToConstant: 60).isActive = true
         
-        if UIDevice.isPad {
-            button.setupPointerInteraction()
-        }
+        button.setupPointerInteraction()
         
         button.configurationUpdateHandler = { button in
             switch button.state {
@@ -225,9 +222,7 @@ final class ImageDetailViewController: UIViewController {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.heightAnchor.constraint(equalToConstant: 60).isActive = true
 
-        if UIDevice.isPad {
-            button.setupPointerInteraction()
-        }
+        button.setupPointerInteraction()
 
         return button
     }
@@ -400,7 +395,6 @@ final class ImageDetailViewController: UIViewController {
         super.traitCollectionDidChange(previousTraitCollection)
         
         if traitCollection.horizontalSizeClass != previousTraitCollection?.horizontalSizeClass {
-            let maxImageHeight: CGFloat = UIDevice.isPad ? 600 : 400
             imageHeightConstraint.constant = maxImageHeight
         }
     }

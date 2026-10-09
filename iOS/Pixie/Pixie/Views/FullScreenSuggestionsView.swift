@@ -241,7 +241,7 @@ class FullScreenSuggestionsView: UIView {
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         item.contentInsets = NSDirectionalEdgeInsets(top: 2, leading: 2, bottom: 2, trailing: 2)
         let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.55), heightDimension: .absolute(132))
-        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, repeatingSubitem: item, count: 2)
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, repeatingSubitem: item, count: 2) // duo-audit:ignore vertical group: each item spans the group width and the two stack on top of each other
         group.interItemSpacing = .fixed(4)
         let section = NSCollectionLayoutSection(group: group)
         section.orthogonalScrollingBehavior = .continuous
@@ -256,7 +256,7 @@ class FullScreenSuggestionsView: UIView {
         let itemSize = NSCollectionLayoutSize(widthDimension: .absolute(140), heightDimension: .absolute(56))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         let groupSize = NSCollectionLayoutSize(widthDimension: .absolute(140), heightDimension: .absolute(120))
-        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, repeatingSubitem: item, count: 2)
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, repeatingSubitem: item, count: 2) // duo-audit:ignore vertical group: each item spans the group width and the two stack on top of each other
         group.interItemSpacing = .fixed(8)
         let section = NSCollectionLayoutSection(group: group)
         section.orthogonalScrollingBehavior = .continuous
@@ -416,6 +416,13 @@ class FullScreenSuggestionsView: UIView {
         dataSource.apply(snapshot, animatingDifferences: true)
     }
     private func checkPhotoPermissions() {
+        #if DEBUG
+        if DemoMode.isActive {
+            recentImages = DemoContent.recentPhotos()
+            applySnapshot()
+            return
+        }
+        #endif
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         if status == .authorized || status == .limited {
             loadRecentImages()
@@ -437,7 +444,7 @@ class FullScreenSuggestionsView: UIView {
         options.resizeMode = .fast
         options.isNetworkAccessAllowed = true
         var images: [UIImage] = []
-        let scale = UIScreen.main.scale
+        let scale = traitCollection.displayScale
         let targetSize = CGSize(width: 240 * scale, height: 240 * scale)
         fetchResult.enumerateObjects { asset, _, _ in
             manager.requestImage(for: asset, targetSize: targetSize, contentMode: .aspectFill, options: options) { image, _ in

@@ -4,7 +4,7 @@ enum CenteredScrollContent {
     /// Wraps `content` in a scroll view pinned to `host`'s safe area. Content shorter than
     /// the screen is centered; taller content (large Dynamic Type, small phones) scrolls.
     @discardableResult
-    static func make(containing content: UIView, in host: UIView, horizontalInset: CGFloat) -> UIScrollView {
+    static func make(containing content: UIView, in host: UIView, horizontalInset: CGFloat, maxContentWidth: CGFloat = 520) -> UIScrollView {
         let scrollView = UIScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.alwaysBounceVertical = false
@@ -17,10 +17,12 @@ enum CenteredScrollContent {
         content.translatesAutoresizingMaskIntoConstraints = false
 
         host.addSubview(scrollView)
+        let fillWidth = content.widthAnchor.constraint(equalTo: container.widthAnchor, constant: -2 * horizontalInset)
+        fillWidth.priority = .defaultHigh
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: host.safeAreaLayoutGuide.topAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: host.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: host.trailingAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: host.safeAreaLayoutGuide.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: host.safeAreaLayoutGuide.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: host.bottomAnchor),
 
             container.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
@@ -33,8 +35,9 @@ enum CenteredScrollContent {
             content.centerYAnchor.constraint(equalTo: container.centerYAnchor),
             content.topAnchor.constraint(greaterThanOrEqualTo: container.topAnchor, constant: 20),
             content.bottomAnchor.constraint(lessThanOrEqualTo: container.bottomAnchor, constant: -20),
-            content.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: horizontalInset),
-            content.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -horizontalInset),
+            content.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            content.widthAnchor.constraint(lessThanOrEqualToConstant: maxContentWidth),
+            fillWidth,
         ])
         return scrollView
     }
