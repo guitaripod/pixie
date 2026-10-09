@@ -14885,6 +14885,70 @@
         }
       }
     },
+    "Headshots, restores, figurines and more" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Business-Porträte, Restaurierungen, 3D-Figuren und mehr"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotos profesionales, restauraciones, figuras 3D y más"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Portraits pro, photos restaurées, figurines 3D et plus"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ritratti pro, restauri, statuine 3D e altro"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "証明写真、復元写真、3Dフィギュアなど"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프로필 사진, 복원 사진, 3D 피규어 등"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zdjęcia biznesowe, renowacje, figurki 3D i więcej"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fotos profissionais, restaurações, figuras 3D e muito mais"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "形象照、修复照、3D手办等"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "形象照、修復照、3D公仔等"
+          }
+        }
+      }
+    },
     "Help" : {
       "localizations" : {
         "de" : {
@@ -22805,6 +22869,70 @@
         }
       }
     },
+    "Pick a photo, then tap an edit: a pro headshot, a restored old photo, a 3D figurine and more." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle ein Foto und tippe dann auf eine Bearbeitung: ein Business-Porträt, ein restauriertes altes Foto, eine 3D-Figur und mehr."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige una foto y luego toca una edición: una foto profesional, una foto antigua restaurada, una figura 3D y mucho más."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez une photo, puis appuyez sur une retouche : portrait pro, ancienne photo restaurée, figurine 3D et bien plus."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli una foto, poi tocca una modifica: un ritratto pro, una vecchia foto restaurata, una statuina 3D e altro ancora."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "写真を選んで編集をタップ。プロの証明写真、復元した古い写真、3Dフィギュアなど。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진을 선택하고 편집을 탭하세요. 프로필 사진, 복원한 옛날 사진, 3D 피규어 등 다양하게."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz zdjęcie, a potem stuknij edycję: zdjęcie biznesowe, odnowione stare zdjęcie, figurkę 3D i wiele więcej."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha uma foto e toque em uma edição: foto profissional, foto antiga restaurada, figura 3D e muito mais."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选一张照片，然后点一个编辑：职业形象照、修复的老照片、3D手办等等。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選一張照片，然後點一個編輯：職業形象照、修復的老照片、3D公仔等等。"
+          }
+        }
+      }
+    },
     "Pick a photo, then tap an edit: a pro headshot, a restored old photo, a 3D figurine and more. Powered by Google's Nano Banana." : {
       "localizations" : {
         "de" : {
@@ -29184,6 +29312,70 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "測試與 Pixie 伺服器的連線"
+          }
+        }
+      }
+    },
+    "The model couldn't make this one. Try rewording it; its safety filter sometimes blocks photos of people. You weren't charged." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Modell konnte dieses Bild nicht erstellen. Formuliere es um; sein Sicherheitsfilter blockiert manchmal Fotos von Personen. Dir wurde nichts berechnet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El modelo no pudo crear este. Intenta reformularlo; su filtro de seguridad a veces bloquea fotos de personas. No te cobramos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le modèle n'a pas pu créer celui-ci. Essayez de le reformuler; son filtre de sécurité bloque parfois les photos de personnes. Vous n'avez pas été facturé."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il modello non ha potuto creare questa immagine. Prova a riformularla; il suo filtro di sicurezza a volte blocca le foto di persone. Non ti è stato addebitato nulla."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデルがこれを作成できませんでした。別の言い方で試してください。安全フィルタが人の写真をブロックすることがあります。料金は発生しませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모델이 이것을 생성하지 못했습니다. 다시 표현해 보세요. 안전 필터가 사람의 사진을 차단하기도 합니다. 요금이 부과되지 않았습니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Model nie mógł utworzyć tego obrazu. Spróbuj przeformułować opis; jego filtr bezpieczeństwa czasami blokuje zdjęcia osób. Nie pobrano opłaty."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O modelo não conseguiu criar este. Tente reformular; seu filtro de segurança às vezes bloqueia fotos de pessoas. Você não foi cobrado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型无法生成这个。试试重新表述；它的安全过滤器有时会屏蔽人物照片。您未被收费。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型無法生成這個。試試重新表述；它的安全過濾器有時會屏蔽人物照片。您未被收費。"
           }
         }
       }
