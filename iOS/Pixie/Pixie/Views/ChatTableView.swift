@@ -76,19 +76,37 @@ class ChatTableView: UIView {
         }
         dataSource.defaultRowAnimation = .fade
     }
-    /// A result never takes more than this share of the chat's height, so in a short window
-    /// (a landscape phone, a window made short by the fold) it still fits beside its actions.
-    private var maxResultImageHeight: CGFloat {
-        tableView.bounds.height * Self.resultImageHeightShare
+    private var isShortWindow: Bool {
+        traitCollection.verticalSizeClass == .compact
     }
-    private static let resultImageHeightShare: CGFloat = 0.75
-    private var laidOutHeight: CGFloat = 0
+
+    /// In a window with compact height (a landscape phone) a result is
+    /// capped so it fits between the top and bottom insets with its actions; elsewhere it keeps
+    /// its width-based size.
+    private var maxResultImageHeight: CGFloat {
+        guard isShortWindow else { return 0 }
+        let visible = tableView.bounds.height - tableView.contentInset.top - tableView.contentInset.bottom
+        return max(visible - Self.resultActionsHeight, Self.minimumResultImageHeight)
+    }
+    private static let resultActionsHeight: CGFloat = 70
+    private static let minimumResultImageHeight: CGFloat = 120
+    private var keyboardInset: CGFloat = 0
+    private var laidOutSize = CGSize.zero
+
+    private var bottomInset: CGFloat {
+        keyboardInset + (isShortWindow ? Self.shortWindowBottomInset : Self.regularBottomInset)
+    }
+    private static let regularBottomInset: CGFloat = 100
+    private static let shortWindowBottomInset: CGFloat = 20
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        guard abs(bounds.height - laidOutHeight) > 1 else { return }
-        let hadLayout = laidOutHeight > 0
-        laidOutHeight = bounds.height
+        if abs(tableView.contentInset.bottom - bottomInset) > 0.5 {
+            tableView.contentInset.bottom = bottomInset
+        }
+        guard abs(bounds.height - laidOutSize.height) > 1 || abs(bounds.width - laidOutSize.width) > 1 else { return }
+        let hadLayout = laidOutSize != .zero
+        laidOutSize = bounds.size
         guard hadLayout else { return }
         let wasAtBottom = isShowingLastMessage
         let anchor = tableView.indexPathsForVisibleRows?.first
@@ -165,7 +183,8 @@ class ChatTableView: UIView {
     }
     func adjustForKeyboard(height: CGFloat, duration: TimeInterval) {
         let adjustedHeight = height > 0 ? height - 20 : 0
-        tableView.contentInset.bottom = adjustedHeight + 100
+        keyboardInset = adjustedHeight
+        tableView.contentInset.bottom = bottomInset
         tableView.verticalScrollIndicatorInsets.bottom = adjustedHeight + 80
         if height > 0 {
             scrollToBottom(animated: true)
