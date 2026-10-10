@@ -67,8 +67,8 @@ final class GalleryImageCell: UICollectionViewCell {
         contentView.addSubview(gradientView)
         
         gradientLayer.colors = [
-            UIColor.clear.cgColor,
-            UIColor.black.withAlphaComponent(0.7).cgColor
+            UIColor.black.withAlphaComponent(0.4).cgColor,
+            UIColor.black.withAlphaComponent(0.8).cgColor
         ]
         gradientLayer.locations = [0.0, 1.0]
         gradientView.layer.addSublayer(gradientLayer)

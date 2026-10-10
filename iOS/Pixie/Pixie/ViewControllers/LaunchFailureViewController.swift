@@ -69,6 +69,8 @@ final class LaunchFailureViewController: UIViewController {
         } else {
             config = .borderedProminent()
         }
+        config.baseBackgroundColor = .brand
+        config.baseForegroundColor = .white
         config.title = String(localized: "Try Again")
         config.cornerStyle = .capsule
         config.buttonSize = .large

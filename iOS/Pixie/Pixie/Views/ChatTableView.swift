@@ -615,7 +615,7 @@ class AssistantMessageCell: UITableViewCell {
         config.title = title
         config.image = UIImage(systemName: symbol)
         config.imagePadding = 5
-        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(textStyle: .footnote, scale: .small)
+        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(textStyle: .body, scale: .medium)
         config.cornerStyle = .capsule
         config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
         config.baseForegroundColor = .brandText

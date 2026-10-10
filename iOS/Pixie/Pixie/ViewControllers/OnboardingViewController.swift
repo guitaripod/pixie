@@ -93,6 +93,8 @@ final class OnboardingViewController: UIViewController {
         } else {
             config = .borderedProminent()
         }
+        config.baseBackgroundColor = .brand
+        config.baseForegroundColor = .white
         config.cornerStyle = .capsule
         config.buttonSize = .large
         let button = UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in

@@ -64,6 +64,8 @@ final class AIConsentViewController: UIViewController {
         label.textColor = .label
         label.textAlignment = .center
         label.numberOfLines = 0
+        label.lineBreakMode = .byWordWrapping
+        label.setContentCompressionResistancePriority(.required, for: .vertical)
         return label
     }()
 
@@ -74,6 +76,8 @@ final class AIConsentViewController: UIViewController {
         } else {
             config = .borderedProminent()
         }
+        config.baseBackgroundColor = .brand
+        config.baseForegroundColor = .white
         config.title = String(localized: "Continue")
         config.cornerStyle = .capsule
         config.buttonSize = .large

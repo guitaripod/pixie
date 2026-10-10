@@ -462,6 +462,8 @@ final class CreditStoreViewController: UIViewController {
         } else {
             config = .borderedProminent()
         }
+        config.baseBackgroundColor = .brand
+        config.baseForegroundColor = .white
         config.cornerStyle = .capsule
         config.buttonSize = .large
         config.titleAlignment = .center

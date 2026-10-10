@@ -18,7 +18,7 @@ enum CenteredScrollContent {
 
         host.addSubview(scrollView)
         let fillWidth = content.widthAnchor.constraint(equalTo: container.widthAnchor, constant: -2 * horizontalInset)
-        fillWidth.priority = .defaultHigh
+        fillWidth.priority = UILayoutPriority(999)
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: host.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: host.safeAreaLayoutGuide.leadingAnchor),
