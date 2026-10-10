@@ -305,17 +305,33 @@ class ImageCell: UICollectionViewCell {
 
 
 /// The picked photo as a 3:4 card with a Change capsule beside it, and a remove control when the
-/// owner handles removal.
+/// owner handles removal. When the row is too narrow for a readable column beside the photo the hint
+/// and the capsule move under it; a compact row (short windows) uses a smaller photo.
 final class SelectedPhotoCell: UICollectionViewCell {
     static let reuseIdentifier = "SelectedPhotoCell"
     static let cardWidth: CGFloat = 160
+    static let compactCardWidth: CGFloat = 96
+    private static let minimumColumnWidth: CGFloat = 168
+    private static let minimumCompactColumnWidth: CGFloat = 148
     var onChange: (() -> Void)?
     var onRemove: (() -> Void)?
+    var isCompact = false {
+        didSet {
+            guard oldValue != isCompact else { return }
+            setNeedsLayout()
+        }
+    }
     private let cardView = UIView()
     private let photoView = UIImageView()
     private let removeButton = UIButton(type: .custom)
     private let removeDisc = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
     private let hintLabel = UILabel()
+    private let column = UIStackView()
+    private var cardWidthConstraint: NSLayoutConstraint!
+    private var besideConstraints: [NSLayoutConstraint] = []
+    private var stackedConstraints: [NSLayoutConstraint] = []
+    private var appliedWidth: CGFloat = -1
+    private var appliedCompact: Bool?
     private lazy var changeButton = PixieButton(style: .secondary, size: .medium, title: String(localized: "Change"), symbol: "photo.on.rectangle") { [weak self] in
         self?.onChange?()
     }
@@ -370,8 +386,12 @@ final class SelectedPhotoCell: UICollectionViewCell {
 
         hintLabel.apply(.callout)
         hintLabel.text = String(localized: "Tap an edit below, or describe your own")
+        hintLabel.lineBreakMode = .byTruncatingTail
         changeButton.translatesAutoresizingMaskIntoConstraints = false
-        let column = UIStackView(arrangedSubviews: [hintLabel, changeButton])
+        changeButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        changeButton.setContentHuggingPriority(.required, for: .horizontal)
+        column.addArrangedSubview(hintLabel)
+        column.addArrangedSubview(changeButton)
         column.axis = .vertical
         column.alignment = .leading
         column.spacing = Theme.Space.md
@@ -380,12 +400,23 @@ final class SelectedPhotoCell: UICollectionViewCell {
 
         let columnCentering = column.centerYAnchor.constraint(equalTo: cardView.centerYAnchor)
         columnCentering.priority = .defaultHigh
-        NSLayoutConstraint.activate([
+        cardWidthConstraint = cardView.widthAnchor.constraint(equalToConstant: Self.cardWidth)
+        besideConstraints = [
             columnCentering,
+            column.leadingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: Theme.Space.lg),
+            column.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor),
+            contentView.bottomAnchor.constraint(greaterThanOrEqualTo: column.bottomAnchor),
+            cardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -Theme.Space.sm)
+        ]
+        stackedConstraints = [
+            column.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            column.topAnchor.constraint(equalTo: cardView.bottomAnchor, constant: Theme.Space.lg),
+            column.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -Theme.Space.sm)
+        ]
+        NSLayoutConstraint.activate([
+            cardWidthConstraint,
             cardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             cardView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            cardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -Theme.Space.sm),
-            cardView.widthAnchor.constraint(equalToConstant: Self.cardWidth),
             cardView.heightAnchor.constraint(equalTo: cardView.widthAnchor, multiplier: 4.0 / 3.0),
             removeButton.widthAnchor.constraint(equalToConstant: 44),
             removeButton.heightAnchor.constraint(equalToConstant: 44),
@@ -397,16 +428,44 @@ final class SelectedPhotoCell: UICollectionViewCell {
             removeDisc.centerYAnchor.constraint(equalTo: removeButton.centerYAnchor),
             glyph.centerXAnchor.constraint(equalTo: removeDisc.contentView.centerXAnchor),
             glyph.centerYAnchor.constraint(equalTo: removeDisc.contentView.centerYAnchor),
-            column.leadingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: Theme.Space.lg),
-            column.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            column.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor),
-            contentView.bottomAnchor.constraint(greaterThanOrEqualTo: column.bottomAnchor)
+            column.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
         ])
+        NSLayoutConstraint.activate(besideConstraints)
         applyAppearance()
     }
+
+    /// The photo's width for a row, and whether the hint column goes under it, from the row's width alone.
+    private static func arrangement(forWidth width: CGFloat, compact: Bool) -> (photoWidth: CGFloat, stacked: Bool) {
+        let photoWidth = compact ? compactCardWidth : cardWidth
+        let column = width - photoWidth - Theme.Space.lg
+        let stacked = column < (compact ? minimumCompactColumnWidth : minimumColumnWidth) || UIApplication.shared.preferredContentSizeCategory.isAccessibilityCategory
+        return (photoWidth, stacked)
+    }
+
+    /// Switches between the two arrangements for a row `width` points wide; a no-op while neither the
+    /// width nor the compact flag changed.
+    private func applyArrangement(forWidth width: CGFloat) {
+        guard width > 0, width != appliedWidth || appliedCompact != isCompact else { return }
+        appliedWidth = width
+        appliedCompact = isCompact
+        let arrangement = Self.arrangement(forWidth: width, compact: isCompact)
+        cardWidthConstraint.constant = arrangement.photoWidth
+        if arrangement.stacked {
+            NSLayoutConstraint.deactivate(besideConstraints)
+            NSLayoutConstraint.activate(stackedConstraints)
+            hintLabel.numberOfLines = 2
+        } else {
+            NSLayoutConstraint.deactivate(stackedConstraints)
+            NSLayoutConstraint.activate(besideConstraints)
+            hintLabel.numberOfLines = 0
+        }
+    }
+
     /// The row's height at the current text size for a row `width` points wide, measured from a real cell.
-    static func height(forWidth width: CGFloat) -> CGFloat {
+    static func height(forWidth width: CGFloat, compact: Bool = false) -> CGFloat {
         let probe = SelectedPhotoCell(frame: CGRect(x: 0, y: 0, width: width, height: 400))
+        probe.isCompact = compact
+        probe.applyArrangement(forWidth: width)
         let size = probe.contentView.systemLayoutSizeFitting(
             CGSize(width: width, height: UIView.layoutFittingCompressedSize.height),
             withHorizontalFittingPriority: .required,
@@ -419,21 +478,27 @@ final class SelectedPhotoCell: UICollectionViewCell {
         onChange?()
     }
     override func layoutSubviews() {
+        applyArrangement(forWidth: contentView.bounds.width)
         super.layoutSubviews()
         cardView.layer.shadowPath = UIBezierPath(roundedRect: cardView.bounds, cornerRadius: cardView.layer.cornerRadius).cgPath
     }
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         applyAppearance()
+        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
+            appliedWidth = -1
+            setNeedsLayout()
+        }
     }
     private func applyAppearance() {
         let isDark = traitCollection.userInterfaceStyle == .dark
         cardView.layer.shadowOpacity = isDark ? 0 : 0.14
         photoView.layer.borderColor = Theme.Color.line.resolvedColor(with: traitCollection).cgColor
     }
-    func configure(with image: UIImage?, canRemove: Bool) {
+    func configure(with image: UIImage?, canRemove: Bool, compact: Bool = false) {
         photoView.image = image
         removeButton.isHidden = !canRemove
+        isCompact = compact
     }
 }
 
@@ -446,6 +511,11 @@ final class PhotoDropZoneCell: UICollectionViewCell {
     private let badge = IconBadge(symbol: "plus", size: 56, symbolScale: 0.5)
     private let titleLabel = UILabel()
     private static let cornerRadius = Theme.Radius.xl - 4
+    static let compactHeight: CGFloat = 136
+    static let compactRowHeight: CGFloat = 96
+    private let stack = UIStackView()
+    private var ratioConstraint: NSLayoutConstraint!
+    private var compactHeightConstraint: NSLayoutConstraint!
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -467,9 +537,11 @@ final class PhotoDropZoneCell: UICollectionViewCell {
 
         titleLabel.apply(.headline)
         titleLabel.textAlignment = .center
+        titleLabel.numberOfLines = 0
         titleLabel.text = String(localized: "Choose a photo")
 
-        let stack = UIStackView(arrangedSubviews: [badge, titleLabel])
+        stack.addArrangedSubview(badge)
+        stack.addArrangedSubview(titleLabel)
         stack.axis = .vertical
         stack.alignment = .center
         stack.spacing = Theme.Space.md
@@ -477,10 +549,12 @@ final class PhotoDropZoneCell: UICollectionViewCell {
         stack.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(stack)
 
-        let ratio = contentView.heightAnchor.constraint(greaterThanOrEqualTo: contentView.widthAnchor, multiplier: 9.0 / 16.0)
-        ratio.priority = UILayoutPriority(999)
+        ratioConstraint = contentView.heightAnchor.constraint(greaterThanOrEqualTo: contentView.widthAnchor, multiplier: 9.0 / 16.0)
+        ratioConstraint.priority = UILayoutPriority(999)
+        compactHeightConstraint = contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: Self.compactHeight)
+        compactHeightConstraint.priority = UILayoutPriority(999)
         NSLayoutConstraint.activate([
-            ratio,
+            ratioConstraint,
             stack.centerXAnchor.constraint(equalTo: card.centerXAnchor),
             stack.centerYAnchor.constraint(equalTo: card.centerYAnchor),
             stack.leadingAnchor.constraint(greaterThanOrEqualTo: card.leadingAnchor, constant: Theme.Space.xl),
@@ -498,6 +572,16 @@ final class PhotoDropZoneCell: UICollectionViewCell {
     }
     private func applyAppearance() {
         card.backgroundColor = Theme.Color.accentSoft
+    }
+    /// A compact card keeps a fixed minimum height instead of the 16:9 ratio, so a short window still
+    /// shows what comes after it; unless `stacksVertically` it lays the glyph and the title side by side to stay shorter.
+    func configure(compact: Bool, stacksVertically: Bool = true) {
+        let horizontal = compact && !stacksVertically
+        ratioConstraint.isActive = !compact
+        compactHeightConstraint.constant = horizontal ? Self.compactRowHeight : Self.compactHeight
+        compactHeightConstraint.isActive = compact
+        stack.axis = horizontal ? .horizontal : .vertical
+        stack.alignment = .center
     }
 }
 

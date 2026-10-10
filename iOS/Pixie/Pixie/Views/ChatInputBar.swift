@@ -382,6 +382,10 @@ class ChatInputBar: UIView {
 
         placeholderLabel.apply(.body, color: Theme.Color.inkTertiary)
         placeholderLabel.font = Self.promptFont
+        placeholderLabel.numberOfLines = 1
+        placeholderLabel.lineBreakMode = .byTruncatingTail
+        placeholderLabel.adjustsFontSizeToFitWidth = true
+        placeholderLabel.minimumScaleFactor = 0.75
         placeholderLabel.text = String(localized: "What do you want to create?")
         placeholderLabel.translatesAutoresizingMaskIntoConstraints = false
         placeholderLabel.isUserInteractionEnabled = false

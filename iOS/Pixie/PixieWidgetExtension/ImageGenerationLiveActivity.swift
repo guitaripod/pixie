@@ -49,14 +49,14 @@ struct ImageGenerationLiveActivity: Widget {
                         countsDown: false, label: { EmptyView() }, currentValueLabel: { EmptyView() }
                     )
                     .progressViewStyle(.circular)
-                    .tint(.purple)
+                    .tint(.pixieViolet)
                     .accessibilityLabel(card.markLabel)
                 } else {
                     Thumbnail(card: card, side: 22)
                 }
             }
             .widgetURL(URL(string: "pixie://chat/\(context.attributes.chatId)"))
-            .keylineTint(.purple)
+            .keylineTint(.pixieViolet)
         }
     }
 }
@@ -158,7 +158,7 @@ private struct Thumbnail: View {
         } else {
             Image(systemName: card.symbol)
                 .font(.system(size: side * 0.55, weight: .semibold))
-                .foregroundStyle(card.isWorking ? .purple : card.tint)
+                .foregroundStyle(card.isWorking ? .pixieViolet : card.tint)
                 .frame(width: side, height: side)
         }
     }
@@ -175,7 +175,7 @@ private struct TrailingMark: View {
             Text(timerInterval: card.state.startedAt...Date.distantFuture, countsDown: false)
                 .font(font.weight(.semibold))
                 .monospacedDigit()
-                .foregroundStyle(.purple)
+                .foregroundStyle(Color.pixieViolet)
                 .multilineTextAlignment(.trailing)
                 .frame(maxWidth: 52)
                 .accessibilityLabel(String(localized: "Elapsed time"))
@@ -201,7 +201,7 @@ private struct Footer: View {
                     timerInterval: card.state.startedAt...card.state.expectedEnd,
                     countsDown: false, label: { EmptyView() }, currentValueLabel: { EmptyView() }
                 )
-                .tint(.purple)
+                .tint(.pixieViolet)
                 if let model = card.attributes.modelName {
                     Text(model)
                         .font(.caption2)
@@ -212,7 +212,7 @@ private struct Footer: View {
         case .ready:
             Label(String(localized: "Tap to view"), systemImage: "hand.tap.fill")
                 .font(.caption)
-                .foregroundStyle(.purple)
+                .foregroundStyle(Color.pixieViolet)
                 .frame(maxWidth: .infinity, alignment: .leading)
         case .failed, .paused:
             EmptyView()
@@ -246,4 +246,8 @@ private struct LockScreenView: View {
         .padding(16)
         .accessibilityElement(children: .combine)
     }
+}
+
+private extension Color {
+    static let pixieViolet = Color(red: 0x6C / 255, green: 0x47 / 255, blue: 0xFF / 255)
 }

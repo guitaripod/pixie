@@ -39,12 +39,22 @@ final class ImageDetailViewController: UIViewController {
     private var cardMinHeightConstraint: NSLayoutConstraint!
     private var lastLayoutSize: CGSize = .zero
     private var sheetTop: CGFloat = 0
+    private var isSideBySide = false
+    private var stageTrailingConstraint: NSLayoutConstraint!
+    private var sheetLeadingConstraint: NSLayoutConstraint!
+    private var closeTrailingConstraint: NSLayoutConstraint!
+    private var closeLeadingConstraint: NSLayoutConstraint!
+    private let topGrabber = UIView()
+    private let sheetHandle = UIView()
 
     private static let stageFraction: CGFloat = 0.52
     private static let stageFractionLargeText: CGFloat = 0.34
     private static let minimumSheetTop: CGFloat = 220
     private static let sheetOverlap: CGFloat = Theme.Radius.sheet
     private static let stageTopInset: CGFloat = 60
+    private static let sideBySideMinWidth: CGFloat = 560
+    private static let sideBySideMinAspect: CGFloat = 0.9
+    private static let sideBySideStageShare: CGFloat = 0.44
     private static let doubleTapZoomScale: CGFloat = 2.5
     private static let imageRadius: CGFloat = Theme.Radius.lg
     private static let shortcutSelectors: Set<Selector> = [
@@ -122,10 +132,11 @@ final class ImageDetailViewController: UIViewController {
         loadingShimmer.pinEdges(to: imageView)
 
         stageHeightConstraint = stageScrollView.heightAnchor.constraint(equalToConstant: Self.minimumSheetTop)
+        stageTrailingConstraint = stageScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         NSLayoutConstraint.activate([
             stageScrollView.topAnchor.constraint(equalTo: view.topAnchor),
             stageScrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            stageScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            stageTrailingConstraint,
             stageHeightConstraint
         ])
 
@@ -143,7 +154,13 @@ final class ImageDetailViewController: UIViewController {
         sheetScrollView.delegate = self
         sheetScrollView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(sheetScrollView)
-        sheetScrollView.pinEdges(to: view)
+        sheetLeadingConstraint = sheetScrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor)
+        NSLayoutConstraint.activate([
+            sheetScrollView.topAnchor.constraint(equalTo: view.topAnchor),
+            sheetScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            sheetScrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            sheetLeadingConstraint,
+        ])
 
         sheetSpacer.translatesAutoresizingMaskIntoConstraints = false
         sheetSpacer.isAccessibilityElement = false
@@ -162,7 +179,7 @@ final class ImageDetailViewController: UIViewController {
         sheetExtension.translatesAutoresizingMaskIntoConstraints = false
         sheetScrollView.insertSubview(sheetExtension, belowSubview: sheetCard)
 
-        let handle = UIView()
+        let handle = sheetHandle
         handle.backgroundColor = Theme.Color.line
         handle.layer.cornerRadius = 2.5
         handle.translatesAutoresizingMaskIntoConstraints = false
@@ -225,7 +242,7 @@ final class ImageDetailViewController: UIViewController {
     }
 
     private func setupChrome() {
-        let grabber = UIView()
+        let grabber = topGrabber
         grabber.backgroundColor = UIColor(white: 1, alpha: 0.35)
         grabber.layer.cornerRadius = 2.5
         grabber.translatesAutoresizingMaskIntoConstraints = false
@@ -245,14 +262,16 @@ final class ImageDetailViewController: UIViewController {
         closeButton.setupPointerInteraction()
         view.addSubview(closeButton)
 
+        closeTrailingConstraint = closeButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -Theme.Space.lg)
+        closeLeadingConstraint = closeButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: Theme.Space.lg)
         NSLayoutConstraint.activate([
+            closeTrailingConstraint,
             grabber.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: Theme.Space.sm),
             grabber.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             grabber.widthAnchor.constraint(equalToConstant: 36),
             grabber.heightAnchor.constraint(equalToConstant: 5),
 
             closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: Theme.Space.md),
-            closeButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -Theme.Space.lg),
             closeButton.widthAnchor.constraint(equalToConstant: 44),
             closeButton.heightAnchor.constraint(equalToConstant: 44),
 
@@ -540,7 +559,7 @@ final class ImageDetailViewController: UIViewController {
     private var imageArea: CGRect {
         let bounds = stageScrollView.bounds
         let top = view.safeAreaInsets.top + Self.stageTopInset
-        let bottom = Self.sheetOverlap + Theme.Space.lg
+        let bottom = isSideBySide ? view.safeAreaInsets.bottom + Theme.Space.xl : Self.sheetOverlap + Theme.Space.lg
         let side = margin
         return CGRect(
             x: side,
@@ -644,17 +663,51 @@ final class ImageDetailViewController: UIViewController {
         updateSheetMetrics()
     }
 
+    /// A wide window that is not much taller than it is wide, such as a landscape phone or the
+    /// inner Duo display, puts the picture beside the details instead of above them.
+    private var prefersSideBySide: Bool {
+        let size = view.bounds.size
+        return size.width >= Self.sideBySideMinWidth && size.width >= size.height * Self.sideBySideMinAspect
+    }
+
     /// Places the sheet's top edge: a share of the height, less when the text is large so the
-    /// controls get the room, and never so low that the sheet loses its first row.
+    /// controls get the room, and never so low that the sheet loses its first row. Side by
+    /// side, the picture takes the leading share of the width and the sheet fills the rest.
     private func updateSheetMetrics() {
-        let fraction = usesLargeText ? Self.stageFractionLargeText : Self.stageFraction
-        sheetTop = max(Self.minimumSheetTop, (view.bounds.height * fraction).rounded())
-        spacerHeightConstraint.constant = sheetTop
-        cardMinHeightConstraint.constant = max(0, view.bounds.height - sheetTop)
-        stageHeightConstraint.constant = sheetTop + Self.sheetOverlap
+        isSideBySide = prefersSideBySide
+        applySideBySideChrome()
+        if isSideBySide {
+            let size = view.bounds.size
+            let stageWidth = (size.width * Self.sideBySideStageShare).rounded()
+            sheetTop = 0
+            spacerHeightConstraint.constant = 0
+            cardMinHeightConstraint.constant = size.height
+            stageHeightConstraint.constant = size.height
+            stageTrailingConstraint.constant = stageWidth - size.width
+            sheetLeadingConstraint.constant = stageWidth
+            stageScrollView.alpha = 1
+        } else {
+            let fraction = usesLargeText ? Self.stageFractionLargeText : Self.stageFraction
+            sheetTop = max(Self.minimumSheetTop, (view.bounds.height * fraction).rounded())
+            spacerHeightConstraint.constant = sheetTop
+            cardMinHeightConstraint.constant = max(0, view.bounds.height - sheetTop)
+            stageHeightConstraint.constant = sheetTop + Self.sheetOverlap
+            stageTrailingConstraint.constant = 0
+            sheetLeadingConstraint.constant = 0
+        }
         sheetScrollView.passthroughHeight = sheetTop
         view.layoutIfNeeded()
         layoutStage()
+    }
+
+    private func applySideBySideChrome() {
+        topGrabber.isHidden = isSideBySide
+        sheetHandle.isHidden = isSideBySide
+        sheetCard.layer.maskedCorners = isSideBySide
+            ? [.layerMinXMinYCorner, .layerMinXMaxYCorner]
+            : [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        closeTrailingConstraint.isActive = !isSideBySide
+        closeLeadingConstraint.isActive = isSideBySide
     }
 
     override func viewSafeAreaInsetsDidChange() {

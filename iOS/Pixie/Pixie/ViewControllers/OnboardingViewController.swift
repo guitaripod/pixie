@@ -89,6 +89,9 @@ private final class OnboardingPageIndicator: UIView {
 final class OnboardingViewController: UIViewController {
     var onFinished: (() -> Void)?
     private var isWaiting = false
+    private var isShortLayout = false
+    private var bottomStack: UIStackView!
+    private var shortNotNowConstraints: [NSLayoutConstraint] = []
 
     private let pages: [OnboardingPage] = [
         OnboardingPage(
@@ -181,6 +184,7 @@ final class OnboardingViewController: UIViewController {
         view.addSubview(skipButton)
 
         let bottomStack = UIStackView(arrangedSubviews: [primaryButton, notNowButton])
+        self.bottomStack = bottomStack
         bottomStack.axis = .vertical
         bottomStack.alignment = .center
         bottomStack.spacing = Theme.Space.xs
@@ -210,8 +214,40 @@ final class OnboardingViewController: UIViewController {
             primaryButton.widthAnchor.constraint(equalTo: bottomStack.widthAnchor),
         ])
 
+        shortNotNowConstraints = [
+            notNowButton.centerYAnchor.constraint(equalTo: skipButton.centerYAnchor),
+            notNowButton.trailingAnchor.constraint(equalTo: skipButton.trailingAnchor),
+        ]
+
         setPage(initialPage, direction: .forward, animated: false)
         updateChrome()
+    }
+
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+        let short = Self.isShort(view.bounds.size)
+        guard short != isShortLayout else { return }
+        isShortLayout = short
+        placeNotNowButton()
+    }
+
+    static func isShort(_ size: CGSize) -> Bool {
+        size.height < OnboardingPageContentViewController.shortWindowHeight && size.width > size.height
+    }
+
+    /// In a short window the page needs every point of height, so "Not Now" leaves the stack
+    /// under the button and takes the place of "Skip", which is never visible on the same page.
+    private func placeNotNowButton() {
+        if isShortLayout {
+            bottomStack.removeArrangedSubview(notNowButton)
+            notNowButton.removeFromSuperview()
+            view.addSubview(notNowButton)
+            NSLayoutConstraint.activate(shortNotNowConstraints)
+        } else {
+            NSLayoutConstraint.deactivate(shortNotNowConstraints)
+            notNowButton.removeFromSuperview()
+            bottomStack.addArrangedSubview(notNowButton)
+        }
     }
 
     override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
@@ -523,6 +559,15 @@ private final class OnboardingPageContentViewController: UIViewController {
     private let page: OnboardingPage
     private var card: BeforeAfterCardView?
     private var cardHeightCap: NSLayoutConstraint?
+    private var cardAspectConstraint: NSLayoutConstraint?
+    private var cardPreferredWidth: NSLayoutConstraint?
+    private let titleLabel = UILabel()
+    private let bodyLabel = UILabel()
+    private let stack = UIStackView()
+    private let textStack = UIStackView()
+    private var textFillsWidth: NSLayoutConstraint!
+    private var stackMaxWidth: NSLayoutConstraint!
+    private var isSideBySide = false
 
     init(page: OnboardingPage, index: Int) {
         self.page = page
@@ -550,31 +595,62 @@ private final class OnboardingPageContentViewController: UIViewController {
             heightCap,
         ])
         cardHeightCap = heightCap
+        cardAspectConstraint = aspect
+        cardPreferredWidth = preferredWidth
 
-        let titleLabel = UILabel()
-        titleLabel.setStyledText(page.title, .display, color: Theme.Color.onBackdrop, alignment: .center)
         titleLabel.accessibilityTraits = .header
+        applyTextAlignment()
 
-        let bodyLabel = UILabel()
-        bodyLabel.setStyledText(page.body, .callout, color: Theme.Color.onBackdropSecondary, alignment: .center)
-
-        var arranged: [UIView] = [card, titleLabel, bodyLabel]
         self.card = card
         let consentRow = page.showsConsent ? makeConsentRow() : nil
-        if let consentRow { arranged.append(consentRow) }
 
-        let stack = UIStackView(arrangedSubviews: arranged)
+        textStack.axis = .vertical
+        textStack.alignment = .fill
+        textStack.spacing = Theme.Space.md
+        textStack.addArrangedSubview(titleLabel)
+        textStack.addArrangedSubview(bodyLabel)
+        if let consentRow { textStack.addArrangedSubview(consentRow) }
+        textStack.setCustomSpacing(Theme.Space.xl, after: bodyLabel)
+
         stack.axis = .vertical
         stack.spacing = Theme.Space.md
         stack.alignment = .center
+        stack.addArrangedSubview(card)
+        stack.addArrangedSubview(textStack)
         stack.setCustomSpacing(Theme.Space.xxl, after: card)
-        stack.setCustomSpacing(Theme.Space.xl, after: bodyLabel)
         stack.translatesAutoresizingMaskIntoConstraints = false
 
-        titleLabel.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        bodyLabel.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        consentRow?.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        CenteredScrollContent.make(containing: stack, in: view, horizontalInset: Theme.screenMargin(for: traitCollection))
+        card.setContentHuggingPriority(.required, for: .horizontal)
+        card.setContentCompressionResistancePriority(.required, for: .horizontal)
+        textStack.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        textStack.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+        textFillsWidth = textStack.widthAnchor.constraint(equalTo: stack.widthAnchor)
+        textFillsWidth.isActive = true
+        stackMaxWidth = stack.widthAnchor.constraint(lessThanOrEqualToConstant: Self.portraitContentWidth)
+        stackMaxWidth.isActive = true
+        CenteredScrollContent.make(containing: stack, in: view, horizontalInset: Theme.screenMargin(for: traitCollection), maxContentWidth: Self.sideBySideContentWidth)
+    }
+
+    private func applyTextAlignment() {
+        let alignment: NSTextAlignment = isSideBySide ? .natural : .center
+        titleLabel.setStyledText(page.title, .display, color: Theme.Color.onBackdrop, alignment: alignment)
+        bodyLabel.setStyledText(page.body, .callout, color: Theme.Color.onBackdropSecondary, alignment: alignment)
+    }
+
+    /// Short windows put the picture beside the words, so nothing has to scroll or overlap.
+    private func applyLayoutMode() {
+        let sideBySide = OnboardingViewController.isShort(containerSize) && !traitCollection.preferredContentSizeCategory.isAccessibilityCategory
+        guard sideBySide != isSideBySide else { return }
+        isSideBySide = sideBySide
+        stack.axis = sideBySide ? .horizontal : .vertical
+        stack.spacing = sideBySide ? Theme.Space.xxl : Theme.Space.md
+        textStack.setCustomSpacing(sideBySide ? Theme.Space.md : Theme.Space.xl, after: bodyLabel)
+        textFillsWidth.isActive = !sideBySide
+        cardAspectConstraint?.priority = sideBySide ? .required : UILayoutPriority(800)
+        cardPreferredWidth?.priority = sideBySide ? UILayoutPriority(900) : .defaultHigh
+        stackMaxWidth.constant = sideBySide ? Self.sideBySideContentWidth : Self.portraitContentWidth
+        applyTextAlignment()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -585,17 +661,32 @@ private final class OnboardingPageContentViewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         scaleCardToWindow()
+    }
+
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+        applyLayoutMode()
         hideCardWhenWindowIsShort()
     }
 
+    /// The size of the onboarding screen itself, which is already the new size while a
+    /// rotation or a resize is in flight and the window's bounds may still be the old one.
+    private var containerSize: CGSize {
+        var controller: UIViewController = self
+        while let parent = controller.parent { controller = parent }
+        return controller.view.bounds.size
+    }
+
     private var windowHeight: CGFloat {
-        view.window?.bounds.height ?? view.bounds.height
+        containerSize.height
     }
 
     /// The card takes a share of the window's height, so it shrinks on short phones and
     /// windows instead of pushing the title and the body off the screen.
     private func scaleCardToWindow() {
-        let height = min(Self.maxCardHeight, max(Self.minCardHeight, windowHeight * Self.cardHeightShare))
+        let height = isSideBySide
+            ? min(Self.maxSideBySideCardHeight, max(Self.minCardHeight, view.bounds.height - 2 * Theme.Space.md))
+            : min(Self.maxCardHeight, max(Self.minCardHeight, windowHeight * Self.cardHeightShare))
         guard abs((cardHeightCap?.constant ?? 0) - height) > 0.5 else { return }
         cardHeightCap?.constant = height
     }
@@ -603,10 +694,14 @@ private final class OnboardingPageContentViewController: UIViewController {
     /// The consent page needs the room its summary takes, so its picture gives way whenever
     /// the window is shorter than a compact phone, whichever display or orientation it is on.
     private func hideCardWhenWindowIsShort() {
-        guard page.showsConsent, let windowHeight = view.window?.bounds.height else { return }
-        card?.isHidden = windowHeight < Self.minimumHeightForConsentCard || traitCollection.preferredContentSizeCategory.isAccessibilityCategory
+        guard page.showsConsent, view.window != nil else { return }
+        card?.isHidden = !isSideBySide && (windowHeight < Self.minimumHeightForConsentCard || traitCollection.preferredContentSizeCategory.isAccessibilityCategory)
     }
 
+    static let shortWindowHeight: CGFloat = 560
+    private static let portraitContentWidth: CGFloat = 520
+    private static let sideBySideContentWidth: CGFloat = 880
+    private static let maxSideBySideCardHeight: CGFloat = 250
     private static let minimumHeightForConsentCard: CGFloat = 700
     private static let maxCardWidth: CGFloat = 400
     private static let cardAspect: CGFloat = 0.8

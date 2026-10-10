@@ -26,6 +26,16 @@ class FullScreenSuggestionsView: UIView {
         return cv
     }()
     private var appliedTopInset: CGFloat = 0
+    private static let compactEnterHeight: CGFloat = 560
+    private static let compactExitHeight: CGFloat = 600
+    private static let compactSideBySideWidth: CGFloat = 400
+    private static let bottomFadeLength: CGFloat = 18
+    private static let veryShortEnterHeight: CGFloat = 300
+    private static let veryShortExitHeight: CGFloat = 340
+    private static let veryShortCardHeight: CGFloat = 104
+    private static let veryShortCardChrome: CGFloat = 40
+    private var isCompactHeight = false
+    private var isVeryShort = false
     private var dataSource: UICollectionViewDiffableDataSource<SuggestionsSection, AnyHashable>!
     var selectedSuggestionsManager: SelectedSuggestionsManager?
     var onPromptSelected: ((String) -> Void)?
@@ -188,7 +198,8 @@ class FullScreenSuggestionsView: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         updateInsets()
-        updateTopFade()
+        updateCompactHeight()
+        updateEdgeFades()
     }
     override func safeAreaInsetsDidChange() {
         super.safeAreaInsetsDidChange()
@@ -207,14 +218,41 @@ class FullScreenSuggestionsView: UIView {
             collectionView.contentOffset = CGPoint(x: 0, y: -top)
         }
     }
-    /// Rows scrolling up under the top bar dissolve over its height instead of being cut off.
-    private func updateTopFade() {
-        topFade.frame = contentHost.bounds
-        let height = max(1, contentHost.bounds.height)
+    /// The scrollable band between the top bar and the composer; the home layout adapts to its height.
+    private var visibleHeight: CGFloat {
+        bounds.height - collectionView.contentInset.top - collectionView.contentInset.bottom
+    }
+    /// A short band (a folded display, landscape, a small phone) drops the Recent strip and tightens the
+    /// hero so the Popular edits stay above the composer. Entering and leaving use different heights so a
+    /// growing composer cannot flip the layout back and forth.
+    private func updateCompactHeight() {
+        let height = visibleHeight
+        guard height > 0 else { return }
+        let compact = isCompactHeight ? height < Self.compactExitHeight : height < Self.compactEnterHeight
+        let veryShort = isVeryShort ? height < Self.veryShortExitHeight : height < Self.veryShortEnterHeight
+        guard compact != isCompactHeight || veryShort != isVeryShort else { return }
+        isCompactHeight = compact
+        isVeryShort = veryShort
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.applySnapshot()
+            var snapshot = self.dataSource.snapshot()
+            snapshot.reloadSections([.editImage, .presets])
+            self.dataSource.apply(snapshot, animatingDifferences: false)
+            self.collectionView.collectionViewLayout.invalidateLayout()
+        }
+    }
+    /// Rows scrolling up under the top bar dissolve over its height, and rows scrolling down under the
+    /// composer dissolve just above it, instead of being cut off or showing through the capsule.
+    private func updateEdgeFades() {
+        topFade.frame = bounds
+        let height = max(1, bounds.height)
         let start = min(1, safeAreaInsets.top / height)
         let end = min(1, (safeAreaInsets.top + 56) / height)
-        topFade.colors = [UIColor.clear.cgColor, UIColor.clear.cgColor, UIColor.black.cgColor, UIColor.black.cgColor]
-        topFade.locations = [0, NSNumber(value: Double(start)), NSNumber(value: Double(end)), 1]
+        let bottomStart = min(1, max(end, (height - collectionView.contentInset.bottom - safeAreaInsets.bottom) / height))
+        let bottomEnd = min(1, bottomStart + Self.bottomFadeLength / height)
+        topFade.colors = [UIColor.clear.cgColor, UIColor.clear.cgColor, UIColor.black.cgColor, UIColor.black.cgColor, UIColor.clear.cgColor]
+        topFade.locations = [0, NSNumber(value: Double(start)), NSNumber(value: Double(end)), NSNumber(value: Double(bottomStart)), NSNumber(value: Double(bottomEnd))]
     }
     private func section(at index: Int) -> SuggestionsSection? {
         guard let identifiers = dataSource?.snapshot().sectionIdentifiers, identifiers.indices.contains(index) else { return nil }
@@ -292,23 +330,41 @@ class FullScreenSuggestionsView: UIView {
         let size = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(estimatedHeight))
         return NSCollectionLayoutBoundarySupplementaryItem(layoutSize: size, elementKind: UICollectionView.elementKindSectionHeader, alignment: .top)
     }
+    /// In a short window the drop zone sits beside the sample card when the row is wide enough for both.
+    private var sharesRowWithSample: Bool {
+        let width = bounds.width - 2 * Theme.screenMargin(for: traitCollection)
+        let hasSample = editSectionItems.contains { ($0 as? String) == Self.sampleTileItem }
+        return isCompactHeight && hasSample && min(width, Theme.Width.form) >= Self.compactSideBySideWidth
+    }
     private func createEditImageSection(environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
         let metrics = Metrics(environment, maxWidth: Theme.Width.form)
-        let items = editSectionItems.map { item -> NSCollectionLayoutItem in
-            let height: CGFloat
-            if (item as? String) == Self.sampleTileItem {
-                height = SampleTileCell.height(forWidth: metrics.contentWidth)
-            } else if (item as? String) == Self.selectedPhotoItem {
-                height = SelectedPhotoCell.height(forWidth: metrics.contentWidth)
-            } else {
-                height = metrics.contentWidth * 9 / 16
+        let compact = isCompactHeight
+        let sideBySide = sharesRowWithSample
+        let group: NSCollectionLayoutGroup
+        if sideBySide {
+            let gap = Theme.Space.md
+            let rowHeight = max(SampleTileCell.height(forWidth: (metrics.contentWidth - gap) / 2), isVeryShort ? PhotoDropZoneCell.compactRowHeight : PhotoDropZoneCell.compactHeight)
+            let item = NSCollectionLayoutItem(layoutSize: NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.5), heightDimension: .fractionalHeight(1.0)))
+            let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(rowHeight))
+            group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, repeatingSubitem: item, count: 2)
+            group.interItemSpacing = .fixed(gap)
+        } else {
+            let items = editSectionItems.map { item -> NSCollectionLayoutItem in
+                let height: CGFloat
+                if (item as? String) == Self.sampleTileItem {
+                    height = SampleTileCell.height(forWidth: metrics.contentWidth)
+                } else if (item as? String) == Self.selectedPhotoItem {
+                    height = SelectedPhotoCell.height(forWidth: metrics.contentWidth, compact: compact)
+                } else {
+                    height = compact ? PhotoDropZoneCell.compactRowHeight : metrics.contentWidth * 9 / 16
+                }
+                let isDropZone = (item as? String) == Self.addImageItem
+                return NSCollectionLayoutItem(layoutSize: NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: isDropZone && !compact ? .estimated(height) : .absolute(height)))
             }
-            let isDropZone = (item as? String) == Self.addImageItem
-            return NSCollectionLayoutItem(layoutSize: NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: isDropZone ? .estimated(height) : .absolute(height)))
+            let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(240))
+            group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: items) // duo-audit:ignore vertical group: the hero card and the sample card stack on top of each other
+            group.interItemSpacing = .fixed(Theme.Space.md)
         }
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(240))
-        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: items) // duo-audit:ignore vertical group: the hero card and the sample card stack on top of each other
-        group.interItemSpacing = .fixed(Theme.Space.md)
         let section = NSCollectionLayoutSection(group: group)
         section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: metrics.sideInset, bottom: 0, trailing: metrics.sideInset)
         section.boundarySupplementaryItems = [sectionHeader()]
@@ -330,9 +386,15 @@ class FullScreenSuggestionsView: UIView {
     private func createPopularSection(environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
         let metrics = Metrics(environment)
         let isRegular = environment.traitCollection.horizontalSizeClass == .regular
-        let width = scaledSize(isRegular ? 176 : 150, environment, cap: 1.5)
-        let height = (width * 4 / 3).rounded()
-        let size = NSCollectionLayoutSize(widthDimension: .absolute(width), heightDimension: .absolute(height))
+        let baseWidth: CGFloat = isCompactHeight ? 132 : (isRegular ? 176 : 150)
+        let width = scaledSize(baseWidth, environment, cap: 1.5)
+        var height = (width * 4 / 3).rounded()
+        var cardWidth = width
+        if isVeryShort && !isTextEnlarged(environment) {
+            height = max(Self.veryShortCardHeight, min(height, visibleHeight - Self.veryShortCardChrome)).rounded()
+            cardWidth = max(width, height * 1.1).rounded()
+        }
+        let size = NSCollectionLayoutSize(widthDimension: .absolute(cardWidth), heightDimension: .absolute(height))
         let item = NSCollectionLayoutItem(layoutSize: size)
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: size, subitems: [item])
         let section = NSCollectionLayoutSection(group: group)
@@ -451,12 +513,14 @@ class FullScreenSuggestionsView: UIView {
                 }
                 if let marker = item as? String, marker == Self.selectedPhotoItem {
                     let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SelectedPhotoCell.reuseIdentifier, for: indexPath) as! SelectedPhotoCell
-                    cell.configure(with: self.selectedPhoto, canRemove: self.onPhotoRemoved != nil)
+                    cell.configure(with: self.selectedPhoto, canRemove: self.onPhotoRemoved != nil, compact: self.isCompactHeight)
                     cell.onChange = { [weak self] in self?.onEditImageTapped?() }
                     cell.onRemove = { [weak self] in self?.onPhotoRemoved?() }
                     return cell
                 }
-                return collectionView.dequeueReusableCell(withReuseIdentifier: PhotoDropZoneCell.reuseIdentifier, for: indexPath)
+                let dropZone = collectionView.dequeueReusableCell(withReuseIdentifier: PhotoDropZoneCell.reuseIdentifier, for: indexPath) as! PhotoDropZoneCell
+                dropZone.configure(compact: self.isCompactHeight, stacksVertically: self.sharesRowWithSample && !self.isVeryShort)
+                return dropZone
             case .recents:
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ImageCell.reuseIdentifier, for: indexPath) as! ImageCell
                 cell.configure(with: item as? UIImage)
@@ -540,14 +604,14 @@ class FullScreenSuggestionsView: UIView {
                                 switch section {
                 case .editImage:
                     if self.selectedPhoto != nil {
-                        header.configure(title: String(localized: "Your photo"), subtitle: nil, prominence: .hero)
+                        header.configure(title: String(localized: "Your photo"), subtitle: nil, prominence: self.isCompactHeight ? .section : .hero)
                     } else {
-                        header.configure(title: String(localized: "Start with a photo"), subtitle: String(localized: "Pick one, then tap an edit"), prominence: .hero)
+                        header.configure(title: String(localized: "Start with a photo"), subtitle: String(localized: "Pick one, then tap an edit"), prominence: self.isCompactHeight ? .section : .hero)
                     }
                 case .recents:
                     header.configure(title: String(localized: "Recent"), subtitle: nil, prominence: .label)
                 case .presets:
-                    header.configure(title: String(localized: "Popular edits"), subtitle: nil)
+                    header.configure(title: String(localized: "Popular edits"), subtitle: nil, prominence: self.isVeryShort ? .label : .section)
                 case .moreEdits:
                     header.configure(title: String(localized: "More edits"), subtitle: nil)
                 case .quickActions:
@@ -575,6 +639,11 @@ class FullScreenSuggestionsView: UIView {
     }
     private func applySnapshot() {
         var snapshot = NSDiffableDataSourceSnapshot<SuggestionsSection, AnyHashable>()
+        let popularFirst = isVeryShort && selectedPhoto != nil
+        if popularFirst {
+            snapshot.appendSections([.presets])
+            snapshot.appendItems(popularPresets.map { $0 as AnyHashable }, toSection: .presets)
+        }
         snapshot.appendSections([.editImage])
         var editItems: [AnyHashable] = []
         if selectedPhoto != nil {
@@ -587,12 +656,14 @@ class FullScreenSuggestionsView: UIView {
         }
         editSectionItems = editItems
         snapshot.appendItems(editItems, toSection: .editImage)
-        if !recentImages.isEmpty {
+        if !recentImages.isEmpty && !isCompactHeight {
             snapshot.appendSections([.recents])
             snapshot.appendItems(recentImages.prefix(10).map { $0 as AnyHashable }, toSection: .recents)
         }
-        snapshot.appendSections([.presets])
-        snapshot.appendItems(popularPresets.map { $0 as AnyHashable }, toSection: .presets)
+        if !popularFirst {
+            snapshot.appendSections([.presets])
+            snapshot.appendItems(popularPresets.map { $0 as AnyHashable }, toSection: .presets)
+        }
         snapshot.appendSections([.moreEdits])
         snapshot.appendItems(moreEditPresets.map { $0 as AnyHashable }, toSection: .moreEdits)
         snapshot.appendSections([.quickActions])
@@ -794,6 +865,7 @@ extension FullScreenSuggestionsView: UICollectionViewDelegate {
         set { 
             collectionView.contentInset = newValue
             collectionView.scrollIndicatorInsets = UIEdgeInsets.zero
+            setNeedsLayout()
         }
     }
     

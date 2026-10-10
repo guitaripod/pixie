@@ -31,6 +31,7 @@ final class CreditStoreViewController: UIViewController {
     private var barConstraints: [NSLayoutConstraint] = []
     private var barColumn: ColumnContainer?
     private var isBarInline = false
+    private var isCompactHeader = false
 
     private enum PacksState {
         case loading
@@ -42,6 +43,7 @@ final class CreditStoreViewController: UIViewController {
     private static let dismissDelay: TimeInterval = 1.1
     private static let voiceOverDismissDelay: TimeInterval = 2.5
     private static let skeletonCardCount = 5
+    private static let shortSheetHeight: CGFloat = 560
 
     init(shortfall: Int? = nil) {
         self.shortfall = shortfall
@@ -66,6 +68,16 @@ final class CreditStoreViewController: UIViewController {
     private lazy var scrollView = ColumnScrollView(spacing: Theme.Space.md, topInset: Theme.Space.sm, bottomInset: Theme.Space.xl)
 
     private lazy var headerBadge = IconBadge(symbol: "sparkles", size: 64, symbolScale: 0.5)
+
+    private lazy var headerStack: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [headerBadge, titleLabel, subtitleLabel, balancePill])
+        stack.axis = .vertical
+        stack.spacing = Theme.Space.sm
+        stack.alignment = .center
+        stack.setCustomSpacing(Theme.Space.lg, after: headerBadge)
+        stack.setCustomSpacing(Theme.Space.lg, after: subtitleLabel)
+        return stack
+    }()
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -239,9 +251,20 @@ final class CreditStoreViewController: UIViewController {
         updateScrollInsets()
     }
 
-    /// At accessibility text sizes the purchase controls would cover most of the screen, so they scroll with the packs instead of sticking.
+    private var isShortSheet: Bool { view.bounds.height < Self.shortSheetHeight }
+
+    /// In a short sheet the badge and tagline give way so the packs get the room.
+    private func applyHeaderDensity() {
+        guard isShortSheet != isCompactHeader else { return }
+        isCompactHeader = isShortSheet
+        headerBadge.isHidden = isCompactHeader
+        subtitleLabel.isHidden = isCompactHeader
+    }
+
+    /// At accessibility text sizes and in short sheets the purchase controls would cover most of the screen, so they scroll with the packs instead of sticking.
     private func placePurchaseBar() {
-        let shouldInline = traitCollection.preferredContentSizeCategory.isAccessibilityCategory
+        applyHeaderDensity()
+        let shouldInline = traitCollection.preferredContentSizeCategory.isAccessibilityCategory || isShortSheet
         guard shouldInline != isBarInline, let barColumn else { return }
         isBarInline = shouldInline
         NSLayoutConstraint.deactivate(barConstraints)
@@ -293,13 +316,6 @@ final class CreditStoreViewController: UIViewController {
     }
 
     private func buildHeader() {
-        let headerStack = UIStackView(arrangedSubviews: [headerBadge, titleLabel, subtitleLabel, balancePill])
-        headerStack.axis = .vertical
-        headerStack.spacing = Theme.Space.sm
-        headerStack.alignment = .center
-        headerStack.setCustomSpacing(Theme.Space.lg, after: headerBadge)
-        headerStack.setCustomSpacing(Theme.Space.lg, after: subtitleLabel)
-
         let column = scrollView.column
         column.addArrangedSubview(headerStack)
         column.setCustomSpacing(Theme.Space.xl, after: headerStack)

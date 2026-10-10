@@ -171,11 +171,20 @@ private final class WhySignInViewController: UIViewController {
 
 class AuthenticationViewController: UIViewController {
 
+    private static let columnsMinWidth: CGFloat = 640
+    private static let columnsMinAspect: CGFloat = 1.2
+    private static let columnsMaxWidth: CGFloat = 880
+    private static let shortColumnsHeight: CGFloat = 560
+
     private let scrollView = UIScrollView()
     private let contentView = UIView()
     private let contentStackView = UIStackView()
 
     private let fanView = PhotoFanView()
+    private let heroColumn = UIStackView()
+    private let actionColumn = UIStackView()
+    private var stackMaxWidth: NSLayoutConstraint!
+    private var usesColumns = false
     private let headerStackView = UIStackView()
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
@@ -229,9 +238,35 @@ class AuthenticationViewController: UIViewController {
         applyHeroVisibility()
     }
 
-    /// The photo fan is decoration, so at accessibility text sizes it gives way to the words and buttons.
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+        let wide = prefersColumns
+        guard wide != usesColumns else { return }
+        usesColumns = wide
+        applyColumnLayout()
+        applyHeroVisibility()
+    }
+
+    /// A wide window puts the words on one side and the sign-in buttons on the other, so the
+    /// buttons stay in view on a landscape phone or the inner Duo display.
+    private var prefersColumns: Bool {
+        let size = view.bounds.size
+        return size.width >= Self.columnsMinWidth && size.width >= size.height * Self.columnsMinAspect
+    }
+
+    private func applyColumnLayout() {
+        contentStackView.axis = usesColumns ? .horizontal : .vertical
+        contentStackView.distribution = usesColumns ? .fillEqually : .fill
+        contentStackView.alignment = usesColumns ? .center : .fill
+        contentStackView.spacing = usesColumns ? Theme.Space.xxxl : Theme.Space.xxl
+        stackMaxWidth.constant = usesColumns ? Self.columnsMaxWidth : Theme.Width.button
+    }
+
+    /// The photo fan is decoration, so at accessibility text sizes and in short wide windows it gives way to the words and buttons.
     private func applyHeroVisibility() {
-        fanView.isHidden = traitCollection.preferredContentSizeCategory.isAccessibilityCategory
+        let size = view.bounds.size
+        let isShort = usesColumns && size.height < Self.shortColumnsHeight
+        fanView.isHidden = traitCollection.preferredContentSizeCategory.isAccessibilityCategory || isShort
     }
 
     private func applyMargins() {
@@ -259,8 +294,17 @@ class AuthenticationViewController: UIViewController {
         contentStackView.translatesAutoresizingMaskIntoConstraints = false
         contentStackView.axis = .vertical
         contentStackView.alignment = .fill
-        contentStackView.spacing = Theme.Space.lg
+        contentStackView.spacing = Theme.Space.xxl
         contentView.addSubview(contentStackView)
+
+        for column in [heroColumn, actionColumn] {
+            column.axis = .vertical
+            column.alignment = .fill
+        }
+        heroColumn.spacing = Theme.Space.xl
+        actionColumn.spacing = Theme.Space.sm
+        contentStackView.addArrangedSubview(heroColumn)
+        contentStackView.addArrangedSubview(actionColumn)
 
         setupHeaderSection()
         setupButtons()
@@ -292,9 +336,8 @@ class AuthenticationViewController: UIViewController {
         headerStackView.addArrangedSubview(titleLabel)
         headerStackView.addArrangedSubview(subtitleLabel)
 
-        contentStackView.addArrangedSubview(fanView)
-        contentStackView.addArrangedSubview(headerStackView)
-        contentStackView.setCustomSpacing(Theme.Space.xl, after: fanView)
+        heroColumn.addArrangedSubview(fanView)
+        heroColumn.addArrangedSubview(headerStackView)
     }
 
     private func setupButtons() {
@@ -334,8 +377,7 @@ class AuthenticationViewController: UIViewController {
             self.debugButton = debugButton
         }
 
-        contentStackView.addArrangedSubview(buttonStackView)
-        contentStackView.setCustomSpacing(Theme.Space.xxl, after: headerStackView)
+        actionColumn.addArrangedSubview(buttonStackView)
     }
 
     private func setupFooter() {
@@ -352,8 +394,7 @@ class AuthenticationViewController: UIViewController {
         footer.spacing = 0
         footer.setCustomSpacing(Theme.Space.xs, after: notNowButton)
         notNowButton.isHidden = true
-        contentStackView.addArrangedSubview(footer)
-        contentStackView.setCustomSpacing(Theme.Space.sm, after: buttonStackView)
+        actionColumn.addArrangedSubview(footer)
     }
 
     private func setupErrorBanner() {
@@ -391,6 +432,7 @@ class AuthenticationViewController: UIViewController {
         stackWidth.priority = UILayoutPriority(999)
         let bannerWidth = errorCard.widthAnchor.constraint(equalTo: view.layoutMarginsGuide.widthAnchor)
         bannerWidth.priority = .defaultHigh
+        stackMaxWidth = contentStackView.widthAnchor.constraint(lessThanOrEqualToConstant: Theme.Width.button)
         let fanHeight = fanView.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor, multiplier: 0.42)
         fanHeight.priority = UILayoutPriority(900)
 
@@ -411,7 +453,7 @@ class AuthenticationViewController: UIViewController {
             contentStackView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             contentStackView.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: Theme.Space.lg),
             contentStackView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -Theme.Space.lg),
-            contentStackView.widthAnchor.constraint(lessThanOrEqualToConstant: Theme.Width.button),
+            stackMaxWidth,
             stackWidth,
 
             fanHeight,

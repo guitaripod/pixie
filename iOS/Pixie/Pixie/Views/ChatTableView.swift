@@ -22,6 +22,7 @@ class ChatTableView: UIView {
     private var pendingRevealID: String?
     weak var delegate: ChatTableViewDelegate?
     var onStarterPromptSelected: ((String) -> Void)?
+    var onResultWidthChange: (() -> Void)?
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
@@ -84,20 +85,32 @@ class ChatTableView: UIView {
         traitCollection.verticalSizeClass == .compact
     }
 
-    /// A result is never taller than 70% of the transcript; in a window with compact height
-    /// (a landscape phone) it is capped so it fits between the top and bottom insets together
-    /// with its actions. Zero means the table has no size yet and the width decides.
+    /// A result never outgrows the band between the top bar and the composer: with the room
+    /// its actions and turn spacing take, it is as tall as that band leaves, and never more
+    /// than 70% of the transcript. Zero means the table has no size yet and the width decides.
     private var maxResultImageHeight: CGFloat {
         guard tableView.bounds.height > 0 else { return 0 }
-        if isShortWindow {
-            let visible = tableView.bounds.height - tableView.contentInset.top - tableView.contentInset.bottom
-            return max(visible - Self.resultActionsHeight, Self.minimumResultImageHeight)
-        }
-        return max(tableView.bounds.height * Self.maximumResultHeightShare, Self.minimumResultImageHeight)
+        let visible = tableView.bounds.height - topInset - bottomInset
+        let share = tableView.bounds.height * Self.maximumResultHeightShare
+        return max(min(visible - Self.resultActionsHeight, share), Self.minimumResultImageHeight)
     }
     private static let resultActionsHeight: CGFloat = 80
-    private static let minimumResultImageHeight: CGFloat = 120
+    private static let minimumResultImageHeight: CGFloat = 96
     private static let maximumResultHeightShare: CGFloat = 0.7
+
+    /// The width the newest result card takes at the current size, so the composer can match
+    /// it instead of spanning a pane far wider than the picture above it.
+    var latestResultWidth: CGFloat? {
+        guard let message = dataSource.snapshot().itemIdentifiers.last(where: { $0.role == .assistant }),
+              let images = message.images, !images.isEmpty else { return nil }
+        let columns = images.count == 1 ? 1 : 2
+        let rows = (images.count + columns - 1) / columns
+        let margin = Theme.screenMargin(for: traitCollection)
+        let column = min(bounds.width - tableView.contentInset.left - tableView.contentInset.right - margin * 2, ChatColumnCell.maximumColumnWidth)
+        guard maxResultImageHeight > 0 else { return column }
+        let cap = AssistantMessageCell.widthCap(columns: columns, rows: rows, aspect: images[0].clampedAspect, maxHeight: maxResultImageHeight)
+        return min(cap, column)
+    }
 
     /// The height-to-width ratio a generating card reserves: the one of the photo being
     /// edited when there is one, a square otherwise, so the result lands without a jump.
@@ -111,20 +124,26 @@ class ChatTableView: UIView {
     private var laidOutSize = CGSize.zero
 
     private var bottomInset: CGFloat {
-        let base = isShortWindow ? Self.shortWindowBottomInset : (composerClearance ?? Self.regularBottomInset)
+        let base = composerClearance ?? Self.regularBottomInset
         return keyboardInset + base + (keyboardInset > 0 ? 0 : safeAreaInsets.bottom)
     }
-    /// The height of the floating composer when it is taller than the default 120 points, so
-    /// the last turn always rests above it.
+    /// The height of the floating composer, so the last turn always rests above it in every
+    /// window size.
     var composerClearance: CGFloat? {
         didSet { applyInsets() }
     }
-    private var topInset: CGFloat {
-        safeAreaInsets.top + Self.topBarClearance
+    /// Where the floating top bar ends, in this view's coordinates; the first turn starts
+    /// below it and the fade that follows.
+    var topBarBottom: CGFloat? {
+        didSet { applyInsets() }
     }
+    private var topInset: CGFloat {
+        (topBarBottom ?? safeAreaInsets.top + Self.defaultTopBarHeight) + Self.topFadeLength
+    }
+    /// How far below the top bar the transcript fades out; the controller draws the fade.
+    static let topFadeLength: CGFloat = Theme.Space.xxl
     private static let regularBottomInset: CGFloat = 120
-    private static let shortWindowBottomInset: CGFloat = 20
-    private static let topBarClearance: CGFloat = 88
+    private static let defaultTopBarHeight: CGFloat = 60
 
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
@@ -170,7 +189,19 @@ class ChatTableView: UIView {
         if wasAtTop {
             tableView.contentOffset.y = -top
         }
+        refitResultsToBand()
     }
+
+    /// Results are sized to the band between the insets, so when the band changes after the
+    /// rows were measured they are measured again.
+    private func refitResultsToBand() {
+        guard laidOutSize != .zero, dataSource != nil, !isRefittingResults,
+              !dataSource.snapshot().itemIdentifiers.isEmpty else { return }
+        isRefittingResults = true
+        reloadAllRows(keepingBottom: true)
+        isRefittingResults = false
+    }
+    private var isRefittingResults = false
 
     override func layoutSubviews() {
         super.layoutSubviews()
@@ -189,6 +220,7 @@ class ChatTableView: UIView {
         } else if let anchor {
             tableView.scrollToRow(at: anchor, at: .top, animated: false)
         }
+        onResultWidthChange?()
     }
 
     private var isShowingLastMessage: Bool {
@@ -208,6 +240,7 @@ class ChatTableView: UIView {
             if !messages.isEmpty {
                 self?.scrollToBottom(animated: animated)
             }
+            self?.onResultWidthChange?()
         }
         updateEmptyState(isEmpty: messages.isEmpty, animated: animated)
     }
@@ -245,6 +278,7 @@ class ChatTableView: UIView {
         snapshot.appendItems([message], toSection: .messages)
         dataSource.apply(snapshot, animatingDifferences: animated) { [weak self] in
             self?.scrollToBottom(animated: animated)
+            self?.onResultWidthChange?()
         }
         updateEmptyState(isEmpty: false, animated: animated)
     }
@@ -612,6 +646,25 @@ private final class ResultActionButton: UIButton {
         didSet { setNeedsUpdateConfiguration() }
     }
     private var revertWork: DispatchWorkItem?
+    var showsTitle = true {
+        didSet {
+            guard oldValue != showsTitle else { return }
+            setNeedsUpdateConfiguration()
+        }
+    }
+
+    /// The width the icon, the gap and the full title need, which the row compares with the
+    /// share it can give this capsule.
+    var titledWidth: CGFloat {
+        let font = Theme.TextStyle.subhead.font
+        let title = (caption as NSString).size(withAttributes: [.font: font]).width.rounded(.up)
+        let icon = (UIImage(systemName: symbol, withConfiguration: Self.symbolConfiguration)?.size.width ?? 0).rounded(.up)
+        return title + icon + Self.imagePadding + Self.horizontalInset * 2
+    }
+
+    private static let imagePadding: CGFloat = 5
+    private static let horizontalInset: CGFloat = 8
+    private static let symbolConfiguration = UIImage.SymbolConfiguration(textStyle: .subheadline, scale: .medium).applying(UIImage.SymbolConfiguration(weight: .semibold))
 
     init(action: ResultAction, title: String, symbol: String, accessibilityLabel spoken: String) {
         self.action = action
@@ -653,14 +706,11 @@ private final class ResultActionButton: UIButton {
     private func refresh() {
         var config = UIButton.Configuration.plain()
         config.cornerStyle = .capsule
-        config.imagePadding = 5
+        config.imagePadding = Self.imagePadding
         config.imagePlacement = .leading
-        config.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 8, bottom: 10, trailing: 8)
-        config.title = caption
-        config.image = UIImage(
-            systemName: isSuccess ? "checkmark" : symbol,
-            withConfiguration: UIImage.SymbolConfiguration(textStyle: .subheadline, scale: .medium).applying(UIImage.SymbolConfiguration(weight: .semibold))
-        )
+        config.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: Self.horizontalInset, bottom: 10, trailing: Self.horizontalInset)
+        config.title = showsTitle ? caption : nil
+        config.image = UIImage(systemName: isSuccess ? "checkmark" : symbol, withConfiguration: Self.symbolConfiguration)
         config.titleLineBreakMode = .byTruncatingTail
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
@@ -672,6 +722,26 @@ private final class ResultActionButton: UIButton {
         config.background.strokeColor = isSuccess ? Theme.Color.success.withAlphaComponent(0.4) : Theme.Color.line
         config.background.strokeWidth = 1
         configuration = config
+    }
+}
+
+/// Three equal capsules that keep their titles while every title fits in its share of the
+/// row and fall back to icons alone, still spoken in full, when one would be cut short.
+private final class ResultActionRow: UIStackView {
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        fitTitles()
+    }
+
+    private func fitTitles() {
+        let buttons = arrangedSubviews.compactMap { $0 as? ResultActionButton }
+        guard axis == .horizontal, bounds.width > 0, !buttons.isEmpty else {
+            buttons.forEach { $0.showsTitle = true }
+            return
+        }
+        let share = (bounds.width - spacing * CGFloat(buttons.count - 1)) / CGFloat(buttons.count)
+        let fits = buttons.allSatisfy { $0.titledWidth <= share }
+        buttons.forEach { $0.showsTitle = fits }
     }
 }
 
@@ -687,7 +757,7 @@ class AssistantMessageCell: ChatColumnCell {
         return stack
     }()
     private var imageViews: [UIImageView] = []
-    private var actionRow: UIStackView?
+    private var actionRow: ResultActionRow?
     private var actionButtons: [ResultAction: ResultActionButton] = [:]
     private var canCompare = false
     private var imageCornerRadius: CGFloat = Theme.Radius.xl
@@ -803,12 +873,12 @@ class AssistantMessageCell: ChatColumnCell {
         let grid = makeGrid(images, columns: columns, aspect: aspect)
         card.contentView.addSubview(grid)
         grid.pinEdges(to: card.contentView)
-        let maxWidth = maxImageHeight > 0 ? widthCap(columns: columns, rows: rows, aspect: aspect, maxHeight: maxImageHeight) : nil
+        let maxWidth = maxImageHeight > 0 ? Self.widthCap(columns: columns, rows: rows, aspect: aspect, maxHeight: maxImageHeight) : nil
         sizeCard(card, in: container, aspect: nil, maxWidth: maxWidth)
         return container
     }
 
-    private func widthCap(columns: Int, rows: Int, aspect: CGFloat, maxHeight: CGFloat) -> CGFloat {
+    fileprivate static func widthCap(columns: Int, rows: Int, aspect: CGFloat, maxHeight: CGFloat) -> CGFloat {
         if columns == 1 { return maxHeight / aspect }
         let cellHeight = (maxHeight - Self.gridGap * CGFloat(rows - 1)) / CGFloat(rows)
         return cellHeight / aspect * 2 + Self.gridGap
@@ -889,8 +959,8 @@ class AssistantMessageCell: ChatColumnCell {
         }
     }
 
-    private func makeActionRow(canCompare: Bool) -> UIStackView {
-        let row = UIStackView()
+    private func makeActionRow(canCompare: Bool) -> ResultActionRow {
+        let row = ResultActionRow()
         row.axis = .horizontal
         row.spacing = Theme.Space.sm
         row.distribution = .fillEqually

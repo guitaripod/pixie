@@ -27,6 +27,15 @@ class ChatGenerationViewController: UIViewController {
     private let creditsViewModel = CreditsViewModel()
     private let topBar = ChatTopBar()
     private let topFade = EdgeFadeView(edge: .top)
+    private let topBand: UIView = {
+        let band = UIView()
+        band.translatesAutoresizingMaskIntoConstraints = false
+        band.backgroundColor = Theme.Color.canvas
+        band.isUserInteractionEnabled = false
+        band.isAccessibilityElement = false
+        return band
+    }()
+    private var composerWidthConstraint: NSLayoutConstraint!
     private let bottomFade = EdgeFadeView(edge: .bottom)
     private var notificationObserver: NSObjectProtocol?
     private var presetLinkObserver: NSObjectProtocol?
@@ -59,6 +68,8 @@ class ChatGenerationViewController: UIViewController {
         super.viewDidLayoutSubviews()
         inputBar.refitExpandedHeight()
         updateSuggestionsInsets()
+        chatView.topBarBottom = topBar.frame.maxY
+        updateComposerWidth()
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -201,8 +212,10 @@ class ChatGenerationViewController: UIViewController {
         chatView.translatesAutoresizingMaskIntoConstraints = false
         chatView.alpha = 0
         chatView.delegate = self
+        chatView.onResultWidthChange = { [weak self] in self?.updateComposerWidth() }
         view.addSubview(chatView)
         updateAccessibilityVisibility()
+        view.addSubview(topBand)
         view.addSubview(topFade)
         view.addSubview(bottomFade)
         inputBar.translatesAutoresizingMaskIntoConstraints = false
@@ -243,6 +256,7 @@ class ChatGenerationViewController: UIViewController {
         trailingConstraint = inputBar.trailingAnchor.constraint(equalTo: safe.trailingAnchor)
         leadingConstraint.priority = .defaultHigh
         trailingConstraint.priority = .defaultHigh
+        composerWidthConstraint = inputBar.widthAnchor.constraint(lessThanOrEqualToConstant: Self.composerMaximumWidth)
 
         NSLayoutConstraint.activate([
             leadingConstraint,
@@ -250,7 +264,7 @@ class ChatGenerationViewController: UIViewController {
             inputBar.leadingAnchor.constraint(greaterThanOrEqualTo: safe.leadingAnchor),
             inputBar.trailingAnchor.constraint(lessThanOrEqualTo: safe.trailingAnchor),
             inputBar.centerXAnchor.constraint(equalTo: safe.centerXAnchor),
-            inputBar.widthAnchor.constraint(lessThanOrEqualToConstant: Theme.Width.form + 24),
+            composerWidthConstraint,
             inputBar.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor)
         ])
 
@@ -269,10 +283,14 @@ class ChatGenerationViewController: UIViewController {
             topBar.topAnchor.constraint(greaterThanOrEqualTo: offlineBanner.bottomAnchor, constant: Theme.Space.xs),
             topBar.leadingAnchor.constraint(equalTo: safe.leadingAnchor, constant: Theme.Space.md),
             topBar.trailingAnchor.constraint(equalTo: safe.trailingAnchor, constant: -Theme.Space.md),
-            topFade.topAnchor.constraint(equalTo: view.topAnchor),
+            topBand.topAnchor.constraint(equalTo: view.topAnchor),
+            topBand.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            topBand.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            topBand.bottomAnchor.constraint(equalTo: topBar.bottomAnchor),
+            topFade.topAnchor.constraint(equalTo: topBand.bottomAnchor),
             topFade.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             topFade.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            topFade.bottomAnchor.constraint(equalTo: topBar.bottomAnchor, constant: Theme.Space.xxl),
+            topFade.heightAnchor.constraint(equalToConstant: ChatTableView.topFadeLength),
             bottomFade.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             bottomFade.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             bottomFade.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -296,6 +314,20 @@ class ChatGenerationViewController: UIViewController {
     }
 
     private static let suggestionsTopClearance: CGFloat = 76
+    private static let composerMaximumWidth: CGFloat = Theme.Width.form + 24
+    private static let composerMinimumWidth: CGFloat = 360
+
+    /// The composer is as wide as the result above it plus the margin each side, never wider
+    /// than the form column and never too narrow to hold its controls, so a wide window does
+    /// not set a capsule twice the width of the picture it edits.
+    private func updateComposerWidth() {
+        var width = Self.composerMaximumWidth
+        if currentState == .chat, let resultWidth = chatView.latestResultWidth {
+            width = min(max(resultWidth + Theme.Space.xxl, Self.composerMinimumWidth), width)
+        }
+        guard abs(composerWidthConstraint.constant - width) > 0.5 else { return }
+        composerWidthConstraint.constant = width
+    }
 
     /// The suggestions scroll under the top bar and the composer, so they need at least the
     /// room both take; a larger inset the view sets for itself is left alone.
@@ -531,6 +563,7 @@ class ChatGenerationViewController: UIViewController {
             return
         }
         currentState = newState
+        updateComposerWidth()
         updateAccessibilityVisibility()
         updateTopBarLeading(animated: animated)
         if animated {

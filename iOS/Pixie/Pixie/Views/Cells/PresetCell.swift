@@ -20,6 +20,7 @@ final class PresetCell: CardCell {
     private let subtitleLabel = UILabel()
     private let countCapsule = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
     private let countLabel = UILabel()
+    private static let subtitleMinimumHeight: CGFloat = 150
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -106,6 +107,7 @@ final class PresetCell: CardCell {
     override func layoutSubviews() {
         super.layoutSubviews()
         countCapsule.layer.cornerRadius = countCapsule.bounds.height / 2
+        subtitleLabel.isHidden = bounds.height < Self.subtitleMinimumHeight
     }
 
     func configure(with preset: EditPreset) {
