@@ -27,39 +27,11 @@ class PhotoSavingService {
     
     private init() {}
     
-    func saveImage(
-        _ image: UIImage,
-        completion: @escaping (Result<PHAsset, PhotoSavingError>) -> Void
-    ) {
-        checkPhotoLibraryPermission { [weak self] granted in
-            guard granted else {
-                completion(.failure(.permissionDenied))
-                return
-            }
-            
-            self?.performSave(image: image, completion: completion)
-        }
-    }
-    
-    func saveImages(
-        _ images: [UIImage],
-        progress: ((Float) -> Void)? = nil,
-        completion: @escaping (Result<[PHAsset], PhotoSavingError>) -> Void
-    ) {
-        checkPhotoLibraryPermission { [weak self] granted in
-            guard granted else {
-                completion(.failure(.permissionDenied))
-                return
-            }
-            
-            self?.performBatchSave(images: images, progress: progress, completion: completion)
-        }
-    }
-    
     /// Saves images with whatever access the user granted. Add-only access, the usual
-    /// answer to the save prompt, can neither create the Pixie album nor read the new
-    /// asset back, so the album is used only with full access and success comes from the
-    /// write itself.
+    /// answer to the save prompt and the only one requested here, can neither create the
+    /// Pixie album nor read the new asset back, so the album is used only when the user
+    /// already granted full access and success comes from the write itself. If the album
+    /// cannot be created or written to, the images still go to the library.
     func saveToLibrary(_ images: [UIImage], completion: @escaping (Result<Void, PhotoSavingError>) -> Void) {
         checkPhotoLibraryPermission { [weak self] granted in
             guard let self, granted else {
@@ -76,6 +48,9 @@ class PhotoSavingService {
         }
     }
 
+    /// Writes the images, adding them to the album when one is given. A write that fails
+    /// with an album, for instance because the user deleted it, is retried once without it
+    /// so the images are never lost to an album problem.
     private func writeAssets(
         _ images: [UIImage],
         into album: PHAssetCollection?,
@@ -86,10 +61,13 @@ class PhotoSavingService {
             if let album, let albumRequest = PHAssetCollectionChangeRequest(for: album) {
                 albumRequest.addAssets(placeholders as NSArray)
             }
-        }) { success, error in
+        }) { [weak self] success, error in
             DispatchQueue.main.async {
                 if success {
                     completion(.success(()))
+                } else if album != nil {
+                    self?.pixieAlbum = nil
+                    self?.writeAssets(images, into: nil, completion: completion)
                 } else {
                     completion(.failure(.saveFailed(error?.localizedDescription ?? String(localized: "Unknown error"))))
                 }
@@ -113,35 +91,6 @@ class PhotoSavingService {
             }
         @unknown default:
             completion(false)
-        }
-    }
-    
-    private func performSave(
-        image: UIImage,
-        completion: @escaping (Result<PHAsset, PhotoSavingError>) -> Void
-    ) {
-        ensureAlbumExists { [weak self] result in
-            switch result {
-            case .success(let album):
-                self?.saveImageToAlbum(image, album: album, completion: completion)
-            case .failure(let error):
-                completion(.failure(error))
-            }
-        }
-    }
-    
-    private func performBatchSave(
-        images: [UIImage],
-        progress: ((Float) -> Void)?,
-        completion: @escaping (Result<[PHAsset], PhotoSavingError>) -> Void
-    ) {
-        ensureAlbumExists { [weak self] result in
-            switch result {
-            case .success(let album):
-                self?.saveImagesToAlbum(images, album: album, progress: progress, completion: completion)
-            case .failure(let error):
-                completion(.failure(error))
-            }
         }
     }
     
@@ -181,79 +130,6 @@ class PhotoSavingService {
                     }
                 } else {
                     completion(.failure(.albumCreationFailed))
-                }
-            }
-        }
-    }
-    
-    private func saveImageToAlbum(
-        _ image: UIImage,
-        album: PHAssetCollection,
-        completion: @escaping (Result<PHAsset, PhotoSavingError>) -> Void
-    ) {
-        var assetPlaceholder: PHObjectPlaceholder?
-        
-        PHPhotoLibrary.shared().performChanges({
-            let assetRequest = PHAssetChangeRequest.creationRequestForAsset(from: image)
-            assetPlaceholder = assetRequest.placeholderForCreatedAsset
-            
-            if let albumChangeRequest = PHAssetCollectionChangeRequest(for: album),
-               let placeholder = assetPlaceholder {
-                albumChangeRequest.addAssets([placeholder] as NSArray)
-            }
-        }) { success, error in
-            DispatchQueue.main.async {
-                if success, let placeholder = assetPlaceholder {
-                    let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [placeholder.localIdentifier], options: nil)
-                    if let asset = fetchResult.firstObject {
-                        completion(.success(asset))
-                    } else {
-                        completion(.failure(.saveFailed(String(localized: "Could not fetch saved asset"))))
-                    }
-                } else {
-                    completion(.failure(.saveFailed(error?.localizedDescription ?? String(localized: "Unknown error"))))
-                }
-            }
-        }
-    }
-    
-    private func saveImagesToAlbum(
-        _ images: [UIImage],
-        album: PHAssetCollection,
-        progress: ((Float) -> Void)?,
-        completion: @escaping (Result<[PHAsset], PhotoSavingError>) -> Void
-    ) {
-        var assetPlaceholders: [PHObjectPlaceholder] = []
-        
-        PHPhotoLibrary.shared().performChanges({
-            let albumChangeRequest = PHAssetCollectionChangeRequest(for: album)
-            
-            for (index, image) in images.enumerated() {
-                let assetRequest = PHAssetChangeRequest.creationRequestForAsset(from: image)
-                if let placeholder = assetRequest.placeholderForCreatedAsset {
-                    assetPlaceholders.append(placeholder)
-                    albumChangeRequest?.addAssets([placeholder] as NSArray)
-                }
-                
-                let currentProgress = Float(index + 1) / Float(images.count)
-                DispatchQueue.main.async {
-                    progress?(currentProgress)
-                }
-            }
-        }) { success, error in
-            DispatchQueue.main.async {
-                if success {
-                    let identifiers = assetPlaceholders.map { $0.localIdentifier }
-                    let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
-                    
-                    var assets: [PHAsset] = []
-                    fetchResult.enumerateObjects { asset, _, _ in
-                        assets.append(asset)
-                    }
-                    
-                    completion(.success(assets))
-                } else {
-                    completion(.failure(.saveFailed(error?.localizedDescription ?? String(localized: "Unknown error"))))
                 }
             }
         }

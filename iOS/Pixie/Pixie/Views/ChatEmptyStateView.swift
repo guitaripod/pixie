@@ -74,9 +74,9 @@ final class StarterChipView: UIVisualEffectView {
         ])
 
         let setHighlighted: (Bool) -> Void = { [weak self] highlighted in
-            UIView.animate(withDuration: highlighted ? 0.1 : 0.2) {
+            Motion.animate(highlighted ? 0.1 : 0.2) {
                 self?.alpha = highlighted ? 0.55 : 1
-                self?.transform = highlighted ? CGAffineTransform(scaleX: 0.97, y: 0.97) : .identity
+                self?.transform = highlighted && !Motion.isReduced ? CGAffineTransform(scaleX: 0.97, y: 0.97) : .identity
             }
         }
         button.addAction(UIAction { _ in setHighlighted(true) }, for: .touchDown)
@@ -227,10 +227,9 @@ final class ChatEmptyStateView: UIView {
         glyph.tintColor = tintColor
         glyph.contentMode = .scaleAspectFit
         glyph.translatesAutoresizingMaskIntoConstraints = false
-        glyph.preferredSymbolConfiguration = UIImage.SymbolConfiguration(
-            font: UIFont.preferredFont(forTextStyle: .largeTitle),
-            scale: .large
-        )
+        glyph.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .largeTitle, scale: .large)
+        glyph.hideFromAccessibility()
+        glyphContainer.hideFromAccessibility()
         glyphContainer.addSubview(glyph)
         NSLayoutConstraint.activate([
             glyph.topAnchor.constraint(equalTo: glyphContainer.topAnchor),
@@ -253,6 +252,8 @@ final class ChatEmptyStateView: UIView {
         subtitleLabel.textColor = .secondaryLabel
         subtitleLabel.textAlignment = .center
         subtitleLabel.numberOfLines = 0
+        subtitleLabel.accessibilityHint = String(localized: "Swipe to see more ideas")
+        scrollView.accessibilityHint = String(localized: "Swipe to see more ideas")
 
         chipsContainer.translatesAutoresizingMaskIntoConstraints = false
         chipsContainer.setChips(StarterPrompts.all.map(makeChip))

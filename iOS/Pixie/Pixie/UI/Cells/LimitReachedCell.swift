@@ -38,15 +38,15 @@ final class LimitReachedCell: UICollectionViewCell {
         iconImageView.tintColor = .secondaryLabel
         iconImageView.contentMode = .scaleAspectFit
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
+        iconImageView.hideFromAccessibility()
         
-        titleLabel.text = String(localized: "Reached viewing limit (100 images)")
-        titleLabel.font = .systemFont(ofSize: 16, weight: .medium)
+        titleLabel.useScaledFont(.body, size: 16, weight: .medium)
         titleLabel.textColor = .label
         titleLabel.textAlignment = .center
         titleLabel.numberOfLines = 0
         
         subtitleLabel.text = String(localized: "Refresh to see more recent images")
-        subtitleLabel.font = .systemFont(ofSize: 14)
+        subtitleLabel.useScaledFont(.subheadline, size: 14)
         subtitleLabel.textColor = .secondaryLabel
         subtitleLabel.textAlignment = .center
         subtitleLabel.numberOfLines = 0
@@ -69,5 +69,15 @@ final class LimitReachedCell: UICollectionViewCell {
             iconImageView.widthAnchor.constraint(equalToConstant: 40),
             iconImageView.heightAnchor.constraint(equalToConstant: 40)
         ])
+        
+        isAccessibilityElement = true
+        accessibilityTraits = .staticText
+    }
+    
+    /// Shows the number of images the pager lets the person page through before this cell
+    /// appears, taken from the pager's own limit rather than written into the text.
+    func configure(limit: Int) {
+        titleLabel.text = String(localized: "Reached viewing limit (\(limit) images)")
+        accessibilityLabel = [titleLabel.text, subtitleLabel.text].compactMap { $0 }.joined(separator: ". ")
     }
 }

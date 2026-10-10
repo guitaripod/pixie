@@ -14,6 +14,13 @@ class OAuthButton: UIButton {
         setupButton()
     }
     
+    var isLoading = false {
+        didSet {
+            guard isLoading != oldValue else { return }
+            setNeedsUpdateConfiguration()
+        }
+    }
+    
     private func setupButton() {
         translatesAutoresizingMaskIntoConstraints = false
         
@@ -21,17 +28,21 @@ class OAuthButton: UIButton {
             guard let self = self else { return }
             
             var config = button.configuration ?? UIButton.Configuration.plain()
+            let baseColor = self.getBackgroundColor(for: self.provider)
             
-            switch button.state {
-            case .highlighted:
-                config.background.backgroundColor = self.getBackgroundColor(for: self.provider)?.withAlphaComponent(0.8)
-                button.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-            default:
-                config.background.backgroundColor = self.getBackgroundColor(for: self.provider)
+            if !button.isEnabled {
+                config.background.backgroundColor = baseColor?.withAlphaComponent(0.5)
+                button.transform = .identity
+            } else if button.isHighlighted {
+                config.background.backgroundColor = baseColor?.withAlphaComponent(0.8)
+                button.transform = Motion.isReduced ? .identity : CGAffineTransform(scaleX: 0.95, y: 0.95)
+            } else {
+                config.background.backgroundColor = baseColor
                 button.transform = .identity
             }
+            config.showsActivityIndicator = self.isLoading
             
-            UIView.animate(withDuration: 0.1) {
+            Motion.animate(0.1) {
                 button.configuration = config
             }
         }
@@ -39,16 +50,18 @@ class OAuthButton: UIButton {
     
     func configure(provider: AuthProvider, title: String, backgroundColor: UIColor, textColor: UIColor, borderColor: UIColor?, iconName: String?) {
         self.provider = provider
+        accessibilityLabel = title
         
         var config = UIButton.Configuration.plain()
         config.title = title
         config.baseForegroundColor = textColor
         config.background.backgroundColor = backgroundColor
-        config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20)
+        config.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 20, bottom: 12, trailing: 20)
+        config.titleLineBreakMode = .byWordWrapping
         
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
-            outgoing.font = .systemFont(ofSize: 16, weight: .medium)
+            outgoing.font = UIFont.scaled(.body, size: 16, weight: .medium)
             return outgoing
         }
         

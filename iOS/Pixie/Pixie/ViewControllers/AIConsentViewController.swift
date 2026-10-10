@@ -31,7 +31,7 @@ final class AIConsentViewController: UIViewController {
         consent.onDeclined = onDeclined
         consent.modalPresentationStyle = .pageSheet
         if let sheet = consent.sheetPresentationController {
-            sheet.detents = [.medium()]
+            sheet.detents = [.medium(), .large()]
             sheet.prefersGrabberVisible = true
         }
         presenter.present(consent, animated: true)
@@ -41,7 +41,8 @@ final class AIConsentViewController: UIViewController {
     private lazy var iconView: UIImageView = {
         let config = UIImage.SymbolConfiguration(pointSize: 40, weight: .semibold)
         let imageView = UIImageView(image: UIImage(systemName: "cloud.fill", withConfiguration: config))
-        imageView.tintColor = .systemPurple
+        imageView.tintColor = .brandText
+        imageView.hideFromAccessibility()
         return imageView
     }()
 
@@ -49,7 +50,9 @@ final class AIConsentViewController: UIViewController {
         let label = UILabel()
         label.text = String(localized: "Made with cloud AI")
         label.font = UIFont.preferredFont(forTextStyle: .title2).rounded()
+        label.adjustsFontForContentSizeCategory = true
         label.textAlignment = .center
+        label.numberOfLines = 0
         return label
     }()
 
@@ -57,7 +60,8 @@ final class AIConsentViewController: UIViewController {
         let label = UILabel()
         label.text = CloudAIConsent.disclosure
         label.font = .preferredFont(forTextStyle: .subheadline)
-        label.textColor = .secondaryLabel
+        label.adjustsFontForContentSizeCategory = true
+        label.textColor = .label
         label.textAlignment = .center
         label.numberOfLines = 0
         return label
@@ -75,6 +79,7 @@ final class AIConsentViewController: UIViewController {
         config.buttonSize = .large
         return UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
             CloudAIConsent.grant()
+            HapticsManager.shared.notification(.success)
             self?.dismiss(animated: true) {
                 self?.onContinue?()
             }
@@ -83,11 +88,35 @@ final class AIConsentViewController: UIViewController {
 
     private lazy var cancelButton: UIButton = {
         var config = UIButton.Configuration.plain()
-        config.title = String(localized: "Not Now")
+        config.title = String(localized: "Not now")
         config.baseForegroundColor = .secondaryLabel
         return UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
             self?.dismiss(animated: true)
         })
+    }()
+
+    /// The icon, title and disclosure read as one card, so VoiceOver speaks the whole
+    /// disclosure in one go instead of stopping at each piece.
+    private lazy var disclosureCard: UIStackView = {
+        let card = UIStackView(arrangedSubviews: [iconView, titleLabel, bodyLabel])
+        card.axis = .vertical
+        card.alignment = .fill
+        card.spacing = 14
+        iconView.contentMode = .center
+        let title = titleLabel.text ?? ""
+        card.describe("\(title). \(CloudAIConsent.disclosure)")
+        return card
+    }()
+
+    private lazy var cancelFootnote: UILabel = {
+        let label = UILabel()
+        label.text = String(localized: "Pixie asks again before your first image.")
+        label.font = .preferredFont(forTextStyle: .footnote)
+        label.adjustsFontForContentSizeCategory = true
+        label.textColor = .secondaryLabel
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        return label
     }()
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -101,18 +130,16 @@ final class AIConsentViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
 
-        let stack = UIStackView(arrangedSubviews: [iconView, titleLabel, bodyLabel, continueButton, cancelButton])
+        let stack = UIStackView(arrangedSubviews: [disclosureCard, continueButton, cancelButton, cancelFootnote])
         stack.axis = .vertical
         stack.spacing = 14
         stack.alignment = .center
+        stack.setCustomSpacing(0, after: cancelButton)
         stack.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(stack)
 
-        NSLayoutConstraint.activate([
-            stack.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
-            stack.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 28),
-            stack.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -28),
-            continueButton.widthAnchor.constraint(equalTo: stack.widthAnchor),
-        ])
+        CenteredScrollContent.make(containing: stack, in: view, horizontalInset: 28)
+        continueButton.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        disclosureCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        cancelFootnote.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     }
 }

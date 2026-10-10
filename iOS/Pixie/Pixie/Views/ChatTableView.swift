@@ -88,7 +88,7 @@ class ChatTableView: UIView {
         let visible = tableView.bounds.height - tableView.contentInset.top - tableView.contentInset.bottom
         return max(visible - Self.resultActionsHeight, Self.minimumResultImageHeight)
     }
-    private static let resultActionsHeight: CGFloat = 70
+    private static let resultActionsHeight: CGFloat = 86
     private static let minimumResultImageHeight: CGFloat = 120
     private var keyboardInset: CGFloat = 0
     private var laidOutSize = CGSize.zero
@@ -147,8 +147,9 @@ class ChatTableView: UIView {
         }
         let apply = { self.emptyStateView.alpha = isEmpty ? 1 : 0 }
         let finish = { self.emptyStateView.isHidden = !isEmpty }
+        emptyStateView.accessibilityElementsHidden = !isEmpty
         if animated {
-            UIView.animate(withDuration: 0.25, animations: apply) { _ in finish() }
+            Motion.animate(0.25, animations: apply, completion: { _ in finish() })
         } else {
             apply()
             finish()
@@ -165,7 +166,24 @@ class ChatTableView: UIView {
         }
         updateEmptyState(isEmpty: false, animated: animated)
     }
+    /// Moves VoiceOver to the newest result once it is on screen, after the "ready"
+    /// announcement has had time to finish.
+    func focusLatestResult() {
+        guard UIAccessibility.isVoiceOverRunning else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.resultFocusDelay) { [weak self] in
+            guard let self,
+                  let message = self.dataSource.snapshot().itemIdentifiers.last(where: { $0.role == .assistant }),
+                  let indexPath = self.dataSource.indexPath(for: message) else { return }
+            self.tableView.layoutIfNeeded()
+            let cell = self.tableView.cellForRow(at: indexPath) as? AssistantMessageCell
+            Announce.layoutChanged(cell?.primaryAccessibilityElement ?? self.tableView)
+        }
+    }
+
+    private static let resultFocusDelay: TimeInterval = 1.3
+
     func scrollToBottom(animated: Bool = true) {
+        let animated = animated && !Motion.isReduced
         guard let lastSection = dataSource.snapshot().sectionIdentifiers.last,
               let lastItem = dataSource.snapshot().itemIdentifiers(inSection: lastSection).last,
               let indexPath = dataSource.indexPath(for: lastItem) else { return }
@@ -236,10 +254,10 @@ extension ChatTableView: AssistantMessageCellDelegate {
               let message = dataSource.itemIdentifier(for: indexPath) else { return }
         delegate?.chatTableView(self, didSelectImageForEdit: index, in: message)
     }
-    func assistantMessageCell(_ cell: AssistantMessageCell, didRequest action: ResultAction, from sourceView: UIView) {
+    func assistantMessageCell(_ cell: AssistantMessageCell, didRequest action: ResultAction, imageIndex: Int?, from sourceView: UIView) {
         guard let indexPath = tableView.indexPath(for: cell),
               let message = dataSource.itemIdentifier(for: indexPath) else { return }
-        delegate?.chatTableView(self, didRequest: action, for: message, from: sourceView)
+        delegate?.chatTableView(self, didRequest: action, imageIndex: imageIndex, for: message, from: sourceView)
     }
 }
 
@@ -249,7 +267,7 @@ protocol ChatTableViewDelegate: AnyObject {
     func chatTableView(_ chatTableView: ChatTableView, didTapImageAt index: Int, in message: ChatMessage)
     func chatTableView(_ chatTableView: ChatTableView, didLongPressImageAt index: Int, in message: ChatMessage)
     func chatTableView(_ chatTableView: ChatTableView, didSelectImageForEdit index: Int, in message: ChatMessage)
-    func chatTableView(_ chatTableView: ChatTableView, didRequest action: ResultAction, for message: ChatMessage, from sourceView: UIView)
+    func chatTableView(_ chatTableView: ChatTableView, didRequest action: ResultAction, imageIndex: Int?, for message: ChatMessage, from sourceView: UIView)
 }
 
 enum ResultAction {
@@ -265,7 +283,7 @@ class UserMessageCell: UITableViewCell {
     private let bubbleView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = UIColor(red: 103/255, green: 80/255, blue: 164/255, alpha: 1)
+        view.backgroundColor = .brand
         view.layer.cornerRadius = 18
         return view
     }()
@@ -273,7 +291,7 @@ class UserMessageCell: UITableViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.numberOfLines = 0
-        label.font = .systemFont(ofSize: 15, weight: .medium)
+        label.useScaledFont(.subheadline, size: 15, weight: .medium)
         label.textColor = .white
         return label
     }()
@@ -291,10 +309,12 @@ class UserMessageCell: UITableViewCell {
         imageView.layer.cornerRadius = 8
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.isHidden = true
+        imageView.accessibilityIgnoresInvertColors = true
         return imageView
     }()
     private var editImageBottomConstraint: NSLayoutConstraint!
     private var metadataBottomConstraint: NSLayoutConstraint!
+    private var metadataSummary: [String] = []
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -339,6 +359,7 @@ class UserMessageCell: UITableViewCell {
         super.prepareForReuse()
         messageLabel.text = nil
         metadataStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        metadataSummary = []
         editImageView.image = nil
         editImageView.isHidden = true
     }
@@ -347,6 +368,7 @@ class UserMessageCell: UITableViewCell {
         messageLabel.text = message.content
         
         metadataStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        metadataSummary = []
         
         metadataBottomConstraint.isActive = false
         editImageBottomConstraint.isActive = false
@@ -394,13 +416,15 @@ class UserMessageCell: UITableViewCell {
             editImageView.isHidden = true
             metadataBottomConstraint.isActive = true
         }
+        describe(String(localized: "You: \(message.content ?? "")"), value: metadataSummary.isEmpty ? nil : metadataSummary.joined(separator: ", "), traits: .staticText)
     }
     
     private func createMetadataLabel(text: String, isBold: Bool = false) -> UILabel {
         let label = UILabel()
         label.text = text
         label.textColor = .white
-        label.font = .systemFont(ofSize: 11, weight: isBold ? .semibold : .regular)
+        label.useScaledFont(.caption2, size: 11, weight: isBold ? .semibold : .regular)
+        label.numberOfLines = 0
         return label
     }
     
@@ -408,19 +432,22 @@ class UserMessageCell: UITableViewCell {
         let rowStack = UIStackView()
         rowStack.axis = .horizontal
         rowStack.distribution = .equalSpacing
+        rowStack.spacing = 8
         
         let labelView = createMetadataLabel(text: label)
-        labelView.textColor = UIColor.white.withAlphaComponent(0.7)
-        labelView.font = .systemFont(ofSize: 10, weight: .regular)
+        labelView.textColor = UIColor.white.withAlphaComponent(0.85)
+        labelView.useScaledFont(.caption2, size: 10)
         
         let valueView = createMetadataLabel(text: value)
         valueView.textColor = .white
-        valueView.font = .systemFont(ofSize: 10, weight: .medium)
+        valueView.useScaledFont(.caption2, size: 10, weight: .medium)
+        valueView.textAlignment = .right
         
         rowStack.addArrangedSubview(labelView)
         rowStack.addArrangedSubview(valueView)
         
         metadataStackView.addArrangedSubview(rowStack)
+        metadataSummary.append("\(label) \(value)")
     }
 }
 
@@ -443,6 +470,10 @@ class AssistantMessageCell: UITableViewCell {
         return stack
     }()
     private var imageViews: [UIImageView] = []
+    private var canCompare = false
+    var primaryAccessibilityElement: Any? {
+        imageViews.first ?? self
+    }
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupViews()
@@ -469,18 +500,23 @@ class AssistantMessageCell: UITableViewCell {
     func configure(with message: ChatMessage, maxImageHeight: CGFloat = 0) {
         contentStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
         imageViews.removeAll()
+        isAccessibilityElement = false
+        accessibilityLabel = nil
+        accessibilityTraits = .none
         if let images = message.images, !images.isEmpty {
             bubbleView.backgroundColor = .clear
+            canCompare = message.sourceImage != nil
             contentStackView.addArrangedSubview(makeImageGrid(images, maxImageHeight: maxImageHeight))
-            contentStackView.addArrangedSubview(makeActionRow(canCompare: message.sourceImage != nil))
+            contentStackView.addArrangedSubview(makeActionRow(canCompare: canCompare))
         } else if let text = message.content, !text.isEmpty {
             bubbleView.backgroundColor = .secondarySystemBackground
             let label = UILabel()
             label.numberOfLines = 0
-            label.font = .systemFont(ofSize: 16)
+            label.useScaledFont(.body, size: 16)
             label.textColor = .label
             label.text = text
             contentStackView.addArrangedSubview(label)
+            describe(String(localized: "Pixie: \(text)"), traits: .staticText)
         }
     }
     /// One result fills the bubble; a pack of results sits in a two-column grid so four
@@ -514,6 +550,9 @@ class AssistantMessageCell: UITableViewCell {
             imageView.isUserInteractionEnabled = true
             imageView.tag = index
             imageView.image = image
+            imageView.accessibilityIgnoresInvertColors = true
+            imageView.describe(String(localized: "Generated image \(index + 1) of \(images.count)"), traits: [.image, .button])
+            imageView.accessibilityCustomActions = customActions(forImageAt: index, in: imageView)
             let aspectRatio = image.size.width > 0 ? image.size.height / image.size.width : 1
             let width = maxImageHeight > 0 ? min(cellWidth, maxRowHeight / aspectRatio) : cellWidth
             NSLayoutConstraint.activate([
@@ -526,6 +565,36 @@ class AssistantMessageCell: UITableViewCell {
             imageViews.append(imageView)
         }
         return grid
+    }
+
+    /// The result's actions as VoiceOver custom actions, so each image can be saved, shared,
+    /// edited or compared without finding the small buttons below it.
+    private func customActions(forImageAt index: Int, in imageView: UIImageView) -> [UIAccessibilityCustomAction] {
+        var actions = [
+            makeCustomAction(String(localized: "Save")) { cell in
+                cell.delegate?.assistantMessageCell(cell, didRequest: .save, imageIndex: index, from: imageView)
+            },
+            makeCustomAction(String(localized: "Share")) { cell in
+                cell.delegate?.assistantMessageCell(cell, didRequest: .share, imageIndex: index, from: imageView)
+            },
+            makeCustomAction(String(localized: "Edit Image")) { cell in
+                cell.delegate?.assistantMessageCell(cell, didSelectImageForEdit: index)
+            }
+        ]
+        if canCompare {
+            actions.append(makeCustomAction(String(localized: "Before & after")) { cell in
+                cell.delegate?.assistantMessageCell(cell, didRequest: .beforeAfter, imageIndex: index, from: imageView)
+            })
+        }
+        return actions
+    }
+
+    private func makeCustomAction(_ name: String, perform: @escaping (AssistantMessageCell) -> Void) -> UIAccessibilityCustomAction {
+        UIAccessibilityCustomAction(name: name) { [weak self] _ in
+            guard let self else { return false }
+            perform(self)
+            return true
+        }
     }
 
     private func makeActionRow(canCompare: Bool) -> UIView {
@@ -546,14 +615,14 @@ class AssistantMessageCell: UITableViewCell {
         config.title = title
         config.image = UIImage(systemName: symbol)
         config.imagePadding = 5
-        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 12, weight: .semibold)
+        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(textStyle: .footnote, scale: .small)
         config.cornerStyle = .capsule
-        config.buttonSize = .small
-        config.baseForegroundColor = .systemPurple
-        config.baseBackgroundColor = .systemPurple
+        config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
+        config.baseForegroundColor = .brandText
+        config.baseBackgroundColor = .brand
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { attributes in
             var attributes = attributes
-            attributes.font = .systemFont(ofSize: 13, weight: .semibold)
+            attributes.font = .scaled(.footnote, size: 13, weight: .semibold)
             return attributes
         }
         let button = UIButton(configuration: config)
@@ -561,10 +630,16 @@ class AssistantMessageCell: UITableViewCell {
         button.addAction(UIAction { [weak self, weak button] _ in
             guard let self, let button else { return }
             HapticManager.shared.impact(.click)
-            self.delegate?.assistantMessageCell(self, didRequest: action, from: button)
+            self.delegate?.assistantMessageCell(self, didRequest: action, imageIndex: nil, from: button)
         }, for: .touchUpInside)
+        NSLayoutConstraint.activate([
+            button.heightAnchor.constraint(greaterThanOrEqualToConstant: Self.minimumTapSize),
+            button.widthAnchor.constraint(greaterThanOrEqualToConstant: Self.minimumTapSize)
+        ])
         return button
     }
+
+    private static let minimumTapSize: CGFloat = 44
 
     @objc private func imageTapped(_ gesture: UITapGestureRecognizer) {
         guard let imageView = gesture.view else { return }
@@ -602,8 +677,10 @@ extension AssistantMessageCell: UIContextMenuInteractionDelegate {
                     switch result {
                     case .success:
                         HapticManager.shared.impact(.success)
-                    case .failure:
+                        Announce.say(String(localized: "Saved to Photos"))
+                    case .failure(let error):
                         HapticManager.shared.impact(.error)
+                        Announce.say(error.localizedDescription)
                     }
                 }
             }
@@ -662,6 +739,8 @@ class LoadingMessageCell: UITableViewCell {
         selectionStyle = .none
         contentView.addSubview(bubbleView)
         bubbleView.addSubview(loadingIndicator)
+        loadingIndicator.hideFromAccessibility()
+        describe(String(localized: "Generating image"), traits: .staticText)
         NSLayoutConstraint.activate([
             bubbleView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
             bubbleView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
@@ -683,5 +762,5 @@ protocol AssistantMessageCellDelegate: AnyObject {
     func assistantMessageCell(_ cell: AssistantMessageCell, didTapImageAt index: Int)
     func assistantMessageCell(_ cell: AssistantMessageCell, didLongPressImageAt index: Int)
     func assistantMessageCell(_ cell: AssistantMessageCell, didSelectImageForEdit index: Int)
-    func assistantMessageCell(_ cell: AssistantMessageCell, didRequest action: ResultAction, from sourceView: UIView)
+    func assistantMessageCell(_ cell: AssistantMessageCell, didRequest action: ResultAction, imageIndex: Int?, from sourceView: UIView)
 }

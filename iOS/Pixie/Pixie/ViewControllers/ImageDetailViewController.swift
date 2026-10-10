@@ -1,5 +1,15 @@
 import UIKit
 
+private enum FirstResponderProbe {
+    static weak var responder: UIResponder?
+}
+
+private extension UIResponder {
+    @objc func probeFirstResponder() {
+        FirstResponderProbe.responder = self
+    }
+}
+
 final class ImageDetailViewController: UIViewController {
     
     weak var delegate: ImageDetailViewControllerDelegate?
@@ -12,6 +22,20 @@ final class ImageDetailViewController: UIViewController {
     private let actionsStackView = UIStackView()
     private let detailsStackView = UIStackView()
     private var imageHeightConstraint: NSLayoutConstraint!
+    private var loadedImage: UIImage?
+    private let loadingIndicator = UIActivityIndicatorView(style: .medium)
+    private let loadFailureView = UIStackView()
+    private var lastLaidOutHeight: CGFloat = 0
+    
+    private static let imageHeightFraction: CGFloat = 0.6
+    private static let minimumImageHeight: CGFloat = 200
+    private static let doubleTapZoomScale: CGFloat = 2.5
+    private static let shortcutSelectors: Set<Selector> = [
+        #selector(dismissDetail),
+        #selector(copyTapped),
+        #selector(downloadTapped),
+        #selector(shareTapped)
+    ]
     
     init(image: ImageMetadata) {
         self.image = image
@@ -31,8 +55,11 @@ final class ImageDetailViewController: UIViewController {
         setupKeyboardCommands()
     }
     
+    /// The tallest the image may be: a share of the room the screen actually has, so a short
+    /// landscape window gets a short image and a tall iPad sheet a tall one.
     private var maxImageHeight: CGFloat {
-        traitCollection.isRegularWidth ? 600 : 400
+        let available = view.safeAreaLayoutGuide.layoutFrame.height
+        return max(Self.minimumImageHeight, available * Self.imageHeightFraction)
     }
 
     private func setupUI() {
@@ -71,7 +98,7 @@ final class ImageDetailViewController: UIViewController {
         let layout = AdaptiveLayout(traitCollection: traitCollection)
         let insets = layout.contentInsets
         
-        imageHeightConstraint = imageScrollView.heightAnchor.constraint(lessThanOrEqualToConstant: maxImageHeight)
+        imageHeightConstraint = imageScrollView.heightAnchor.constraint(equalToConstant: Self.minimumImageHeight)
         
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -107,9 +134,59 @@ final class ImageDetailViewController: UIViewController {
             detailsStackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16)
         ])
         
-        let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch))
-        imageView.isUserInteractionEnabled = true
-        imageView.addGestureRecognizer(pinchGesture)
+        let doubleTap = UITapGestureRecognizer(target: self, action: #selector(handleDoubleTap(_:)))
+        doubleTap.numberOfTapsRequired = 2
+        imageScrollView.addGestureRecognizer(doubleTap)
+        
+        imageView.describe(String(localized: "Generated image"), value: image.prompt, traits: .image)
+        setupLoadStates()
+    }
+    
+    private func setupLoadStates() {
+        loadingIndicator.hidesWhenStopped = true
+        loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
+        loadingIndicator.hideFromAccessibility()
+        contentView.addSubview(loadingIndicator)
+        
+        let failureLabel = UILabel()
+        failureLabel.useScaledFont(.body, size: 16)
+        failureLabel.text = String(localized: "Couldn't load image.")
+        failureLabel.textColor = .secondaryLabel
+        failureLabel.textAlignment = .center
+        failureLabel.numberOfLines = 0
+        
+        var retryConfig = UIButton.Configuration.tinted()
+        retryConfig.title = String(localized: "Retry")
+        retryConfig.baseForegroundColor = .brandText
+        retryConfig.baseBackgroundColor = .brand
+        retryConfig.cornerStyle = .capsule
+        retryConfig.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .scaled(.body, size: 16, weight: .semibold)
+            return outgoing
+        }
+        let retryButton = UIButton(configuration: retryConfig)
+        retryButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+        retryButton.addAction(UIAction { [weak self] _ in self?.loadImage() }, for: .touchUpInside)
+        retryButton.setupPointerInteraction()
+        
+        loadFailureView.axis = .vertical
+        loadFailureView.alignment = .center
+        loadFailureView.spacing = 12
+        loadFailureView.isHidden = true
+        loadFailureView.translatesAutoresizingMaskIntoConstraints = false
+        loadFailureView.addArrangedSubview(failureLabel)
+        loadFailureView.addArrangedSubview(retryButton)
+        contentView.addSubview(loadFailureView)
+        
+        NSLayoutConstraint.activate([
+            loadingIndicator.centerXAnchor.constraint(equalTo: imageScrollView.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: imageScrollView.centerYAnchor),
+            loadFailureView.centerXAnchor.constraint(equalTo: imageScrollView.centerXAnchor),
+            loadFailureView.centerYAnchor.constraint(equalTo: imageScrollView.centerYAnchor),
+            loadFailureView.leadingAnchor.constraint(greaterThanOrEqualTo: imageScrollView.leadingAnchor, constant: 16),
+            loadFailureView.trailingAnchor.constraint(lessThanOrEqualTo: imageScrollView.trailingAnchor, constant: -16)
+        ])
     }
     
     private func setupActionButtons() {
@@ -120,24 +197,28 @@ final class ImageDetailViewController: UIViewController {
         
         let editButton = createActionButton(
             title: String(localized: "Edit"),
+            accessibilityLabel: String(localized: "Edit this image"),
             image: UIImage(systemName: "pencil"),
             action: #selector(editTapped)
         )
         
         let copyButton = createActionButton(
             title: String(localized: "Copy"),
+            accessibilityLabel: String(localized: "Copy Prompt"),
             image: UIImage(systemName: "doc.on.doc"),
             action: #selector(copyTapped)
         )
         
         let downloadButton = createActionButton(
             title: String(localized: "Save"),
+            accessibilityLabel: String(localized: "Save to Photos"),
             image: UIImage(systemName: "arrow.down.to.line"),
             action: #selector(downloadTapped)
         )
         
         let shareButton = createActionButton(
             title: String(localized: "Share"),
+            accessibilityLabel: String(localized: "Share"),
             image: UIImage(systemName: "square.and.arrow.up"),
             action: #selector(shareTapped)
         )
@@ -154,6 +235,18 @@ final class ImageDetailViewController: UIViewController {
         actionsStackView.addArrangedSubview(downloadButton)
         actionsStackView.addArrangedSubview(shareButton)
         actionsStackView.addArrangedSubview(moreButton)
+        updateActionsLayout()
+    }
+
+    /// Lays the five actions in a row, or stacks them with the icon beside the title when the
+    /// text size is large enough that a row would clip the titles.
+    private func updateActionsLayout() {
+        let stacked = traitCollection.preferredContentSizeCategory.isAccessibilityCategory
+        actionsStackView.axis = stacked ? .vertical : .horizontal
+        actionsStackView.distribution = stacked ? .fill : .fillEqually
+        for case let button as UIButton in actionsStackView.arrangedSubviews {
+            button.configuration?.imagePlacement = stacked ? .leading : .top
+        }
     }
 
     private func makeMoreMenu() -> UIMenu {
@@ -169,32 +262,36 @@ final class ImageDetailViewController: UIViewController {
         return UIMenu(title: "", children: [delete])
     }
     
-    private func createActionButton(title: String, image: UIImage?, action: Selector) -> UIButton {
+    private func makeActionConfiguration(title: String, image: UIImage?) -> UIButton.Configuration {
         var config = UIButton.Configuration.tinted()
         config.title = title
         config.image = image
         config.imagePlacement = .top
         config.imagePadding = 4
-        config.baseForegroundColor = UIColor(red: 103/255, green: 80/255, blue: 164/255, alpha: 1.0)
-        config.baseBackgroundColor = UIColor(red: 103/255, green: 80/255, blue: 164/255, alpha: 0.1)
+        config.baseForegroundColor = .brandText
+        config.baseBackgroundColor = .brand
         config.cornerStyle = .medium
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
-            outgoing.font = .systemFont(ofSize: 12, weight: .medium)
+            outgoing.font = .scaled(.caption1, size: 12, weight: .medium)
             return outgoing
         }
-        
-        let button = UIButton(configuration: config)
+        return config
+    }
+    
+    private func createActionButton(title: String, accessibilityLabel: String, image: UIImage?, action: Selector) -> UIButton {
+        let button = UIButton(configuration: makeActionConfiguration(title: title, image: image))
+        button.accessibilityLabel = accessibilityLabel
         button.addTarget(self, action: action, for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.heightAnchor.constraint(equalToConstant: 60).isActive = true
+        button.heightAnchor.constraint(greaterThanOrEqualToConstant: 60).isActive = true
         
         button.setupPointerInteraction()
         
         button.configurationUpdateHandler = { button in
             switch button.state {
             case .highlighted:
-                button.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+                button.transform = Motion.isReduced ? .identity : CGAffineTransform(scaleX: 0.95, y: 0.95)
             default:
                 button.transform = .identity
             }
@@ -204,23 +301,10 @@ final class ImageDetailViewController: UIViewController {
     }
 
     private func createMenuButton(title: String, image: UIImage?) -> UIButton {
-        var config = UIButton.Configuration.tinted()
-        config.title = title
-        config.image = image
-        config.imagePlacement = .top
-        config.imagePadding = 4
-        config.baseForegroundColor = UIColor(red: 103/255, green: 80/255, blue: 164/255, alpha: 1.0)
-        config.baseBackgroundColor = UIColor(red: 103/255, green: 80/255, blue: 164/255, alpha: 0.1)
-        config.cornerStyle = .medium
-        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
-            var outgoing = incoming
-            outgoing.font = .systemFont(ofSize: 12, weight: .medium)
-            return outgoing
-        }
-
-        let button = UIButton(configuration: config)
+        let button = UIButton(configuration: makeActionConfiguration(title: title, image: image))
+        button.accessibilityLabel = String(localized: "More")
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.heightAnchor.constraint(equalToConstant: 60).isActive = true
+        button.heightAnchor.constraint(greaterThanOrEqualToConstant: 60).isActive = true
 
         button.setupPointerInteraction()
 
@@ -256,13 +340,14 @@ final class ImageDetailViewController: UIViewController {
         
         let titleLabel = UILabel()
         titleLabel.text = title
-        titleLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        titleLabel.useScaledFont(.subheadline, size: 14, weight: .medium)
         titleLabel.textColor = .secondaryLabel
+        titleLabel.numberOfLines = 0
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
         let valueLabel = UILabel()
         valueLabel.text = value
-        valueLabel.font = .systemFont(ofSize: 16)
+        valueLabel.useScaledFont(.body, size: 16)
         valueLabel.textColor = .label
         valueLabel.numberOfLines = 0
         valueLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -281,23 +366,23 @@ final class ImageDetailViewController: UIViewController {
             valueLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12)
         ])
         
+        containerView.describe(title, value: value, traits: .staticText)
         detailsStackView.addArrangedSubview(containerView)
     }
     
-    @objc private func handlePinch(_ gesture: UIPinchGestureRecognizer) {
-        guard let view = gesture.view else { return }
-        
-        switch gesture.state {
-        case .changed:
-            let scale = gesture.scale
-            view.transform = CGAffineTransform(scaleX: scale, y: scale)
-        case .ended, .cancelled:
-            UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0) {
-                view.transform = .identity
-            }
-        default:
-            break
+    @objc private func handleDoubleTap(_ gesture: UITapGestureRecognizer) {
+        let animated = !Motion.isReduced
+        if imageScrollView.zoomScale > imageScrollView.minimumZoomScale + 0.01 {
+            imageScrollView.setZoomScale(imageScrollView.minimumZoomScale, animated: animated)
+            return
         }
+        let point = gesture.location(in: imageView)
+        let size = CGSize(
+            width: imageScrollView.bounds.width / Self.doubleTapZoomScale,
+            height: imageScrollView.bounds.height / Self.doubleTapZoomScale
+        )
+        let rect = CGRect(x: point.x - size.width / 2, y: point.y - size.height / 2, width: size.width, height: size.height)
+        imageScrollView.zoom(to: rect, animated: animated)
     }
     
     @objc private func editTapped() {
@@ -321,36 +406,46 @@ final class ImageDetailViewController: UIViewController {
     }
     
     private func loadImage() {
-        guard let url = URL(string: image.url) else { return }
+        loadFailureView.isHidden = true
         
         if let cachedImage = ImageCache.shared.image(for: image.url) {
-            imageView.image = cachedImage
-            updateImageViewHeight(for: cachedImage)
+            show(cachedImage)
             return
         }
         
-        URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
-            guard let self = self,
-                  let data = data,
-                  let loadedImage = UIImage(data: data),
-                  error == nil else { return }
-            
-            ImageCache.shared.setImage(loadedImage, for: self.image.url)
-            
-            DispatchQueue.main.async {
-                self.imageView.image = loadedImage
-                self.updateImageViewHeight(for: loadedImage)
+        loadingIndicator.startAnimating()
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let loaded = await ImageCache.shared.loadImage(from: self.image.url)
+            self.loadingIndicator.stopAnimating()
+            if let loaded {
+                self.show(loaded)
+            } else {
+                self.showLoadFailure()
             }
-        }.resume()
+        }
     }
     
-    private func updateImageViewHeight(for image: UIImage) {
-        let aspectRatio = image.size.height / image.size.width
-        let width = view.bounds.width - 32
-        let height = min(width * aspectRatio, 400)
-        
-        imageView.constraints.first { $0.firstAttribute == .height }?.constant = height
-        view.layoutIfNeeded()
+    private func show(_ loadedImage: UIImage) {
+        self.loadedImage = loadedImage
+        imageView.image = loadedImage
+        updateImageHeight()
+    }
+    
+    private func showLoadFailure() {
+        loadFailureView.isHidden = false
+        Announce.say(String(localized: "Couldn't load image."))
+    }
+    
+    /// Sizes the image area to the picture's own proportions, up to the tallest the screen
+    /// allows, so neither a wide nor a tall picture leaves a band of empty space.
+    private func updateImageHeight() {
+        let width = imageScrollView.bounds.width > 0 ? imageScrollView.bounds.width : view.bounds.width - 32
+        let aspectRatio = loadedImage.map { $0.size.height / max($0.size.width, 1) } ?? 1
+        let height = min(width * aspectRatio, maxImageHeight)
+        if abs(imageHeightConstraint.constant - height) > 0.5 {
+            imageHeightConstraint.constant = height
+        }
     }
     
     private func formatDate(_ dateString: String) -> String {
@@ -387,15 +482,47 @@ final class ImageDetailViewController: UIViewController {
                                   modifierFlags: [.command, .shift]))
     }
     
+    /// Shortcuts belong to this screen only while it is the one in front and nobody is typing
+    /// somewhere else, so command-C still copies selected text instead of the prompt.
+    private var shortcutsAreActive: Bool {
+        guard isViewLoaded, view.window != nil, presentedViewController == nil, !isBeingDismissed else { return false }
+        FirstResponderProbe.responder = nil
+        UIApplication.shared.sendAction(#selector(UIResponder.probeFirstResponder), to: nil, from: nil, for: nil)
+        return !(FirstResponderProbe.responder is UITextInput)
+    }
+    
+    override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
+        if Self.shortcutSelectors.contains(action) && !shortcutsAreActive {
+            return false
+        }
+        return super.canPerformAction(action, withSender: sender)
+    }
+    
     @objc private func dismissDetail() {
         dismiss(animated: true)
+    }
+    
+    override func accessibilityPerformEscape() -> Bool {
+        dismiss(animated: true)
+        return true
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        if abs(view.bounds.height - lastLaidOutHeight) > 0.5 || loadedImage == nil {
+            lastLaidOutHeight = view.bounds.height
+            updateImageHeight()
+        }
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         
+        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
+            updateActionsLayout()
+        }
         if traitCollection.horizontalSizeClass != previousTraitCollection?.horizontalSizeClass {
-            imageHeightConstraint.constant = maxImageHeight
+            updateImageHeight()
         }
     }
 }

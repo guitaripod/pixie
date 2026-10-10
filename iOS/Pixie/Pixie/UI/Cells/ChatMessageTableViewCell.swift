@@ -33,6 +33,7 @@ class ChatMessageTableViewCell: UITableViewCell {
     private let messageLabel: UILabel = {
         let label = UILabel()
         label.font = .preferredFont(forTextStyle: .body)
+        label.adjustsFontForContentSizeCategory = true
         label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -62,6 +63,7 @@ class ChatMessageTableViewCell: UITableViewCell {
         view.clipsToBounds = true
         view.layer.cornerRadius = 12
         view.isHidden = true
+        view.accessibilityIgnoresInvertColors = true
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -75,6 +77,7 @@ class ChatMessageTableViewCell: UITableViewCell {
     private let timestampLabel: UILabel = {
         let label = UILabel()
         label.font = .preferredFont(forTextStyle: .caption2)
+        label.adjustsFontForContentSizeCategory = true
         label.textColor = .secondaryLabel
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -84,6 +87,7 @@ class ChatMessageTableViewCell: UITableViewCell {
     private var trailingConstraint: NSLayoutConstraint!
     private var editImageBottomConstraint: NSLayoutConstraint!
     private var metadataBottomConstraint: NSLayoutConstraint!
+    private var metadataSummary: [String] = []
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -103,8 +107,12 @@ class ChatMessageTableViewCell: UITableViewCell {
         loadingIndicator.isHidden = true
         timestampLabel.text = nil
         metadataStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        metadataSummary = []
         editImageView.image = nil
         editImageView.isHidden = true
+        isAccessibilityElement = false
+        accessibilityLabel = nil
+        accessibilityValue = nil
     }
     
     private func setupViews() {
@@ -118,6 +126,8 @@ class ChatMessageTableViewCell: UITableViewCell {
         bubbleView.addSubview(messageImageView)
         bubbleView.addSubview(loadingIndicator)
         contentView.addSubview(timestampLabel)
+        loadingIndicator.hideFromAccessibility()
+        timestampLabel.accessibilityElementsHidden = true
         
         leadingConstraint = bubbleView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16)
         trailingConstraint = bubbleView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
@@ -153,7 +163,7 @@ class ChatMessageTableViewCell: UITableViewCell {
             loadingIndicator.centerYAnchor.constraint(equalTo: bubbleView.centerYAnchor),
             
             timestampLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
-            timestampLabel.heightAnchor.constraint(equalToConstant: 16)
+            timestampLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 16)
         ])
     }
     
@@ -178,12 +188,13 @@ class ChatMessageTableViewCell: UITableViewCell {
     }
     
     private func configureUserMessage(text: String, metadata: ChatMessage.MessageMetadata?, editingImage: UIImage?) {
-        bubbleView.backgroundColor = UIColor(red: 103/255, green: 80/255, blue: 164/255, alpha: 1)
+        bubbleView.backgroundColor = .brand
         messageLabel.textColor = .white
         messageLabel.text = text
-        messageLabel.font = .systemFont(ofSize: 15, weight: .medium)
+        messageLabel.useScaledFont(.subheadline, size: 15, weight: .medium)
         
         metadataStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        metadataSummary = []
         
         metadataBottomConstraint.isActive = false
         editImageBottomConstraint.isActive = false
@@ -232,13 +243,15 @@ class ChatMessageTableViewCell: UITableViewCell {
         trailingConstraint.isActive = true
         timestampLabel.textAlignment = .right
         timestampLabel.trailingAnchor.constraint(equalTo: bubbleView.trailingAnchor).isActive = true
+        describe(String(localized: "You: \(text)"), value: metadataSummary.isEmpty ? nil : metadataSummary.joined(separator: ", "), traits: .staticText)
     }
     
     private func createMetadataLabel(text: String, isBold: Bool = false) -> UILabel {
         let label = UILabel()
         label.text = text
         label.textColor = .white
-        label.font = .systemFont(ofSize: 11, weight: isBold ? .semibold : .regular)
+        label.useScaledFont(.caption2, size: 11, weight: isBold ? .semibold : .regular)
+        label.numberOfLines = 0
         return label
     }
     
@@ -246,19 +259,22 @@ class ChatMessageTableViewCell: UITableViewCell {
         let rowStack = UIStackView()
         rowStack.axis = .horizontal
         rowStack.distribution = .equalSpacing
+        rowStack.spacing = 8
         
         let labelView = createMetadataLabel(text: label)
-        labelView.textColor = UIColor.white.withAlphaComponent(0.7)
-        labelView.font = .systemFont(ofSize: 10, weight: .regular)
+        labelView.textColor = UIColor.white.withAlphaComponent(0.85)
+        labelView.useScaledFont(.caption2, size: 10)
         
         let valueView = createMetadataLabel(text: value)
         valueView.textColor = .white
-        valueView.font = .systemFont(ofSize: 10, weight: .medium)
+        valueView.useScaledFont(.caption2, size: 10, weight: .medium)
+        valueView.textAlignment = .right
         
         rowStack.addArrangedSubview(labelView)
         rowStack.addArrangedSubview(valueView)
         
         metadataStackView.addArrangedSubview(rowStack)
+        metadataSummary.append("\(label) \(value)")
     }
     
     private func configureImageResponse(url: String, prompt: String) {
@@ -272,6 +288,7 @@ class ChatMessageTableViewCell: UITableViewCell {
         trailingConstraint.isActive = false
         timestampLabel.textAlignment = .left
         timestampLabel.leadingAnchor.constraint(equalTo: bubbleView.leadingAnchor).isActive = true
+        describe(String(localized: "Pixie: \(prompt)"), traits: .image)
     }
     
     private func configureError(message: String) {
@@ -283,6 +300,7 @@ class ChatMessageTableViewCell: UITableViewCell {
         trailingConstraint.isActive = false
         timestampLabel.textAlignment = .left
         timestampLabel.leadingAnchor.constraint(equalTo: bubbleView.leadingAnchor).isActive = true
+        describe(message, traits: .staticText)
     }
     
     private func configureLoading() {
@@ -295,6 +313,7 @@ class ChatMessageTableViewCell: UITableViewCell {
         trailingConstraint.isActive = false
         timestampLabel.textAlignment = .left
         timestampLabel.leadingAnchor.constraint(equalTo: bubbleView.leadingAnchor).isActive = true
+        describe(String(localized: "Generating image"), traits: .staticText)
     }
     
     static func registration() -> String {

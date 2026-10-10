@@ -9,9 +9,10 @@ struct CreditTransactionsResponse: Codable {
     let transactions: [CreditTransaction]
     let page: Int
     let perPage: Int
+    let total: Int?
     
     enum CodingKeys: String, CodingKey {
-        case transactions, page
+        case transactions, page, total
         case perPage = "per_page"
     }
 }

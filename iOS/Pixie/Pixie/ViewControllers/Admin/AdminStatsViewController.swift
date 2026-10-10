@@ -16,7 +16,7 @@ class AdminStatsViewController: UIViewController {
     private var systemStats: SystemStatsResponse?
     
     private let loadingView = UIActivityIndicatorView(style: .large)
-    private let errorLabel = UILabel()
+    private let errorView = AdminInlineMessageView()
     
     init() {
         self.adminRepository = AdminRepository(networkService: AppContainer.shared.networkService)
@@ -52,12 +52,7 @@ class AdminStatsViewController: UIViewController {
         loadingView.translatesAutoresizingMaskIntoConstraints = false
         loadingView.hidesWhenStopped = true
         
-        errorLabel.translatesAutoresizingMaskIntoConstraints = false
-        errorLabel.font = .systemFont(ofSize: 17)
-        errorLabel.textColor = .secondaryLabel
-        errorLabel.textAlignment = .center
-        errorLabel.numberOfLines = 0
-        errorLabel.isHidden = true
+        errorView.translatesAutoresizingMaskIntoConstraints = false
         
         userStatsCard.configure(
             title: String(localized: "Users"),
@@ -80,12 +75,12 @@ class AdminStatsViewController: UIViewController {
         imageStatsCard.configure(
             title: String(localized: "Images"),
             icon: UIImage(systemName: "photo.fill"),
-            color: .systemPurple
+            color: .brandText
         )
         
         view.addSubview(scrollView)
         view.addSubview(loadingView)
-        view.addSubview(errorLabel)
+        view.addSubview(errorView)
         
         scrollView.addSubview(contentStackView)
         
@@ -111,10 +106,10 @@ class AdminStatsViewController: UIViewController {
             loadingView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             
-            errorLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            errorLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            errorLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 32),
-            errorLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32)
+            errorView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            errorView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            errorView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 32),
+            errorView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32)
         ])
     }
     
@@ -145,6 +140,8 @@ class AdminStatsViewController: UIViewController {
                 await MainActor.run {
                     self.systemStats = stats
                     self.updateUI(with: stats)
+                    self.errorView.hide()
+                    self.scrollView.isHidden = false
                     self.refreshControl.endRefreshing()
                 }
             } catch {
@@ -157,24 +154,31 @@ class AdminStatsViewController: UIViewController {
     }
     
     private func updateUI(with stats: SystemStatsResponse) {
-        userStatsCard.addStatItem(label: String(localized: "Total Users"), value: "\(stats.users.total)")
+        [userStatsCard, creditStatsCard, revenueStatsCard, imageStatsCard].forEach { $0.removeStatItems() }
+
+        let users = stats.users.total.formatted()
+        userStatsCard.addStatItem(label: String(localized: "Total Users"), value: users, spokenValue: String(localized: "\(users) users"))
         
-        creditStatsCard.addStatItem(label: String(localized: "Total Balance"), value: "\(stats.credits.totalBalance)")
-        creditStatsCard.addStatItem(label: String(localized: "Total Purchased"), value: "\(stats.credits.totalPurchased)")
-        creditStatsCard.addStatItem(label: String(localized: "Total Spent"), value: "\(stats.credits.totalSpent)")
+        let balance = stats.credits.totalBalance.formatted()
+        let purchased = stats.credits.totalPurchased.formatted()
+        let spent = stats.credits.totalSpent.formatted()
+        creditStatsCard.addStatItem(label: String(localized: "Total Balance"), value: balance, spokenValue: String(localized: "\(balance) credits"))
+        creditStatsCard.addStatItem(label: String(localized: "Total Purchased"), value: purchased, spokenValue: String(localized: "\(purchased) credits"))
+        creditStatsCard.addStatItem(label: String(localized: "Total Spent"), value: spent, spokenValue: String(localized: "\(spent) credits"))
         
-        revenueStatsCard.addStatItem(label: String(localized: "Total Revenue"), value: String(localized: "$\(stats.revenue.totalUsd)"))
-        revenueStatsCard.addStatItem(label: String(localized: "OpenAI Costs"), value: String(localized: "$\(stats.revenue.openaiCostsUsd)"))
-        revenueStatsCard.addStatItem(label: String(localized: "Gross Profit"), value: String(localized: "$\(stats.revenue.grossProfitUsd)"))
-        revenueStatsCard.addStatItem(label: String(localized: "Profit Margin"), value: String(localized: "\(stats.revenue.profitMargin)%"))
+        revenueStatsCard.addStatItem(label: String(localized: "Total Revenue"), value: String(localized: "$\(stats.revenue.totalUsd)"), spokenValue: String(localized: "\(stats.revenue.totalUsd) dollars"))
+        revenueStatsCard.addStatItem(label: String(localized: "OpenAI Costs"), value: String(localized: "$\(stats.revenue.openaiCostsUsd)"), spokenValue: String(localized: "\(stats.revenue.openaiCostsUsd) dollars"))
+        revenueStatsCard.addStatItem(label: String(localized: "Gross Profit"), value: String(localized: "$\(stats.revenue.grossProfitUsd)"), spokenValue: String(localized: "\(stats.revenue.grossProfitUsd) dollars"))
+        revenueStatsCard.addStatItem(label: String(localized: "Profit Margin"), value: String(localized: "\(stats.revenue.profitMargin)%"), spokenValue: String(localized: "\(stats.revenue.profitMargin) percent"))
         
-        imageStatsCard.addStatItem(label: String(localized: "Total Generated"), value: "\(stats.images.totalGenerated)")
+        let generated = stats.images.totalGenerated.formatted()
+        imageStatsCard.addStatItem(label: String(localized: "Total Generated"), value: generated, spokenValue: String(localized: "\(generated) images"))
     }
     
     private func showLoading() {
         loadingView.startAnimating()
         scrollView.isHidden = true
-        errorLabel.isHidden = true
+        errorView.hide()
     }
     
     private func hideLoading() {
@@ -183,9 +187,11 @@ class AdminStatsViewController: UIViewController {
     }
     
     private func showError(_ message: String) {
-        errorLabel.text = message
-        errorLabel.isHidden = false
+        errorView.show(message) { [weak self] in
+            self?.loadStats()
+        }
         scrollView.isHidden = true
+        haptics.notification(.error)
     }
 }
 
@@ -213,7 +219,10 @@ class StatsCardView: UIView {
         layer.shadowRadius = 4
         
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.font = .systemFont(ofSize: 20, weight: .semibold)
+        titleLabel.useScaledFont(.title3, size: 20, weight: .semibold)
+        titleLabel.numberOfLines = 0
+        titleLabel.accessibilityTraits = .header
+        iconImageView.hideFromAccessibility()
         
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         iconImageView.contentMode = .scaleAspectFit
@@ -226,17 +235,22 @@ class StatsCardView: UIView {
         addSubview(titleLabel)
         addSubview(statsStackView)
         
+        let titleCentering = titleLabel.centerYAnchor.constraint(equalTo: iconImageView.centerYAnchor)
+        titleCentering.priority = .defaultHigh
+        
         NSLayoutConstraint.activate([
+            titleCentering,
             iconImageView.topAnchor.constraint(equalTo: topAnchor, constant: 16),
             iconImageView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             iconImageView.widthAnchor.constraint(equalToConstant: 32),
             iconImageView.heightAnchor.constraint(equalToConstant: 32),
             
-            titleLabel.centerYAnchor.constraint(equalTo: iconImageView.centerYAnchor),
+            titleLabel.topAnchor.constraint(greaterThanOrEqualTo: topAnchor, constant: 16),
             titleLabel.leadingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: 12),
             titleLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
             
-            statsStackView.topAnchor.constraint(equalTo: iconImageView.bottomAnchor, constant: 16),
+            statsStackView.topAnchor.constraint(greaterThanOrEqualTo: iconImageView.bottomAnchor, constant: 16),
+            statsStackView.topAnchor.constraint(greaterThanOrEqualTo: titleLabel.bottomAnchor, constant: 16),
             statsStackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             statsStackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
             statsStackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -16)
@@ -249,36 +263,37 @@ class StatsCardView: UIView {
         iconImageView.tintColor = color
     }
     
-    func addStatItem(label: String, value: String) {
-        let containerView = UIView()
-        
+    func removeStatItems() {
+        statsStackView.arrangedSubviews.forEach {
+            statsStackView.removeArrangedSubview($0)
+            $0.removeFromSuperview()
+        }
+    }
+    
+    func addStatItem(label: String, value: String, spokenValue: String) {
         let labelView = UILabel()
-        labelView.translatesAutoresizingMaskIntoConstraints = false
-        labelView.font = .systemFont(ofSize: 15)
+        labelView.useScaledFont(.subheadline, size: 15)
         labelView.textColor = .secondaryLabel
+        labelView.numberOfLines = 0
         labelView.text = label
+        labelView.setContentHuggingPriority(.defaultLow, for: .horizontal)
         
         let valueView = UILabel()
-        valueView.translatesAutoresizingMaskIntoConstraints = false
-        valueView.font = .systemFont(ofSize: 17, weight: .medium)
+        valueView.useScaledFont(.body, size: 17, weight: .medium)
         valueView.textColor = .label
         valueView.text = value
         valueView.textAlignment = .right
+        valueView.numberOfLines = 0
+        valueView.setContentHuggingPriority(.required, for: .horizontal)
+        valueView.setContentCompressionResistancePriority(.required, for: .horizontal)
         
-        containerView.addSubview(labelView)
-        containerView.addSubview(valueView)
+        let row = UIStackView(arrangedSubviews: [labelView, valueView])
+        row.axis = .horizontal
+        row.alignment = .firstBaseline
+        row.spacing = 8
+        row.heightAnchor.constraint(greaterThanOrEqualToConstant: 24).isActive = true
+        row.describe(label, value: spokenValue)
         
-        NSLayoutConstraint.activate([
-            labelView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
-            labelView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            
-            valueView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-            valueView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            valueView.leadingAnchor.constraint(greaterThanOrEqualTo: labelView.trailingAnchor, constant: 8),
-            
-            containerView.heightAnchor.constraint(equalToConstant: 24)
-        ])
-        
-        statsStackView.addArrangedSubview(containerView)
+        statsStackView.addArrangedSubview(row)
     }
 }

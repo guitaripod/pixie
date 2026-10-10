@@ -34,24 +34,23 @@ final class PresetCell: UICollectionViewCell {
         iconBackground.addSubview(iconView)
 
         countBadge.translatesAutoresizingMaskIntoConstraints = false
-        countBadge.font = .systemFont(ofSize: 12, weight: .bold)
+        countBadge.useScaledFont(.caption1, size: 12, weight: .bold)
         countBadge.textColor = .white
         countBadge.textAlignment = .center
-        countBadge.layer.cornerRadius = 10
         countBadge.clipsToBounds = true
         contentView.addSubview(countBadge)
 
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.font = .systemFont(ofSize: 15, weight: .semibold)
+        titleLabel.useScaledFont(.subheadline, size: 15, weight: .semibold)
         titleLabel.textColor = .label
         titleLabel.adjustsFontSizeToFitWidth = true
         titleLabel.minimumScaleFactor = 0.8
         contentView.addSubview(titleLabel)
 
         subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        subtitleLabel.font = .systemFont(ofSize: 12)
+        subtitleLabel.useScaledFont(.caption1, size: 12)
         subtitleLabel.textColor = .secondaryLabel
-        subtitleLabel.numberOfLines = 2
+        subtitleLabel.numberOfLines = 0
         contentView.addSubview(subtitleLabel)
 
         NSLayoutConstraint.activate([
@@ -64,7 +63,8 @@ final class PresetCell: UICollectionViewCell {
 
             countBadge.centerYAnchor.constraint(equalTo: iconBackground.centerYAnchor),
             countBadge.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
-            countBadge.heightAnchor.constraint(equalToConstant: 20),
+            countBadge.heightAnchor.constraint(greaterThanOrEqualToConstant: 20),
+            countBadge.leadingAnchor.constraint(greaterThanOrEqualTo: iconBackground.trailingAnchor, constant: 8),
             countBadge.widthAnchor.constraint(greaterThanOrEqualToConstant: 32),
 
             titleLabel.topAnchor.constraint(equalTo: iconBackground.bottomAnchor, constant: 10),
@@ -81,6 +81,18 @@ final class PresetCell: UICollectionViewCell {
         accessibilityTraits = .button
     }
 
+    /// Title, subtitle and, for a pack, how many images one tap makes, as one spoken phrase.
+    private static func accessibilityDescription(of preset: EditPreset) -> String {
+        let base = "\(preset.title), \(preset.subtitle)"
+        guard preset.imageCount > 1 else { return base }
+        return "\(base), " + String(localized: "\(preset.imageCount) images")
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        countBadge.layer.cornerRadius = countBadge.bounds.height / 2
+    }
+
     func configure(with preset: EditPreset) {
         iconBackground.backgroundColor = preset.tint.withAlphaComponent(0.18)
         iconView.image = UIImage(systemName: preset.symbol)
@@ -88,9 +100,8 @@ final class PresetCell: UICollectionViewCell {
         titleLabel.text = preset.title
         subtitleLabel.text = preset.subtitle
         countBadge.isHidden = preset.imageCount <= 1
-        countBadge.backgroundColor = preset.tint
+        countBadge.backgroundColor = preset.tint.darkenedForWhiteText()
         countBadge.text = "×\(preset.imageCount)"
-        accessibilityLabel = preset.title
-        accessibilityHint = preset.subtitle
+        accessibilityLabel = Self.accessibilityDescription(of: preset)
     }
 }

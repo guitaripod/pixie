@@ -11,8 +11,8 @@ class CreditRepository: CreditRepositoryProtocol {
         try await apiService.getCreditBalance()
     }
     
-    func getTransactions(limit: Int) async throws -> CreditTransactionsResponse {
-        try await apiService.getCreditTransactions(limit: limit)
+    func getTransactions(limit: Int, page: Int) async throws -> CreditTransactionsResponse {
+        try await apiService.getCreditTransactions(limit: limit, page: page)
     }
     
     func getPacks() async throws -> CreditPacksResponse {

@@ -9,7 +9,10 @@ class MainSplitViewController: UISplitViewController {
     private var creditsViewController: CreditsMainViewController?
     private var settingsViewController: SettingsViewController?
     private var adminViewController: AdminDashboardViewController?
-    private var selectedSection: SidebarSection = .chat
+    private var selectedSection: SidebarSection = .chat {
+        didSet { Self.persist(selectedSection) }
+    }
+    private static let selectedSectionKey = "pixie.selectedSection"
     #if DEBUG
     var demoLaunch: DemoLaunch?
     private var demoLaunched = false
@@ -68,6 +71,7 @@ class MainSplitViewController: UISplitViewController {
     private func setupViewControllers() {
         sidebarViewController = SidebarViewController()
         sidebarViewController.delegate = self
+        sidebarViewController.initialSection = restoredSection()
         
         chatViewController = ChatGenerationViewController()
         #if DEBUG
@@ -81,6 +85,22 @@ class MainSplitViewController: UISplitViewController {
         setViewController(detailNavigationController, for: .compact)
     }
     
+    /// The section saved by the last session, used only when the window is wide enough for the
+    /// sidebar and never during a demo launch, so compact phones keep opening on the chat.
+    private func restoredSection() -> SidebarSection {
+        #if DEBUG
+        if demoLaunch != nil { return .chat }
+        #endif
+        guard traitCollection.horizontalSizeClass == .regular,
+              let raw = UserDefaults.standard.object(forKey: Self.selectedSectionKey) as? Int,
+              let section = SidebarSection(rawValue: raw) else { return .chat }
+        return section
+    }
+
+    private static func persist(_ section: SidebarSection) {
+        UserDefaults.standard.set(section.rawValue, forKey: selectedSectionKey)
+    }
+
     private func setupDelegate() {
         delegate = self
     }

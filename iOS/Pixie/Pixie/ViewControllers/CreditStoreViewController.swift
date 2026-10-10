@@ -25,6 +25,18 @@ final class CreditStoreViewController: UIViewController {
     private var packs: [StorePackDisplay] = []
     private var selectedPackId = "popular"
     private var isPurchasing = false
+    private var packsState = PacksState.loading
+    private var packsTimeoutTask: Task<Void, Never>?
+
+    private enum PacksState {
+        case loading
+        case failed
+        case loaded
+    }
+
+    private static let packsLoadTimeout: UInt64 = 10_000_000_000
+    private static let dismissDelay: TimeInterval = 1.1
+    private static let voiceOverDismissDelay: TimeInterval = 2.5
 
     init(shortfall: Int? = nil) {
         self.shortfall = shortfall
@@ -61,28 +73,28 @@ final class CreditStoreViewController: UIViewController {
     }()
 
     private lazy var heroIconView: UIImageView = {
-        let config = UIImage.SymbolConfiguration(pointSize: 44, weight: .semibold)
+        let config = UIImage.SymbolConfiguration(textStyle: .largeTitle, scale: .large).applying(UIImage.SymbolConfiguration(weight: .semibold))
         let imageView = UIImageView(image: UIImage(systemName: "sparkles", withConfiguration: config))
-        imageView.tintColor = .systemPurple
+        imageView.tintColor = .brandText
         imageView.contentMode = .scaleAspectFit
-        if #available(iOS 18.0, *) {
-            imageView.addSymbolEffect(.pulse, options: .repeat(.continuous))
-        }
+        imageView.hideFromAccessibility()
         return imageView
     }()
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.text = String(localized: "Pixie Credits")
-        label.font = UIFont.systemFont(ofSize: 30, weight: .bold).rounded()
+        label.useScaledFont(.title1, size: 30, weight: .bold, rounded: true)
         label.textAlignment = .center
+        label.numberOfLines = 0
+        label.accessibilityTraits = .header
         return label
     }()
 
     private lazy var subtitleLabel: UILabel = {
         let label = UILabel()
         label.text = String(localized: "Pay for what you create.\nNo subscription — ever.")
-        label.font = .preferredFont(forTextStyle: .subheadline)
+        label.useScaledFont(.subheadline, size: 15)
         label.textColor = .secondaryLabel
         label.textAlignment = .center
         label.numberOfLines = 0
@@ -91,9 +103,10 @@ final class CreditStoreViewController: UIViewController {
 
     private lazy var balanceLabel: UILabel = {
         let label = UILabel()
-        label.font = .preferredFont(forTextStyle: .footnote)
+        label.useScaledFont(.footnote, size: 13)
         label.textColor = .secondaryLabel
         label.textAlignment = .center
+        label.numberOfLines = 0
         return label
     }()
 
@@ -107,11 +120,65 @@ final class CreditStoreViewController: UIViewController {
     private lazy var perksLabel: UILabel = {
         let label = UILabel()
         label.text = String(localized: "Credits never expire  ·  Every quality tier  ·  No account required")
-        label.font = .preferredFont(forTextStyle: .caption1)
+        label.useScaledFont(.caption1, size: 12)
         label.textColor = .secondaryLabel
         label.textAlignment = .center
         label.numberOfLines = 0
         return label
+    }()
+
+    private lazy var packsStatusSpinner: UIActivityIndicatorView = {
+        let spinner = UIActivityIndicatorView(style: .medium)
+        spinner.hidesWhenStopped = true
+        return spinner
+    }()
+
+    private lazy var packsStatusIcon: UIImageView = {
+        let imageView = UIImageView(image: UIImage(systemName: "exclamationmark.triangle.fill"))
+        imageView.tintColor = .systemOrange
+        imageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .title2)
+        imageView.contentMode = .scaleAspectFit
+        imageView.hideFromAccessibility()
+        return imageView
+    }()
+
+    private lazy var packsStatusLabel: UILabel = {
+        let label = UILabel()
+        label.useScaledFont(.subheadline, size: 15, weight: .medium)
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var packsRetryButton: UIButton = {
+        var config = UIButton.Configuration.filled()
+        config.title = String(localized: "Retry")
+        config.baseBackgroundColor = .brand
+        config.baseForegroundColor = .white
+        config.cornerStyle = .capsule
+        config.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 24, bottom: 10, trailing: 24)
+        let button = UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
+            self?.retryPacks()
+        })
+        button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+        return button
+    }()
+
+    private lazy var packsStatusCard: UIVisualEffectView = {
+        let card = GlassMaterial.cardView(cornerRadius: 18)
+        let stack = UIStackView(arrangedSubviews: [packsStatusSpinner, packsStatusIcon, packsStatusLabel, packsRetryButton])
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 12
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        card.contentView.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.topAnchor.constraint(equalTo: card.contentView.topAnchor, constant: 24),
+            stack.leadingAnchor.constraint(equalTo: card.contentView.leadingAnchor, constant: 16),
+            stack.trailingAnchor.constraint(equalTo: card.contentView.trailingAnchor, constant: -16),
+            stack.bottomAnchor.constraint(equalTo: card.contentView.bottomAnchor, constant: -24),
+        ])
+        return card
     }()
 
     private lazy var ctaButton: UIButton = {
@@ -131,6 +198,8 @@ final class CreditStoreViewController: UIViewController {
         let terms = UIButton(configuration: plainFooterConfiguration(title: String(localized: "Terms")), primaryAction: UIAction { [weak self] _ in
             self?.open(url: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")
         })
+        privacy.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+        terms.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
         let stack = UIStackView(arrangedSubviews: [privacy, terms])
         stack.axis = .horizontal
         stack.spacing = 18
@@ -159,8 +228,11 @@ final class CreditStoreViewController: UIViewController {
                 self?.navigationController?.pushViewController(CreditsMainViewController(), animated: true)
             }
         )
+        navigationItem.leftBarButtonItem?.accessibilityLabel = String(localized: "Credits & Usage")
         layoutUI()
         buildHeader()
+        applyHeroMotion()
+        NotificationCenter.default.addObserver(self, selector: #selector(reduceMotionChanged), name: UIAccessibility.reduceMotionStatusDidChangeNotification, object: nil)
         #if DEBUG
         if DemoMode.isActive {
             applyDemoPacks()
@@ -169,7 +241,25 @@ final class CreditStoreViewController: UIViewController {
         #endif
         bind()
         viewModel.refresh()
-        Task { await purchaseManager.fetchCreditPacks() }
+        loadPacks(retrying: false)
+    }
+
+    deinit {
+        packsTimeoutTask?.cancel()
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    @objc private func reduceMotionChanged() {
+        applyHeroMotion()
+    }
+
+    /// Pulses the hero sparkles only while Reduce Motion is off.
+    private func applyHeroMotion() {
+        guard #available(iOS 18.0, *) else { return }
+        heroIconView.removeAllSymbolEffects()
+        if !Motion.isReduced {
+            heroIconView.addSymbolEffect(.pulse, options: .repeat(.continuous))
+        }
     }
 
     private func layoutUI() {
@@ -208,8 +298,10 @@ final class CreditStoreViewController: UIViewController {
             contentStack.addArrangedSubview(makeShortfallBanner(shortfall))
         }
 
+        contentStack.addArrangedSubview(packsStatusCard)
         contentStack.addArrangedSubview(packsStack)
         contentStack.addArrangedSubview(perksLabel)
+        applyPacksState()
     }
 
     private func makeShortfallBanner(_ shortfall: Int) -> UIView {
@@ -217,9 +309,10 @@ final class CreditStoreViewController: UIViewController {
         let icon = UIImageView(image: UIImage(systemName: "exclamationmark.circle.fill"))
         icon.tintColor = .systemOrange
         icon.setContentHuggingPriority(.required, for: .horizontal)
+        icon.hideFromAccessibility()
         let label = UILabel()
         label.text = String(localized: "You need \(shortfall) more credits to finish this image.")
-        label.font = .preferredFont(forTextStyle: .footnote)
+        label.useScaledFont(.footnote, size: 13)
         label.numberOfLines = 0
         let stack = UIStackView(arrangedSubviews: [icon, label])
         stack.axis = .horizontal
@@ -233,6 +326,7 @@ final class CreditStoreViewController: UIViewController {
             stack.trailingAnchor.constraint(equalTo: card.contentView.trailingAnchor, constant: -14),
             stack.bottomAnchor.constraint(equalTo: card.contentView.bottomAnchor, constant: -12),
         ])
+        card.describe(label.text ?? "", traits: .staticText)
         return card
     }
 
@@ -249,6 +343,7 @@ final class CreditStoreViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] packsWithPricing in
                 guard !packsWithPricing.isEmpty else { return }
+                self?.packsTimeoutTask?.cancel()
                 self?.packs = packsWithPricing.map {
                     StorePackDisplay(
                         id: $0.creditPack.id,
@@ -264,7 +359,59 @@ final class CreditStoreViewController: UIViewController {
             .store(in: &cancellables)
     }
 
+    private func loadPacks(retrying: Bool) {
+        packsState = .loading
+        applyPacksState()
+        packsTimeoutTask?.cancel()
+        packsTimeoutTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: Self.packsLoadTimeout)
+            guard !Task.isCancelled else { return }
+            self?.failPacksIfStillEmpty()
+        }
+        Task {
+            await purchaseManager.fetchCreditPacks()
+            if purchaseManager.creditPacks.isEmpty {
+                failPacksIfStillEmpty()
+            } else if retrying, purchaseManager.offerings == nil {
+                RevenueCatManager.shared.fetchOfferings()
+            }
+        }
+    }
+
+    private func failPacksIfStillEmpty() {
+        guard packs.isEmpty, packsState != .failed else { return }
+        packsTimeoutTask?.cancel()
+        packsState = .failed
+        applyPacksState()
+        HapticsManager.shared.notification(.error)
+        Announce.say(String(localized: "Couldn't load credit packs"))
+    }
+
+    private func retryPacks() {
+        HapticsManager.shared.selection()
+        loadPacks(retrying: true)
+    }
+
+    /// Shows the spinner while packs load, the error card with Retry when they cannot, and the pack list and purchase button once loaded.
+    private func applyPacksState() {
+        let isLoading = packsState == .loading
+        let isFailed = packsState == .failed
+        packsStatusCard.isHidden = packsState == .loaded
+        packsStack.isHidden = packsState != .loaded
+        ctaButton.isHidden = isFailed
+        packsStatusIcon.isHidden = !isFailed
+        packsRetryButton.isHidden = !isFailed
+        packsStatusLabel.text = isFailed ? String(localized: "Couldn't load credit packs") : String(localized: "Loading…")
+        if isLoading {
+            packsStatusSpinner.startAnimating()
+        } else {
+            packsStatusSpinner.stopAnimating()
+        }
+    }
+
     private func reloadPacks() {
+        packsState = .loaded
+        applyPacksState()
         packsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         if packs.first(where: { $0.id == selectedPackId }) == nil {
             selectedPackId = packs.first?.id ?? selectedPackId
@@ -288,10 +435,13 @@ final class CreditStoreViewController: UIViewController {
 
     private func select(packId: String) {
         guard !isPurchasing else { return }
-        HapticsManager.shared.impact(.light)
+        HapticsManager.shared.selection()
         selectedPackId = packId
         for case let card as PackCardView in packsStack.arrangedSubviews {
             card.isSelectedPack = card.packId == packId
+            if card.packId == packId, UIAccessibility.isVoiceOverRunning {
+                Announce.layoutChanged(card)
+            }
         }
         updateCTA()
     }
@@ -324,7 +474,7 @@ final class CreditStoreViewController: UIViewController {
         config.baseForegroundColor = .secondaryLabel
         config.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 4, bottom: 4, trailing: 4)
         var container = AttributeContainer()
-        container.font = UIFont.preferredFont(forTextStyle: .caption1)
+        container.font = UIFont.scaled(.caption1, size: 12)
         config.attributedTitle = AttributedString(title, attributes: container)
         return config
     }
@@ -341,6 +491,7 @@ final class CreditStoreViewController: UIViewController {
         isPurchasing = true
         ctaButton.configuration?.showsActivityIndicator = true
         ctaButton.isEnabled = false
+        Announce.say(String(localized: "Processing purchase"))
 
         Task {
             let result = await purchaseManager.purchaseCreditPack(package: package)
@@ -350,12 +501,11 @@ final class CreditStoreViewController: UIViewController {
                 switch result {
                 case .success(let purchase):
                     HapticsManager.shared.notification(.success)
+                    Announce.say(String(localized: "\(self.formatted(purchase.credits)) credits added"))
                     self.ctaButton.configuration?.title = String(localized: "Added \(self.formatted(purchase.credits)) credits")
                     self.ctaButton.configuration?.subtitle = String(localized: "New balance: \(self.formatted(purchase.newBalance))")
                     Task { await self.viewModel.loadBalance() }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { [weak self] in
-                        self?.dismiss(animated: true)
-                    }
+                    self.dismissAfterPurchase()
                 case .failure(let error):
                     self.updateCTA()
                     if error is PurchaseCancelledException { return }
@@ -365,6 +515,14 @@ final class CreditStoreViewController: UIViewController {
                     self.present(alert, animated: true)
                 }
             }
+        }
+    }
+
+    /// Closes the store shortly after a purchase, leaving VoiceOver time to read the confirmation first.
+    private func dismissAfterPurchase() {
+        let delay = UIAccessibility.isVoiceOverRunning ? Self.voiceOverDismissDelay : Self.dismissDelay
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+            self?.dismiss(animated: true)
         }
     }
 
@@ -398,11 +556,13 @@ final class PackCardView: UIControl {
 
     private let glassCard: UIVisualEffectView
     private let checkmarkView: UIImageView
+    private let rowSpacer = UIView()
+    private var rowStack = UIStackView()
 
     init(pack: StorePackDisplay, badge: String?) {
         self.packId = pack.id
         self.glassCard = GlassMaterial.cardView(cornerRadius: 18)
-        let checkConfig = UIImage.SymbolConfiguration(pointSize: 20, weight: .semibold)
+        let checkConfig = UIImage.SymbolConfiguration(textStyle: .title3, scale: .medium).applying(UIImage.SymbolConfiguration(weight: .semibold))
         self.checkmarkView = UIImageView(image: UIImage(systemName: "circle", withConfiguration: checkConfig))
         super.init(frame: .zero)
         build(pack: pack, badge: badge)
@@ -418,19 +578,22 @@ final class PackCardView: UIControl {
 
         let nameLabel = UILabel()
         nameLabel.text = pack.name
-        nameLabel.font = UIFont.preferredFont(forTextStyle: .headline).rounded()
+        nameLabel.useScaledFont(.headline, size: 17, weight: .semibold, rounded: true)
+        nameLabel.numberOfLines = 0
 
         let creditsLabel = UILabel()
-        creditsLabel.font = .preferredFont(forTextStyle: .subheadline)
+        creditsLabel.useScaledFont(.subheadline, size: 15)
         creditsLabel.textColor = .secondaryLabel
+        creditsLabel.numberOfLines = 0
         let total = NumberFormatter.localizedString(from: NSNumber(value: pack.totalCredits), number: .decimal)
         creditsLabel.text = pack.bonusCredits > 0
             ? String(localized: "\(total) credits · +\(pack.bonusPercent)% bonus")
             : String(localized: "\(total) credits")
 
         let imagesLabel = UILabel()
-        imagesLabel.font = .preferredFont(forTextStyle: .caption1)
-        imagesLabel.textColor = .tertiaryLabel
+        imagesLabel.useScaledFont(.caption1, size: 12)
+        imagesLabel.textColor = .secondaryLabel
+        imagesLabel.numberOfLines = 0
         imagesLabel.text = String(localized: "≈ \(pack.imageEstimate) images")
 
         let leftStack = UIStackView(arrangedSubviews: [nameLabel, creditsLabel, imagesLabel])
@@ -439,14 +602,17 @@ final class PackCardView: UIControl {
 
         let priceLabel = UILabel()
         priceLabel.text = pack.price
-        priceLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold).rounded()
+        priceLabel.useScaledFont(.title3, size: 20, weight: .bold, rounded: true)
+        priceLabel.adjustsFontSizeToFitWidth = true
+        priceLabel.minimumScaleFactor = 0.7
         priceLabel.setContentHuggingPriority(.required, for: .horizontal)
         priceLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         checkmarkView.tintColor = .tertiaryLabel
         checkmarkView.setContentHuggingPriority(.required, for: .horizontal)
 
-        let rowStack = UIStackView(arrangedSubviews: [checkmarkView, leftStack, UIView(), priceLabel])
+        rowSpacer.isHidden = false
+        rowStack = UIStackView(arrangedSubviews: [checkmarkView, leftStack, rowSpacer, priceLabel])
         rowStack.axis = .horizontal
         rowStack.spacing = 12
         rowStack.alignment = .center
@@ -468,14 +634,15 @@ final class PackCardView: UIControl {
         if let badge {
             let badgeLabel = PaddedLabel()
             badgeLabel.text = badge
-            badgeLabel.font = .systemFont(ofSize: 10, weight: .bold)
+            badgeLabel.useScaledFont(.caption2, size: 10, weight: .bold)
             badgeLabel.textColor = .white
-            badgeLabel.backgroundColor = packId == "popular" ? .systemPurple : .systemGreen
+            badgeLabel.backgroundColor = packId == "popular" ? .brand : Self.bestValueGreen
             badgeLabel.layer.cornerRadius = 8
             badgeLabel.layer.cornerCurve = .continuous
             badgeLabel.clipsToBounds = true
             badgeLabel.translatesAutoresizingMaskIntoConstraints = false
             badgeLabel.isUserInteractionEnabled = false
+            badgeLabel.hideFromAccessibility()
             addSubview(badgeLabel)
             constraints.append(contentsOf: [
                 badgeLabel.centerYAnchor.constraint(equalTo: topAnchor),
@@ -486,16 +653,49 @@ final class PackCardView: UIControl {
         NSLayoutConstraint.activate(constraints)
         layer.cornerRadius = 18
         layer.cornerCurve = .continuous
+        describeForAccessibility(pack: pack, badge: badge, total: total)
         updateSelection()
+        if #available(iOS 17.0, *) {
+            registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (card: PackCardView, _) in
+                card.updateSelection()
+            }
+        }
+    }
+
+    private static let bestValueGreen = UIColor(red: 0.1, green: 0.45, blue: 0.22, alpha: 1)
+
+    /// Makes the whole card one VoiceOver button: name, total credits, bonus and price, with the badge and image estimate as its value.
+    private func describeForAccessibility(pack: StorePackDisplay, badge: String?, total: String) {
+        let label = pack.bonusCredits > 0
+            ? String(localized: "\(pack.name), \(total) credits, \(pack.bonusCredits) bonus, \(pack.price)")
+            : String(localized: "\(pack.name), \(total) credits, \(pack.price)")
+        let images = String(localized: "About \(pack.imageEstimate) images")
+        describe(label, value: [badge, images].compactMap { $0 }.joined(separator: ", "), traits: .button)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        applyContentSizeLayout()
+    }
+
+    /// Stacks the card's columns at accessibility text sizes so the price never squeezes the pack name.
+    private func applyContentSizeLayout() {
+        let isAccessibilitySize = traitCollection.preferredContentSizeCategory.isAccessibilityCategory
+        let axis: NSLayoutConstraint.Axis = isAccessibilitySize ? .vertical : .horizontal
+        guard rowStack.axis != axis else { return }
+        rowStack.axis = axis
+        rowStack.alignment = isAccessibilitySize ? .leading : .center
+        rowSpacer.isHidden = isAccessibilitySize
     }
 
     private func updateSelection() {
-        let checkConfig = UIImage.SymbolConfiguration(pointSize: 20, weight: .semibold)
+        let checkConfig = UIImage.SymbolConfiguration(textStyle: .title3, scale: .medium).applying(UIImage.SymbolConfiguration(weight: .semibold))
+        accessibilityTraits = isSelectedPack ? [.button, .selected] : .button
         if isSelectedPack {
             checkmarkView.image = UIImage(systemName: "checkmark.circle.fill", withConfiguration: checkConfig)
-            checkmarkView.tintColor = .systemPurple
+            checkmarkView.tintColor = .brandText
             glassCard.layer.borderWidth = 2
-            glassCard.layer.borderColor = UIColor.systemPurple.cgColor
+            glassCard.layer.borderColor = UIColor.brandText.resolvedColor(with: traitCollection).cgColor
         } else {
             checkmarkView.image = UIImage(systemName: "circle", withConfiguration: checkConfig)
             checkmarkView.tintColor = .tertiaryLabel

@@ -35,6 +35,7 @@ protocol SidebarViewControllerDelegate: AnyObject {
 class SidebarViewController: UIViewController {
     
     weak var delegate: SidebarViewControllerDelegate?
+    var initialSection: SidebarSection = .chat
     
     private var collectionView: UICollectionView!
     private var dataSource: UICollectionViewDiffableDataSource<Int, SidebarSection>!
@@ -81,10 +82,15 @@ class SidebarViewController: UIViewController {
             var configuration = UIListContentConfiguration.sidebarCell()
             configuration.text = section.title
             configuration.image = section.icon
-            configuration.imageProperties.tintColor = .systemBlue
+            configuration.imageProperties.tintColor = .brandText
             
             cell.contentConfiguration = configuration
             cell.backgroundConfiguration = UIBackgroundConfiguration.listSidebarCell()
+            cell.isAccessibilityElement = true
+            cell.accessibilityLabel = section.title
+            cell.configurationUpdateHandler = { cell, state in
+                cell.accessibilityTraits = state.isSelected ? [.button, .selected] : .button
+            }
         }
         
         dataSource = UICollectionViewDiffableDataSource<Int, SidebarSection>(collectionView: collectionView) { collectionView, indexPath, section in
@@ -100,12 +106,12 @@ class SidebarViewController: UIViewController {
     }
     
     private func selectInitialItem() {
-        let indexPath = IndexPath(item: 0, section: 0)
-        collectionView.selectItem(at: indexPath, animated: false, scrollPosition: .top)
+        let isExpanded = splitViewController.map { !$0.isCollapsed } ?? false
+        let section = isExpanded && sections.contains(initialSection) ? initialSection : .chat
+        let item = sections.firstIndex(of: section) ?? 0
+        collectionView.selectItem(at: IndexPath(item: item, section: 0), animated: false, scrollPosition: .top)
 
-        if let splitVC = self.splitViewController,
-           !splitVC.isCollapsed,
-           let section = sections.first {
+        if isExpanded {
             delegate?.sidebarViewController(self, didSelectSection: section)
         }
     }

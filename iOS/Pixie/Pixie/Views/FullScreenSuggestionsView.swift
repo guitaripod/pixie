@@ -27,10 +27,13 @@ class FullScreenSuggestionsView: UIView {
     var onSelectionChanged: (() -> Void)?
     var onImageTapped: ((UIImage) -> Void)?
     var onPresetSelected: ((EditPreset) -> Void)?
+    var onSampleTapped: (() -> Void)?
     private static let addImageItem = "add_image"
+    private static let sampleTileItem = "sample_tile"
     private static let selectedPhotoItem = "selected_photo"
     private var recentImages: [UIImage] = []
     private var selectedPhoto: UIImage?
+    private var editSectionItems: [AnyHashable] = []
     private let presets = EditPreset.all()
     private var selectedCreativeCategory = 0
     private var selectedModifierCategory = 0
@@ -160,6 +163,7 @@ class FullScreenSuggestionsView: UIView {
         collectionView.register(SectionHeaderView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: SectionHeaderView.reuseIdentifier)
         collectionView.register(CreativePromptsHeaderView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: CreativePromptsHeaderView.reuseIdentifier)
         collectionView.register(ImageCell.self, forCellWithReuseIdentifier: ImageCell.reuseIdentifier)
+        collectionView.register(SampleTileCell.self, forCellWithReuseIdentifier: SampleTileCell.reuseIdentifier)
         collectionView.register(PresetCell.self, forCellWithReuseIdentifier: PresetCell.reuseIdentifier)
         collectionView.register(QuickActionCell.self, forCellWithReuseIdentifier: QuickActionCell.reuseIdentifier)
         collectionView.register(PromptCardCell.self, forCellWithReuseIdentifier: PromptCardCell.reuseIdentifier)
@@ -173,17 +177,17 @@ class FullScreenSuggestionsView: UIView {
                   let section = SuggestionsSection(rawValue: sectionIndex) else { return nil }
             switch section {
             case .editImage:
-                return self.createEditImageSection()
+                return self.createEditImageSection(environment: environment)
             case .presets:
-                return self.createPresetsSection(containerWidth: environment.container.effectiveContentSize.width)
+                return self.createPresetsSection(environment: environment)
             case .quickActions:
-                return self.createQuickActionsSection()
+                return self.createQuickActionsSection(environment: environment)
             case .creativePrompts:
-                return self.createCreativePromptsSection()
+                return self.createCreativePromptsSection(environment: environment)
             case .stylePresets:
-                return self.createStylePresetsSection()
+                return self.createStylePresetsSection(environment: environment)
             case .promptModifiers:
-                return self.createPromptModifiersSection()
+                return self.createPromptModifiersSection(environment: environment)
             }
         }
         let config = UICollectionViewCompositionalLayoutConfiguration()
@@ -191,11 +195,31 @@ class FullScreenSuggestionsView: UIView {
         layout.configuration = config
         return layout
     }
-    private func createEditImageSection() -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .absolute(120), heightDimension: .absolute(120))
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        let groupSize = NSCollectionLayoutSize(widthDimension: .absolute(120), heightDimension: .absolute(120))
-        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
+    private func isTextEnlarged(_ environment: NSCollectionLayoutEnvironment) -> Bool {
+        environment.traitCollection.preferredContentSizeCategory > .large
+    }
+    /// `base` points at the default text size, growing with Dynamic Type up to `cap` times so a
+    /// tile keeps room for its label without taking over the screen.
+    private func scaledSize(_ base: CGFloat, _ environment: NSCollectionLayoutEnvironment, cap: CGFloat = 2) -> CGFloat {
+        let scaled = UIFontMetrics.default.scaledValue(for: base, compatibleWith: environment.traitCollection)
+        return min(max(base, scaled), base * cap)
+    }
+    /// A fixed height at the default text size, and a self-sizing one when the text is larger
+    /// so a label never clips inside its tile.
+    private func rowHeight(_ base: CGFloat, _ environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutDimension {
+        isTextEnlarged(environment) ? .estimated(base) : .absolute(base)
+    }
+    private func createEditImageSection(environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
+        let side = scaledSize(120, environment, cap: 1.6)
+        let group: NSCollectionLayoutGroup
+        if editSectionItems.contains(where: { ($0 as? String) == Self.sampleTileItem }) {
+            group = editRowGroupWithSampleTile(side: side, environment: environment)
+        } else {
+            let itemSize = NSCollectionLayoutSize(widthDimension: .absolute(side), heightDimension: .absolute(side))
+            let item = NSCollectionLayoutItem(layoutSize: itemSize)
+            let groupSize = NSCollectionLayoutSize(widthDimension: .absolute(side), heightDimension: .absolute(side))
+            group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
+        }
         let section = NSCollectionLayoutSection(group: group)
         section.orthogonalScrollingBehavior = .continuous
         section.interGroupSpacing = 12
@@ -205,12 +229,30 @@ class FullScreenSuggestionsView: UIView {
         section.boundarySupplementaryItems = [header]
         return section
     }
-    private func createPresetsSection(containerWidth: CGFloat) -> NSCollectionLayoutSection {
-        let columns = max(2, min(4, Int((containerWidth - 32) / 180)))
-        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0 / CGFloat(columns)), heightDimension: .fractionalHeight(1.0))
+    /// One row holding every item of the photo section, with the sample tile twice as wide as a
+    /// photo so its title and subtitle fit beside the thumbnail.
+    private func editRowGroupWithSampleTile(side: CGFloat, environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutGroup {
+        let spacing: CGFloat = 12
+        let sampleWidth = side * 2 + spacing
+        let widths = editSectionItems.map { ($0 as? String) == Self.sampleTileItem ? sampleWidth : side }
+        let totalWidth = widths.reduce(0, +) + spacing * CGFloat(max(0, widths.count - 1))
+        let groupSize = NSCollectionLayoutSize(widthDimension: .absolute(totalWidth), heightDimension: .absolute(side))
+        return NSCollectionLayoutGroup.custom(layoutSize: groupSize) { _ in
+            var x: CGFloat = 0
+            return widths.map { width in
+                defer { x += width + spacing }
+                return NSCollectionLayoutGroupCustomItem(frame: CGRect(x: x, y: 0, width: width, height: side))
+            }
+        }
+    }
+    private func createPresetsSection(environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
+        let containerWidth = environment.container.effectiveContentSize.width
+        let enlarged = isTextEnlarged(environment)
+        let columns = max(enlarged ? 1 : 2, min(4, Int((containerWidth - 32) / scaledSize(180, environment, cap: 1.6))))
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0 / CGFloat(columns)), heightDimension: enlarged ? .estimated(128) : .fractionalHeight(1.0))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5)
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(128))
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: rowHeight(128, environment))
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: Array(repeating: item, count: columns))
         let section = NSCollectionLayoutSection(group: group)
         section.interGroupSpacing = 10
@@ -221,10 +263,11 @@ class FullScreenSuggestionsView: UIView {
         section.boundarySupplementaryItems = [header]
         return section
     }
-    private func createQuickActionsSection() -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .absolute(120), heightDimension: .absolute(40))
+    private func createQuickActionsSection(environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
+        let width = scaledSize(120, environment)
+        let itemSize = NSCollectionLayoutSize(widthDimension: .absolute(width), heightDimension: rowHeight(40, environment))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        let groupSize = NSCollectionLayoutSize(widthDimension: .absolute(120), heightDimension: .absolute(136))
+        let groupSize = NSCollectionLayoutSize(widthDimension: .absolute(width), heightDimension: rowHeight(136, environment))
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, repeatingSubitem: item, count: 3)
         group.interItemSpacing = .fixed(8)
         let section = NSCollectionLayoutSection(group: group)
@@ -236,11 +279,11 @@ class FullScreenSuggestionsView: UIView {
         section.boundarySupplementaryItems = [header]
         return section
     }
-    private func createCreativePromptsSection() -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(64))
+    private func createCreativePromptsSection(environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: rowHeight(64, environment))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         item.contentInsets = NSDirectionalEdgeInsets(top: 2, leading: 2, bottom: 2, trailing: 2)
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.55), heightDimension: .absolute(132))
+        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(isTextEnlarged(environment) ? 0.8 : 0.55), heightDimension: rowHeight(132, environment))
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, repeatingSubitem: item, count: 2) // duo-audit:ignore vertical group: each item spans the group width and the two stack on top of each other
         group.interItemSpacing = .fixed(4)
         let section = NSCollectionLayoutSection(group: group)
@@ -252,10 +295,11 @@ class FullScreenSuggestionsView: UIView {
         section.boundarySupplementaryItems = [header]
         return section
     }
-    private func createStylePresetsSection() -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .absolute(140), heightDimension: .absolute(56))
+    private func createStylePresetsSection(environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
+        let width = scaledSize(140, environment)
+        let itemSize = NSCollectionLayoutSize(widthDimension: .absolute(width), heightDimension: rowHeight(56, environment))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        let groupSize = NSCollectionLayoutSize(widthDimension: .absolute(140), heightDimension: .absolute(120))
+        let groupSize = NSCollectionLayoutSize(widthDimension: .absolute(width), heightDimension: rowHeight(120, environment))
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, repeatingSubitem: item, count: 2) // duo-audit:ignore vertical group: each item spans the group width and the two stack on top of each other
         group.interItemSpacing = .fixed(8)
         let section = NSCollectionLayoutSection(group: group)
@@ -267,10 +311,10 @@ class FullScreenSuggestionsView: UIView {
         section.boundarySupplementaryItems = [header]
         return section
     }
-    private func createPromptModifiersSection() -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .estimated(100), heightDimension: .absolute(32))
+    private func createPromptModifiersSection(environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(widthDimension: .estimated(100), heightDimension: rowHeight(32, environment))
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        let groupSize = NSCollectionLayoutSize(widthDimension: .estimated(100), heightDimension: .absolute(32))
+        let groupSize = NSCollectionLayoutSize(widthDimension: .estimated(100), heightDimension: rowHeight(32, environment))
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
         let section = NSCollectionLayoutSection(group: group)
         section.orthogonalScrollingBehavior = .continuous
@@ -286,6 +330,9 @@ class FullScreenSuggestionsView: UIView {
             guard let self = self else { return nil }
             switch SuggestionsSection(rawValue: indexPath.section) {
             case .editImage:
+                if let marker = item as? String, marker == Self.sampleTileItem {
+                    return collectionView.dequeueReusableCell(withReuseIdentifier: SampleTileCell.reuseIdentifier, for: indexPath)
+                }
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ImageCell.reuseIdentifier, for: indexPath) as! ImageCell
                 if let marker = item as? String, marker == Self.selectedPhotoItem {
                     cell.configure(with: self.selectedPhoto, isSelectedPhoto: true)
@@ -306,7 +353,8 @@ class FullScreenSuggestionsView: UIView {
                 let actions = self.isEditMode ? self.editModeQuickActions : self.quickActions
                 let action = actions[indexPath.item]
                 let isSelected = self.selectedSuggestionsManager?.isSelected(action.title, type: .quickAction) ?? false
-                cell.configure(with: action, isSelected: isSelected)
+                let category = self.isEditMode ? String(localized: "Edit") : String(localized: "Template")
+                cell.configure(with: action, isSelected: isSelected, category: category)
                 return cell
             case .creativePrompts:
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PromptCardCell.reuseIdentifier, for: indexPath) as! PromptCardCell
@@ -314,7 +362,7 @@ class FullScreenSuggestionsView: UIView {
                 if indexPath.item < prompts.count {
                     let prompt = prompts[indexPath.item]
                     let isSelected = self.selectedSuggestionsManager?.isSelected(prompt, type: .creativePrompt) ?? false
-                    cell.configure(with: prompt, color: self.creativePrompts[self.selectedCreativeCategory].color, isSelected: isSelected)
+                    cell.configure(with: prompt, color: self.creativePrompts[self.selectedCreativeCategory].color, isSelected: isSelected, category: self.creativePrompts[self.selectedCreativeCategory].category)
                 }
                 return cell
             case .stylePresets:
@@ -336,7 +384,7 @@ class FullScreenSuggestionsView: UIView {
                         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ModifierChipCell.reuseIdentifier, for: indexPath) as! ModifierChipCell
                         let modifier = modifiers[modifierIndex]
                         let isSelected = self.selectedSuggestionsManager?.isSelected(modifier, type: .promptModifier) ?? false
-                        cell.configure(with: modifier, isSelected: isSelected)
+                        cell.configure(with: modifier, isSelected: isSelected, category: self.modifierCategories[self.selectedModifierCategory])
                         return cell
                     }
                 }
@@ -389,6 +437,11 @@ class FullScreenSuggestionsView: UIView {
         }
         applySnapshot()
     }
+    /// The sample photo is for people who have not made an image yet, and only while no photo of
+    /// their own is already picked.
+    private var showsSampleTile: Bool {
+        selectedPhoto == nil && ReviewPrompt.successfulGenerationCount == 0
+    }
     private func applySnapshot() {
         var snapshot = NSDiffableDataSourceSnapshot<SuggestionsSection, AnyHashable>()
         snapshot.appendSections([.editImage])
@@ -397,7 +450,11 @@ class FullScreenSuggestionsView: UIView {
             editItems.append(Self.selectedPhotoItem as AnyHashable)
         }
         editItems.append(Self.addImageItem as AnyHashable)
+        if showsSampleTile {
+            editItems.append(Self.sampleTileItem as AnyHashable)
+        }
         editItems.append(contentsOf: recentImages.prefix(10).map { $0 as AnyHashable })
+        editSectionItems = editItems
         snapshot.appendItems(editItems, toSection: .editImage)
         snapshot.appendSections([.presets])
         snapshot.appendItems(presets.map { $0 as AnyHashable }, toSection: .presets)
@@ -431,6 +488,7 @@ class FullScreenSuggestionsView: UIView {
     
     func refreshRecentImages() {
         checkPhotoPermissions()
+        applySnapshot()
     }
     private func loadRecentImages() {
         let fetchOptions = PHFetchOptions()
@@ -473,6 +531,8 @@ extension FullScreenSuggestionsView: UICollectionViewDelegate {
                 onImageTapped?(image)
             } else if let marker = item as? String, marker == Self.addImageItem {
                 onEditImageTapped?()
+            } else if let marker = item as? String, marker == Self.sampleTileItem {
+                onSampleTapped?()
             }
         case .presets:
             if let preset = dataSource.itemIdentifier(for: indexPath) as? EditPreset {
@@ -558,14 +618,13 @@ extension FullScreenSuggestionsView: UICollectionViewDelegate {
     }
     private func animateCell(at indexPath: IndexPath, highlighted: Bool) {
         guard let cell = collectionView.cellForItem(at: indexPath) else { return }
-        UIView.animate(
-            withDuration: 0.1,
-            delay: 0,
-            options: [.beginFromCurrentState, .allowUserInteraction],
-            animations: {
+        Motion.animate(0.1, options: [.beginFromCurrentState, .allowUserInteraction]) {
+            if Motion.isReduced {
+                cell.alpha = highlighted ? 0.7 : 1
+            } else {
                 cell.transform = highlighted ? CGAffineTransform(scaleX: 0.95, y: 0.95) : .identity
             }
-        )
+        }
     }
     func refreshView() {
         applySnapshot()

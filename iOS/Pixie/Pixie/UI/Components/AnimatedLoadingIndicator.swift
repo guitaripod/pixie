@@ -8,6 +8,7 @@ class AnimatedLoadingIndicator: UIView {
     
     private let dotSize: CGFloat = 8
     private let spacing: CGFloat = 6
+    private var isAnimating = false
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -20,6 +21,13 @@ class AnimatedLoadingIndicator: UIView {
     }
     
     private func setupViews() {
+        hideFromAccessibility()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(reduceMotionChanged),
+            name: UIAccessibility.reduceMotionStatusDidChangeNotification,
+            object: nil
+        )
         [dot1, dot2, dot3].forEach { dot in
             dot.backgroundColor = .systemGray
             dot.layer.cornerRadius = dotSize / 2
@@ -47,32 +55,42 @@ class AnimatedLoadingIndicator: UIView {
         ])
     }
     
+    @objc private func reduceMotionChanged() {
+        guard isAnimating else { return }
+        startAnimating()
+    }
+    
     func startAnimating() {
-        let duration: TimeInterval = 0.6
+        isAnimating = true
+        stopDotAnimations()
+        
+        guard !Motion.isReduced else { return }
+        
+        let duration: TimeInterval = 0.3
         let delay: TimeInterval = 0.1
         
         [dot1, dot2, dot3].enumerated().forEach { index, dot in
             dot.alpha = 0.3
             
-            UIView.animateKeyframes(
-                withDuration: duration,
+            Motion.animate(
+                duration,
                 delay: delay * Double(index),
-                options: [.repeat, .autoreverse],
+                options: [.repeat, .autoreverse, .curveEaseInOut],
                 animations: {
-                    UIView.addKeyframe(withRelativeStartTime: 0, relativeDuration: 0.5) {
-                        dot.alpha = 1.0
-                        dot.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
-                    }
-                    UIView.addKeyframe(withRelativeStartTime: 0.5, relativeDuration: 0.5) {
-                        dot.alpha = 0.3
-                        dot.transform = .identity
-                    }
+                    dot.alpha = 1.0
+                    dot.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
                 }
             )
         }
     }
     
     func stopAnimating() {
+        isAnimating = false
+        stopDotAnimations()
+    }
+    
+    /// Leaves the dots static and fully visible, which is also how they sit while Reduce Motion is on.
+    private func stopDotAnimations() {
         [dot1, dot2, dot3].forEach { dot in
             dot.layer.removeAllAnimations()
             dot.alpha = 1.0

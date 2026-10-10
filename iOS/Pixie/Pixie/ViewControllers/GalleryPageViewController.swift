@@ -12,13 +12,29 @@ final class GalleryPageViewController: UIViewController {
     private var currentPage = 1
     private let pageSize = 20
     private var totalPagesLoaded = 0
+    private var hiddenIDs: Set<String> = []
+    private var selectedIDs: Set<String> = []
+    private(set) var isSelecting = false
     
     private let collectionView: UICollectionView
     private let refreshControl = UIRefreshControl()
+    private let emptyRefreshControl = UIRefreshControl()
+    private let emptyScrollView = UIScrollView()
     private let emptyStateView = EmptyStateView()
     private let loadingView = UIActivityIndicatorView(style: .large)
     
     private var dataSource: UICollectionViewDiffableDataSource<Int, ImageMetadata>!
+    
+    /// What the grid shows: everything loaded except the images waiting out their undo window,
+    /// each id once even if two pages overlap after the gallery changed between requests.
+    private var displayedImages: [ImageMetadata] {
+        var seen = Set<String>()
+        return images.filter { !hiddenIDs.contains($0.id) && seen.insert($0.id).inserted }
+    }
+    
+    var selectedImages: [ImageMetadata] {
+        displayedImages.filter { selectedIDs.contains($0.id) }
+    }
     
     init() {
         self.collectionView = UICollectionView(frame: .zero, collectionViewLayout: Self.createLayout())
@@ -95,16 +111,14 @@ final class GalleryPageViewController: UIViewController {
         view.backgroundColor = .systemBackground
         
         collectionView.translatesAutoresizingMaskIntoConstraints = false
+        collectionView.accessibilityLabel = String(localized: "My Images")
         view.addSubview(collectionView)
         
         loadingView.translatesAutoresizingMaskIntoConstraints = false
         loadingView.hidesWhenStopped = true
         view.addSubview(loadingView)
         
-        emptyStateView.translatesAutoresizingMaskIntoConstraints = false
-        emptyStateView.isHidden = true
-        emptyStateView.isUserInteractionEnabled = true
-        view.addSubview(emptyStateView)
+        setupEmptyState()
         
         NSLayoutConstraint.activate([
             collectionView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -113,15 +127,56 @@ final class GalleryPageViewController: UIViewController {
             collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
             loadingView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            loadingView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            
-            emptyStateView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            emptyStateView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            emptyStateView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 32),
-            emptyStateView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32)
+            loadingView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
+    }
+    
+    /// The empty state sits in its own scroll view so a large text size scrolls instead of
+    /// clipping, and the scroll view carries its own refresh control because it covers the grid.
+    private func setupEmptyState() {
+        emptyScrollView.translatesAutoresizingMaskIntoConstraints = false
+        emptyScrollView.backgroundColor = .systemBackground
+        emptyScrollView.alwaysBounceVertical = true
+        emptyScrollView.isHidden = true
+        emptyScrollView.refreshControl = emptyRefreshControl
+        emptyRefreshControl.addTarget(self, action: #selector(handleRefresh), for: .valueChanged)
+        view.addSubview(emptyScrollView)
         
+        let holder = UIView()
+        holder.translatesAutoresizingMaskIntoConstraints = false
+        emptyScrollView.addSubview(holder)
+        
+        emptyStateView.translatesAutoresizingMaskIntoConstraints = false
+        emptyStateView.onCreateTapped = { [weak self] in
+            guard let self else { return }
+            self.delegate?.galleryPageDidRequestCreate(self)
+        }
         emptyStateView.configure(for: .personal)
+        holder.addSubview(emptyStateView)
+        
+        let holderHeight = holder.heightAnchor.constraint(equalTo: emptyScrollView.frameLayoutGuide.heightAnchor)
+        holderHeight.priority = .defaultLow
+        
+        NSLayoutConstraint.activate([
+            emptyScrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            emptyScrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            emptyScrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            emptyScrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            holder.topAnchor.constraint(equalTo: emptyScrollView.contentLayoutGuide.topAnchor),
+            holder.bottomAnchor.constraint(equalTo: emptyScrollView.contentLayoutGuide.bottomAnchor),
+            holder.leadingAnchor.constraint(equalTo: emptyScrollView.contentLayoutGuide.leadingAnchor),
+            holder.trailingAnchor.constraint(equalTo: emptyScrollView.contentLayoutGuide.trailingAnchor),
+            holder.widthAnchor.constraint(equalTo: emptyScrollView.frameLayoutGuide.widthAnchor),
+            holder.heightAnchor.constraint(greaterThanOrEqualTo: emptyScrollView.frameLayoutGuide.heightAnchor),
+            holderHeight,
+            
+            emptyStateView.centerYAnchor.constraint(equalTo: holder.centerYAnchor),
+            emptyStateView.topAnchor.constraint(greaterThanOrEqualTo: holder.topAnchor, constant: 24),
+            emptyStateView.bottomAnchor.constraint(lessThanOrEqualTo: holder.bottomAnchor, constant: -24),
+            emptyStateView.leadingAnchor.constraint(equalTo: holder.safeAreaLayoutGuide.leadingAnchor, constant: 32),
+            emptyStateView.trailingAnchor.constraint(equalTo: holder.safeAreaLayoutGuide.trailingAnchor, constant: -32)
+        ])
     }
     
     private func setupCollectionView() {
@@ -134,12 +189,17 @@ final class GalleryPageViewController: UIViewController {
     private func setupDataSource() {
         dataSource = UICollectionViewDiffableDataSource<Int, ImageMetadata>(
             collectionView: collectionView
-        ) { collectionView, indexPath, image in
+        ) { [weak self] collectionView, indexPath, image in
             let cell = collectionView.dequeueReusableCell(
                 withReuseIdentifier: GalleryImageCell.identifier,
                 for: indexPath
             ) as! GalleryImageCell
             cell.configure(with: image)
+            cell.setSelection(mode: self?.isSelecting ?? false, marked: self?.selectedIDs.contains(image.id) ?? false)
+            cell.onAction = { [weak self] action in
+                guard let self else { return }
+                self.delegate?.galleryPageDidPerformAction(self, action: action, on: image)
+            }
             return cell
         }
     }
@@ -158,7 +218,7 @@ final class GalleryPageViewController: UIViewController {
         guard !isLoading else { return }
         isLoading = true
         loadingView.startAnimating()
-        emptyStateView.isHidden = true
+        emptyScrollView.isHidden = true
         
         Task {
             do {
@@ -172,12 +232,13 @@ final class GalleryPageViewController: UIViewController {
                     self.loadingView.stopAnimating()
                     self.updateSnapshot()
                     self.updateEmptyState()
+                    self.announceLoaded()
                 }
             } catch {
                 await MainActor.run {
                     self.isLoading = false
                     self.loadingView.stopAnimating()
-                    self.showError(error)
+                    self.showError(error) { self.loadInitialData() }
                     self.updateEmptyState()
                 }
             }
@@ -185,7 +246,10 @@ final class GalleryPageViewController: UIViewController {
     }
     
     func refresh() {
-        guard !isLoading else { return }
+        guard !isLoading else {
+            endRefreshing()
+            return
+        }
         
         isRefreshing = true
         currentPage = 1
@@ -200,18 +264,24 @@ final class GalleryPageViewController: UIViewController {
                     self.totalPagesLoaded = 1
                     self.hasMore = response.images.count == self.pageSize
                     self.isRefreshing = false
-                    self.refreshControl.endRefreshing()
+                    self.endRefreshing()
                     self.updateSnapshot()
                     self.updateEmptyState()
+                    self.announceLoaded()
                 }
             } catch {
                 await MainActor.run {
                     self.isRefreshing = false
-                    self.refreshControl.endRefreshing()
-                    self.showError(error)
+                    self.endRefreshing()
+                    self.showError(error) { self.refresh() }
                 }
             }
         }
+    }
+    
+    private func endRefreshing() {
+        refreshControl.endRefreshing()
+        emptyRefreshControl.endRefreshing()
     }
     
     private func loadMore() {
@@ -219,6 +289,7 @@ final class GalleryPageViewController: UIViewController {
         
         isLoading = true
         let nextPage = currentPage + 1
+        announce(String(localized: "Loading more images"))
         
         Task {
             do {
@@ -230,14 +301,29 @@ final class GalleryPageViewController: UIViewController {
                     self.hasMore = response.images.count == self.pageSize
                     self.isLoading = false
                     self.updateSnapshot()
+                    if !response.images.isEmpty {
+                        self.announce(String(localized: "\(response.images.count) more images"))
+                    }
                 }
             } catch {
                 await MainActor.run {
                     self.isLoading = false
-                    self.showError(error)
+                    self.showError(error) { self.loadMore() }
                 }
             }
         }
+    }
+    
+    private func announceLoaded() {
+        let count = displayedImages.count
+        if count > 0 {
+            announce(String(localized: "\(count) images"))
+        }
+    }
+    
+    private func announce(_ text: String) {
+        guard UIAccessibility.isVoiceOverRunning else { return }
+        Announce.say(text)
     }
     
     private func fetchImages(page: Int) async throws -> GalleryResponse {
@@ -299,37 +385,75 @@ final class GalleryPageViewController: UIViewController {
         }
     }
     
-    func removeImage(id: String) {
-        guard images.contains(where: { $0.id == id }) else { return }
-        images.removeAll { $0.id == id }
+    /// Takes images off the grid at once while keeping them in the list, so putting them
+    /// back lands each one exactly where it was.
+    func hide(ids: Set<String>) {
+        hiddenIDs.formUnion(ids)
+        selectedIDs.subtract(ids)
+        updateSnapshot()
+        updateEmptyState()
+        notifySelectionChanged()
+    }
+    
+    func unhide(ids: Set<String>) {
+        hiddenIDs.subtract(ids)
         updateSnapshot()
         updateEmptyState()
     }
-
+    
+    /// Forgets images the server has deleted for good.
+    func purge(ids: Set<String>) {
+        images.removeAll { ids.contains($0.id) }
+        hiddenIDs.subtract(ids)
+        selectedIDs.subtract(ids)
+        updateSnapshot()
+        updateEmptyState()
+    }
+    
+    func setSelecting(_ selecting: Bool) {
+        guard selecting != isSelecting else { return }
+        isSelecting = selecting
+        selectedIDs.removeAll()
+        collectionView.dragInteractionEnabled = !selecting
+        refreshVisibleSelectionState()
+        notifySelectionChanged()
+    }
+    
+    private func refreshVisibleSelectionState() {
+        for case let cell as GalleryImageCell in collectionView.visibleCells {
+            guard let indexPath = collectionView.indexPath(for: cell),
+                  let image = dataSource.itemIdentifier(for: indexPath) else { continue }
+            cell.setSelection(mode: isSelecting, marked: selectedIDs.contains(image.id))
+        }
+    }
+    
+    private func notifySelectionChanged() {
+        delegate?.galleryPageDidChangeSelection(self, count: selectedIDs.count)
+    }
 
     private func updateSnapshot() {
         var snapshot = NSDiffableDataSourceSnapshot<Int, ImageMetadata>()
         snapshot.appendSections([0])
-        snapshot.appendItems(images, toSection: 0)
-        dataSource.apply(snapshot, animatingDifferences: true)
+        snapshot.appendItems(displayedImages, toSection: 0)
+        dataSource.apply(snapshot, animatingDifferences: !Motion.isReduced)
     }
     
     private func updateEmptyState() {
-        emptyStateView.isHidden = !images.isEmpty || isLoading
-        if !emptyStateView.isHidden {
-            view.bringSubviewToFront(emptyStateView)
+        let isEmpty = displayedImages.isEmpty
+        emptyScrollView.isHidden = !isEmpty || isLoading
+        if !emptyScrollView.isHidden {
+            view.bringSubviewToFront(emptyScrollView)
         }
+        delegate?.galleryPageDidChangeContent(self, hasImages: !isEmpty)
     }
     
-    private func showError(_ error: Error) {
+    private func showError(_ error: Error, retry: @escaping () -> Void) {
         let alert = UIAlertController(
             title: String(localized: "Error"),
             message: error.localizedDescription,
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: String(localized: "Retry"), style: .default) { [weak self] _ in
-            self?.loadInitialData()
-        })
+        alert.addAction(UIAlertAction(title: String(localized: "Retry"), style: .default) { _ in retry() })
         alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
         present(alert, animated: true)
     }
@@ -337,23 +461,42 @@ final class GalleryPageViewController: UIViewController {
 
 extension GalleryPageViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard indexPath.section == 0 else { return }
+        guard indexPath.section == 0, let image = dataSource.itemIdentifier(for: indexPath) else { return }
+        collectionView.deselectItem(at: indexPath, animated: false)
+        
+        if isSelecting {
+            toggleSelection(of: image, at: indexPath)
+            return
+        }
+        
         HapticsManager.shared.impact(.light)
-        let image = images[indexPath.item]
         delegate?.galleryPageDidSelectImage(self, image: image)
+    }
+    
+    private func toggleSelection(of image: ImageMetadata, at indexPath: IndexPath) {
+        if selectedIDs.contains(image.id) {
+            selectedIDs.remove(image.id)
+        } else {
+            selectedIDs.insert(image.id)
+        }
+        HapticsManager.shared.selection()
+        if let cell = collectionView.cellForItem(at: indexPath) as? GalleryImageCell {
+            cell.setSelection(mode: true, marked: selectedIDs.contains(image.id))
+            Announce.layoutChanged(cell)
+        }
+        notifySelectionChanged()
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         guard indexPath.section == 0 else { return }
         
-        if indexPath.item >= images.count - 5 && !isLoading && hasMore {
+        if indexPath.item >= displayedImages.count - 5 && !isLoading && hasMore {
             loadMore()
         }
     }
     
     func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-        guard indexPath.section == 0 else { return nil }
-        let image = images[indexPath.item]
+        guard indexPath.section == 0, !isSelecting, let image = dataSource.itemIdentifier(for: indexPath) else { return nil }
         
         return UIContextMenuConfiguration(identifier: indexPath as NSCopying, previewProvider: {
             return self.makePreviewViewController(for: image)
@@ -363,8 +506,8 @@ extension GalleryPageViewController: UICollectionViewDelegate {
     }
     
     func collectionView(_ collectionView: UICollectionView, willPerformPreviewActionForMenuWith configuration: UIContextMenuConfiguration, animator: UIContextMenuInteractionCommitAnimating) {
-        guard let indexPath = configuration.identifier as? IndexPath else { return }
-        let image = images[indexPath.item]
+        guard let indexPath = configuration.identifier as? IndexPath,
+              let image = dataSource.itemIdentifier(for: indexPath) else { return }
         
         animator.addCompletion {
             self.delegate?.galleryPageDidSelectImage(self, image: image)
@@ -481,15 +624,14 @@ extension GalleryPageViewController: UICollectionViewDelegate {
 extension GalleryPageViewController: UICollectionViewDataSourcePrefetching {
     func collectionView(_ collectionView: UICollectionView, prefetchItemsAt indexPaths: [IndexPath]) {
         let urls = indexPaths.compactMap { indexPath -> String? in
-            guard indexPath.item < images.count else { return nil }
-            let image = images[indexPath.item]
+            guard let image = dataSource.itemIdentifier(for: indexPath) else { return nil }
             return image.thumbnailUrl ?? image.url
         }
         
         ImageCache.shared.prefetchImages(for: urls)
         
         if let lastIndexPath = indexPaths.last,
-           lastIndexPath.item >= images.count - 5,
+           lastIndexPath.item >= displayedImages.count - 5,
            !isLoading && hasMore {
             loadMore()
         }
@@ -503,8 +645,7 @@ extension GalleryPageViewController: UICollectionViewDataSourcePrefetching {
 
 extension GalleryPageViewController: UICollectionViewDragDelegate {
     func collectionView(_ collectionView: UICollectionView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
-        guard indexPath.item < images.count else { return [] }
-        let image = images[indexPath.item]
+        guard !isSelecting, let image = dataSource.itemIdentifier(for: indexPath) else { return [] }
         
         let itemProvider = NSItemProvider()
         

@@ -6,6 +6,7 @@ class AdminAdjustmentHistoryViewController: UIViewController {
     private let refreshControl = UIRefreshControl()
     private let loadingView = UIActivityIndicatorView(style: .large)
     private let emptyStateLabel = UILabel()
+    private let errorView = AdminInlineMessageView()
     private let haptics = HapticManager.shared
     
     private let adminRepository: AdminRepositoryProtocol
@@ -45,6 +46,8 @@ class AdminAdjustmentHistoryViewController: UIViewController {
         tableView.backgroundColor = .clear
         tableView.separatorStyle = .none
         tableView.refreshControl = refreshControl
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 120
         tableView.register(AdjustmentHistoryCell.self, forCellReuseIdentifier: "HistoryCell")
         
         refreshControl.addTarget(self, action: #selector(refreshHistory), for: .valueChanged)
@@ -54,7 +57,7 @@ class AdminAdjustmentHistoryViewController: UIViewController {
         
         emptyStateLabel.translatesAutoresizingMaskIntoConstraints = false
         emptyStateLabel.text = String(localized: "No adjustment history")
-        emptyStateLabel.font = .systemFont(ofSize: 17)
+        emptyStateLabel.useScaledFont(.body, size: 17)
         emptyStateLabel.textColor = .secondaryLabel
         emptyStateLabel.textAlignment = .center
         emptyStateLabel.numberOfLines = 0
@@ -63,6 +66,8 @@ class AdminAdjustmentHistoryViewController: UIViewController {
         view.addSubview(tableView)
         view.addSubview(loadingView)
         view.addSubview(emptyStateLabel)
+        errorView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(errorView)
     }
     
     private func setupConstraints() {
@@ -78,12 +83,18 @@ class AdminAdjustmentHistoryViewController: UIViewController {
             emptyStateLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emptyStateLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             emptyStateLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 32),
-            emptyStateLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32)
+            emptyStateLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32),
+            
+            errorView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            errorView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            errorView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 32),
+            errorView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32)
         ])
     }
     
     private func loadHistory() {
         loadingView.startAnimating()
+        errorView.hide()
         
         Task {
             do {
@@ -92,6 +103,7 @@ class AdminAdjustmentHistoryViewController: UIViewController {
                     self.adjustmentHistory = response.adjustments
                     self.tableView.reloadData()
                     self.loadingView.stopAnimating()
+                    self.errorView.hide()
                     self.updateEmptyState()
                 }
             } catch {
@@ -111,6 +123,7 @@ class AdminAdjustmentHistoryViewController: UIViewController {
                     self.adjustmentHistory = response.adjustments
                     self.tableView.reloadData()
                     self.refreshControl.endRefreshing()
+                    self.errorView.hide()
                     self.updateEmptyState()
                 }
             } catch {
@@ -123,17 +136,15 @@ class AdminAdjustmentHistoryViewController: UIViewController {
     }
     
     private func updateEmptyState() {
-        emptyStateLabel.isHidden = !adjustmentHistory.isEmpty
+        emptyStateLabel.isHidden = !adjustmentHistory.isEmpty || !errorView.isHidden
     }
     
     private func showError(_ message: String) {
-        let alert = UIAlertController(
-            title: String(localized: "Error"),
-            message: message,
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
-        present(alert, animated: true)
+        haptics.notification(.error)
+        emptyStateLabel.isHidden = true
+        errorView.show(message) { [weak self] in
+            self?.loadHistory()
+        }
     }
 }
 
@@ -182,6 +193,8 @@ class AdjustmentHistoryCell: UITableViewCell {
     private let userIdLabel = UILabel()
     private let dateLabel = UILabel()
     private let newBalanceLabel = UILabel()
+    private let headerStack = UIStackView()
+    private let footerStack = UIStackView()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -204,32 +217,45 @@ class AdjustmentHistoryCell: UITableViewCell {
         containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
         containerView.layer.shadowRadius = 4
         
-        amountLabel.translatesAutoresizingMaskIntoConstraints = false
-        amountLabel.font = .systemFont(ofSize: 24, weight: .bold)
+        amountLabel.useScaledFont(.title2, size: 24, weight: .bold)
         
-        reasonLabel.translatesAutoresizingMaskIntoConstraints = false
-        reasonLabel.font = .systemFont(ofSize: 15)
+        reasonLabel.useScaledFont(.subheadline, size: 15)
         reasonLabel.textColor = .secondaryLabel
-        reasonLabel.numberOfLines = 2
+        reasonLabel.numberOfLines = 0
         
-        userIdLabel.translatesAutoresizingMaskIntoConstraints = false
-        userIdLabel.font = .systemFont(ofSize: 13)
-        userIdLabel.textColor = .tertiaryLabel
+        userIdLabel.useScaledFont(.footnote, size: 13)
+        userIdLabel.textColor = .secondaryLabel
+        userIdLabel.lineBreakMode = .byTruncatingMiddle
+        userIdLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         
-        dateLabel.translatesAutoresizingMaskIntoConstraints = false
-        dateLabel.font = .systemFont(ofSize: 13)
-        dateLabel.textColor = .tertiaryLabel
+        dateLabel.useScaledFont(.footnote, size: 13)
+        dateLabel.textColor = .secondaryLabel
+        dateLabel.textAlignment = .right
+        dateLabel.numberOfLines = 0
+        dateLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
         
-        newBalanceLabel.translatesAutoresizingMaskIntoConstraints = false
-        newBalanceLabel.font = .systemFont(ofSize: 15, weight: .medium)
+        newBalanceLabel.useScaledFont(.subheadline, size: 15, weight: .medium)
         newBalanceLabel.textColor = .secondaryLabel
+        newBalanceLabel.textAlignment = .right
+        newBalanceLabel.numberOfLines = 0
+        
+        headerStack.addArrangedSubview(amountLabel)
+        headerStack.addArrangedSubview(newBalanceLabel)
+        headerStack.alignment = .center
+        headerStack.spacing = 8
+        
+        footerStack.addArrangedSubview(userIdLabel)
+        footerStack.addArrangedSubview(dateLabel)
+        footerStack.alignment = .center
+        footerStack.spacing = 8
+        
+        let contentStack = UIStackView(arrangedSubviews: [headerStack, reasonLabel, footerStack])
+        contentStack.translatesAutoresizingMaskIntoConstraints = false
+        contentStack.axis = .vertical
+        contentStack.spacing = 8
         
         contentView.addSubview(containerView)
-        containerView.addSubview(amountLabel)
-        containerView.addSubview(reasonLabel)
-        containerView.addSubview(userIdLabel)
-        containerView.addSubview(dateLabel)
-        containerView.addSubview(newBalanceLabel)
+        containerView.addSubview(contentStack)
         
         NSLayoutConstraint.activate([
             containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
@@ -237,23 +263,30 @@ class AdjustmentHistoryCell: UITableViewCell {
             containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
             
-            amountLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
-            amountLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            
-            newBalanceLabel.centerYAnchor.constraint(equalTo: amountLabel.centerYAnchor),
-            newBalanceLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            
-            reasonLabel.topAnchor.constraint(equalTo: amountLabel.bottomAnchor, constant: 8),
-            reasonLabel.leadingAnchor.constraint(equalTo: amountLabel.leadingAnchor),
-            reasonLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            
-            userIdLabel.topAnchor.constraint(equalTo: reasonLabel.bottomAnchor, constant: 8),
-            userIdLabel.leadingAnchor.constraint(equalTo: amountLabel.leadingAnchor),
-            userIdLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16),
-            
-            dateLabel.centerYAnchor.constraint(equalTo: userIdLabel.centerYAnchor),
-            dateLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16)
+            contentStack.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
+            contentStack.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            contentStack.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            contentStack.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16)
         ])
+        updateAxes()
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
+            updateAxes()
+        }
+    }
+    
+    /// Stacks the two-sided rows vertically at accessibility text sizes so nothing overlaps or clips.
+    private func updateAxes() {
+        let stacked = traitCollection.preferredContentSizeCategory.isAccessibilityCategory
+        [headerStack, footerStack].forEach {
+            $0.axis = stacked ? .vertical : .horizontal
+            $0.alignment = stacked ? .leading : .center
+        }
+        newBalanceLabel.textAlignment = stacked ? .left : .right
+        dateLabel.textAlignment = stacked ? .left : .right
     }
     
     func configure(with item: AdjustmentHistoryItem, dateFormatter: DateFormatter) {
@@ -270,5 +303,15 @@ class AdjustmentHistoryCell: UITableViewCell {
         } else {
             dateLabel.text = item.createdAt
         }
+        
+        let change = amount > 0
+            ? String(localized: "Added \(amount) credits")
+            : String(localized: "Removed \(abs(amount)) credits")
+        describe(
+            change,
+            hint: String(localized: "Shows adjustment details"),
+            value: [item.reason, userIdLabel.text, newBalanceLabel.text, dateLabel.text].compactMap { $0 }.joined(separator: ", "),
+            traits: .button
+        )
     }
 }

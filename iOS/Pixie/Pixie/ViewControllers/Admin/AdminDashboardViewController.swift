@@ -32,11 +32,13 @@ class AdminDashboardViewController: UIViewController {
         contentStackView.isLayoutMarginsRelativeArrangement = true
         
         titleLabel.text = String(localized: "Admin Dashboard")
-        titleLabel.font = .systemFont(ofSize: 34, weight: .bold)
+        titleLabel.useScaledFont(.largeTitle, size: 34, weight: .bold)
         titleLabel.textColor = .label
+        titleLabel.numberOfLines = 0
+        titleLabel.accessibilityTraits = .header
         
         subtitleLabel.text = String(localized: "Manage system resources and user accounts")
-        subtitleLabel.font = .systemFont(ofSize: 17)
+        subtitleLabel.useScaledFont(.body, size: 17)
         subtitleLabel.textColor = .secondaryLabel
         subtitleLabel.numberOfLines = 0
         
@@ -146,17 +148,22 @@ class AdminFeatureCardView: UIView {
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
         addGestureRecognizer(tapGesture)
+        isAccessibilityElement = true
+        accessibilityTraits = .button
         
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         iconImageView.contentMode = .scaleAspectFit
-        iconImageView.tintColor = .secondaryLabel
+        iconImageView.tintColor = .brandText
+        iconImageView.hideFromAccessibility()
+        chevronImageView.hideFromAccessibility()
         
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.font = .systemFont(ofSize: 17, weight: .semibold)
+        titleLabel.useScaledFont(.body, size: 17, weight: .semibold)
         titleLabel.textColor = .label
+        titleLabel.numberOfLines = 0
         
         descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
-        descriptionLabel.font = .systemFont(ofSize: 15)
+        descriptionLabel.useScaledFont(.subheadline, size: 15)
         descriptionLabel.textColor = .secondaryLabel
         descriptionLabel.numberOfLines = 0
         
@@ -175,6 +182,7 @@ class AdminFeatureCardView: UIView {
             iconImageView.centerYAnchor.constraint(equalTo: centerYAnchor),
             iconImageView.widthAnchor.constraint(equalToConstant: 48),
             iconImageView.heightAnchor.constraint(equalToConstant: 48),
+            heightAnchor.constraint(greaterThanOrEqualToConstant: 80),
             
             titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: 16),
             titleLabel.leadingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: 16),
@@ -196,18 +204,90 @@ class AdminFeatureCardView: UIView {
         iconImageView.image = icon
         titleLabel.text = title
         descriptionLabel.text = description
+        accessibilityLabel = title
+        accessibilityValue = description
+    }
+    
+    override func accessibilityActivate() -> Bool {
+        handleTap()
+        return true
     }
     
     @objc private func handleTap() {
         haptics.impact(.click)
         
-        UIView.animate(withDuration: 0.1, animations: {
+        if Motion.isReduced {
+            onTap?()
+            return
+        }
+        Motion.animate(0.1, animations: {
             self.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
         }) { _ in
-            UIView.animate(withDuration: 0.1) {
+            Motion.animate(0.1) {
                 self.transform = .identity
             }
             self.onTap?()
         }
+    }
+}
+
+final class AdminInlineMessageView: UIView {
+
+    private let label = UILabel()
+    private let retryButton = UIButton(type: .system)
+    private let stack = UIStackView()
+    private var onRetry: (() -> Void)?
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupUI()
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func setupUI() {
+        isHidden = true
+        label.useScaledFont(.body, size: 17)
+        label.textColor = .secondaryLabel
+        label.textAlignment = .center
+        label.numberOfLines = 0
+
+        var configuration = UIButton.Configuration.filled()
+        configuration.title = String(localized: "Retry")
+        configuration.baseBackgroundColor = .brand
+        configuration.baseForegroundColor = .white
+        configuration.cornerStyle = .capsule
+        retryButton.configuration = configuration
+        retryButton.addAction(UIAction { [weak self] _ in self?.onRetry?() }, for: .touchUpInside)
+        retryButton.isHidden = true
+
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 16
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.addArrangedSubview(label)
+        stack.addArrangedSubview(retryButton)
+        addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.topAnchor.constraint(equalTo: topAnchor),
+            stack.bottomAnchor.constraint(equalTo: bottomAnchor),
+            stack.leadingAnchor.constraint(equalTo: leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: trailingAnchor),
+            retryButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
+        ])
+    }
+
+    func show(_ message: String, retry: (() -> Void)? = nil) {
+        label.text = message
+        onRetry = retry
+        retryButton.isHidden = retry == nil
+        isHidden = false
+        Announce.say(message)
+    }
+
+    func hide() {
+        isHidden = true
     }
 }

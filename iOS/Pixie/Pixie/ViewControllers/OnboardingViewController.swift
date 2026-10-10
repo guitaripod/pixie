@@ -7,34 +7,48 @@ enum Onboarding {
 }
 
 private struct OnboardingPage {
-    let symbol: String
-    let tint: UIColor
+    let beforeImage: String
+    let afterImage: String
     let title: String
     let body: String
     var showsConsent = false
 }
 
+private final class OnboardingPageControl: UIPageControl {
+    var onIncrement: (() -> Void)?
+    var onDecrement: (() -> Void)?
+
+    override func accessibilityIncrement() {
+        onIncrement?()
+    }
+
+    override func accessibilityDecrement() {
+        onDecrement?()
+    }
+}
+
 final class OnboardingViewController: UIViewController {
     var onFinished: (() -> Void)?
+    private var isWaiting = false
     private static let maxButtonWidth: CGFloat = 420
 
     private let pages: [OnboardingPage] = [
         OnboardingPage(
-            symbol: "wand.and.stars",
-            tint: .systemPurple,
+            beforeImage: "onboarding_before_1",
+            afterImage: "onboarding_after_1",
             title: String(localized: "Edit any photo\nin one tap"),
             body: String(localized: "Pick a photo, then tap an edit: a pro headshot, a restored old photo, a 3D figurine and more.")
         ),
         OnboardingPage(
-            symbol: "bubble.left.and.text.bubble.right.fill",
-            tint: .systemPink,
+            beforeImage: "onboarding_before_2",
+            afterImage: "onboarding_after_2",
             title: String(localized: "Then refine it\nby chat"),
             body: String(localized: "Ask for changes in plain words, and each message edits your latest image. Or describe a brand-new picture from scratch.")
         ),
         OnboardingPage(
-            symbol: "sparkles",
-            tint: .systemOrange,
-            title: String(localized: "3 free images\nto start"),
+            beforeImage: "onboarding_before_3",
+            afterImage: "onboarding_after_3",
+            title: String(localized: "\(WelcomeCredits.startingFreeImages) free images\nto start"),
             body: String(localized: "Create right now, no sign-up. After that, pay only for what you make with credit packs that never expire. No subscription, ever."),
             showsConsent: !CloudAIConsent.isGranted
         ),
@@ -60,13 +74,15 @@ final class OnboardingViewController: UIViewController {
         return controller
     }()
 
-    private lazy var pageControl: UIPageControl = {
-        let control = UIPageControl()
+    private lazy var pageControl: OnboardingPageControl = {
+        let control = OnboardingPageControl()
         control.numberOfPages = pages.count
         control.currentPageIndicatorTintColor = .label
         control.pageIndicatorTintColor = .tertiaryLabel
         control.isUserInteractionEnabled = false
         control.translatesAutoresizingMaskIntoConstraints = false
+        control.onIncrement = { [weak self] in self?.step(by: 1) }
+        control.onDecrement = { [weak self] in self?.step(by: -1) }
         return control
     }()
 
@@ -146,14 +162,48 @@ final class OnboardingViewController: UIViewController {
         updateChrome()
     }
 
+    /// Puts the primary button into a loading state so the host can hold the final tap while
+    /// the first-launch account is created in the background.
+    func showWaiting() {
+        guard !isWaiting else { return }
+        isWaiting = true
+        updateChrome()
+        Announce.say(String(localized: "Getting ready…"))
+    }
+
+    /// Restores the primary button to the title of the current page.
+    func hideWaiting() {
+        guard isWaiting else { return }
+        isWaiting = false
+        updateChrome()
+    }
+
     private func advance() {
-        HapticsManager.shared.impact(.light)
+        guard !isWaiting else { return }
         if pageIndex >= pages.count - 1 {
+            HapticsManager.shared.impact(.light)
             if needsConsent { CloudAIConsent.grant() }
             finish()
         } else {
-            setPage(pageIndex + 1, direction: .forward, animated: true)
+            setPage(pageIndex + 1, direction: .forward, animated: !Motion.isReduced)
+            pageDidChange()
         }
+    }
+
+    /// Moves one page for VoiceOver's adjustable page control, staying put at either end.
+    private func step(by offset: Int) {
+        let target = pageIndex + offset
+        guard pages.indices.contains(target) else { return }
+        setPage(target, direction: offset > 0 ? .forward : .reverse, animated: !Motion.isReduced)
+        pageDidChange()
+    }
+
+    /// Gives the person the same feedback for a swipe as for a tap: a selection tick, and a
+    /// spoken summary of the new page with the action its button now offers.
+    private func pageDidChange() {
+        HapticsManager.shared.selection()
+        let title = pages[pageIndex].title.replacingOccurrences(of: "\n", with: " ")
+        Announce.screenChanged("\(title). \(primaryButtonTitle)")
     }
 
     private func finish() {
@@ -161,13 +211,25 @@ final class OnboardingViewController: UIViewController {
         onFinished?()
     }
 
+    private var isOnLastPage: Bool { pageIndex == pages.count - 1 }
+
+    private var primaryButtonTitle: String {
+        guard isOnLastPage else { return String(localized: "Continue") }
+        return needsConsent ? String(localized: "Agree & Start Creating") : String(localized: "Start Creating")
+    }
+
     private func updateChrome() {
         pageControl.currentPage = pageIndex
-        let isLast = pageIndex == pages.count - 1
-        let primaryTitle = isLast ? (needsConsent ? String(localized: "Agree & Start Creating") : String(localized: "Start Creating")) : String(localized: "Continue")
-        primaryButton.configuration?.title = primaryTitle
-        skipButton.configuration?.title = isLast ? String(localized: "Not Now") : String(localized: "Skip")
-        skipButton.isHidden = isLast && !needsConsent
+        pageControl.describe(
+            String(localized: "Page"),
+            value: String(localized: "\(pageIndex + 1) of \(pages.count)"),
+            traits: .adjustable
+        )
+        primaryButton.configuration?.title = isWaiting ? String(localized: "Getting ready…") : primaryButtonTitle
+        primaryButton.configuration?.showsActivityIndicator = isWaiting
+        primaryButton.isEnabled = !isWaiting
+        skipButton.configuration?.title = isOnLastPage ? String(localized: "Not Now") : String(localized: "Skip")
+        skipButton.isHidden = isOnLastPage && !needsConsent
     }
 }
 
@@ -186,13 +248,145 @@ extension OnboardingViewController: UIPageViewControllerDataSource, UIPageViewCo
         guard completed, let content = pageController.viewControllers?.first as? OnboardingPageContentViewController else { return }
         pageIndex = content.index
         updateChrome()
+        pageDidChange()
+    }
+}
+
+private final class PillLabel: UILabel {
+    private static let insets = UIEdgeInsets(top: 4, left: 10, bottom: 4, right: 10)
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        useScaledFont(.caption2, size: 11, weight: .bold)
+        textColor = .white
+        backgroundColor = UIColor.black.withAlphaComponent(0.62)
+        clipsToBounds = true
+        textAlignment = .center
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError() }
+
+    override func drawText(in rect: CGRect) {
+        super.drawText(in: rect.inset(by: Self.insets))
+    }
+
+    override var intrinsicContentSize: CGSize {
+        let size = super.intrinsicContentSize
+        return CGSize(width: size.width + Self.insets.left + Self.insets.right, height: size.height + Self.insets.top + Self.insets.bottom)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        layer.cornerRadius = bounds.height / 2
+    }
+}
+
+/// A glass card with the original photo on the left and Pixie's result on the right, split
+/// by a handle. The result wipes in from the right edge once when the card appears.
+private final class BeforeAfterCardView: UIView {
+    private static let cardRadius: CGFloat = 28
+    private static let inset: CGFloat = 8
+    private static let pillMargin: CGFloat = 10
+    private static let handleSize: CGFloat = 30
+    private static let dividerWidth: CGFloat = 2
+    private static let restingFraction: CGFloat = 0.5
+
+    private let glass = GlassMaterial.cardView(cornerRadius: BeforeAfterCardView.cardRadius)
+    private let content = UIView()
+    private let beforeView = UIImageView()
+    private let afterView = UIImageView()
+    private let afterMask = UIView()
+    private let divider = UIView()
+    private let handle = UIView()
+    private let beforePill = PillLabel()
+    private let afterPill = PillLabel()
+    private var revealProgress: CGFloat
+
+    init(beforeImage: String, afterImage: String) {
+        revealProgress = Motion.isReduced ? 1 : 0
+        super.init(frame: .zero)
+        translatesAutoresizingMaskIntoConstraints = false
+        addSubview(glass)
+        glass.contentView.addSubview(content)
+
+        content.clipsToBounds = true
+        content.layer.cornerRadius = Self.cardRadius - Self.inset
+        content.layer.cornerCurve = .continuous
+
+        for (view, name) in [(beforeView, beforeImage), (afterView, afterImage)] {
+            view.image = UIImage(named: name)
+            view.contentMode = .scaleAspectFill
+            view.clipsToBounds = true
+            content.addSubview(view)
+        }
+        afterMask.backgroundColor = .black
+        afterView.mask = afterMask
+
+        divider.backgroundColor = .white
+        content.addSubview(divider)
+
+        handle.backgroundColor = .white
+        handle.layer.cornerRadius = Self.handleSize / 2
+        handle.layer.shadowColor = UIColor.black.cgColor
+        handle.layer.shadowOpacity = 0.3
+        handle.layer.shadowRadius = 4
+        handle.layer.shadowOffset = CGSize(width: 0, height: 1)
+        let handleIcon = UIImageView(image: UIImage(systemName: "arrow.left.and.right"))
+        handleIcon.tintColor = .black
+        handleIcon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 12, weight: .bold)
+        handleIcon.contentMode = .center
+        handleIcon.frame = CGRect(x: 0, y: 0, width: Self.handleSize, height: Self.handleSize)
+        handle.addSubview(handleIcon)
+        content.addSubview(handle)
+
+        beforePill.text = String(localized: "Before")
+        afterPill.text = String(localized: "After")
+        content.addSubview(beforePill)
+        content.addSubview(afterPill)
+
+        describe(String(localized: "Example: before and after"), traits: .image)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError() }
+
+    func reveal() {
+        guard revealProgress < 1 else { return }
+        revealProgress = 1
+        setNeedsLayout()
+        Motion.animate(0.9, delay: 0.2, options: [.curveEaseInOut]) {
+            self.layoutIfNeeded()
+        }
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        glass.frame = bounds
+        content.frame = bounds.insetBy(dx: Self.inset, dy: Self.inset)
+        let size = content.bounds.size
+        beforeView.frame = content.bounds
+        afterView.frame = content.bounds
+
+        let dividerX = size.width * (1 - revealProgress * (1 - Self.restingFraction))
+        afterMask.frame = CGRect(x: dividerX, y: 0, width: max(0, size.width - dividerX), height: size.height)
+        divider.frame = CGRect(x: dividerX - Self.dividerWidth / 2, y: 0, width: Self.dividerWidth, height: size.height)
+        handle.frame = CGRect(x: dividerX - Self.handleSize / 2, y: (size.height - Self.handleSize) / 2, width: Self.handleSize, height: Self.handleSize)
+
+        let beforeSize = beforePill.intrinsicContentSize
+        let afterSize = afterPill.intrinsicContentSize
+        let pillY = size.height - Self.pillMargin
+        beforePill.frame = CGRect(x: Self.pillMargin, y: pillY - beforeSize.height, width: beforeSize.width, height: beforeSize.height)
+        afterPill.frame = CGRect(x: size.width - Self.pillMargin - afterSize.width, y: pillY - afterSize.height, width: afterSize.width, height: afterSize.height)
+        afterPill.alpha = revealProgress
     }
 }
 
 private final class OnboardingPageContentViewController: UIViewController {
     let index: Int
     private let page: OnboardingPage
-    private var iconContainer: UIView?
+    private var card: BeforeAfterCardView?
+    private var cardHeightCap: NSLayoutConstraint?
 
     init(page: OnboardingPage, index: Int) {
         self.page = page
@@ -206,36 +400,37 @@ private final class OnboardingPageContentViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        let iconContainer = GlassMaterial.cardView(cornerRadius: 44)
-        iconContainer.heightAnchor.constraint(equalToConstant: 132).isActive = true
-        iconContainer.widthAnchor.constraint(equalToConstant: 132).isActive = true
-
-        let config = UIImage.SymbolConfiguration(pointSize: 56, weight: .semibold)
-        let iconView = UIImageView(image: UIImage(systemName: page.symbol, withConfiguration: config))
-        iconView.tintColor = page.tint
-        iconView.contentMode = .center
-        iconView.translatesAutoresizingMaskIntoConstraints = false
-        iconContainer.contentView.addSubview(iconView)
+        let card = BeforeAfterCardView(beforeImage: page.beforeImage, afterImage: page.afterImage)
+        let preferredWidth = card.widthAnchor.constraint(equalToConstant: Self.maxCardWidth)
+        preferredWidth.priority = .defaultHigh
+        let aspect = card.widthAnchor.constraint(equalTo: card.heightAnchor, multiplier: Self.cardAspect)
+        aspect.priority = UILayoutPriority(800)
+        let heightCap = card.heightAnchor.constraint(lessThanOrEqualToConstant: Self.maxCardHeight)
         NSLayoutConstraint.activate([
-            iconView.centerXAnchor.constraint(equalTo: iconContainer.contentView.centerXAnchor),
-            iconView.centerYAnchor.constraint(equalTo: iconContainer.contentView.centerYAnchor),
+            card.widthAnchor.constraint(lessThanOrEqualToConstant: Self.maxCardWidth),
+            preferredWidth,
+            aspect,
+            heightCap,
         ])
+        cardHeightCap = heightCap
 
         let titleLabel = UILabel()
         titleLabel.text = page.title
-        titleLabel.font = UIFont.systemFont(ofSize: 34, weight: .bold).rounded()
+        titleLabel.useScaledFont(.largeTitle, size: 34, weight: .bold, rounded: true)
         titleLabel.numberOfLines = 0
         titleLabel.textAlignment = .center
+        titleLabel.accessibilityTraits = .header
 
         let bodyLabel = UILabel()
         bodyLabel.text = page.body
         bodyLabel.font = .preferredFont(forTextStyle: .body)
+        bodyLabel.adjustsFontForContentSizeCategory = true
         bodyLabel.textColor = .secondaryLabel
         bodyLabel.numberOfLines = 0
         bodyLabel.textAlignment = .center
 
-        var arranged: [UIView] = [iconContainer, titleLabel, bodyLabel]
-        self.iconContainer = iconContainer
+        var arranged: [UIView] = [card, titleLabel, bodyLabel]
+        self.card = card
         let consentCard = page.showsConsent ? makeConsentCard() : nil
         if let consentCard { arranged.append(consentCard) }
 
@@ -249,19 +444,42 @@ private final class OnboardingPageContentViewController: UIViewController {
         CenteredScrollContent.make(containing: stack, in: view, horizontalInset: 36)
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        card?.reveal()
+    }
+
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        hideIconWhenWindowIsShort()
+        scaleCardToWindow()
+        hideCardWhenWindowIsShort()
     }
 
-    /// The consent page needs the room its disclosure takes, so its icon gives way whenever
+    private var windowHeight: CGFloat {
+        view.window?.bounds.height ?? view.bounds.height
+    }
+
+    /// The card takes a share of the window's height, so it shrinks on short phones and
+    /// windows instead of pushing the title and the body off the screen.
+    private func scaleCardToWindow() {
+        let height = min(Self.maxCardHeight, max(Self.minCardHeight, windowHeight * Self.cardHeightShare))
+        guard abs((cardHeightCap?.constant ?? 0) - height) > 0.5 else { return }
+        cardHeightCap?.constant = height
+    }
+
+    /// The consent page needs the room its disclosure takes, so its picture gives way whenever
     /// the window is shorter than a compact phone, whichever display or orientation it is on.
-    private func hideIconWhenWindowIsShort() {
+    private func hideCardWhenWindowIsShort() {
         guard page.showsConsent, let windowHeight = view.window?.bounds.height else { return }
-        iconContainer?.isHidden = windowHeight < Self.minimumHeightForConsentIcon
+        card?.isHidden = windowHeight < Self.minimumHeightForConsentCard
     }
 
-    private static let minimumHeightForConsentIcon: CGFloat = 700
+    private static let minimumHeightForConsentCard: CGFloat = 700
+    private static let maxCardWidth: CGFloat = 320
+    private static let cardAspect: CGFloat = 0.8
+    private static let maxCardHeight: CGFloat = maxCardWidth / cardAspect
+    private static let minCardHeight: CGFloat = 180
+    private static let cardHeightShare: CGFloat = 0.38
 
     /// The same third-party disclosure the consent sheet shows, so tapping the primary
     /// button on this page is an informed, explicit agreement.
@@ -269,14 +487,15 @@ private final class OnboardingPageContentViewController: UIViewController {
         let card = GlassMaterial.cardView(cornerRadius: 20)
 
         let icon = UIImageView(image: UIImage(systemName: "cloud.fill"))
-        icon.tintColor = .systemPurple
+        icon.tintColor = .brandText
+        icon.hideFromAccessibility()
         icon.setContentHuggingPriority(.required, for: .horizontal)
         icon.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         let label = UILabel()
         label.text = CloudAIConsent.disclosure
-        label.font = .preferredFont(forTextStyle: .footnote)
-        label.textColor = .secondaryLabel
+        label.useScaledFont(.footnote, size: 13)
+        label.textColor = .label
         label.numberOfLines = 0
 
         let row = UIStackView(arrangedSubviews: [icon, label])
@@ -291,6 +510,7 @@ private final class OnboardingPageContentViewController: UIViewController {
             row.leadingAnchor.constraint(equalTo: card.contentView.leadingAnchor, constant: 14),
             row.trailingAnchor.constraint(equalTo: card.contentView.trailingAnchor, constant: -14),
         ])
+        card.describe(CloudAIConsent.disclosure)
         return card
     }
 }

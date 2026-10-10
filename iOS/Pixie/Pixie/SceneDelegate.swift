@@ -78,12 +78,37 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             return
         }
 
-        if await bootstrapAnonymousUser() {
-            showMainInterface()
+        let account = Task { await bootstrapAnonymousUser() }
+
+        if !Onboarding.isCompleted {
+            showFirstRunOnboarding(whileCreating: account)
             return
         }
 
-        showLaunchFailureInterface()
+        if await account.value {
+            showMainInterface()
+        } else {
+            showLaunchFailureInterface()
+        }
+    }
+
+    /// A first launch has nothing to restore, so the welcome pages appear at once while the
+    /// anonymous account is created behind them; the last tap waits only if the network is
+    /// still working on it.
+    private func showFirstRunOnboarding(whileCreating account: Task<Bool, Never>) {
+        let onboarding = OnboardingViewController()
+        onboarding.onFinished = { [weak self, weak onboarding] in
+            onboarding?.showWaiting()
+            Task { @MainActor in
+                guard let self else { return }
+                if await account.value {
+                    self.showMainInterface()
+                } else {
+                    self.showLaunchFailureInterface()
+                }
+            }
+        }
+        replaceRoot(with: onboarding)
     }
 
     @MainActor
@@ -124,6 +149,19 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         AppContainer.shared.updateNetworkServiceAPIKey()
     }
     #endif
+
+    @MainActor
+    func restartAsNewUser() {
+        guard let window else { return }
+        let splashViewController = UIViewController()
+        splashViewController.view = SplashView(frame: window.bounds)
+        Motion.transition(with: window, duration: 0.3, options: .transitionCrossDissolve) {
+            window.rootViewController = splashViewController
+        }
+        Task {
+            await checkAuthenticationState()
+        }
+    }
 
     func showAuthenticationInterface() {
         let authViewController = AuthenticationViewController()

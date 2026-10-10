@@ -9,7 +9,7 @@ protocol APIServiceProtocol {
     func getUsage(userId: String, start: String?, end: String?) async throws -> UsageResponse
     func getUsageDetails(userId: String, start: String?, end: String?) async throws -> UsageDetailsResponse
     func getCreditBalance() async throws -> CreditBalance
-    func getCreditTransactions(limit: Int) async throws -> CreditTransactionsResponse
+    func getCreditTransactions(limit: Int, page: Int) async throws -> CreditTransactionsResponse
     func getCreditPacks() async throws -> CreditPacksResponse
     func estimateCreditCost(_ request: CreditEstimateRequest) async throws -> CreditEstimateResponse
     func checkDeviceAuthStatus(deviceCode: String) async throws -> DeviceAuthStatus
@@ -99,8 +99,8 @@ class APIService: APIServiceProtocol {
         try await networkService.get("/v1/credits/balance", type: CreditBalance.self)
     }
     
-    func getCreditTransactions(limit: Int) async throws -> CreditTransactionsResponse {
-        try await networkService.get("/v1/credits/transactions?per_page=\(limit)", type: CreditTransactionsResponse.self)
+    func getCreditTransactions(limit: Int, page: Int) async throws -> CreditTransactionsResponse {
+        try await networkService.get("/v1/credits/transactions?per_page=\(limit)&page=\(page)", type: CreditTransactionsResponse.self)
     }
     
     func getCreditPacks() async throws -> CreditPacksResponse {

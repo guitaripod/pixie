@@ -11,14 +11,20 @@ class CostEstimatorViewController: UIViewController {
     private let balanceCard = UIView()
     private let balanceLabel = UILabel()
     private let balanceAmountLabel = UILabel()
+    private let balanceStatusLabel = UILabel()
+    private let balanceStatusIcon = UIImageView()
+    private var currentBalance: Int?
+    private var pendingAnnouncement: DispatchWorkItem?
+    private var announcementBaseline: String?
+    private var lastResultSummary = ""
     
     private let qualitySection = UIView()
     private let qualityLabel = UILabel()
-    private let qualitySegmentedControl = UISegmentedControl(items: [String(localized: "Low"), String(localized: "Medium"), String(localized: "High")])
+    private let qualitySegmentedControl = LabelledSegmentedControl(items: [String(localized: "Low"), String(localized: "Medium"), String(localized: "High")])
     
     private let sizeSection = UIView()
     private let sizeLabel = UILabel()
-    private let sizeSegmentedControl = UISegmentedControl(items: ["1024×1024", "1536×1024", "1024×1536"])
+    private let sizeSegmentedControl = LabelledSegmentedControl(items: ["1024×1024", "1536×1024", "1024×1536"])
     
     private let editSection = UIView()
     private let editLabel = UILabel()
@@ -93,42 +99,77 @@ class CostEstimatorViewController: UIViewController {
         balanceCard.translatesAutoresizingMaskIntoConstraints = false
         
         balanceLabel.text = String(localized: "Current Balance")
-        balanceLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        balanceLabel.useScaledFont(.subheadline, size: 14, weight: .medium)
         balanceLabel.textColor = .secondaryLabel
+        balanceLabel.numberOfLines = 0
         balanceLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        balanceAmountLabel.font = .systemFont(ofSize: 28, weight: .bold)
+        balanceAmountLabel.useScaledFont(.title1, size: 28, weight: .bold)
+        balanceAmountLabel.textColor = .label
+        balanceAmountLabel.numberOfLines = 0
         balanceAmountLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        balanceStatusLabel.useScaledFont(.subheadline, size: 14, weight: .semibold)
+        balanceStatusLabel.textColor = .label
+        balanceStatusLabel.numberOfLines = 0
+        balanceStatusIcon.contentMode = .scaleAspectFit
+        balanceStatusIcon.setContentHuggingPriority(.required, for: .horizontal)
+        balanceStatusIcon.setContentCompressionResistancePriority(.required, for: .horizontal)
+
+        let statusStack = UIStackView(arrangedSubviews: [balanceStatusIcon, balanceStatusLabel])
+        statusStack.axis = .horizontal
+        statusStack.spacing = 6
+        statusStack.alignment = .center
+        statusStack.isHidden = true
+        statusStack.tag = Self.balanceStatusTag
+        statusStack.translatesAutoresizingMaskIntoConstraints = false
         
         balanceCard.addSubview(balanceLabel)
         balanceCard.addSubview(balanceAmountLabel)
+        balanceCard.addSubview(statusStack)
+        balanceCard.isAccessibilityElement = true
+        balanceCard.accessibilityTraits = .staticText
         
         NSLayoutConstraint.activate([
             balanceLabel.topAnchor.constraint(equalTo: balanceCard.topAnchor, constant: 16),
             balanceLabel.leadingAnchor.constraint(equalTo: balanceCard.leadingAnchor, constant: 16),
+            balanceLabel.trailingAnchor.constraint(equalTo: balanceCard.trailingAnchor, constant: -16),
             
             balanceAmountLabel.topAnchor.constraint(equalTo: balanceLabel.bottomAnchor, constant: 4),
             balanceAmountLabel.leadingAnchor.constraint(equalTo: balanceCard.leadingAnchor, constant: 16),
-            balanceAmountLabel.bottomAnchor.constraint(equalTo: balanceCard.bottomAnchor, constant: -16)
+            balanceAmountLabel.trailingAnchor.constraint(equalTo: balanceCard.trailingAnchor, constant: -16),
+
+            statusStack.topAnchor.constraint(equalTo: balanceAmountLabel.bottomAnchor, constant: 6),
+            statusStack.leadingAnchor.constraint(equalTo: balanceCard.leadingAnchor, constant: 16),
+            statusStack.trailingAnchor.constraint(lessThanOrEqualTo: balanceCard.trailingAnchor, constant: -16),
+            statusStack.bottomAnchor.constraint(equalTo: balanceCard.bottomAnchor, constant: -16)
         ])
     }
+
+    private static let balanceStatusTag = 7001
     
     private func setupQualitySection() {
         qualityLabel.text = String(localized: "Quality")
-        qualityLabel.font = .systemFont(ofSize: 16, weight: .semibold)
+        qualityLabel.useScaledFont(.callout, size: 16, weight: .semibold)
+        qualityLabel.numberOfLines = 0
+        qualityLabel.accessibilityElementsHidden = true
         qualityLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        qualitySegmentedControl.selectedSegmentIndex = 1 // Medium by default
+        qualitySegmentedControl.selectedSegmentIndex = 1
+        qualitySegmentedControl.accessibilityLabel = String(localized: "Quality")
         qualitySegmentedControl.addTarget(self, action: #selector(segmentChanged), for: .valueChanged)
         qualitySegmentedControl.translatesAutoresizingMaskIntoConstraints = false
     }
     
     private func setupSizeSection() {
         sizeLabel.text = String(localized: "Size")
-        sizeLabel.font = .systemFont(ofSize: 16, weight: .semibold)
+        sizeLabel.useScaledFont(.callout, size: 16, weight: .semibold)
+        sizeLabel.numberOfLines = 0
+        sizeLabel.accessibilityElementsHidden = true
         sizeLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        sizeSegmentedControl.selectedSegmentIndex = 0 // 1024x1024 by default
+        sizeSegmentedControl.selectedSegmentIndex = 0
+        sizeSegmentedControl.accessibilityLabel = String(localized: "Size")
         sizeSegmentedControl.addTarget(self, action: #selector(segmentChanged), for: .valueChanged)
         sizeSegmentedControl.translatesAutoresizingMaskIntoConstraints = false
     }
@@ -139,10 +180,13 @@ class CostEstimatorViewController: UIViewController {
         editSection.translatesAutoresizingMaskIntoConstraints = false
         
         editLabel.text = String(localized: "Edit Mode")
-        editLabel.font = .systemFont(ofSize: 16, weight: .medium)
+        editLabel.useScaledFont(.callout, size: 16, weight: .medium)
+        editLabel.numberOfLines = 0
+        editLabel.accessibilityElementsHidden = true
         editLabel.translatesAutoresizingMaskIntoConstraints = false
         
         editSwitch.isOn = false
+        editSwitch.accessibilityLabel = String(localized: "Edit Mode")
         editSwitch.addTarget(self, action: #selector(switchChanged), for: .valueChanged)
         editSwitch.translatesAutoresizingMaskIntoConstraints = false
         
@@ -151,12 +195,14 @@ class CostEstimatorViewController: UIViewController {
         
         NSLayoutConstraint.activate([
             editLabel.leadingAnchor.constraint(equalTo: editSection.leadingAnchor, constant: 16),
-            editLabel.centerYAnchor.constraint(equalTo: editSection.centerYAnchor),
+            editLabel.topAnchor.constraint(equalTo: editSection.topAnchor, constant: 12),
+            editLabel.bottomAnchor.constraint(equalTo: editSection.bottomAnchor, constant: -12),
+            editLabel.trailingAnchor.constraint(lessThanOrEqualTo: editSwitch.leadingAnchor, constant: -12),
             
             editSwitch.trailingAnchor.constraint(equalTo: editSection.trailingAnchor, constant: -16),
             editSwitch.centerYAnchor.constraint(equalTo: editSection.centerYAnchor),
             
-            editSection.heightAnchor.constraint(equalToConstant: 56)
+            editSection.heightAnchor.constraint(greaterThanOrEqualToConstant: 56)
         ])
     }
     
@@ -166,18 +212,23 @@ class CostEstimatorViewController: UIViewController {
         numberOfImagesSection.translatesAutoresizingMaskIntoConstraints = false
         
         numberOfImagesLabel.text = String(localized: "Number of Images")
-        numberOfImagesLabel.font = .systemFont(ofSize: 16, weight: .medium)
+        numberOfImagesLabel.useScaledFont(.callout, size: 16, weight: .medium)
+        numberOfImagesLabel.numberOfLines = 0
+        numberOfImagesLabel.accessibilityElementsHidden = true
         numberOfImagesLabel.translatesAutoresizingMaskIntoConstraints = false
         
         numberOfImagesStepper.minimumValue = 1
         numberOfImagesStepper.maximumValue = 4
         numberOfImagesStepper.value = 1
+        numberOfImagesStepper.accessibilityLabel = String(localized: "Number of Images")
+        numberOfImagesStepper.accessibilityValue = "1"
         numberOfImagesStepper.addTarget(self, action: #selector(stepperChanged), for: .valueChanged)
         numberOfImagesStepper.translatesAutoresizingMaskIntoConstraints = false
         
         numberOfImagesValueLabel.text = "1"
-        numberOfImagesValueLabel.font = .systemFont(ofSize: 16, weight: .medium)
-        numberOfImagesValueLabel.textColor = .systemPurple
+        numberOfImagesValueLabel.useScaledFont(.callout, size: 16, weight: .medium)
+        numberOfImagesValueLabel.textColor = .brandText
+        numberOfImagesValueLabel.accessibilityElementsHidden = true
         numberOfImagesValueLabel.translatesAutoresizingMaskIntoConstraints = false
         
         numberOfImagesSection.addSubview(numberOfImagesLabel)
@@ -186,7 +237,9 @@ class CostEstimatorViewController: UIViewController {
         
         NSLayoutConstraint.activate([
             numberOfImagesLabel.leadingAnchor.constraint(equalTo: numberOfImagesSection.leadingAnchor, constant: 16),
-            numberOfImagesLabel.centerYAnchor.constraint(equalTo: numberOfImagesSection.centerYAnchor),
+            numberOfImagesLabel.topAnchor.constraint(equalTo: numberOfImagesSection.topAnchor, constant: 12),
+            numberOfImagesLabel.bottomAnchor.constraint(equalTo: numberOfImagesSection.bottomAnchor, constant: -12),
+            numberOfImagesLabel.trailingAnchor.constraint(lessThanOrEqualTo: numberOfImagesValueLabel.leadingAnchor, constant: -12),
             
             numberOfImagesValueLabel.trailingAnchor.constraint(equalTo: numberOfImagesStepper.leadingAnchor, constant: -16),
             numberOfImagesValueLabel.centerYAnchor.constraint(equalTo: numberOfImagesSection.centerYAnchor),
@@ -194,15 +247,19 @@ class CostEstimatorViewController: UIViewController {
             numberOfImagesStepper.trailingAnchor.constraint(equalTo: numberOfImagesSection.trailingAnchor, constant: -16),
             numberOfImagesStepper.centerYAnchor.constraint(equalTo: numberOfImagesSection.centerYAnchor),
             
-            numberOfImagesSection.heightAnchor.constraint(equalToConstant: 56)
+            numberOfImagesSection.heightAnchor.constraint(greaterThanOrEqualToConstant: 56)
         ])
+        numberOfImagesValueLabel.setContentHuggingPriority(.required, for: .horizontal)
+        numberOfImagesValueLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
     }
     
     private func setupResultCard() {
-        resultCard.backgroundColor = .systemPurple.withAlphaComponent(0.1)
+        resultCard.backgroundColor = .brandTint
         resultCard.layer.cornerRadius = 16
         resultCard.layer.borderWidth = 1
-        resultCard.layer.borderColor = UIColor.systemPurple.cgColor
+        resultCard.layer.borderColor = UIColor.brand.cgColor
+        resultCard.isAccessibilityElement = true
+        resultCard.accessibilityTraits = .staticText
         resultCard.translatesAutoresizingMaskIntoConstraints = false
         
         resultStackView.axis = .vertical
@@ -210,15 +267,17 @@ class CostEstimatorViewController: UIViewController {
         resultStackView.alignment = .center
         resultStackView.translatesAutoresizingMaskIntoConstraints = false
         
-        estimatedCostLabel.font = .systemFont(ofSize: 36, weight: .bold)
-        estimatedCostLabel.textColor = .systemPurple
+        estimatedCostLabel.useScaledFont(.largeTitle, size: 36, weight: .bold)
+        estimatedCostLabel.textColor = .brandText
         estimatedCostLabel.textAlignment = .center
+        estimatedCostLabel.numberOfLines = 0
         
-        estimatedUSDLabel.font = .systemFont(ofSize: 16, weight: .medium)
+        estimatedUSDLabel.useScaledFont(.callout, size: 16, weight: .medium)
         estimatedUSDLabel.textColor = .secondaryLabel
         estimatedUSDLabel.textAlignment = .center
+        estimatedUSDLabel.numberOfLines = 0
         
-        noteLabel.font = .systemFont(ofSize: 14)
+        noteLabel.useScaledFont(.subheadline, size: 14)
         noteLabel.textColor = .secondaryLabel
         noteLabel.textAlignment = .center
         noteLabel.numberOfLines = 0
@@ -292,27 +351,79 @@ class CostEstimatorViewController: UIViewController {
     
     private func updateBalance(_ balance: CreditBalance?) {
         guard let balance = balance else { return }
+        currentBalance = balance.balance
         balanceAmountLabel.text = String(localized: "\(balance.balance) credits")
-        balanceAmountLabel.textColor = balance.getBalanceColor()
+        refreshBalanceStatus()
+    }
+
+    /// Says in words and with a symbol whether the balance covers the current estimate, so the
+    /// green or orange tint is never the only signal.
+    private func refreshBalanceStatus() {
+        guard let balance = currentBalance else { return }
+        let isEnough = balance >= estimatedTotal
+        let status = isEnough ? String(localized: "Enough") : String(localized: "Low")
+        balanceStatusLabel.text = status
+        balanceStatusIcon.image = UIImage(systemName: isEnough ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+        balanceStatusIcon.tintColor = isEnough ? .systemGreen : .systemOrange
+        balanceCard.viewWithTag(Self.balanceStatusTag)?.isHidden = false
+        balanceCard.accessibilityLabel = String(localized: "Current Balance")
+        balanceCard.accessibilityValue = "\(String(localized: "\(balance) credits")), \(status)"
     }
     
     @objc private func segmentChanged() {
         HapticsManager.shared.selection()
-        updateCalculation()
+        updateCalculation(announcing: true)
     }
     
     @objc private func switchChanged() {
         HapticsManager.shared.selection()
-        updateCalculation()
+        updateCalculation(announcing: true)
     }
     
     @objc private func stepperChanged() {
         HapticsManager.shared.selection()
-        numberOfImagesValueLabel.text = "\(Int(numberOfImagesStepper.value))"
-        updateCalculation()
+        let count = Int(numberOfImagesStepper.value)
+        numberOfImagesValueLabel.text = "\(count)"
+        numberOfImagesStepper.accessibilityValue = "\(count)"
+        updateCalculation(announcing: true)
     }
+
+    private var estimatedTotal: Int {
+        let quality = ["low", "medium", "high"][qualitySegmentedControl.selectedSegmentIndex]
+        let size = ["1024x1024", "1536x1024", "1024x1536"][sizeSegmentedControl.selectedSegmentIndex]
+        let editCost = editSwitch.isOn ? getEditCost(quality: quality) : 0
+        return (getBaseCost(quality: quality, size: size) + editCost) * Int(numberOfImagesStepper.value)
+    }
+
+    /// One USD figure in the person's own number format. It stays dollars: the symbol is used
+    /// only where their region's currency is also dollars, otherwise the ISO code is shown.
+    private func formattedUSD(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.locale = .current
+        formatter.currencyCode = "USD"
+        formatter.numberStyle = Locale.current.currency?.identifier == "USD" ? .currency : .currencyISOCode
+        return formatter.string(from: NSNumber(value: amount)) ?? String(format: "%.2f USD", amount)
+    }
+
+    /// Speaks the new estimate once the person stops adjusting, and only when it changed.
+    private func scheduleAnnouncement(previous: String) {
+        if announcementBaseline == nil { announcementBaseline = previous }
+        pendingAnnouncement?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            let baseline = self.announcementBaseline
+            self.announcementBaseline = nil
+            guard self.lastResultSummary != baseline else { return }
+            Announce.say(self.lastResultSummary)
+        }
+        pendingAnnouncement = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.announcementDelay, execute: item)
+    }
+
+    private static let announcementDelay: TimeInterval = 0.9
     
-    private func updateCalculation() {
+    private func updateCalculation(announcing: Bool = false) {
+        let previousSummary = lastResultSummary
         let quality = ["low", "medium", "high"][qualitySegmentedControl.selectedSegmentIndex]
         let size = ["1024x1024", "1536x1024", "1024x1536"][sizeSegmentedControl.selectedSegmentIndex]
         let isEdit = editSwitch.isOn
@@ -326,8 +437,13 @@ class CostEstimatorViewController: UIViewController {
         
         // Update UI
         estimatedCostLabel.text = String(localized: "\(totalCost) credits")
-        estimatedUSDLabel.text = String(format: String(localized: "≈ $%.2f USD"), Double(totalCost) * 0.01)
+        estimatedUSDLabel.text = String(localized: "≈ \(formattedUSD(Double(totalCost) * 0.01))")
         noteLabel.text = String(localized: "Estimate based on \(numberOfImages) image\(numberOfImages > 1 ? "s" : "")")
+        lastResultSummary = [estimatedCostLabel.text, estimatedUSDLabel.text].compactMap { $0 }.joined(separator: ", ")
+        resultCard.accessibilityLabel = String(localized: "Cost Estimator")
+        resultCard.accessibilityValue = [lastResultSummary, noteLabel.text].compactMap { $0 }.joined(separator: ", ")
+        refreshBalanceStatus()
+        if announcing { scheduleAnnouncement(previous: previousSummary) }
     }
     
     private func getBaseCost(quality: String, size: String) -> Int {

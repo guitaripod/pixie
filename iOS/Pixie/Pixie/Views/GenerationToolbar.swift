@@ -22,6 +22,8 @@ class GenerationToolbar: UIView {
     private var compressionLevel: Int = 80
     private var selectedModeration: ModerationLevel?
     private var showAdvancedOptions = false
+    private var pendingCostAnnouncement: DispatchWorkItem?
+    private var lastAnnouncedCost = ""
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -37,6 +39,7 @@ class GenerationToolbar: UIView {
         setupExpandedContent()
         
         setExpanded(false)
+        lastAnnouncedCost = currentCostText
     }
     
     private func setupCollapsedContent() {
@@ -53,7 +56,9 @@ class GenerationToolbar: UIView {
         promptTextField.translatesAutoresizingMaskIntoConstraints = false
         promptTextField.placeholder = String(localized: "Describe what you want to create...")
         promptTextField.borderStyle = .none
-        promptTextField.font = .systemFont(ofSize: 16)
+        promptTextField.font = .scaled(.body, size: 16)
+        promptTextField.adjustsFontForContentSizeCategory = true
+        promptTextField.accessibilityLabel = String(localized: "Prompt")
         promptTextField.returnKeyType = .go
         promptTextField.delegate = self
         
@@ -65,15 +70,17 @@ class GenerationToolbar: UIView {
         
         expandButton.translatesAutoresizingMaskIntoConstraints = false
         expandButton.setImage(UIImage(systemName: "chevron.up.circle.fill"), for: .normal)
-        expandButton.tintColor = .systemBlue
+        expandButton.tintColor = .brandText
+        expandButton.accessibilityLabel = String(localized: "Prompt and options")
         expandButton.addTarget(self, action: #selector(expandButtonTapped), for: .touchUpInside)
         
         generateButton.translatesAutoresizingMaskIntoConstraints = false
         var config = UIButton.Configuration.filled()
         config.image = UIImage(systemName: "sparkles")
         config.cornerStyle = .capsule
-        config.baseBackgroundColor = UIColor(red: 0.404, green: 0.314, blue: 0.643, alpha: 1.0)
+        config.baseBackgroundColor = .brand
         generateButton.configuration = config
+        generateButton.accessibilityLabel = String(localized: "Generate")
         generateButton.addTarget(self, action: #selector(generateTapped), for: .touchUpInside)
         
         stackView.addArrangedSubview(textFieldContainer)
@@ -90,14 +97,15 @@ class GenerationToolbar: UIView {
             stackView.leadingAnchor.constraint(equalTo: collapsedContent.leadingAnchor, constant: 16),
             stackView.trailingAnchor.constraint(equalTo: collapsedContent.trailingAnchor, constant: -16),
             
-            textFieldContainer.heightAnchor.constraint(equalToConstant: 40),
+            textFieldContainer.heightAnchor.constraint(greaterThanOrEqualToConstant: 44),
             
             promptTextField.leadingAnchor.constraint(equalTo: textFieldContainer.leadingAnchor, constant: 16),
             promptTextField.trailingAnchor.constraint(equalTo: textFieldContainer.trailingAnchor, constant: -16),
-            promptTextField.centerYAnchor.constraint(equalTo: textFieldContainer.centerYAnchor),
+            promptTextField.topAnchor.constraint(equalTo: textFieldContainer.topAnchor, constant: 10),
+            promptTextField.bottomAnchor.constraint(equalTo: textFieldContainer.bottomAnchor, constant: -10),
             
-            expandButton.widthAnchor.constraint(equalToConstant: 32),
-            expandButton.heightAnchor.constraint(equalToConstant: 32),
+            expandButton.widthAnchor.constraint(equalToConstant: 44),
+            expandButton.heightAnchor.constraint(equalToConstant: 44),
             
             generateButton.widthAnchor.constraint(equalToConstant: 44),
             generateButton.heightAnchor.constraint(equalToConstant: 44)
@@ -133,14 +141,16 @@ class GenerationToolbar: UIView {
         let iconView = UIImageView()
         iconView.translatesAutoresizingMaskIntoConstraints = false
         iconView.image = UIImage(systemName: "sparkles")
-        iconView.tintColor = .systemBlue
+        iconView.tintColor = .brandText
         iconView.contentMode = .scaleAspectFit
         headerView.addSubview(iconView)
         
         let titleLabel = UILabel()
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.text = String(localized: "Create Image")
-        titleLabel.font = .systemFont(ofSize: 24, weight: .semibold)
+        titleLabel.useScaledFont(.title2, size: 24, weight: .semibold)
+        titleLabel.numberOfLines = 0
+        titleLabel.accessibilityTraits = .header
         headerView.addSubview(titleLabel)
         
         NSLayoutConstraint.activate([
@@ -150,10 +160,11 @@ class GenerationToolbar: UIView {
             iconView.heightAnchor.constraint(equalToConstant: 24),
             
             titleLabel.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 8),
-            titleLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+            titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor),
+            titleLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor),
             titleLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
             
-            headerView.heightAnchor.constraint(equalToConstant: 32)
+            headerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 32)
         ])
         
         let promptSection = createPromptSection()
@@ -195,13 +206,17 @@ class GenerationToolbar: UIView {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = String(localized: "Describe what you want to create...")
-        label.font = .systemFont(ofSize: 14)
+        label.useScaledFont(.subheadline, size: 14)
+        label.numberOfLines = 0
         label.textColor = .secondaryLabel
+        label.accessibilityElementsHidden = true
         section.addSubview(label)
         
         let textView = UITextView()
         textView.translatesAutoresizingMaskIntoConstraints = false
-        textView.font = .systemFont(ofSize: 16)
+        textView.font = .scaled(.body, size: 16)
+        textView.adjustsFontForContentSizeCategory = true
+        textView.accessibilityLabel = String(localized: "Prompt")
         textView.backgroundColor = .secondarySystemFill
         textView.layer.cornerRadius = 12
         textView.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
@@ -212,11 +227,12 @@ class GenerationToolbar: UIView {
         NSLayoutConstraint.activate([
             label.topAnchor.constraint(equalTo: section.topAnchor),
             label.leadingAnchor.constraint(equalTo: section.leadingAnchor),
+            label.trailingAnchor.constraint(equalTo: section.trailingAnchor),
             
             textView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 8),
             textView.leadingAnchor.constraint(equalTo: section.leadingAnchor),
             textView.trailingAnchor.constraint(equalTo: section.trailingAnchor),
-            textView.heightAnchor.constraint(equalToConstant: 80),
+            textView.heightAnchor.constraint(greaterThanOrEqualToConstant: 80),
             textView.bottomAnchor.constraint(equalTo: section.bottomAnchor)
         ])
         
@@ -236,13 +252,14 @@ class GenerationToolbar: UIView {
         let iconView = UIImageView()
         iconView.translatesAutoresizingMaskIntoConstraints = false
         iconView.image = UIImage(systemName: "cpu")
-        iconView.tintColor = .systemBlue
+        iconView.tintColor = .brandText
         iconView.contentMode = .scaleAspectFit
 
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = String(localized: "AI Model")
-        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.useScaledFont(.callout, size: 16, weight: .medium)
+        label.numberOfLines = 0
 
         headerStack.addArrangedSubview(iconView)
         headerStack.addArrangedSubview(label)
@@ -270,7 +287,7 @@ class GenerationToolbar: UIView {
                 }
                 self?.selectedModel = model
                 self?.updateUIForModel()
-                self?.updateGenerateButton()
+                self?.costInputChanged()
             }, for: .touchUpInside)
 
             if model == selectedModel {
@@ -290,14 +307,13 @@ class GenerationToolbar: UIView {
             scrollView.topAnchor.constraint(equalTo: headerStack.bottomAnchor, constant: 12),
             scrollView.leadingAnchor.constraint(equalTo: section.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: section.trailingAnchor),
-            scrollView.heightAnchor.constraint(equalToConstant: 80),
+            scrollView.heightAnchor.constraint(equalTo: stackView.heightAnchor),
             scrollView.bottomAnchor.constraint(equalTo: section.bottomAnchor),
 
             stackView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            stackView.heightAnchor.constraint(equalTo: scrollView.heightAnchor)
+            stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor)
         ])
 
         return section
@@ -306,43 +322,46 @@ class GenerationToolbar: UIView {
     private func createModelButton(model: ImageModel) -> UIButton {
         let button = UIButton(type: .custom)
         button.translatesAutoresizingMaskIntoConstraints = false
-
+        
         let stackView = UIStackView()
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.axis = .vertical
         stackView.spacing = 2
         stackView.alignment = .center
         stackView.isUserInteractionEnabled = false
-
+        
         let titleLabel = UILabel()
         titleLabel.text = model.displayName
-        titleLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        titleLabel.useScaledFont(.subheadline, size: 14, weight: .medium)
+        titleLabel.numberOfLines = 0
         titleLabel.textAlignment = .center
-
+        
         let descriptionLabel = UILabel()
         descriptionLabel.text = model.description
-        descriptionLabel.font = .systemFont(ofSize: 11)
+        descriptionLabel.useScaledFont(.caption1, size: 11)
         descriptionLabel.textAlignment = .center
-        descriptionLabel.alpha = 0.7
-        descriptionLabel.numberOfLines = 2
-
+        descriptionLabel.numberOfLines = 0
+        
         stackView.addArrangedSubview(titleLabel)
         stackView.addArrangedSubview(descriptionLabel)
-
+        
         button.addSubview(stackView)
-
+        
         button.layer.cornerRadius = 12
         button.layer.borderWidth = 2
         button.layer.borderColor = UIColor.clear.cgColor
         button.backgroundColor = .secondarySystemFill
-
+        button.accessibilityLabel = "\(model.displayName), \(model.description)"
+        button.accessibilityTraits = .button
+        
         button.configurationUpdateHandler = { button in
-            UIView.animate(withDuration: 0.2) {
+            button.accessibilityTraits = button.isSelected ? [.button, .selected] : .button
+            Motion.animate(0.2) {
                 if button.isSelected {
-                    button.layer.borderColor = UIColor.systemBlue.cgColor
-                    button.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.1)
-                    titleLabel.textColor = .systemBlue
-                    descriptionLabel.textColor = .systemBlue
+                    button.layer.borderColor = UIColor.brand.cgColor
+                    button.backgroundColor = .brandTint
+                    titleLabel.textColor = .brandText
+                    descriptionLabel.textColor = .brandText
                 } else {
                     button.layer.borderColor = UIColor.clear.cgColor
                     button.backgroundColor = .secondarySystemFill
@@ -351,16 +370,17 @@ class GenerationToolbar: UIView {
                 }
             }
         }
-
+        
         NSLayoutConstraint.activate([
             button.widthAnchor.constraint(equalToConstant: 140),
-            button.heightAnchor.constraint(equalToConstant: 80),
+            button.heightAnchor.constraint(greaterThanOrEqualToConstant: 80),
             stackView.centerXAnchor.constraint(equalTo: button.centerXAnchor),
-            stackView.centerYAnchor.constraint(equalTo: button.centerYAnchor),
+            stackView.topAnchor.constraint(equalTo: button.topAnchor, constant: 8),
+            stackView.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -8),
             stackView.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 8),
             stackView.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -8)
         ])
-
+        
         return button
     }
 
@@ -377,13 +397,14 @@ class GenerationToolbar: UIView {
         let iconView = UIImageView()
         iconView.translatesAutoresizingMaskIntoConstraints = false
         iconView.image = UIImage(systemName: "aspectratio")
-        iconView.tintColor = .systemBlue
+        iconView.tintColor = .brandText
         iconView.contentMode = .scaleAspectFit
         
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = String(localized: "Size")
-        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.useScaledFont(.callout, size: 16, weight: .medium)
+        label.numberOfLines = 0
         
         headerStack.addArrangedSubview(iconView)
         headerStack.addArrangedSubview(label)
@@ -410,6 +431,7 @@ class GenerationToolbar: UIView {
                     }
                 }
                 self?.selectedSize = size
+                self?.costInputChanged()
             }, for: .touchUpInside)
             
             if size == selectedSize {
@@ -429,14 +451,13 @@ class GenerationToolbar: UIView {
             scrollView.topAnchor.constraint(equalTo: headerStack.bottomAnchor, constant: 12),
             scrollView.leadingAnchor.constraint(equalTo: section.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: section.trailingAnchor),
-            scrollView.heightAnchor.constraint(equalToConstant: 60),
+            scrollView.heightAnchor.constraint(equalTo: stackView.heightAnchor),
             scrollView.bottomAnchor.constraint(equalTo: section.bottomAnchor),
             
             stackView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            stackView.heightAnchor.constraint(equalTo: scrollView.heightAnchor)
+            stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor)
         ])
         
         return section
@@ -455,14 +476,15 @@ class GenerationToolbar: UIView {
         
         let titleLabel = UILabel()
         titleLabel.text = size.displayName
-        titleLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        titleLabel.useScaledFont(.subheadline, size: 14, weight: .medium)
+        titleLabel.numberOfLines = 0
         titleLabel.textAlignment = .center
         
         let dimensionsLabel = UILabel()
         dimensionsLabel.text = size.dimensions
-        dimensionsLabel.font = .systemFont(ofSize: 11)
+        dimensionsLabel.useScaledFont(.caption1, size: 11)
+        dimensionsLabel.numberOfLines = 0
         dimensionsLabel.textAlignment = .center
-        dimensionsLabel.alpha = 0.7
         
         stackView.addArrangedSubview(titleLabel)
         stackView.addArrangedSubview(dimensionsLabel)
@@ -473,14 +495,17 @@ class GenerationToolbar: UIView {
         button.layer.borderWidth = 2
         button.layer.borderColor = UIColor.clear.cgColor
         button.backgroundColor = .secondarySystemFill
+        button.accessibilityLabel = "\(size.displayName), \(size.dimensions)"
+        button.accessibilityTraits = .button
         
         button.configurationUpdateHandler = { button in
-            UIView.animate(withDuration: 0.2) {
+            button.accessibilityTraits = button.isSelected ? [.button, .selected] : .button
+            Motion.animate(0.2) {
                 if button.isSelected {
-                    button.layer.borderColor = UIColor.systemBlue.cgColor
-                    button.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.1)
-                    titleLabel.textColor = .systemBlue
-                    dimensionsLabel.textColor = .systemBlue
+                    button.layer.borderColor = UIColor.brand.cgColor
+                    button.backgroundColor = .brandTint
+                    titleLabel.textColor = .brandText
+                    dimensionsLabel.textColor = .brandText
                 } else {
                     button.layer.borderColor = UIColor.clear.cgColor
                     button.backgroundColor = .secondarySystemFill
@@ -491,10 +516,13 @@ class GenerationToolbar: UIView {
         }
         
         NSLayoutConstraint.activate([
-            button.widthAnchor.constraint(equalToConstant: 90),
-            button.heightAnchor.constraint(equalToConstant: 60),
+            button.widthAnchor.constraint(greaterThanOrEqualToConstant: 90),
+            button.heightAnchor.constraint(greaterThanOrEqualToConstant: 60),
             stackView.centerXAnchor.constraint(equalTo: button.centerXAnchor),
-            stackView.centerYAnchor.constraint(equalTo: button.centerYAnchor)
+            stackView.topAnchor.constraint(equalTo: button.topAnchor, constant: 8),
+            stackView.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -8),
+            stackView.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 8),
+            stackView.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -8)
         ])
         
         return button
@@ -513,19 +541,21 @@ class GenerationToolbar: UIView {
         let iconView = UIImageView()
         iconView.translatesAutoresizingMaskIntoConstraints = false
         iconView.image = UIImage(systemName: "sparkles")
-        iconView.tintColor = .systemBlue
+        iconView.tintColor = .brandText
         iconView.contentMode = .scaleAspectFit
         
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = String(localized: "Quality")
-        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.useScaledFont(.callout, size: 16, weight: .medium)
+        label.numberOfLines = 0
         
         let creditsLabel = UILabel()
         creditsLabel.translatesAutoresizingMaskIntoConstraints = false
         creditsLabel.text = selectedQuality.creditRange
-        creditsLabel.font = .systemFont(ofSize: 12)
+        creditsLabel.useScaledFont(.caption1, size: 12)
         creditsLabel.textColor = .secondaryLabel
+        creditsLabel.accessibilityElementsHidden = true
         creditsLabel.tag = 5001
         
         headerStack.addArrangedSubview(iconView)
@@ -556,6 +586,7 @@ class GenerationToolbar: UIView {
                 }
                 self?.selectedQuality = quality
                 creditsLabel.text = quality.creditRange
+                self?.costInputChanged()
             }, for: .touchUpInside)
             
             if quality == selectedQuality {
@@ -576,14 +607,13 @@ class GenerationToolbar: UIView {
             scrollView.topAnchor.constraint(equalTo: headerStack.bottomAnchor, constant: 12),
             scrollView.leadingAnchor.constraint(equalTo: section.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: section.trailingAnchor),
-            scrollView.heightAnchor.constraint(equalToConstant: 40),
+            scrollView.heightAnchor.constraint(equalTo: stackView.heightAnchor),
             scrollView.bottomAnchor.constraint(equalTo: section.bottomAnchor),
             
             stackView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            stackView.heightAnchor.constraint(equalTo: scrollView.heightAnchor)
+            stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor)
         ])
         
         return section
@@ -607,7 +637,8 @@ class GenerationToolbar: UIView {
         
         let label = UILabel()
         label.text = quality.displayName
-        label.font = .systemFont(ofSize: 14, weight: .medium)
+        label.useScaledFont(.subheadline, size: 14, weight: .medium)
+        label.numberOfLines = 0
         label.textColor = .label
         
         stackView.addArrangedSubview(iconView)
@@ -617,11 +648,15 @@ class GenerationToolbar: UIView {
         
         button.layer.cornerRadius = 12
         button.backgroundColor = .secondarySystemFill
+        button.accessibilityLabel = quality.displayName
+        button.accessibilityValue = quality.creditRange
+        button.accessibilityTraits = .button
         
         button.configurationUpdateHandler = { button in
-            UIView.animate(withDuration: 0.2) {
+            button.accessibilityTraits = button.isSelected ? [.button, .selected] : .button
+            Motion.animate(0.2) {
                 if button.isSelected {
-                    button.backgroundColor = .systemBlue
+                    button.backgroundColor = .brand
                     iconView.tintColor = .white
                     label.textColor = .white
                 } else {
@@ -633,9 +668,10 @@ class GenerationToolbar: UIView {
         }
         
         NSLayoutConstraint.activate([
-            button.heightAnchor.constraint(equalToConstant: 40),
+            button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44),
             stackView.centerXAnchor.constraint(equalTo: button.centerXAnchor),
-            stackView.centerYAnchor.constraint(equalTo: button.centerYAnchor),
+            stackView.topAnchor.constraint(equalTo: button.topAnchor, constant: 8),
+            stackView.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -8),
             stackView.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 16),
             stackView.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -16),
             iconView.widthAnchor.constraint(equalToConstant: 18),
@@ -647,16 +683,20 @@ class GenerationToolbar: UIView {
     
     private func createAdvancedSection() -> UIView {
         let section = UIView()
-        let toggleView = UIView()
+        let toggleView = ActivatableView()
         toggleView.translatesAutoresizingMaskIntoConstraints = false
         toggleView.backgroundColor = UIColor.secondarySystemFill.withAlphaComponent(0.5)
         toggleView.layer.cornerRadius = 16
+        toggleView.tag = 1003
+        toggleView.onActivate = { [weak self] in self?.toggleAdvancedOptions() }
+        toggleView.describe(String(localized: "Advanced Options"), value: String(localized: "Collapsed"), traits: .button)
         section.addSubview(toggleView)
         
         let toggleLabel = UILabel()
         toggleLabel.translatesAutoresizingMaskIntoConstraints = false
         toggleLabel.text = String(localized: "Advanced Options")
-        toggleLabel.font = .systemFont(ofSize: 16, weight: .medium)
+        toggleLabel.useScaledFont(.callout, size: 16, weight: .medium)
+        toggleLabel.numberOfLines = 0
         toggleView.addSubview(toggleLabel)
         
         let toggleIcon = UIImageView()
@@ -693,10 +733,12 @@ class GenerationToolbar: UIView {
             toggleView.topAnchor.constraint(equalTo: section.topAnchor),
             toggleView.leadingAnchor.constraint(equalTo: section.leadingAnchor),
             toggleView.trailingAnchor.constraint(equalTo: section.trailingAnchor),
-            toggleView.heightAnchor.constraint(equalToConstant: 48),
+            toggleView.heightAnchor.constraint(greaterThanOrEqualToConstant: 48),
             
             toggleLabel.leadingAnchor.constraint(equalTo: toggleView.leadingAnchor, constant: 16),
-            toggleLabel.centerYAnchor.constraint(equalTo: toggleView.centerYAnchor),
+            toggleLabel.topAnchor.constraint(equalTo: toggleView.topAnchor, constant: 12),
+            toggleLabel.bottomAnchor.constraint(equalTo: toggleView.bottomAnchor, constant: -12),
+            toggleLabel.trailingAnchor.constraint(lessThanOrEqualTo: toggleIcon.leadingAnchor, constant: -8),
             
             toggleIcon.trailingAnchor.constraint(equalTo: toggleView.trailingAnchor, constant: -16),
             toggleIcon.centerYAnchor.constraint(equalTo: toggleView.centerYAnchor),
@@ -759,19 +801,23 @@ class GenerationToolbar: UIView {
         let compressionLabel = UILabel()
         compressionLabel.translatesAutoresizingMaskIntoConstraints = false
         compressionLabel.text = String(localized: "Compression")
-        compressionLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        compressionLabel.useScaledFont(.subheadline, size: 14, weight: .medium)
+        compressionLabel.numberOfLines = 0
+        compressionLabel.accessibilityElementsHidden = true
         compressionHeader.addSubview(compressionLabel)
         
         let compressionValue = UILabel()
         compressionValue.translatesAutoresizingMaskIntoConstraints = false
         compressionValue.text = String(localized: "\(compressionLevel)%")
-        compressionValue.font = .systemFont(ofSize: 14, weight: .medium)
-        compressionValue.textColor = .systemBlue
+        compressionValue.useScaledFont(.subheadline, size: 14, weight: .medium)
+        compressionValue.accessibilityElementsHidden = true
+        compressionValue.textColor = .brandText
         compressionValue.tag = 2002
         compressionHeader.addSubview(compressionValue)
         
-        let slider = UISlider()
+        let slider = PercentSlider()
         slider.translatesAutoresizingMaskIntoConstraints = false
+        slider.accessibilityLabel = String(localized: "Compression")
         slider.minimumValue = 0
         slider.maximumValue = 100
         slider.value = Float(compressionLevel)
@@ -797,12 +843,15 @@ class GenerationToolbar: UIView {
             compressionStack.bottomAnchor.constraint(equalTo: compressionContainer.bottomAnchor),
             
             compressionLabel.leadingAnchor.constraint(equalTo: compressionHeader.leadingAnchor),
-            compressionLabel.centerYAnchor.constraint(equalTo: compressionHeader.centerYAnchor),
+            compressionLabel.topAnchor.constraint(equalTo: compressionHeader.topAnchor),
+            compressionLabel.bottomAnchor.constraint(equalTo: compressionHeader.bottomAnchor),
+            compressionLabel.trailingAnchor.constraint(lessThanOrEqualTo: compressionValue.leadingAnchor, constant: -8),
             
             compressionValue.trailingAnchor.constraint(equalTo: compressionHeader.trailingAnchor),
             compressionValue.centerYAnchor.constraint(equalTo: compressionHeader.centerYAnchor),
             
-            compressionHeader.heightAnchor.constraint(equalToConstant: 20)
+            compressionHeader.heightAnchor.constraint(greaterThanOrEqualToConstant: 20),
+            slider.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
         ])
         
         return section
@@ -833,13 +882,14 @@ class GenerationToolbar: UIView {
         let iconView = UIImageView()
         iconView.translatesAutoresizingMaskIntoConstraints = false
         iconView.image = UIImage(systemName: icon)
-        iconView.tintColor = .systemBlue
+        iconView.tintColor = .brandText
         iconView.contentMode = .scaleAspectFit
         
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = title
-        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.useScaledFont(.callout, size: 16, weight: .medium)
+        label.numberOfLines = 0
         
         headerStack.addArrangedSubview(iconView)
         headerStack.addArrangedSubview(label)
@@ -886,14 +936,13 @@ class GenerationToolbar: UIView {
             scrollView.topAnchor.constraint(equalTo: headerStack.bottomAnchor, constant: 12),
             scrollView.leadingAnchor.constraint(equalTo: section.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: section.trailingAnchor),
-            scrollView.heightAnchor.constraint(equalToConstant: 36),
+            scrollView.heightAnchor.constraint(equalTo: stackView.heightAnchor),
             scrollView.bottomAnchor.constraint(equalTo: section.bottomAnchor),
             
             stackView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            stackView.heightAnchor.constraint(equalTo: scrollView.heightAnchor)
+            stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor)
         ])
         
         section.tag = Int.random(in: 100...999)
@@ -903,19 +952,29 @@ class GenerationToolbar: UIView {
     private func createSelectionChip(title: String) -> UIButton {
         let button = UIButton(type: .custom)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle(title, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
+        var config = UIButton.Configuration.plain()
+        config.title = title
+        config.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16)
+        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { attributes in
+            var attributes = attributes
+            attributes.font = .scaled(.subheadline, size: 14, weight: .medium)
+            return attributes
+        }
+        button.configuration = config
         button.layer.cornerRadius = 12
-        
-        button.setTitleColor(.label, for: .normal)
-        button.setTitleColor(.white, for: .selected)
-        button.backgroundColor = .secondarySystemFill
+        button.clipsToBounds = true
+        button.accessibilityLabel = title
+        button.accessibilityTraits = .button
         
         button.configurationUpdateHandler = { button in
-            UIView.animate(withDuration: 0.2) {
-                button.backgroundColor = button.isSelected ? .systemBlue : .secondarySystemFill
-            }
+            var config = button.configuration
+            config?.baseForegroundColor = button.isSelected ? .white : .label
+            config?.background.backgroundColor = button.isSelected ? .brand : .secondarySystemFill
+            button.configuration = config
+            button.accessibilityTraits = button.isSelected ? [.button, .selected] : .button
         }
+        
+        button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
         
         return button
     }
@@ -926,11 +985,15 @@ class GenerationToolbar: UIView {
         
         if let toggleIcon = viewWithTag(1001) as? UIImageView,
            let optionsContainer = viewWithTag(1002) {
-            UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0) {
+            Motion.spring(0.3, damping: 0.8) {
                 toggleIcon.transform = self.showAdvancedOptions ? CGAffineTransform(rotationAngle: .pi) : .identity
                 optionsContainer.isHidden = !self.showAdvancedOptions
                 optionsContainer.alpha = self.showAdvancedOptions ? 1 : 0
             }
+        }
+        if let toggleView = viewWithTag(1003) {
+            toggleView.accessibilityValue = showAdvancedOptions ? String(localized: "Expanded") : String(localized: "Collapsed")
+            Announce.layoutChanged(toggleView)
         }
     }
     
@@ -951,7 +1014,7 @@ class GenerationToolbar: UIView {
     private func updateCompressionVisibility() {
         if let compressionContainer = viewWithTag(2001) {
             let shouldShow = selectedFormat?.supportsCompression ?? false
-            UIView.animate(withDuration: 0.3) {
+            Motion.animate(0.3) {
                 compressionContainer.isHidden = !shouldShow
                 compressionContainer.alpha = shouldShow ? 1 : 0
             }
@@ -968,7 +1031,9 @@ class GenerationToolbar: UIView {
         config.imagePlacement = .leading
         config.imagePadding = 8
         config.cornerStyle = .large
-        config.baseBackgroundColor = .systemBlue
+        config.baseBackgroundColor = .brand
+        config.baseForegroundColor = .white
+        config.titleLineBreakMode = .byWordWrapping
         button.configuration = config
         button.configurationUpdateHandler = { [weak self] button in
             guard let self = self else { return }
@@ -984,7 +1049,7 @@ class GenerationToolbar: UIView {
             button.topAnchor.constraint(equalTo: section.topAnchor),
             button.leadingAnchor.constraint(equalTo: section.leadingAnchor),
             button.trailingAnchor.constraint(equalTo: section.trailingAnchor),
-            button.heightAnchor.constraint(equalToConstant: 56),
+            button.heightAnchor.constraint(greaterThanOrEqualToConstant: 56),
             button.bottomAnchor.constraint(equalTo: section.bottomAnchor)
         ])
         
@@ -1029,7 +1094,8 @@ class GenerationToolbar: UIView {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = title
-        label.font = .systemFont(ofSize: 15, weight: .semibold)
+        label.useScaledFont(.subheadline, size: 15, weight: .semibold)
+        label.numberOfLines = 0
         label.textColor = .label
         section.addSubview(label)
         
@@ -1056,14 +1122,13 @@ class GenerationToolbar: UIView {
             scrollView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 8),
             scrollView.leadingAnchor.constraint(equalTo: section.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: section.trailingAnchor),
-            scrollView.heightAnchor.constraint(equalToConstant: 36),
+            scrollView.heightAnchor.constraint(equalTo: stackView.heightAnchor),
             scrollView.bottomAnchor.constraint(equalTo: section.bottomAnchor),
             
             stackView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            stackView.heightAnchor.constraint(equalTo: scrollView.heightAnchor)
+            stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor)
         ])
         
         if let firstButton = stackView.arrangedSubviews.first as? UIButton {
@@ -1080,12 +1145,13 @@ class GenerationToolbar: UIView {
         var config = UIButton.Configuration.tinted()
         config.title = title
         config.cornerStyle = .capsule
-        config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
+        config.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
         
         button.configuration = config
         button.configurationUpdateHandler = { button in
             var config = button.configuration
-            config?.baseBackgroundColor = button.isSelected ? UIColor(red: 0.404, green: 0.314, blue: 0.643, alpha: 1.0) : .secondarySystemFill
+            config?.baseBackgroundColor = button.isSelected ? .brand : .secondarySystemFill
+            button.accessibilityTraits = button.isSelected ? [.button, .selected] : .button
             config?.baseForegroundColor = button.isSelected ? .white : .label
             button.configuration = config
         }
@@ -1100,6 +1166,31 @@ class GenerationToolbar: UIView {
         collapsedContent.isHidden = expanded
         expandedContent.isHidden = !expanded
         expandButton.setImage(UIImage(systemName: expanded ? "chevron.down.circle.fill" : "chevron.up.circle.fill"), for: .normal)
+        expandButton.accessibilityValue = expanded ? String(localized: "Expanded") : String(localized: "Collapsed")
+    }
+
+    /// Refreshes the Generate button and speaks the new cost once the person stops changing
+    /// options, only when it differs from the last figure heard.
+    private func costInputChanged() {
+        updateGenerateButton()
+        pendingCostAnnouncement?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            guard let self, self.currentCostText != self.lastAnnouncedCost else { return }
+            self.lastAnnouncedCost = self.currentCostText
+            Announce.say(self.currentCostText)
+        }
+        pendingCostAnnouncement = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.costAnnouncementDelay, execute: item)
+    }
+
+    private static let costAnnouncementDelay: TimeInterval = 0.9
+
+    private var currentCostText: String {
+        let credits = estimateCredits()
+        if credits.lowerBound == credits.upperBound {
+            return String(localized: "\(credits.lowerBound) credits")
+        }
+        return String(localized: "\(credits.lowerBound)-\(credits.upperBound) credits")
     }
     
     func setPrompt(_ prompt: String) {
@@ -1156,7 +1247,7 @@ class GenerationToolbar: UIView {
         expandedStackView.arrangedSubviews.forEach { view in
             switch view.tag {
             case 9000, 9001, 9002:
-                UIView.animate(withDuration: 0.3) {
+                Motion.animate(0.3) {
                     view.isHidden = !isOpenAI
                     view.alpha = isOpenAI ? 1.0 : 0.0
                 }
@@ -1228,6 +1319,7 @@ class GenerationToolbar: UIView {
         }
 
         updateUIForModel()
+        lastAnnouncedCost = currentCostText
     }
 }
 

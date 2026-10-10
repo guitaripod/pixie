@@ -10,11 +10,15 @@ class AdminCreditAdjustmentViewController: UIViewController {
     private let tableView = UITableView()
     private let loadingView = UIActivityIndicatorView(style: .large)
     private let emptyStateLabel = UILabel()
+    private let errorView = AdminInlineMessageView()
+    private let searchSpinner = UIActivityIndicatorView(style: .medium)
+    private var searchMagnifier: UIView?
     
     private let adminRepository: AdminRepositoryProtocol
     private var searchResults: [UserSearchResult] = []
     private var selectedUser: UserSearchResult?
     private var searchTimer: Timer?
+    private var searchGeneration = 0
     
     init() {
         self.adminRepository = AdminRepository(networkService: AppContainer.shared.networkService)
@@ -40,12 +44,19 @@ class AdminCreditAdjustmentViewController: UIViewController {
         searchBar.placeholder = String(localized: "Search users by email or ID")
         searchBar.delegate = self
         searchBar.searchBarStyle = .minimal
+        searchBar.accessibilityLabel = String(localized: "Search users")
+        searchBar.searchTextField.accessibilityLabel = String(localized: "Search users")
+        searchMagnifier = searchBar.searchTextField.leftView
+        searchSpinner.hidesWhenStopped = true
         
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.delegate = self
         tableView.dataSource = self
         tableView.backgroundColor = .clear
         tableView.separatorStyle = .none
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 72
+        tableView.keyboardDismissMode = .onDrag
         tableView.register(UserSearchResultCell.self, forCellReuseIdentifier: "UserCell")
         
         loadingView.translatesAutoresizingMaskIntoConstraints = false
@@ -53,7 +64,7 @@ class AdminCreditAdjustmentViewController: UIViewController {
         
         emptyStateLabel.translatesAutoresizingMaskIntoConstraints = false
         emptyStateLabel.text = String(localized: "Search for users to adjust their credits")
-        emptyStateLabel.font = .systemFont(ofSize: 17)
+        emptyStateLabel.useScaledFont(.body, size: 17)
         emptyStateLabel.textColor = .secondaryLabel
         emptyStateLabel.textAlignment = .center
         emptyStateLabel.numberOfLines = 0
@@ -62,6 +73,8 @@ class AdminCreditAdjustmentViewController: UIViewController {
         view.addSubview(tableView)
         view.addSubview(loadingView)
         view.addSubview(emptyStateLabel)
+        errorView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(errorView)
     }
     
     private func setupConstraints() {
@@ -81,38 +94,76 @@ class AdminCreditAdjustmentViewController: UIViewController {
             emptyStateLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emptyStateLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             emptyStateLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 32),
-            emptyStateLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32)
+            emptyStateLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32),
+            
+            errorView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            errorView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            errorView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 32),
+            errorView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32)
         ])
     }
     
     private func searchUsers(query: String) {
+        searchGeneration += 1
+        let generation = searchGeneration
+        errorView.hide()
+        
         guard !query.isEmpty else {
             searchResults = []
             tableView.reloadData()
+            setSearching(false)
             updateEmptyState()
             return
         }
         
-        loadingView.startAnimating()
+        setSearching(true)
         emptyStateLabel.isHidden = true
         
         Task {
             do {
                 let results = try await adminRepository.searchUsers(query: query)
                 await MainActor.run {
+                    guard generation == self.searchGeneration else { return }
                     self.searchResults = results
                     self.tableView.reloadData()
-                    self.loadingView.stopAnimating()
+                    self.setSearching(false)
                     self.updateEmptyState()
+                    self.announceResultCount()
                 }
             } catch {
                 await MainActor.run {
+                    guard generation == self.searchGeneration else { return }
                     self.searchResults = []
                     self.tableView.reloadData()
-                    self.loadingView.stopAnimating()
-                    self.showError(error.localizedDescription)
+                    self.setSearching(false)
+                    self.showSearchError(error.localizedDescription, query: query)
                 }
             }
+        }
+    }
+    
+    /// Swaps the search field's magnifier for a spinner while the debounce or the request is pending.
+    private func setSearching(_ searching: Bool) {
+        let field = searchBar.searchTextField
+        if searching {
+            field.leftView = searchSpinner
+            searchSpinner.startAnimating()
+        } else {
+            searchSpinner.stopAnimating()
+            field.leftView = searchMagnifier
+        }
+    }
+    
+    private func announceResultCount() {
+        guard !searchResults.isEmpty else { return }
+        Announce.say(String(localized: "\(searchResults.count) users found"))
+    }
+    
+    private func showSearchError(_ message: String, query: String) {
+        emptyStateLabel.isHidden = true
+        haptics.notification(.error)
+        errorView.show(message) { [weak self] in
+            self?.searchUsers(query: query)
         }
     }
     
@@ -129,85 +180,29 @@ class AdminCreditAdjustmentViewController: UIViewController {
     }
     
     private func showAdjustmentDialog(for user: UserSearchResult) {
-        let alertController = UIAlertController(
-            title: String(localized: "Adjust Credits"),
-            message: String(localized: "Current balance: \(user.credits) credits\nUser: \(user.email ?? user.id)"),
-            preferredStyle: .alert
-        )
-        
-        alertController.addTextField { textField in
-            textField.placeholder = String(localized: "Amount (positive to add, negative to remove)")
-            textField.keyboardType = .numbersAndPunctuation
+        let form = AdminAdjustmentFormViewController(user: user, repository: adminRepository)
+        form.onAdjusted = { [weak self] newBalance in
+            self?.presentAdjustmentSuccess(newBalance: newBalance)
         }
-        
-        alertController.addTextField { textField in
-            textField.placeholder = String(localized: "Reason for adjustment")
-        }
-        
-        let adjustAction = UIAlertAction(title: String(localized: "Adjust"), style: .default) { [weak self] _ in
-            guard let amountText = alertController.textFields?[0].text,
-                  let amount = Int(amountText),
-                  let reason = alertController.textFields?[1].text,
-                  !reason.isEmpty else {
-                self?.showError(String(localized: "Please enter a valid amount and reason"))
-                return
-            }
-            
-            self?.performAdjustment(userId: user.id, amount: amount, reason: reason)
-        }
-        
-        alertController.addAction(adjustAction)
-        alertController.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
-        
+        let navigation = UINavigationController(rootViewController: form)
+        navigation.modalPresentationStyle = .pageSheet
+        navigation.sheetPresentationController?.detents = [.medium(), .large()]
         haptics.impact(.click)
-        present(alertController, animated: true)
+        present(navigation, animated: true)
     }
     
-    private func performAdjustment(userId: String, amount: Int, reason: String) {
-        let loadingAlert = UIAlertController(title: String(localized: "Adjusting Credits"), message: String(localized: "Please wait..."), preferredStyle: .alert)
-        present(loadingAlert, animated: true)
-        
-        Task {
-            do {
-                let request = AdminCreditAdjustmentRequest(userId: userId, amount: amount, reason: reason)
-                let response = try await adminRepository.adjustCredits(request: request)
-                
-                await MainActor.run {
-                    loadingAlert.dismiss(animated: true) {
-                        self.haptics.notification(.success)
-                        let successAlert = UIAlertController(
-                            title: String(localized: "Success"),
-                            message: String(localized: "Credits adjusted successfully. New balance: \(response.newBalance)"),
-                            preferredStyle: .alert
-                        )
-                        successAlert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default) { _ in
-                            self.searchBar.text = ""
-                            self.searchResults = []
-                            self.tableView.reloadData()
-                            self.updateEmptyState()
-                        })
-                        self.present(successAlert, animated: true)
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    loadingAlert.dismiss(animated: true) {
-                        self.haptics.notification(.error)
-                        self.showError(error.localizedDescription)
-                    }
-                }
-            }
-        }
-    }
-    
-    private func showError(_ message: String) {
-        let alert = UIAlertController(
-            title: String(localized: "Error"),
-            message: message,
+    private func presentAdjustmentSuccess(newBalance: Int) {
+        let successAlert = UIAlertController(
+            title: String(localized: "Success"),
+            message: String(localized: "Credits adjusted successfully. New balance: \(newBalance)"),
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
-        present(alert, animated: true)
+        successAlert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default) { [weak self] _ in
+            guard let self else { return }
+            self.searchBar.text = ""
+            self.searchUsers(query: "")
+        })
+        present(successAlert, animated: true)
     }
 }
 
@@ -215,6 +210,13 @@ extension AdminCreditAdjustmentViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         searchTimer?.invalidate()
         
+        guard !searchText.isEmpty else {
+            searchUsers(query: "")
+            return
+        }
+        
+        errorView.hide()
+        setSearching(true)
         searchTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
             self?.searchUsers(query: searchText)
         }
@@ -246,13 +248,32 @@ extension AdminCreditAdjustmentViewController: UITableViewDelegate {
     }
 }
 
+final class AdminBadgeLabel: UILabel {
+
+    private let insets = UIEdgeInsets(top: 2, left: 8, bottom: 2, right: 8)
+
+    override func drawText(in rect: CGRect) {
+        super.drawText(in: rect.inset(by: insets))
+    }
+
+    override var intrinsicContentSize: CGSize {
+        let size = super.intrinsicContentSize
+        return CGSize(width: size.width + insets.left + insets.right, height: size.height + insets.top + insets.bottom)
+    }
+
+    override func sizeThatFits(_ size: CGSize) -> CGSize {
+        let fitted = super.sizeThatFits(CGSize(width: size.width - insets.left - insets.right, height: size.height))
+        return CGSize(width: fitted.width + insets.left + insets.right, height: fitted.height + insets.top + insets.bottom)
+    }
+}
+
 class UserSearchResultCell: UITableViewCell {
     
     private let containerView = UIView()
     private let emailLabel = UILabel()
     private let idLabel = UILabel()
     private let creditsLabel = UILabel()
-    private let adminBadge = UILabel()
+    private let adminBadge = AdminBadgeLabel()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -275,31 +296,45 @@ class UserSearchResultCell: UITableViewCell {
         containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
         containerView.layer.shadowRadius = 4
         
-        emailLabel.translatesAutoresizingMaskIntoConstraints = false
-        emailLabel.font = .systemFont(ofSize: 17, weight: .medium)
+        emailLabel.useScaledFont(.body, size: 17, weight: .medium)
+        emailLabel.numberOfLines = 0
         
-        idLabel.translatesAutoresizingMaskIntoConstraints = false
-        idLabel.font = .systemFont(ofSize: 13)
+        idLabel.useScaledFont(.footnote, size: 13)
         idLabel.textColor = .secondaryLabel
+        idLabel.numberOfLines = 0
         
-        creditsLabel.translatesAutoresizingMaskIntoConstraints = false
-        creditsLabel.font = .systemFont(ofSize: 17, weight: .semibold)
-        creditsLabel.textColor = UIColor(red: 103/255, green: 80/255, blue: 164/255, alpha: 1.0)
+        creditsLabel.useScaledFont(.body, size: 17, weight: .semibold)
+        creditsLabel.textColor = .brandText
+        creditsLabel.textAlignment = .right
+        creditsLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
         
-        adminBadge.translatesAutoresizingMaskIntoConstraints = false
         adminBadge.text = String(localized: "ADMIN")
-        adminBadge.font = .systemFont(ofSize: 11, weight: .bold)
+        adminBadge.useScaledFont(.caption2, size: 11, weight: .bold)
         adminBadge.textColor = .white
         adminBadge.backgroundColor = .systemOrange
         adminBadge.layer.cornerRadius = 4
+        adminBadge.layer.masksToBounds = true
         adminBadge.textAlignment = .center
         adminBadge.isHidden = true
         
+        let textStack = UIStackView(arrangedSubviews: [emailLabel, idLabel])
+        textStack.axis = .vertical
+        textStack.spacing = 4
+        
+        let trailingStack = UIStackView(arrangedSubviews: [creditsLabel, adminBadge])
+        trailingStack.axis = .vertical
+        trailingStack.alignment = .trailing
+        trailingStack.spacing = 4
+        trailingStack.setContentCompressionResistancePriority(.required, for: .horizontal)
+        
+        let rowStack = UIStackView(arrangedSubviews: [textStack, trailingStack])
+        rowStack.translatesAutoresizingMaskIntoConstraints = false
+        rowStack.axis = .horizontal
+        rowStack.alignment = .center
+        rowStack.spacing = 12
+        
         contentView.addSubview(containerView)
-        containerView.addSubview(emailLabel)
-        containerView.addSubview(idLabel)
-        containerView.addSubview(creditsLabel)
-        containerView.addSubview(adminBadge)
+        containerView.addSubview(rowStack)
         
         NSLayoutConstraint.activate([
             containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
@@ -307,28 +342,218 @@ class UserSearchResultCell: UITableViewCell {
             containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
             
-            emailLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
-            emailLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            emailLabel.trailingAnchor.constraint(lessThanOrEqualTo: adminBadge.leadingAnchor, constant: -8),
-            
-            idLabel.topAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 4),
-            idLabel.leadingAnchor.constraint(equalTo: emailLabel.leadingAnchor),
-            idLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16),
-            
-            creditsLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            creditsLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            
-            adminBadge.centerYAnchor.constraint(equalTo: emailLabel.centerYAnchor),
-            adminBadge.trailingAnchor.constraint(equalTo: creditsLabel.leadingAnchor, constant: -8),
-            adminBadge.widthAnchor.constraint(equalToConstant: 50),
-            adminBadge.heightAnchor.constraint(equalToConstant: 20)
+            rowStack.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
+            rowStack.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            rowStack.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            rowStack.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16),
+            containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 60)
         ])
     }
     
     func configure(with user: UserSearchResult) {
-        emailLabel.text = user.email ?? String(localized: "No email")
+        let email = user.email ?? String(localized: "No email")
+        emailLabel.text = email
         idLabel.text = String(localized: "ID: \(user.id)")
         creditsLabel.text = "\(user.credits)"
         adminBadge.isHidden = !user.isAdmin
+        
+        let role = user.isAdmin ? String(localized: "Admin") + ", " : ""
+        describe(
+            "\(email), \(role)" + String(localized: "\(user.credits) credits"),
+            hint: String(localized: "Adjusts this user's credits"),
+            value: String(localized: "ID: \(user.id)"),
+            traits: .button
+        )
+    }
+}
+
+final class AdminAdjustmentFormViewController: UIViewController {
+
+    var onAdjusted: ((Int) -> Void)?
+
+    private let user: UserSearchResult
+    private let repository: AdminRepositoryProtocol
+    private let haptics = HapticManager.shared
+
+    private let summaryLabel = UILabel()
+    private let directionControl = UISegmentedControl(items: [String(localized: "Add"), String(localized: "Remove")])
+    private let amountField = UITextField()
+    private let reasonField = UITextField()
+    private let errorLabel = UILabel()
+    private let spinner = UIActivityIndicatorView(style: .medium)
+    private var adjustButton: UIBarButtonItem!
+    private var isSubmitting = false
+
+    init(user: UserSearchResult, repository: AdminRepositoryProtocol) {
+        self.user = user
+        self.repository = repository
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = String(localized: "Adjust Credits")
+        view.backgroundColor = .systemGroupedBackground
+        setupNavigation()
+        setupFields()
+        setupLayout()
+        updateAdjustEnabled()
+    }
+
+    private func setupNavigation() {
+        navigationItem.leftBarButtonItem = UIBarButtonItem(systemItem: .cancel, primaryAction: UIAction { [weak self] _ in
+            self?.dismiss(animated: true)
+        })
+        adjustButton = UIBarButtonItem(title: String(localized: "Adjust"), primaryAction: UIAction { [weak self] _ in
+            self?.submit()
+        })
+        if #available(iOS 26.0, *) {
+            adjustButton.style = .prominent
+        }
+        navigationItem.rightBarButtonItem = adjustButton
+    }
+
+    private func setupFields() {
+        summaryLabel.useScaledFont(.subheadline, size: 15)
+        summaryLabel.textColor = .secondaryLabel
+        summaryLabel.numberOfLines = 0
+        summaryLabel.text = String(localized: "Current balance: \(user.credits) credits\nUser: \(user.email ?? user.id)")
+
+        directionControl.selectedSegmentIndex = 0
+        directionControl.accessibilityLabel = String(localized: "Adjustment type")
+        directionControl.addAction(UIAction { [weak self] _ in self?.directionChanged() }, for: .valueChanged)
+        directionChanged()
+
+        configure(amountField, placeholder: String(localized: "Amount"), keyboard: .numberPad)
+        configure(reasonField, placeholder: String(localized: "Reason for adjustment"), keyboard: .default)
+        reasonField.returnKeyType = .done
+        reasonField.delegate = self
+
+        errorLabel.useScaledFont(.footnote, size: 13)
+        errorLabel.textColor = .systemRed
+        errorLabel.numberOfLines = 0
+        errorLabel.isHidden = true
+    }
+
+    private func configure(_ field: UITextField, placeholder: String, keyboard: UIKeyboardType) {
+        field.placeholder = placeholder
+        field.accessibilityLabel = placeholder
+        field.keyboardType = keyboard
+        field.borderStyle = .roundedRect
+        field.font = .scaled(.body, size: 17)
+        field.adjustsFontForContentSizeCategory = true
+        field.addAction(UIAction { [weak self] _ in self?.fieldsChanged() }, for: .editingChanged)
+        field.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+    }
+
+    private func setupLayout() {
+        let scrollView = UIScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.keyboardDismissMode = .interactive
+        let stack = UIStackView(arrangedSubviews: [summaryLabel, directionControl, amountField, reasonField, errorLabel])
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.axis = .vertical
+        stack.spacing = 16
+        stack.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+        stack.isLayoutMarginsRelativeArrangement = true
+        view.addSubview(scrollView)
+        scrollView.addSubview(stack)
+        NSLayoutConstraint.activate([
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor),
+            stack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            stack.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            stack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            stack.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor)
+        ])
+    }
+
+    private var signedAmount: Int? {
+        guard let text = amountField.text, let magnitude = Int(text), magnitude > 0 else { return nil }
+        return directionControl.selectedSegmentIndex == 0 ? magnitude : -magnitude
+    }
+
+    private var trimmedReason: String {
+        reasonField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
+
+    private func directionChanged() {
+        let removing = directionControl.selectedSegmentIndex == 1
+        directionControl.accessibilityValue = removing ? String(localized: "Remove") : String(localized: "Add")
+        haptics.selectionChanged()
+        fieldsChanged()
+    }
+
+    private func fieldsChanged() {
+        errorLabel.isHidden = true
+        updateAdjustEnabled()
+    }
+
+    private func updateAdjustEnabled() {
+        adjustButton?.isEnabled = !isSubmitting && signedAmount != nil && !trimmedReason.isEmpty
+    }
+
+    private func setSubmitting(_ submitting: Bool) {
+        isSubmitting = submitting
+        directionControl.isEnabled = !submitting
+        amountField.isEnabled = !submitting
+        reasonField.isEnabled = !submitting
+        isModalInPresentation = submitting
+        navigationItem.leftBarButtonItem?.isEnabled = !submitting
+        if submitting {
+            spinner.startAnimating()
+            navigationItem.rightBarButtonItem = UIBarButtonItem(customView: spinner)
+        } else {
+            spinner.stopAnimating()
+            navigationItem.rightBarButtonItem = adjustButton
+        }
+        updateAdjustEnabled()
+    }
+
+    private func submit() {
+        guard let amount = signedAmount, !trimmedReason.isEmpty, !isSubmitting else {
+            showError(String(localized: "Please enter a valid amount and reason"))
+            return
+        }
+        view.endEditing(true)
+        setSubmitting(true)
+        let request = AdminCreditAdjustmentRequest(userId: user.id, amount: amount, reason: trimmedReason)
+        Task {
+            do {
+                let response = try await repository.adjustCredits(request: request)
+                await MainActor.run {
+                    self.haptics.notification(.success)
+                    self.dismiss(animated: true) {
+                        self.onAdjusted?(response.newBalance)
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.setSubmitting(false)
+                    self.showError(error.localizedDescription)
+                }
+            }
+        }
+    }
+
+    private func showError(_ message: String) {
+        errorLabel.text = message
+        errorLabel.isHidden = false
+        haptics.notification(.error)
+        Announce.say(message)
+    }
+}
+
+extension AdminAdjustmentFormViewController: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        return true
     }
 }

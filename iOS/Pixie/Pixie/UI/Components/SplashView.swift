@@ -3,7 +3,10 @@ import UIKit
 class SplashView: UIView {
     
     private let titleLabel = UILabel()
+    private let statusLabel = UILabel()
     private let gradientLayer = CAGradientLayer()
+    private var slowLaunchTask: Task<Void, Never>?
+    private static let slowLaunchDelay: Duration = .seconds(6)
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -33,33 +36,72 @@ class SplashView: UIView {
         layer.insertSublayer(gradientLayer, at: 0)
         
         titleLabel.text = "Pixie"
-        titleLabel.font = .systemFont(ofSize: 48, weight: .bold)
+        titleLabel.useScaledFont(.largeTitle, size: 48, weight: .bold)
         titleLabel.textColor = .label
         titleLabel.textAlignment = .center
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
         addSubview(titleLabel)
+
+        statusLabel.text = String(localized: "Taking longer than usual…")
+        statusLabel.useScaledFont(.subheadline, size: 15)
+        statusLabel.textColor = .secondaryLabel
+        statusLabel.textAlignment = .center
+        statusLabel.numberOfLines = 0
+        statusLabel.alpha = 0
+        statusLabel.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(statusLabel)
         
         NSLayoutConstraint.activate([
             titleLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
-            titleLabel.centerYAnchor.constraint(equalTo: centerYAnchor)
+            titleLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
+            titleLabel.leadingAnchor.constraint(greaterThanOrEqualTo: safeAreaLayoutGuide.leadingAnchor, constant: 24),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: safeAreaLayoutGuide.trailingAnchor, constant: -24),
+            statusLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 16),
+            statusLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
+            statusLabel.leadingAnchor.constraint(greaterThanOrEqualTo: safeAreaLayoutGuide.leadingAnchor, constant: 24),
+            statusLabel.trailingAnchor.constraint(lessThanOrEqualTo: safeAreaLayoutGuide.trailingAnchor, constant: -24)
         ])
-        
+
+        describe(String(localized: "Pixie, loading"), traits: .staticText)
         animateElements()
+        watchForSlowLaunch()
+    }
+
+    /// Fades in a status line when the host has not dismissed the splash after a few
+    /// seconds, so a slow launch never looks like a frozen app.
+    private func watchForSlowLaunch() {
+        slowLaunchTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.slowLaunchDelay)
+            guard !Task.isCancelled, let self else { return }
+            Motion.animate(0.3) { self.statusLabel.alpha = 1 }
+            Announce.say(String(localized: "Taking longer than usual…"))
+        }
+    }
+
+    override func didMoveToSuperview() {
+        super.didMoveToSuperview()
+        if superview == nil { slowLaunchTask?.cancel() }
+    }
+
+    deinit {
+        slowLaunchTask?.cancel()
     }
     
     private func animateElements() {
+        guard !Motion.isReduced else { return }
         titleLabel.alpha = 0
         titleLabel.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
         
-        UIView.animate(withDuration: 0.8, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 0.5) {
+        Motion.spring(0.8, damping: 0.7, velocity: 0.5) {
             self.titleLabel.transform = .identity
             self.titleLabel.alpha = 1
         }
     }
     
     func animateOut(completion: @escaping () -> Void) {
-        UIView.animate(withDuration: 0.5, delay: 0, options: [.curveEaseInOut]) {
+        slowLaunchTask?.cancel()
+        Motion.animate(0.5, options: [.curveEaseInOut]) {
             self.transform = CGAffineTransform(translationX: 0, y: -self.bounds.height)
             self.alpha = 0
         } completion: { _ in

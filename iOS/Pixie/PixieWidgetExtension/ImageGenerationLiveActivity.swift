@@ -50,6 +50,7 @@ struct ImageGenerationLiveActivity: Widget {
                     )
                     .progressViewStyle(.circular)
                     .tint(.purple)
+                    .accessibilityLabel(card.markLabel)
                 } else {
                     Thumbnail(card: card, side: 22)
                 }
@@ -87,6 +88,15 @@ private struct Card {
         }
     }
 
+    var markLabel: String {
+        switch phase {
+        case .working: return String(localized: "Creating image")
+        case .ready: return String(localized: "Image ready")
+        case .failed: return String(localized: "Couldn't create image")
+        case .paused: return String(localized: "Open Pixie to finish")
+        }
+    }
+
     var detail: String {
         phase == .failed ? state.message ?? attributes.prompt : attributes.prompt
     }
@@ -119,8 +129,17 @@ private struct Card {
 private struct Thumbnail: View {
     let card: Card
     let side: CGFloat
+    var decorative = false
 
     var body: some View {
+        mark
+            .accessibilityHidden(decorative)
+            .accessibilityLabel(card.markLabel)
+            .accessibilityAddTraits(.isImage)
+    }
+
+    @ViewBuilder
+    private var mark: some View {
         if let picture = card.picture {
             Image(uiImage: picture)
                 .resizable()
@@ -133,15 +152,14 @@ private struct Thumbnail: View {
                             .font(.system(size: side * 0.3, weight: .bold))
                             .foregroundStyle(.white, card.tint)
                             .offset(x: side * 0.1, y: side * 0.1)
+                            .accessibilityHidden(true)
                     }
                 }
-                .accessibilityHidden(true)
         } else {
             Image(systemName: card.symbol)
                 .font(.system(size: side * 0.55, weight: .semibold))
                 .foregroundStyle(card.isWorking ? .purple : card.tint)
                 .frame(width: side, height: side)
-                .accessibilityHidden(true)
         }
     }
 }
@@ -149,6 +167,7 @@ private struct Thumbnail: View {
 private struct TrailingMark: View {
     let card: Card
     let font: Font
+    var decorative = false
 
     var body: some View {
         switch card.phase {
@@ -159,11 +178,14 @@ private struct TrailingMark: View {
                 .foregroundStyle(.purple)
                 .multilineTextAlignment(.trailing)
                 .frame(maxWidth: 52)
+                .accessibilityLabel(String(localized: "Elapsed time"))
+                .accessibilityHidden(decorative)
         case .ready, .failed, .paused:
             Image(systemName: card.symbol)
                 .font(font)
                 .foregroundStyle(card.tint)
-                .accessibilityLabel(card.title)
+                .accessibilityLabel(card.markLabel)
+                .accessibilityHidden(decorative)
         }
     }
 }
@@ -203,7 +225,7 @@ private struct LockScreenView: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
-            Thumbnail(card: card, side: 56)
+            Thumbnail(card: card, side: 56, decorative: true)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline) {
                     Text(card.title)
@@ -211,7 +233,7 @@ private struct LockScreenView: View {
                         .foregroundStyle(card.tint)
                         .lineLimit(1)
                     Spacer(minLength: 8)
-                    TrailingMark(card: card, font: .subheadline)
+                    TrailingMark(card: card, font: .subheadline, decorative: !card.isWorking)
                 }
                 Text(card.detail)
                     .font(.subheadline)
@@ -222,5 +244,6 @@ private struct LockScreenView: View {
             }
         }
         .padding(16)
+        .accessibilityElement(children: .combine)
     }
 }

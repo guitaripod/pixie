@@ -8,13 +8,27 @@ class CreditsMainViewController: UIViewController {
     private let scrollView = UIScrollView()
     private let contentView = UIView()
     private static let maxContentWidth: CGFloat = 600
+    private static let freshnessRefreshInterval: TimeInterval = 30
     
+    private let topStack = UIStackView()
     private let balanceCard = UIView()
     private let balanceSkeletonLoader = BalanceSkeletonLoaderView()
-    private let balanceLabel = UILabel()
+    private let balanceContentStack = UIStackView()
     private let balanceTitleLabel = UILabel()
+    private let amountRow = UIStackView()
     private let balanceAmountLabel = UILabel()
     private let creditsLabel = UILabel()
+    private let freeImagesLabel = UILabel()
+    private let lowBalanceIcon = UIImageView()
+    private let lowBalanceLabel = UILabel()
+    private let lowBalanceStack = UIStackView()
+    private let freshnessLabel = UILabel()
+    
+    private let errorBanner = UIView()
+    private let errorStack = UIStackView()
+    private let errorIcon = UIImageView()
+    private let errorLabel = UILabel()
+    private let retryButton = UIButton(type: .system)
     
     private let quickActionsLabel = UILabel()
     private let quickActionsStackView = UIStackView()
@@ -27,6 +41,10 @@ class CreditsMainViewController: UIViewController {
     
     private let tipsCard = UIView()
     private let tipsLabel = UILabel()
+    
+    private var freshnessTimer: Timer?
+    private var isShowingBalanceError = false
+    private var hasAnnouncedLowBalance = false
     
     init(viewModel: CreditsViewModel? = nil) {
         self.viewModel = viewModel ?? CreditsViewModel()
@@ -41,20 +59,28 @@ class CreditsMainViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         bindViewModel()
+        renderBalance()
         viewModel.refresh()
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         viewModel.refresh()
+        startFreshnessTimer()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        freshnessTimer?.invalidate()
+        freshnessTimer = nil
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        // Update gradient layer frame
         if let gradientLayer = balanceCard.layer.value(forKey: "gradientLayer") as? CAGradientLayer {
             gradientLayer.frame = balanceCard.bounds
         }
+        applyContentSizeLayout()
     }
     
     private func setupUI() {
@@ -64,6 +90,7 @@ class CreditsMainViewController: UIViewController {
         
         setupScrollView()
         setupBalanceCard()
+        setupErrorBanner()
         setupQuickActions()
         setupFeatures()
         setupRecentTransactions()
@@ -105,47 +132,139 @@ class CreditsMainViewController: UIViewController {
         balanceCard.layer.shadowRadius = 12
         balanceCard.translatesAutoresizingMaskIntoConstraints = false
         
-        // Add gradient background
         let gradientLayer = CAGradientLayer()
         gradientLayer.colors = [
-            UIColor.systemPurple.withAlphaComponent(0.1).cgColor,
-            UIColor.systemPurple.withAlphaComponent(0.05).cgColor
+            UIColor.brand.withAlphaComponent(0.1).cgColor,
+            UIColor.brand.withAlphaComponent(0.05).cgColor
         ]
         gradientLayer.locations = [0, 1]
         gradientLayer.startPoint = CGPoint(x: 0, y: 0)
         gradientLayer.endPoint = CGPoint(x: 1, y: 1)
         gradientLayer.cornerRadius = 20
         balanceCard.layer.insertSublayer(gradientLayer, at: 0)
-        
-        // Store gradient layer reference for layout updates
         balanceCard.layer.setValue(gradientLayer, forKey: "gradientLayer")
         
         balanceTitleLabel.text = String(localized: "Current Balance")
-        balanceTitleLabel.font = .systemFont(ofSize: 16, weight: .medium)
+        balanceTitleLabel.useScaledFont(.callout, size: 16, weight: .medium)
         balanceTitleLabel.textColor = .secondaryLabel
         balanceTitleLabel.textAlignment = .center
-        balanceTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        balanceTitleLabel.numberOfLines = 0
         
-        balanceAmountLabel.font = .systemFont(ofSize: 48, weight: .bold)
+        balanceAmountLabel.useScaledFont(.largeTitle, size: 48, weight: .bold)
+        balanceAmountLabel.textColor = .label
         balanceAmountLabel.textAlignment = .center
-        balanceAmountLabel.translatesAutoresizingMaskIntoConstraints = false
+        balanceAmountLabel.adjustsFontSizeToFitWidth = true
+        balanceAmountLabel.minimumScaleFactor = 0.5
+        balanceAmountLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
         
         creditsLabel.text = String(localized: "credits")
-        creditsLabel.font = .systemFont(ofSize: 22, weight: .medium)
+        creditsLabel.useScaledFont(.title2, size: 22, weight: .medium)
         creditsLabel.textColor = .secondaryLabel
-        creditsLabel.translatesAutoresizingMaskIntoConstraints = false
+        creditsLabel.setContentHuggingPriority(.required, for: .horizontal)
+        
+        amountRow.axis = .horizontal
+        amountRow.alignment = .lastBaseline
+        amountRow.spacing = 8
+        amountRow.addArrangedSubview(balanceAmountLabel)
+        amountRow.addArrangedSubview(creditsLabel)
+        
+        freeImagesLabel.useScaledFont(.footnote, size: 13, weight: .semibold)
+        freeImagesLabel.textColor = .brandText
+        freeImagesLabel.textAlignment = .center
+        freeImagesLabel.numberOfLines = 0
+        freeImagesLabel.isHidden = true
+        
+        lowBalanceIcon.image = UIImage(systemName: "exclamationmark.triangle.fill")
+        lowBalanceIcon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .footnote)
+        lowBalanceIcon.contentMode = .scaleAspectFit
+        lowBalanceIcon.setContentHuggingPriority(.required, for: .horizontal)
+        lowBalanceLabel.useScaledFont(.footnote, size: 13, weight: .semibold)
+        lowBalanceLabel.textColor = .label
+        lowBalanceLabel.numberOfLines = 0
+        lowBalanceStack.axis = .horizontal
+        lowBalanceStack.alignment = .firstBaseline
+        lowBalanceStack.spacing = 6
+        lowBalanceStack.addArrangedSubview(lowBalanceIcon)
+        lowBalanceStack.addArrangedSubview(lowBalanceLabel)
+        lowBalanceStack.isHidden = true
+        
+        freshnessLabel.useScaledFont(.caption1, size: 12)
+        freshnessLabel.textColor = .secondaryLabel
+        freshnessLabel.textAlignment = .center
+        freshnessLabel.numberOfLines = 0
+        freshnessLabel.isHidden = true
+        
+        balanceContentStack.axis = .vertical
+        balanceContentStack.alignment = .center
+        balanceContentStack.spacing = 6
+        balanceContentStack.translatesAutoresizingMaskIntoConstraints = false
+        balanceContentStack.addArrangedSubview(balanceTitleLabel)
+        balanceContentStack.addArrangedSubview(amountRow)
+        balanceContentStack.addArrangedSubview(freeImagesLabel)
+        balanceContentStack.addArrangedSubview(lowBalanceStack)
+        balanceContentStack.addArrangedSubview(freshnessLabel)
+        balanceContentStack.setCustomSpacing(10, after: amountRow)
         
         balanceSkeletonLoader.translatesAutoresizingMaskIntoConstraints = false
+        balanceSkeletonLoader.hideFromAccessibility()
         
-        balanceCard.addSubview(balanceTitleLabel)
-        balanceCard.addSubview(balanceAmountLabel)
-        balanceCard.addSubview(creditsLabel)
+        balanceCard.addSubview(balanceContentStack)
         balanceCard.addSubview(balanceSkeletonLoader)
+    }
+    
+    private func setupErrorBanner() {
+        errorBanner.backgroundColor = .secondarySystemBackground
+        errorBanner.layer.cornerRadius = 16
+        errorBanner.layer.borderWidth = 1
+        errorBanner.layer.borderColor = UIColor.separator.cgColor
+        errorBanner.isHidden = true
+        
+        errorIcon.image = UIImage(systemName: "exclamationmark.triangle.fill")
+        errorIcon.tintColor = .systemOrange
+        errorIcon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .body)
+        errorIcon.contentMode = .scaleAspectFit
+        errorIcon.setContentHuggingPriority(.required, for: .horizontal)
+        errorIcon.hideFromAccessibility()
+        
+        errorLabel.text = String(localized: "Couldn't refresh your balance")
+        errorLabel.useScaledFont(.subheadline, size: 15, weight: .medium)
+        errorLabel.textColor = .label
+        errorLabel.numberOfLines = 0
+        
+        var config = UIButton.Configuration.filled()
+        config.title = String(localized: "Retry")
+        config.baseBackgroundColor = .brand
+        config.baseForegroundColor = .white
+        config.cornerStyle = .capsule
+        config.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 18, bottom: 10, trailing: 18)
+        retryButton.configuration = config
+        retryButton.addAction(UIAction { [weak self] _ in self?.retryBalance() }, for: .touchUpInside)
+        retryButton.setContentHuggingPriority(.required, for: .horizontal)
+        retryButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        
+        errorStack.axis = .horizontal
+        errorStack.alignment = .center
+        errorStack.spacing = 10
+        errorStack.translatesAutoresizingMaskIntoConstraints = false
+        errorStack.addArrangedSubview(errorIcon)
+        errorStack.addArrangedSubview(errorLabel)
+        errorStack.addArrangedSubview(retryButton)
+        errorBanner.addSubview(errorStack)
+        
+        NSLayoutConstraint.activate([
+            errorStack.topAnchor.constraint(equalTo: errorBanner.topAnchor, constant: 12),
+            errorStack.leadingAnchor.constraint(equalTo: errorBanner.leadingAnchor, constant: 14),
+            errorStack.trailingAnchor.constraint(equalTo: errorBanner.trailingAnchor, constant: -14),
+            errorStack.bottomAnchor.constraint(equalTo: errorBanner.bottomAnchor, constant: -12),
+            retryButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
+        ])
     }
     
     private func setupQuickActions() {
         quickActionsLabel.text = String(localized: "Quick Actions")
-        quickActionsLabel.font = .systemFont(ofSize: 18, weight: .bold)
+        quickActionsLabel.useScaledFont(.title3, size: 18, weight: .bold)
+        quickActionsLabel.numberOfLines = 0
+        quickActionsLabel.accessibilityTraits = .header
         quickActionsLabel.translatesAutoresizingMaskIntoConstraints = false
         
         quickActionsStackView.axis = .horizontal
@@ -175,7 +294,9 @@ class CreditsMainViewController: UIViewController {
     
     private func setupFeatures() {
         featuresLabel.text = String(localized: "Features")
-        featuresLabel.font = .systemFont(ofSize: 18, weight: .bold)
+        featuresLabel.useScaledFont(.title3, size: 18, weight: .bold)
+        featuresLabel.numberOfLines = 0
+        featuresLabel.accessibilityTraits = .header
         featuresLabel.translatesAutoresizingMaskIntoConstraints = false
         
         featuresStackView.axis = .vertical
@@ -222,13 +343,24 @@ class CreditsMainViewController: UIViewController {
         
         let titleLabel = UILabel()
         titleLabel.text = String(localized: "Recent Transactions")
-        titleLabel.font = .systemFont(ofSize: 16, weight: .bold)
+        titleLabel.useScaledFont(.callout, size: 16, weight: .bold)
+        titleLabel.numberOfLines = 0
+        titleLabel.accessibilityTraits = .header
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        let viewAllButton = UIButton(type: .system)
-        viewAllButton.setTitle(String(localized: "View All"), for: .normal)
-        viewAllButton.titleLabel?.font = .systemFont(ofSize: 14)
+        var viewAllConfig = UIButton.Configuration.plain()
+        viewAllConfig.title = String(localized: "View All")
+        viewAllConfig.baseForegroundColor = .brandText
+        viewAllConfig.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 0)
+        viewAllConfig.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = UIFont.scaled(.subheadline, size: 14)
+            return outgoing
+        }
+        let viewAllButton = UIButton(configuration: viewAllConfig)
         viewAllButton.addTarget(self, action: #selector(viewAllTransactionsTapped), for: .touchUpInside)
+        viewAllButton.setContentHuggingPriority(.required, for: .horizontal)
+        viewAllButton.setContentCompressionResistancePriority(.required, for: .horizontal)
         viewAllButton.translatesAutoresizingMaskIntoConstraints = false
         
         headerView.addSubview(titleLabel)
@@ -242,18 +374,23 @@ class CreditsMainViewController: UIViewController {
         recentTransactionsCard.addSubview(recentTransactionsStackView)
         
         NSLayoutConstraint.activate([
-            headerView.topAnchor.constraint(equalTo: recentTransactionsCard.topAnchor, constant: 16),
+            headerView.topAnchor.constraint(equalTo: recentTransactionsCard.topAnchor, constant: 8),
             headerView.leadingAnchor.constraint(equalTo: recentTransactionsCard.leadingAnchor, constant: 16),
             headerView.trailingAnchor.constraint(equalTo: recentTransactionsCard.trailingAnchor, constant: -16),
-            headerView.heightAnchor.constraint(equalToConstant: 24),
             
             titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor),
-            titleLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+            titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 4),
+            titleLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -4),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: viewAllButton.leadingAnchor, constant: -8),
             
             viewAllButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
+            viewAllButton.topAnchor.constraint(greaterThanOrEqualTo: headerView.topAnchor),
+            viewAllButton.bottomAnchor.constraint(lessThanOrEqualTo: headerView.bottomAnchor),
             viewAllButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+            viewAllButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44),
+            headerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 44),
             
-            recentTransactionsStackView.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 8),
+            recentTransactionsStackView.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 4),
             recentTransactionsStackView.leadingAnchor.constraint(equalTo: recentTransactionsCard.leadingAnchor, constant: 16),
             recentTransactionsStackView.trailingAnchor.constraint(equalTo: recentTransactionsCard.trailingAnchor, constant: -16),
             recentTransactionsStackView.bottomAnchor.constraint(equalTo: recentTransactionsCard.bottomAnchor, constant: -16)
@@ -269,9 +406,10 @@ class CreditsMainViewController: UIViewController {
         
         let tipLabel = UILabel()
         let tipText = NSMutableAttributedString()
-        tipText.append(NSAttributedString(string: String(localized: "Tip: "), attributes: [.font: UIFont.systemFont(ofSize: 14, weight: .bold)]))
-        tipText.append(NSAttributedString(string: String(localized: "View transaction history to see recent credit usage\nBrowse credit packs to purchase more credits"), attributes: [.font: UIFont.systemFont(ofSize: 14)]))
+        tipText.append(NSAttributedString(string: String(localized: "Tip: "), attributes: [.font: UIFont.scaled(.subheadline, size: 14, weight: .bold)]))
+        tipText.append(NSAttributedString(string: String(localized: "View transaction history to see recent credit usage\nBrowse credit packs to purchase more credits"), attributes: [.font: UIFont.scaled(.subheadline, size: 14)]))
         tipLabel.attributedText = tipText
+        tipLabel.adjustsFontForContentSizeCategory = true
         tipLabel.numberOfLines = 0
         tipLabel.textColor = .secondaryLabel
         tipLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -287,7 +425,13 @@ class CreditsMainViewController: UIViewController {
     }
     
     private func layoutUI() {
-        contentView.addSubview(balanceCard)
+        topStack.axis = .vertical
+        topStack.spacing = 12
+        topStack.translatesAutoresizingMaskIntoConstraints = false
+        topStack.addArrangedSubview(balanceCard)
+        topStack.addArrangedSubview(errorBanner)
+        
+        contentView.addSubview(topStack)
         contentView.addSubview(quickActionsLabel)
         contentView.addSubview(quickActionsStackView)
         contentView.addSubview(featuresLabel)
@@ -296,33 +440,32 @@ class CreditsMainViewController: UIViewController {
         contentView.addSubview(tipsCard)
         
         NSLayoutConstraint.activate([
-            balanceCard.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            balanceCard.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            balanceCard.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            balanceCard.heightAnchor.constraint(equalToConstant: 140),
+            topStack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            topStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            topStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
-            balanceTitleLabel.centerXAnchor.constraint(equalTo: balanceCard.centerXAnchor),
-            balanceTitleLabel.topAnchor.constraint(equalTo: balanceCard.topAnchor, constant: 20),
+            balanceCard.heightAnchor.constraint(greaterThanOrEqualToConstant: 140),
             
-            balanceAmountLabel.centerXAnchor.constraint(equalTo: balanceCard.centerXAnchor),
-            balanceAmountLabel.topAnchor.constraint(equalTo: balanceTitleLabel.bottomAnchor, constant: 8),
-            
-            creditsLabel.leadingAnchor.constraint(equalTo: balanceAmountLabel.trailingAnchor, constant: 8),
-            creditsLabel.bottomAnchor.constraint(equalTo: balanceAmountLabel.bottomAnchor, constant: -8),
+            balanceContentStack.topAnchor.constraint(equalTo: balanceCard.topAnchor, constant: 20),
+            balanceContentStack.bottomAnchor.constraint(equalTo: balanceCard.bottomAnchor, constant: -16),
+            balanceContentStack.leadingAnchor.constraint(equalTo: balanceCard.leadingAnchor, constant: 16),
+            balanceContentStack.trailingAnchor.constraint(equalTo: balanceCard.trailingAnchor, constant: -16),
             
             balanceSkeletonLoader.centerXAnchor.constraint(equalTo: balanceCard.centerXAnchor),
             balanceSkeletonLoader.centerYAnchor.constraint(equalTo: balanceCard.centerYAnchor),
             
-            quickActionsLabel.topAnchor.constraint(equalTo: balanceCard.bottomAnchor, constant: 24),
+            quickActionsLabel.topAnchor.constraint(equalTo: topStack.bottomAnchor, constant: 24),
             quickActionsLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            quickActionsLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
             quickActionsStackView.topAnchor.constraint(equalTo: quickActionsLabel.bottomAnchor, constant: 12),
             quickActionsStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             quickActionsStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            quickActionsStackView.heightAnchor.constraint(equalToConstant: 120),
+            quickActionsStackView.heightAnchor.constraint(greaterThanOrEqualToConstant: 120),
             
             featuresLabel.topAnchor.constraint(equalTo: quickActionsStackView.bottomAnchor, constant: 24),
             featuresLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            featuresLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
             featuresStackView.topAnchor.constraint(equalTo: featuresLabel.bottomAnchor, constant: 12),
             featuresStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
@@ -339,18 +482,29 @@ class CreditsMainViewController: UIViewController {
         ])
     }
     
+    /// Stacks the side-by-side rows vertically at accessibility text sizes so nothing is squeezed or clipped.
+    private func applyContentSizeLayout() {
+        let isAccessibilitySize = traitCollection.preferredContentSizeCategory.isAccessibilityCategory
+        let amountAxis: NSLayoutConstraint.Axis = isAccessibilitySize ? .vertical : .horizontal
+        if amountRow.axis != amountAxis {
+            amountRow.axis = amountAxis
+            amountRow.alignment = isAccessibilitySize ? .center : .lastBaseline
+        }
+        if quickActionsStackView.axis != amountAxis {
+            quickActionsStackView.axis = amountAxis
+            quickActionsStackView.distribution = isAccessibilitySize ? .fill : .fillEqually
+        }
+        if errorStack.axis != amountAxis {
+            errorStack.axis = amountAxis
+            errorStack.alignment = isAccessibilitySize ? .leading : .center
+        }
+    }
+    
     private func bindViewModel() {
-        viewModel.$isLoadingBalance
+        viewModel.objectWillChange
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] isLoading in
-                self?.updateBalanceCard(isLoading: isLoading)
-            }
-            .store(in: &cancellables)
-        
-        viewModel.$balance
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] balance in
-                self?.updateBalance(balance)
+            .sink { [weak self] _ in
+                self?.renderBalance()
             }
             .store(in: &cancellables)
         
@@ -367,26 +521,149 @@ class CreditsMainViewController: UIViewController {
                 self?.updateRecentTransactions(transactions)
             }
             .store(in: &cancellables)
+        
+        NotificationCenter.default.publisher(for: .networkStatusChanged)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.networkStatusChanged()
+            }
+            .store(in: &cancellables)
+        
+        NotificationCenter.default.publisher(for: UIAccessibility.reduceMotionStatusDidChangeNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.renderBalance()
+            }
+            .store(in: &cancellables)
     }
     
-    private func updateBalanceCard(isLoading: Bool) {
-        balanceSkeletonLoader.isHidden = !isLoading
-        balanceTitleLabel.isHidden = isLoading
-        balanceAmountLabel.isHidden = isLoading
-        creditsLabel.isHidden = isLoading
+    private func startFreshnessTimer() {
+        freshnessTimer?.invalidate()
+        freshnessTimer = Timer.scheduledTimer(withTimeInterval: Self.freshnessRefreshInterval, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.updateFreshness() }
+        }
+    }
+    
+    private func networkStatusChanged() {
+        renderBalance()
+        if NetworkMonitor.shared.isConnected, viewModel.balanceErrorMessage != nil, !viewModel.isLoadingBalance {
+            Task { await viewModel.loadBalance() }
+        }
+    }
+    
+    private func retryBalance() {
+        HapticsManager.shared.selection()
+        Task { await viewModel.loadBalance() }
+    }
+    
+    /// Redraws the whole balance card, the inline error banner and their VoiceOver description from the view model.
+    private func renderBalance() {
+        let balance = viewModel.balance
+        let isLoadingFirstBalance = viewModel.isLoadingBalance && balance == nil
         
-        if isLoading {
+        balanceSkeletonLoader.isHidden = !isLoadingFirstBalance
+        balanceContentStack.isHidden = isLoadingFirstBalance
+        if isLoadingFirstBalance && !Motion.isReduced {
             balanceSkeletonLoader.startAnimating()
         } else {
             balanceSkeletonLoader.stopAnimating()
         }
+        
+        balanceAmountLabel.text = balance.map { Self.formatted($0.balance) } ?? "–"
+        updateStatusLines(for: balance)
+        updateFreshness()
+        updateErrorBanner()
+        updateBalanceAccessibility(isLoading: isLoadingFirstBalance)
     }
     
-    private func updateBalance(_ balance: CreditBalance?) {
-        guard let balance = balance else { return }
+    private func updateStatusLines(for balance: CreditBalance?) {
+        guard let balance else {
+            freeImagesLabel.isHidden = true
+            lowBalanceStack.isHidden = true
+            return
+        }
         
-        balanceAmountLabel.text = "\(balance.balance)"
-        balanceAmountLabel.textColor = balance.getBalanceColor()
+        let freeImages = freeImagesLeft(for: balance.balance)
+        freeImagesLabel.text = freeImages.map { String(localized: "\($0) free images left") }
+        freeImagesLabel.isHidden = freeImages == nil
+        
+        let lowText = lowBalanceText(for: balance.balance)
+        lowBalanceLabel.text = lowText
+        lowBalanceIcon.tintColor = balance.balance == 0 ? .systemRed : .systemOrange
+        lowBalanceStack.isHidden = lowText == nil
+    }
+    
+    /// Whole images still covered by the welcome grant, or nil once the person bought credits or has none left.
+    private func freeImagesLeft(for balance: Int) -> Int? {
+        guard WelcomeCredits().isOnWelcomeGrant(balance: balance) else { return nil }
+        let images = WelcomeCredits.freeImages(balance: balance, imageCost: CreditStoreViewController.defaultImageCreditCost)
+        return images > 0 ? images : nil
+    }
+    
+    private func lowBalanceText(for balance: Int) -> String? {
+        if balance == 0 { return String(localized: "Out of credits") }
+        if balance < CreditsViewModel.lowBalanceThreshold { return String(localized: "Low balance") }
+        return nil
+    }
+    
+    private func freshnessText() -> String? {
+        guard viewModel.balance != nil else { return nil }
+        if !NetworkMonitor.shared.isConnected {
+            return String(localized: "Offline, showing last balance")
+        }
+        guard let updatedAt = viewModel.balanceUpdatedAt else { return nil }
+        if Date().timeIntervalSince(updatedAt) < 60 {
+            return String(localized: "Updated just now")
+        }
+        let relative = RelativeDateTimeFormatter().localizedString(for: updatedAt, relativeTo: Date())
+        return String(localized: "Updated \(relative)")
+    }
+    
+    private func updateFreshness() {
+        let text = freshnessText()
+        freshnessLabel.text = text
+        freshnessLabel.isHidden = text == nil
+        if viewModel.balance != nil {
+            updateBalanceAccessibility(isLoading: false)
+        }
+    }
+    
+    private func updateErrorBanner() {
+        let shouldShow = viewModel.balanceErrorMessage != nil
+        errorBanner.isHidden = !shouldShow
+        retryButton.isEnabled = !viewModel.isLoadingBalance
+        retryButton.configuration?.showsActivityIndicator = viewModel.isLoadingBalance
+        
+        guard shouldShow != isShowingBalanceError else { return }
+        isShowingBalanceError = shouldShow
+        if shouldShow {
+            HapticsManager.shared.notification(.error)
+            Announce.say(String(localized: "Couldn't refresh your balance"))
+        } else if viewModel.balance != nil {
+            Announce.say(String(localized: "Balance updated"))
+        }
+    }
+    
+    private func updateBalanceAccessibility(isLoading: Bool) {
+        guard let balance = viewModel.balance else {
+            let label = isLoading ? String(localized: "Loading…") : String(localized: "Balance unavailable")
+            balanceCard.describe(label, traits: .staticText)
+            return
+        }
+        let value = [
+            freeImagesLabel.isHidden ? nil : freeImagesLabel.text,
+            lowBalanceStack.isHidden ? nil : lowBalanceLabel.text,
+            freshnessLabel.isHidden ? nil : freshnessLabel.text
+        ].compactMap { $0 }.joined(separator: ", ")
+        balanceCard.describe(
+            String(localized: "Balance: \(Self.formatted(balance.balance)) credits"),
+            value: value.isEmpty ? nil : value,
+            traits: .staticText
+        )
+    }
+    
+    private static func formatted(_ value: Int) -> String {
+        NumberFormatter.localizedString(from: NSNumber(value: value), number: .decimal)
     }
     
     private func updateRecentTransactions(_ transactions: [CreditTransaction]) {
@@ -401,36 +678,53 @@ class CreditsMainViewController: UIViewController {
     }
     
     private func updateLowCreditWarning(_ showWarning: Bool) {
-        guard showWarning else { return }
-        
-        // Animate the balance card to grab attention
-        UIView.animate(withDuration: 0.3, animations: {
-            self.balanceCard.transform = CGAffineTransform(scaleX: 1.02, y: 1.02)
-        }) { _ in
-            UIView.animate(withDuration: 0.3) {
-                self.balanceCard.transform = .identity
-            }
+        guard showWarning else {
+            hasAnnouncedLowBalance = false
+            return
         }
         
-        // Add haptic feedback
+        pulseBalanceCard()
         HapticsManager.shared.notification(.warning)
+        
+        if !hasAnnouncedLowBalance, let balance = viewModel.balance {
+            hasAnnouncedLowBalance = true
+            Announce.say(lowBalanceText(for: balance.balance) ?? String(localized: "Low balance"))
+        }
+    }
+    
+    private func pulseBalanceCard() {
+        guard !Motion.isReduced else { return }
+        Motion.animate(0.3, animations: {
+            self.balanceCard.transform = CGAffineTransform(scaleX: 1.02, y: 1.02)
+        }, completion: { _ in
+            Motion.animate(0.3) {
+                self.balanceCard.transform = .identity
+            }
+        })
     }
     
     private func createTransactionView(_ transaction: CreditTransaction) -> UIView {
         let container = UIView()
         container.translatesAutoresizingMaskIntoConstraints = false
+        container.describe(
+            "\(transaction.kindName), \(transaction.description)",
+            value: transaction.spokenAmount,
+            traits: .staticText
+        )
         
         let descriptionLabel = UILabel()
         descriptionLabel.text = transaction.description
-        descriptionLabel.font = .systemFont(ofSize: 14)
+        descriptionLabel.useScaledFont(.subheadline, size: 14)
         descriptionLabel.textColor = .label
+        descriptionLabel.numberOfLines = 0
         descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
         
         let amountLabel = UILabel()
-        let isSpend = transaction.transactionType == "spend"
-        amountLabel.text = "\(isSpend ? "-" : "+")\(transaction.amount)"
-        amountLabel.font = .systemFont(ofSize: 14, weight: .medium)
-        amountLabel.textColor = isSpend ? .systemRed : .systemPurple
+        amountLabel.text = transaction.signedAmountText
+        amountLabel.useScaledFont(.subheadline, size: 14, weight: .medium)
+        amountLabel.textColor = transaction.isDebit ? .label : .brandText
+        amountLabel.setContentHuggingPriority(.required, for: .horizontal)
+        amountLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
         amountLabel.translatesAutoresizingMaskIntoConstraints = false
         
         container.addSubview(descriptionLabel)
@@ -438,13 +732,12 @@ class CreditsMainViewController: UIViewController {
         
         NSLayoutConstraint.activate([
             descriptionLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            descriptionLabel.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            descriptionLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 2),
+            descriptionLabel.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -2),
             descriptionLabel.trailingAnchor.constraint(lessThanOrEqualTo: amountLabel.leadingAnchor, constant: -8),
             
             amountLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            amountLabel.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            
-            container.heightAnchor.constraint(equalToConstant: 20)
+            amountLabel.firstBaselineAnchor.constraint(equalTo: descriptionLabel.firstBaselineAnchor)
         ])
         
         return container
@@ -459,30 +752,33 @@ class CreditsMainViewController: UIViewController {
         card.layer.shadowOffset = CGSize(width: 0, height: 2)
         card.layer.shadowRadius = 8
         card.translatesAutoresizingMaskIntoConstraints = false
+        card.describe(title, hint: subtitle, traits: .button)
         
         let iconContainer = UIView()
-        iconContainer.backgroundColor = .systemPurple.withAlphaComponent(0.15)
+        iconContainer.backgroundColor = .brandTint
         iconContainer.layer.cornerRadius = 14
         iconContainer.translatesAutoresizingMaskIntoConstraints = false
         iconContainer.isUserInteractionEnabled = false
         
         let iconImageView = UIImageView(image: icon)
-        iconImageView.tintColor = .systemPurple
+        iconImageView.tintColor = .brandText
         iconImageView.contentMode = .scaleAspectFit
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         
         let titleLabel = UILabel()
         titleLabel.text = title
-        titleLabel.font = .systemFont(ofSize: 16, weight: .semibold)
+        titleLabel.useScaledFont(.callout, size: 16, weight: .semibold)
         titleLabel.textAlignment = .center
+        titleLabel.numberOfLines = 0
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.isUserInteractionEnabled = false
         
         let subtitleLabel = UILabel()
         subtitleLabel.text = subtitle
-        subtitleLabel.font = .systemFont(ofSize: 12)
+        subtitleLabel.useScaledFont(.caption1, size: 12)
         subtitleLabel.textColor = .secondaryLabel
         subtitleLabel.textAlignment = .center
+        subtitleLabel.numberOfLines = 0
         subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
         subtitleLabel.isUserInteractionEnabled = false
         
@@ -508,7 +804,8 @@ class CreditsMainViewController: UIViewController {
             
             subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
             subtitleLabel.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 8),
-            subtitleLabel.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -8)
+            subtitleLabel.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -8),
+            subtitleLabel.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
         ])
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(quickActionTapped(_:)))
@@ -524,22 +821,24 @@ class CreditsMainViewController: UIViewController {
         card.layer.borderWidth = 1
         card.layer.borderColor = UIColor.separator.cgColor
         card.translatesAutoresizingMaskIntoConstraints = false
+        card.describe(title, hint: description, traits: .button)
         
         let iconImageView = UIImageView(image: icon)
-        iconImageView.tintColor = .systemPurple
+        iconImageView.tintColor = .brandText
         iconImageView.contentMode = .scaleAspectFit
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         iconImageView.isUserInteractionEnabled = false
         
         let titleLabel = UILabel()
         titleLabel.text = title
-        titleLabel.font = .systemFont(ofSize: 16, weight: .medium)
+        titleLabel.useScaledFont(.callout, size: 16, weight: .medium)
+        titleLabel.numberOfLines = 0
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.isUserInteractionEnabled = false
         
         let descriptionLabel = UILabel()
         descriptionLabel.text = description
-        descriptionLabel.font = .systemFont(ofSize: 14)
+        descriptionLabel.useScaledFont(.subheadline, size: 14)
         descriptionLabel.textColor = .secondaryLabel
         descriptionLabel.numberOfLines = 0
         descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -588,17 +887,17 @@ class CreditsMainViewController: UIViewController {
     @objc private func quickActionTapped(_ gesture: UITapGestureRecognizer) {
         HapticsManager.shared.impact(.light)
         
-        UIView.animate(withDuration: 0.1, animations: {
+        Motion.animate(0.1, animations: {
             gesture.view?.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        }) { _ in
-            UIView.animate(withDuration: 0.1) {
+        }, completion: { _ in
+            Motion.animate(0.1) {
                 gesture.view?.transform = .identity
             }
             
             if let card = gesture.view as? QuickActionCard {
                 card.action()
             }
-        }
+        })
     }
     
     @objc private func featureTapped(_ gesture: UITapGestureRecognizer) {
@@ -699,6 +998,7 @@ class BalanceSkeletonLoaderView: UIView {
     }
     
     func startAnimating() {
+        guard !Motion.isReduced, shimmerLayer.animation(forKey: "shimmer") == nil else { return }
         let animation = CABasicAnimation(keyPath: "locations")
         animation.fromValue = [0, 0, 0.25]
         animation.toValue = [0.75, 1, 1]
@@ -723,6 +1023,12 @@ private class QuickActionCard: UIView {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    override func accessibilityActivate() -> Bool {
+        HapticsManager.shared.impact(.light)
+        action()
+        return true
+    }
 }
 
 private class FeatureCard: UIView {
@@ -735,5 +1041,11 @@ private class FeatureCard: UIView {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func accessibilityActivate() -> Bool {
+        HapticsManager.shared.selection()
+        action()
+        return true
     }
 }

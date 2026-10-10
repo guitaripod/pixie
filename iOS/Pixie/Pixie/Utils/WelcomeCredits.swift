@@ -22,6 +22,18 @@ struct WelcomeCredits {
         defaults.set(true, forKey: Self.purchasedKey)
     }
 
+    /// Credits one standard edit costs: the fixed price of the model one-tap presets run on, which
+    /// is the same figure the balance chip divides the balance by.
+    static var standardImageCost: Int {
+        ImageModel.gemini.fixedCost ?? CreditStoreViewController.defaultImageCreditCost
+    }
+
+    /// How many standard edits the welcome grant pays for, so onboarding never quotes a number
+    /// that drifts from the grant or the price.
+    static var startingFreeImages: Int {
+        freeImages(balance: grant, imageCost: standardImageCost)
+    }
+
     /// Whole images the balance covers at `imageCost` credits each.
     static func freeImages(balance: Int, imageCost: Int) -> Int {
         guard imageCost > 0 else { return 0 }

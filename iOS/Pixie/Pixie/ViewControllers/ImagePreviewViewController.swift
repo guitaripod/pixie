@@ -32,20 +32,38 @@ class ImagePreviewViewController: UIViewController {
         imageView.image = image
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.describe(String(localized: "Generated image"), hint: String(localized: "Double tap to zoom"), traits: .image)
         scrollView.addSubview(imageView)
         if onEditConfirmed != nil {
-            editButton.translatesAutoresizingMaskIntoConstraints = false
-            var config = UIButton.Configuration.filled()
-            config.title = String(localized: "Edit Image")
-            config.image = UIImage(systemName: "wand.and.stars")
-            config.imagePlacement = .leading
-            config.imagePadding = 8
-            config.cornerStyle = .large
-            config.baseBackgroundColor = UIColor(red: 0.404, green: 0.314, blue: 0.643, alpha: 1.0)
-            editButton.configuration = config
-            editButton.addTarget(self, action: #selector(editButtonTapped), for: .touchUpInside)
-            view.addSubview(editButton)
+            setupEditButton()
         }
+    }
+    private func setupEditButton() {
+        editButton.translatesAutoresizingMaskIntoConstraints = false
+        var config: UIButton.Configuration
+        if #available(iOS 26.0, *) {
+            config = .prominentGlass()
+        } else {
+            config = .borderedProminent()
+        }
+        config.title = String(localized: "Edit Image")
+        config.image = UIImage(systemName: "wand.and.stars")
+        config.imagePlacement = .leading
+        config.imagePadding = 8
+        config.cornerStyle = .capsule
+        config.baseBackgroundColor = .brand
+        config.baseForegroundColor = .white
+        config.contentInsets = NSDirectionalEdgeInsets(top: 14, leading: 24, bottom: 14, trailing: 24)
+        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .scaled(.body, size: 17, weight: .semibold)
+            return outgoing
+        }
+        editButton.configuration = config
+        editButton.accessibilityLabel = String(localized: "Edit this image")
+        editButton.addTarget(self, action: #selector(editButtonTapped), for: .touchUpInside)
+        editButton.setupPointerInteraction()
+        view.addSubview(editButton)
     }
     private func setupConstraints() {
         var constraints = [
@@ -63,9 +81,11 @@ class ImagePreviewViewController: UIViewController {
         if onEditConfirmed != nil {
             constraints.append(contentsOf: [
                 editButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-                editButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                editButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+                editButton.leadingAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
+                editButton.trailingAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
                 editButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 150),
-                editButton.heightAnchor.constraint(equalToConstant: 50)
+                editButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 50)
             ])
         }
         NSLayoutConstraint.activate(constraints)
@@ -87,6 +107,10 @@ class ImagePreviewViewController: UIViewController {
     @objc private func editButtonTapped() {
         HapticManager.shared.impact(.click)
         onEditConfirmed?()
+    }
+    override func accessibilityPerformEscape() -> Bool {
+        dismiss(animated: true)
+        return true
     }
     private func setupModalPresentation() {
         if #available(iOS 15.0, *) {

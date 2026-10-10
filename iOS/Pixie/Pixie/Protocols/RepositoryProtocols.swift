@@ -11,7 +11,7 @@ protocol ImageRepositoryProtocol {
 
 protocol CreditRepositoryProtocol {
     func getBalance() async throws -> CreditBalance
-    func getTransactions(limit: Int) async throws -> CreditTransactionsResponse
+    func getTransactions(limit: Int, page: Int) async throws -> CreditTransactionsResponse
     func getPacks() async throws -> CreditPacksResponse
     func estimateCost(request: CreditEstimateRequest) async throws -> CreditEstimateResponse
 }

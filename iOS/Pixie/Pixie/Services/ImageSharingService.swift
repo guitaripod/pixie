@@ -57,14 +57,12 @@ class ImageSharingService {
         )
         
         alertController.addAction(UIAlertAction(title: String(localized: "Save to Photos"), style: .default) { _ in
-            PhotoSavingService.shared.saveImage(image) { result in
-                DispatchQueue.main.async {
-                    switch result {
-                    case .success:
-                        self.showSaveSuccess(in: viewController)
-                    case .failure(let error):
-                        self.showSaveError(error, in: viewController)
-                    }
+            PhotoSavingService.shared.saveToLibrary([image]) { result in
+                switch result {
+                case .success:
+                    self.showSaveSuccess(in: viewController)
+                case .failure(let error):
+                    self.showSaveError(error, in: viewController)
                 }
             }
         })
@@ -138,25 +136,16 @@ class ImageSharingService {
     }
     
     private func showSaveSuccess(in viewController: UIViewController) {
-        let haptics = HapticManager.shared
-        haptics.impact(.success)
-        
-        let alert = UIAlertController(
+        HapticManager.shared.impact(.success)
+        presentTransientAlert(
             title: String(localized: "Saved!"),
-            message: String(localized: "Image saved to your Pixie album"),
-            preferredStyle: .alert
+            message: String(localized: "Saved to Photos"),
+            in: viewController
         )
-        
-        viewController.present(alert, animated: true)
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            alert.dismiss(animated: true)
-        }
     }
     
     private func showSaveError(_ error: PhotoSavingError, in viewController: UIViewController) {
-        let haptics = HapticManager.shared
-        haptics.impact(.error)
+        HapticManager.shared.impact(.error)
         
         let alert = UIAlertController(
             title: String(localized: "Save Failed"),
@@ -164,50 +153,57 @@ class ImageSharingService {
             preferredStyle: .alert
         )
         
-        alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
+        alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .cancel))
         
         if case .permissionDenied = error {
-            alert.addAction(UIAlertAction(title: String(localized: "Open Settings"), style: .default) { _ in
+            let openSettings = UIAlertAction(title: String(localized: "Open Settings"), style: .default) { _ in
                 if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(settingsURL)
                 }
-            })
+            }
+            alert.addAction(openSettings)
+            alert.preferredAction = openSettings
         }
         
         viewController.present(alert, animated: true)
     }
     
     private func showCopySuccess(in viewController: UIViewController) {
-        let haptics = HapticManager.shared
-        haptics.impact(.success)
-        
-        let alert = UIAlertController(
+        HapticManager.shared.impact(.success)
+        presentTransientAlert(
             title: String(localized: "Copied!"),
             message: String(localized: "Image copied to clipboard"),
-            preferredStyle: .alert
+            in: viewController
         )
-        
+    }
+
+    /// How long a self-dismissing alert stays up: never under two seconds, and longer for
+    /// longer text so the whole message can be read.
+    private func readingTime(title: String, message: String) -> TimeInterval {
+        let characters = title.count + message.count
+        return min(8, max(2, 1 + Double(characters) * 0.06))
+    }
+
+    /// Shows an alert that closes itself after the reading time. The dismissal is a task the
+    /// OK button cancels, so a person who closes the alert first never has a later timer
+    /// dismiss whatever is on screen by then.
+    private func presentTransientAlert(title: String, message: String, in viewController: UIViewController) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let timer = DismissalTimer()
+        alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .cancel) { _ in
+            timer.task?.cancel()
+        })
         viewController.present(alert, animated: true)
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+
+        let delay = readingTime(title: title, message: message)
+        timer.task = Task { @MainActor [weak alert] in
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            guard !Task.isCancelled, let alert, alert.presentingViewController != nil else { return }
             alert.dismiss(animated: true)
         }
     }
-    
-    private func showPromptCopySuccess(in viewController: UIViewController) {
-        let haptics = HapticManager.shared
-        haptics.impact(.success)
-        
-        let alert = UIAlertController(
-            title: String(localized: "Copied!"),
-            message: String(localized: "Prompt copied to clipboard"),
-            preferredStyle: .alert
-        )
-        
-        viewController.present(alert, animated: true)
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            alert.dismiss(animated: true)
-        }
-    }
+}
+
+private final class DismissalTimer {
+    var task: Task<Void, Never>?
 }
