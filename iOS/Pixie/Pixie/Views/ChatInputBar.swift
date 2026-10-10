@@ -195,9 +195,9 @@ class ChatInputBar: UIView {
         containerView.addGestureRecognizer(panGesture)
         NSLayoutConstraint.activate([
             dragHandleContainer.topAnchor.constraint(equalTo: containerView.topAnchor),
-            dragHandleContainer.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
-            dragHandleContainer.widthAnchor.constraint(equalToConstant: 120),
-            dragHandleContainer.heightAnchor.constraint(equalToConstant: 44),
+            dragHandleContainer.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            dragHandleContainer.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            dragHandleContainer.heightAnchor.constraint(equalToConstant: 24),
             dragHandle.centerXAnchor.constraint(equalTo: dragHandleContainer.centerXAnchor),
             dragHandle.centerYAnchor.constraint(equalTo: dragHandleContainer.centerYAnchor),
             dragHandle.widthAnchor.constraint(equalToConstant: 40),
