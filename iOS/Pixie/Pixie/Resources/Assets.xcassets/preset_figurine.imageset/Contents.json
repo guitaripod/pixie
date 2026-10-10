@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "preset_figurine.jpg",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

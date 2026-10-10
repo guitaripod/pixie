@@ -20,8 +20,10 @@ final class GalleryPageViewController: UIViewController {
     private let refreshControl = UIRefreshControl()
     private let emptyRefreshControl = UIRefreshControl()
     private let emptyScrollView = UIScrollView()
-    private let emptyStateView = EmptyStateView()
-    private let loadingView = UIActivityIndicatorView(style: .large)
+    private var showsSkeleton = false
+    private var serverTotal: Int?
+    private var isTitleHidden = true
+    private var skeletonSize = CGSize.zero
     
     private var dataSource: UICollectionViewDiffableDataSource<Int, ImageMetadata>!
     
@@ -62,72 +64,67 @@ final class GalleryPageViewController: UIViewController {
         NotificationCenter.default.removeObserver(self)
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        guard showsSkeleton, view.bounds.size != skeletonSize else { return }
+        updateSnapshot()
+    }
+
 
     @objc private func galleryNeedsRefresh() {
         refresh()
     }
 
     
-    private static let narrowGalleryWidth: CGFloat = 480
-
     private static func createLayout() -> UICollectionViewLayout {
         UICollectionViewCompositionalLayout { _, environment in
-            let layout = AdaptiveLayout(traitCollection: environment.traitCollection)
-            let insets = environment.container.effectiveContentSize.width < Self.narrowGalleryWidth ? UIEdgeInsets.zero : layout.contentInsets
-            let columns = layout.galleryColumns(containerWidth: environment.container.effectiveContentSize.width - insets.left - insets.right)
-            let spacing: CGFloat = environment.traitCollection.isRegularWidth ? 2 : 1
+            let metrics = GalleryGrid.metrics(containerWidth: environment.container.effectiveContentSize.width, traits: environment.traitCollection)
+            let fraction = 1.0 / CGFloat(metrics.columns)
 
-            let itemSize = NSCollectionLayoutSize(
-                widthDimension: .fractionalWidth(1.0 / CGFloat(columns)),
-                heightDimension: .fractionalWidth(1.0 / CGFloat(columns))
-            )
-            let item = NSCollectionLayoutItem(layoutSize: itemSize)
-
-            let groupSize = NSCollectionLayoutSize(
-                widthDimension: .fractionalWidth(1.0),
-                heightDimension: .fractionalWidth(1.0 / CGFloat(columns))
-            )
+            let item = NSCollectionLayoutItem(layoutSize: NSCollectionLayoutSize(
+                widthDimension: .fractionalWidth(fraction),
+                heightDimension: .fractionalWidth(fraction)
+            ))
             let group = NSCollectionLayoutGroup.horizontal(
-                layoutSize: groupSize,
+                layoutSize: NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalWidth(fraction)),
                 subitem: item,
-                count: columns
+                count: metrics.columns
             )
-            group.interItemSpacing = .fixed(spacing)
+            group.interItemSpacing = .fixed(metrics.spacing)
+
+            let header = NSCollectionLayoutBoundarySupplementaryItem(
+                layoutSize: NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(96)),
+                elementKind: GalleryHeaderView.kind,
+                alignment: .top
+            )
 
             let section = NSCollectionLayoutSection(group: group)
-            section.interGroupSpacing = spacing
-            section.contentInsetsReference = .safeArea
+            section.interGroupSpacing = metrics.spacing
+            section.boundarySupplementaryItems = [header]
             section.contentInsets = NSDirectionalEdgeInsets(
-                top: insets.top,
-                leading: insets.left,
-                bottom: 80 + insets.bottom,
-                trailing: insets.right
+                top: 0,
+                leading: metrics.insets.left,
+                bottom: GalleryGrid.bottomInset,
+                trailing: metrics.insets.right
             )
             return section
         }
     }
     
     private func setupUI() {
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = Theme.Color.canvas
         
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.accessibilityLabel = String(localized: "My Images")
         view.addSubview(collectionView)
         
-        loadingView.translatesAutoresizingMaskIntoConstraints = false
-        loadingView.hidesWhenStopped = true
-        view.addSubview(loadingView)
-        
         setupEmptyState()
         
         NSLayoutConstraint.activate([
             collectionView.topAnchor.constraint(equalTo: view.topAnchor),
-            collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            
-            loadingView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            loadingView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+            collectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            collectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
     
@@ -135,7 +132,7 @@ final class GalleryPageViewController: UIViewController {
     /// clipping, and the scroll view carries its own refresh control because it covers the grid.
     private func setupEmptyState() {
         emptyScrollView.translatesAutoresizingMaskIntoConstraints = false
-        emptyScrollView.backgroundColor = .systemBackground
+        emptyScrollView.backgroundColor = Theme.Color.canvas
         emptyScrollView.alwaysBounceVertical = true
         emptyScrollView.isHidden = true
         emptyScrollView.refreshControl = emptyRefreshControl
@@ -146,12 +143,15 @@ final class GalleryPageViewController: UIViewController {
         holder.translatesAutoresizingMaskIntoConstraints = false
         emptyScrollView.addSubview(holder)
         
-        emptyStateView.translatesAutoresizingMaskIntoConstraints = false
-        emptyStateView.onCreateTapped = { [weak self] in
+        let emptyStateView = StateView(
+            symbol: "photo.on.rectangle.angled",
+            title: String(localized: "No images yet"),
+            message: String(localized: "Your generated images will appear here"),
+            actionTitle: String(localized: "Create an image")
+        ) { [weak self] in
             guard let self else { return }
             self.delegate?.galleryPageDidRequestCreate(self)
         }
-        emptyStateView.configure(for: .personal)
         holder.addSubview(emptyStateView)
         
         let holderHeight = holder.heightAnchor.constraint(equalTo: emptyScrollView.frameLayoutGuide.heightAnchor)
@@ -172,18 +172,23 @@ final class GalleryPageViewController: UIViewController {
             holderHeight,
             
             emptyStateView.centerYAnchor.constraint(equalTo: holder.centerYAnchor),
-            emptyStateView.topAnchor.constraint(greaterThanOrEqualTo: holder.topAnchor, constant: 24),
-            emptyStateView.bottomAnchor.constraint(lessThanOrEqualTo: holder.bottomAnchor, constant: -24),
-            emptyStateView.leadingAnchor.constraint(equalTo: holder.safeAreaLayoutGuide.leadingAnchor, constant: 32),
-            emptyStateView.trailingAnchor.constraint(equalTo: holder.safeAreaLayoutGuide.trailingAnchor, constant: -32)
+            emptyStateView.topAnchor.constraint(greaterThanOrEqualTo: holder.topAnchor, constant: Theme.Space.xxl),
+            emptyStateView.bottomAnchor.constraint(lessThanOrEqualTo: holder.bottomAnchor, constant: -Theme.Space.xxl),
+            emptyStateView.leadingAnchor.constraint(equalTo: holder.safeAreaLayoutGuide.leadingAnchor, constant: Theme.Space.xxxl),
+            emptyStateView.trailingAnchor.constraint(equalTo: holder.safeAreaLayoutGuide.trailingAnchor, constant: -Theme.Space.xxxl)
         ])
     }
     
     private func setupCollectionView() {
-        collectionView.backgroundColor = .systemBackground
+        collectionView.backgroundColor = Theme.Color.canvas
         collectionView.delegate = self
         collectionView.prefetchDataSource = self
         collectionView.register(GalleryImageCell.self, forCellWithReuseIdentifier: GalleryImageCell.identifier)
+        collectionView.register(
+            GalleryHeaderView.self,
+            forSupplementaryViewOfKind: GalleryHeaderView.kind,
+            withReuseIdentifier: GalleryHeaderView.identifier
+        )
     }
     
     private func setupDataSource() {
@@ -194,6 +199,10 @@ final class GalleryPageViewController: UIViewController {
                 withReuseIdentifier: GalleryImageCell.identifier,
                 for: indexPath
             ) as! GalleryImageCell
+            if image.isSkeleton {
+                cell.configurePlaceholder()
+                return cell
+            }
             cell.configure(with: image)
             cell.setSelection(mode: self?.isSelecting ?? false, marked: self?.selectedIDs.contains(image.id) ?? false)
             cell.onAction = { [weak self] action in
@@ -202,6 +211,37 @@ final class GalleryPageViewController: UIViewController {
             }
             return cell
         }
+        dataSource.supplementaryViewProvider = { [weak self] collectionView, kind, indexPath in
+            guard kind == GalleryHeaderView.kind else { return nil }
+            let header = collectionView.dequeueReusableSupplementaryView(
+                ofKind: kind,
+                withReuseIdentifier: GalleryHeaderView.identifier,
+                for: indexPath
+            ) as! GalleryHeaderView
+            self?.configure(header: header)
+            return header
+        }
+    }
+    
+    private func configure(header: GalleryHeaderView) {
+        let metrics = GalleryGrid.metrics(containerWidth: collectionView.bounds.width, traits: traitCollection)
+        let padding = metrics.insets.left == 0 ? Theme.screenMargin(for: traitCollection) : 0
+        header.configure(count: showsSkeleton ? nil : headerCount, horizontalPadding: padding)
+    }
+    
+    /// The number in the "N images" line: the server's total when it is known, less the images
+    /// waiting out their undo window, and never fewer than the grid is showing.
+    private var headerCount: Int {
+        let shown = displayedImages.count
+        guard let serverTotal else { return shown }
+        return max(shown, serverTotal - hiddenIDs.count)
+    }
+    
+    private func refreshHeader() {
+        let header = collectionView.supplementaryView(forElementKind: GalleryHeaderView.kind, at: IndexPath(item: 0, section: 0))
+        guard let header = header as? GalleryHeaderView else { return }
+        configure(header: header)
+        collectionView.collectionViewLayout.invalidateLayout()
     }
     
     private func setupRefreshControl() {
@@ -217,19 +257,22 @@ final class GalleryPageViewController: UIViewController {
     private func loadInitialData() {
         guard !isLoading else { return }
         isLoading = true
-        loadingView.startAnimating()
+        showsSkeleton = true
+        collectionView.isScrollEnabled = false
         emptyScrollView.isHidden = true
+        updateSnapshot()
         
         Task {
             do {
                 let response = try await fetchImages(page: 1)
                 await MainActor.run {
                     self.images = response.images
+                    self.serverTotal = response.total
                     self.currentPage = 1
                     self.totalPagesLoaded = 1
                     self.hasMore = response.images.count == self.pageSize
                     self.isLoading = false
-                    self.loadingView.stopAnimating()
+                    self.endSkeleton()
                     self.updateSnapshot()
                     self.updateEmptyState()
                     self.announceLoaded()
@@ -237,7 +280,8 @@ final class GalleryPageViewController: UIViewController {
             } catch {
                 await MainActor.run {
                     self.isLoading = false
-                    self.loadingView.stopAnimating()
+                    self.endSkeleton()
+                    self.updateSnapshot()
                     self.showError(error) { self.loadInitialData() }
                     self.updateEmptyState()
                 }
@@ -261,6 +305,7 @@ final class GalleryPageViewController: UIViewController {
                 let response = try await fetchImages(page: 1)
                 await MainActor.run {
                     self.images = response.images
+                    self.serverTotal = response.total
                     self.totalPagesLoaded = 1
                     self.hasMore = response.images.count == self.pageSize
                     self.isRefreshing = false
@@ -277,6 +322,11 @@ final class GalleryPageViewController: UIViewController {
                 }
             }
         }
+    }
+    
+    private func endSkeleton() {
+        showsSkeleton = false
+        collectionView.isScrollEnabled = true
     }
     
     private func endRefreshing() {
@@ -296,6 +346,7 @@ final class GalleryPageViewController: UIViewController {
                 let response = try await fetchImages(page: nextPage)
                 await MainActor.run {
                     self.images.append(contentsOf: response.images)
+                    self.serverTotal = response.total
                     self.currentPage = nextPage
                     self.totalPagesLoaded += 1
                     self.hasMore = response.images.count == self.pageSize
@@ -403,7 +454,9 @@ final class GalleryPageViewController: UIViewController {
     
     /// Forgets images the server has deleted for good.
     func purge(ids: Set<String>) {
+        let removed = images.filter { ids.contains($0.id) }.count
         images.removeAll { ids.contains($0.id) }
+        serverTotal = serverTotal.map { max(0, $0 - removed) }
         hiddenIDs.subtract(ids)
         selectedIDs.subtract(ids)
         updateSnapshot()
@@ -434,8 +487,21 @@ final class GalleryPageViewController: UIViewController {
     private func updateSnapshot() {
         var snapshot = NSDiffableDataSourceSnapshot<Int, ImageMetadata>()
         snapshot.appendSections([0])
-        snapshot.appendItems(displayedImages, toSection: 0)
-        dataSource.apply(snapshot, animatingDifferences: !Motion.isReduced)
+        snapshot.appendItems(showsSkeleton ? skeletonItems : displayedImages, toSection: 0)
+        dataSource.apply(snapshot, animatingDifferences: !Motion.isReduced && !showsSkeleton) { [weak self] in
+            self?.refreshHeader()
+        }
+        refreshHeader()
+    }
+    
+    /// Enough loading squares to fill the screen, in the same grid the real thumbnails will use.
+    private var skeletonItems: [ImageMetadata] {
+        skeletonSize = view.bounds.size
+        let width = max(collectionView.bounds.width, 1)
+        let metrics = GalleryGrid.metrics(containerWidth: width, traits: traitCollection)
+        let side = (width - metrics.insets.left - metrics.insets.right) / CGFloat(metrics.columns)
+        let rows = Int(ceil(max(collectionView.bounds.height, view.bounds.height, 1) / max(side, 1)))
+        return (0..<(rows * metrics.columns)).map { ImageMetadata.skeleton(index: $0) }
     }
     
     private func updateEmptyState() {
@@ -444,7 +510,18 @@ final class GalleryPageViewController: UIViewController {
         if !emptyScrollView.isHidden {
             view.bringSubviewToFront(emptyScrollView)
         }
+        notifyHeaderVisibility()
         delegate?.galleryPageDidChangeContent(self, hasImages: !isEmpty)
+    }
+    
+    /// The navigation bar shows its own "Gallery" once the big title has scrolled away, and
+    /// always when the empty state has replaced the grid and its title.
+    private func notifyHeaderVisibility() {
+        let scrolled = showsSkeleton ? 0 : collectionView.contentOffset.y + collectionView.adjustedContentInset.top
+        let hidden = emptyScrollView.isHidden && scrolled < GalleryGrid.titleScrollThreshold
+        guard hidden != isTitleHidden else { return }
+        isTitleHidden = hidden
+        delegate?.galleryPageDidChangeHeaderVisibility(self, isTitleHidden: hidden)
     }
     
     private func showError(_ error: Error, retry: @escaping () -> Void) {
@@ -460,8 +537,13 @@ final class GalleryPageViewController: UIViewController {
 }
 
 extension GalleryPageViewController: UICollectionViewDelegate {
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        guard scrollView === collectionView else { return }
+        notifyHeaderVisibility()
+    }
+    
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard indexPath.section == 0, let image = dataSource.itemIdentifier(for: indexPath) else { return }
+        guard indexPath.section == 0, let image = dataSource.itemIdentifier(for: indexPath), !image.isSkeleton else { return }
         collectionView.deselectItem(at: indexPath, animated: false)
         
         if isSelecting {
@@ -488,7 +570,7 @@ extension GalleryPageViewController: UICollectionViewDelegate {
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        guard indexPath.section == 0 else { return }
+        guard indexPath.section == 0, !showsSkeleton else { return }
         
         if indexPath.item >= displayedImages.count - 5 && !isLoading && hasMore {
             loadMore()
@@ -496,7 +578,7 @@ extension GalleryPageViewController: UICollectionViewDelegate {
     }
     
     func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-        guard indexPath.section == 0, !isSelecting, let image = dataSource.itemIdentifier(for: indexPath) else { return nil }
+        guard indexPath.section == 0, !isSelecting, let image = dataSource.itemIdentifier(for: indexPath), !image.isSkeleton else { return nil }
         
         return UIContextMenuConfiguration(identifier: indexPath as NSCopying, previewProvider: {
             return self.makePreviewViewController(for: image)
@@ -516,7 +598,7 @@ extension GalleryPageViewController: UICollectionViewDelegate {
     
     private func makePreviewViewController(for image: ImageMetadata) -> UIViewController? {
         let previewVC = UIViewController()
-        previewVC.view.backgroundColor = .systemBackground
+        previewVC.view.backgroundColor = Theme.Color.canvas
         
         let containerView = UIView()
         containerView.backgroundColor = .black
@@ -624,7 +706,7 @@ extension GalleryPageViewController: UICollectionViewDelegate {
 extension GalleryPageViewController: UICollectionViewDataSourcePrefetching {
     func collectionView(_ collectionView: UICollectionView, prefetchItemsAt indexPaths: [IndexPath]) {
         let urls = indexPaths.compactMap { indexPath -> String? in
-            guard let image = dataSource.itemIdentifier(for: indexPath) else { return nil }
+            guard let image = dataSource.itemIdentifier(for: indexPath), !image.isSkeleton else { return nil }
             return image.thumbnailUrl ?? image.url
         }
         
@@ -645,7 +727,7 @@ extension GalleryPageViewController: UICollectionViewDataSourcePrefetching {
 
 extension GalleryPageViewController: UICollectionViewDragDelegate {
     func collectionView(_ collectionView: UICollectionView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
-        guard !isSelecting, let image = dataSource.itemIdentifier(for: indexPath) else { return [] }
+        guard !isSelecting, let image = dataSource.itemIdentifier(for: indexPath), !image.isSkeleton else { return [] }
         
         let itemProvider = NSItemProvider()
         
@@ -661,3 +743,32 @@ extension GalleryPageViewController: UICollectionViewDragDelegate {
     }
 }
 
+
+enum GalleryGrid {
+    struct Metrics {
+        let columns: Int
+        let spacing: CGFloat
+        let insets: UIEdgeInsets
+    }
+
+    static let narrowWidth: CGFloat = 480
+    static let bottomInset: CGFloat = 96
+    static let titleScrollThreshold: CGFloat = 40
+
+    static func metrics(containerWidth: CGFloat, traits: UITraitCollection) -> Metrics {
+        let layout = AdaptiveLayout(traitCollection: traits)
+        let insets = containerWidth < narrowWidth ? UIEdgeInsets.zero : layout.contentInsets
+        let columns = layout.galleryColumns(containerWidth: containerWidth - insets.left - insets.right)
+        return Metrics(columns: columns, spacing: 1, insets: insets)
+    }
+}
+
+private extension ImageMetadata {
+    static let skeletonPrefix = "skeleton-"
+
+    var isSkeleton: Bool { id.hasPrefix(Self.skeletonPrefix) }
+
+    static func skeleton(index: Int) -> ImageMetadata {
+        ImageMetadata(id: "\(skeletonPrefix)\(index)", url: "", prompt: "", createdAt: "", userId: "", thumbnailUrl: nil, metadata: nil, tags: nil)
+    }
+}

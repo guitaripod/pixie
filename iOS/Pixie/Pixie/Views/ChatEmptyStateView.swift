@@ -28,13 +28,14 @@ final class StarterChipView: UIVisualEffectView {
     init(prompt: StarterPrompt, accent: UIColor, action: @escaping () -> Void) {
         self.text = prompt.text
         self.icon = UIImageView(image: UIImage(systemName: prompt.icon))
-        super.init(effect: GlassMaterial.effect(interactive: true))
+        super.init(effect: nil)
         translatesAutoresizingMaskIntoConstraints = false
         layer.cornerRadius = 21
         layer.cornerCurve = .continuous
         layer.borderWidth = 1
-        layer.borderColor = UIColor.separator.withAlphaComponent(0.35).cgColor
         clipsToBounds = true
+        contentView.backgroundColor = Theme.Color.surface
+        applyBorder()
 
         icon.tintColor = accent
         icon.contentMode = .scaleAspectFit
@@ -42,11 +43,8 @@ final class StarterChipView: UIVisualEffectView {
         icon.setContentHuggingPriority(.required, for: .horizontal)
         icon.setContentCompressionResistancePriority(.required, for: .horizontal)
 
+        label.apply(.subhead, color: Theme.Color.ink)
         label.text = prompt.text
-        label.font = UIFontMetrics(forTextStyle: .subheadline).scaledFont(for: .systemFont(ofSize: 15, weight: .medium))
-        label.adjustsFontForContentSizeCategory = true
-        label.textColor = .label
-        label.numberOfLines = 0
 
         let stack = UIStackView(arrangedSubviews: [icon, label])
         stack.axis = .horizontal
@@ -85,6 +83,15 @@ final class StarterChipView: UIVisualEffectView {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        applyBorder()
+    }
+
+    private func applyBorder() {
+        layer.borderColor = Theme.Color.line.resolvedColor(with: traitCollection).cgColor
     }
 
     func measure(maxWidth: CGFloat) -> CGSize {
@@ -223,11 +230,7 @@ final class ChatEmptyStateView: UIView {
 
         let glyphContainer = UIView()
         glyphContainer.translatesAutoresizingMaskIntoConstraints = false
-        let glyph = UIImageView(image: UIImage(systemName: "sparkles"))
-        glyph.tintColor = tintColor
-        glyph.contentMode = .scaleAspectFit
-        glyph.translatesAutoresizingMaskIntoConstraints = false
-        glyph.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .largeTitle, scale: .large)
+        let glyph = IconBadge(symbol: "sparkles", size: 64)
         glyph.hideFromAccessibility()
         glyphContainer.hideFromAccessibility()
         glyphContainer.addSubview(glyph)
@@ -238,20 +241,10 @@ final class ChatEmptyStateView: UIView {
         ])
 
         let titleLabel = UILabel()
-        titleLabel.text = String(localized: "What will you make today?")
-        titleLabel.font = UIFontMetrics(forTextStyle: .title2).scaledFont(for: .systemFont(ofSize: 24, weight: .bold))
-        titleLabel.adjustsFontForContentSizeCategory = true
-        titleLabel.textColor = .label
-        titleLabel.textAlignment = .center
-        titleLabel.numberOfLines = 0
+        titleLabel.setStyledText(String(localized: "What will you make today?"), .title, alignment: .center)
 
         let subtitleLabel = UILabel()
-        subtitleLabel.text = String(localized: "Describe an image below, or start from one of these.")
-        subtitleLabel.font = .preferredFont(forTextStyle: .subheadline)
-        subtitleLabel.adjustsFontForContentSizeCategory = true
-        subtitleLabel.textColor = .secondaryLabel
-        subtitleLabel.textAlignment = .center
-        subtitleLabel.numberOfLines = 0
+        subtitleLabel.setStyledText(String(localized: "Describe an image below, or start from one of these."), .callout, alignment: .center)
         subtitleLabel.accessibilityHint = String(localized: "Swipe to see more ideas")
         scrollView.accessibilityHint = String(localized: "Swipe to see more ideas")
 
@@ -296,7 +289,7 @@ final class ChatEmptyStateView: UIView {
     }
 
     private func makeChip(_ prompt: StarterPrompt) -> StarterChipView {
-        StarterChipView(prompt: prompt, accent: tintColor) { [weak self] in
+        StarterChipView(prompt: prompt, accent: Theme.Color.accentText) { [weak self] in
             self?.haptics.impact(.click)
             self?.onPromptSelected?(prompt.text)
         }

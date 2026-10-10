@@ -29,6 +29,7 @@ class MainSplitViewController: UISplitViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        view.backgroundColor = Theme.Color.canvas
         preferredDisplayMode = .oneBesideSecondary
         preferredSplitBehavior = .tile
         presentsWithGesture = true

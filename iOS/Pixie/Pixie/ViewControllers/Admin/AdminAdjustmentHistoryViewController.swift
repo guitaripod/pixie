@@ -5,7 +5,10 @@ class AdminAdjustmentHistoryViewController: UIViewController {
     private let tableView = UITableView()
     private let refreshControl = UIRefreshControl()
     private let loadingView = UIActivityIndicatorView(style: .large)
-    private let emptyStateLabel = UILabel()
+    private let emptyStateView = StateView(
+        symbol: "clock.arrow.circlepath",
+        title: String(localized: "No adjustment history")
+    )
     private let errorView = AdminInlineMessageView()
     private let haptics = HapticManager.shared
     
@@ -38,7 +41,7 @@ class AdminAdjustmentHistoryViewController: UIViewController {
     
     private func setupUI() {
         title = String(localized: "Adjustment History")
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = Theme.Color.canvas
         
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.delegate = self
@@ -54,18 +57,13 @@ class AdminAdjustmentHistoryViewController: UIViewController {
         
         loadingView.translatesAutoresizingMaskIntoConstraints = false
         loadingView.hidesWhenStopped = true
+        loadingView.color = Theme.Color.accentText
         
-        emptyStateLabel.translatesAutoresizingMaskIntoConstraints = false
-        emptyStateLabel.text = String(localized: "No adjustment history")
-        emptyStateLabel.useScaledFont(.body, size: 17)
-        emptyStateLabel.textColor = .secondaryLabel
-        emptyStateLabel.textAlignment = .center
-        emptyStateLabel.numberOfLines = 0
-        emptyStateLabel.isHidden = true
+        emptyStateView.isHidden = true
         
         view.addSubview(tableView)
         view.addSubview(loadingView)
-        view.addSubview(emptyStateLabel)
+        view.addSubview(emptyStateView)
         errorView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(errorView)
     }
@@ -80,10 +78,10 @@ class AdminAdjustmentHistoryViewController: UIViewController {
             loadingView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             
-            emptyStateLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            emptyStateLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            emptyStateLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 32),
-            emptyStateLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32),
+            emptyStateView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            emptyStateView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            emptyStateView.leadingAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 32),
+            emptyStateView.trailingAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32),
             
             errorView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             errorView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
@@ -136,12 +134,12 @@ class AdminAdjustmentHistoryViewController: UIViewController {
     }
     
     private func updateEmptyState() {
-        emptyStateLabel.isHidden = !adjustmentHistory.isEmpty || !errorView.isHidden
+        emptyStateView.isHidden = !adjustmentHistory.isEmpty || !errorView.isHidden
     }
     
     private func showError(_ message: String) {
         haptics.notification(.error)
-        emptyStateLabel.isHidden = true
+        emptyStateView.isHidden = true
         errorView.show(message) { [weak self] in
             self?.loadHistory()
         }
@@ -187,7 +185,7 @@ extension AdminAdjustmentHistoryViewController: UITableViewDelegate {
 
 class AdjustmentHistoryCell: UITableViewCell {
     
-    private let containerView = UIView()
+    private let card = SurfaceView(style: .card)
     private let amountLabel = UILabel()
     private let reasonLabel = UILabel()
     private let userIdLabel = UILabel()
@@ -209,64 +207,51 @@ class AdjustmentHistoryCell: UITableViewCell {
         backgroundColor = .clear
         selectionStyle = .none
         
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        containerView.backgroundColor = .secondarySystemGroupedBackground
-        containerView.layer.cornerRadius = 12
-        containerView.layer.shadowColor = UIColor.black.cgColor
-        containerView.layer.shadowOpacity = 0.05
-        containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
-        containerView.layer.shadowRadius = 4
+        amountLabel.apply(.numeral(24))
+        amountLabel.numberOfLines = 1
         
-        amountLabel.useScaledFont(.title2, size: 24, weight: .bold)
+        reasonLabel.apply(.callout)
         
-        reasonLabel.useScaledFont(.subheadline, size: 15)
-        reasonLabel.textColor = .secondaryLabel
-        reasonLabel.numberOfLines = 0
-        
-        userIdLabel.useScaledFont(.footnote, size: 13)
-        userIdLabel.textColor = .secondaryLabel
+        userIdLabel.apply(.footnote)
+        userIdLabel.numberOfLines = 1
         userIdLabel.lineBreakMode = .byTruncatingMiddle
         userIdLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         
-        dateLabel.useScaledFont(.footnote, size: 13)
-        dateLabel.textColor = .secondaryLabel
+        dateLabel.apply(.footnote)
         dateLabel.textAlignment = .right
-        dateLabel.numberOfLines = 0
         dateLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
         
-        newBalanceLabel.useScaledFont(.subheadline, size: 15, weight: .medium)
-        newBalanceLabel.textColor = .secondaryLabel
+        newBalanceLabel.apply(.subhead)
         newBalanceLabel.textAlignment = .right
-        newBalanceLabel.numberOfLines = 0
         
         headerStack.addArrangedSubview(amountLabel)
         headerStack.addArrangedSubview(newBalanceLabel)
         headerStack.alignment = .center
-        headerStack.spacing = 8
+        headerStack.spacing = Theme.Space.sm
         
         footerStack.addArrangedSubview(userIdLabel)
         footerStack.addArrangedSubview(dateLabel)
         footerStack.alignment = .center
-        footerStack.spacing = 8
+        footerStack.spacing = Theme.Space.sm
         
         let contentStack = UIStackView(arrangedSubviews: [headerStack, reasonLabel, footerStack])
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         contentStack.axis = .vertical
-        contentStack.spacing = 8
+        contentStack.spacing = Theme.Space.sm
         
-        contentView.addSubview(containerView)
-        containerView.addSubview(contentStack)
+        contentView.addSubview(card)
+        card.contentView.addSubview(contentStack)
+        contentStack.pinEdges(to: card.contentView, insets: UIEdgeInsets(top: Theme.Space.lg, left: Theme.Space.lg, bottom: Theme.Space.lg, right: Theme.Space.lg))
         
+        let margin = Theme.Space.lg
+        let width = card.widthAnchor.constraint(equalTo: contentView.widthAnchor, constant: -2 * margin)
+        width.priority = .defaultHigh
         NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
-            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
-            
-            contentStack.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
-            contentStack.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            contentStack.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            contentStack.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16)
+            card.topAnchor.constraint(equalTo: contentView.topAnchor, constant: Theme.Space.sm),
+            card.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -Theme.Space.sm),
+            card.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            card.widthAnchor.constraint(lessThanOrEqualToConstant: Theme.Width.form),
+            width
         ])
         updateAxes()
     }
@@ -292,7 +277,7 @@ class AdjustmentHistoryCell: UITableViewCell {
     func configure(with item: AdjustmentHistoryItem, dateFormatter: DateFormatter) {
         let amount = item.amount
         amountLabel.text = amount > 0 ? "+\(amount)" : "\(amount)"
-        amountLabel.textColor = amount > 0 ? .systemGreen : .systemRed
+        amountLabel.textColor = amount > 0 ? Theme.Color.success : Theme.Color.danger
         
         reasonLabel.text = item.reason
         userIdLabel.text = String(localized: "User: \(item.userId)")

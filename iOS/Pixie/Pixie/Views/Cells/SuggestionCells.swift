@@ -24,11 +24,101 @@ extension UIColor {
 }
 
 
-class SectionHeaderView: UICollectionReusableView {
-    static let reuseIdentifier = "SectionHeaderView"
+/// The shared look of a tile on the start screen: a surface with a hairline, a soft shadow in light
+/// mode, and an accent-tinted state when marked. The shadow lives on the cell and the clipping on
+/// its content view, so rounded corners never cut it off.
+class CardCell: UICollectionViewCell {
+    var cardRadius: CGFloat = Theme.Radius.lg {
+        didSet { applyChrome() }
+    }
+
+    var showsHairline = true {
+        didSet { applyChrome() }
+    }
+
+    var isMarked = false {
+        didSet { applyChrome() }
+    }
+
+    private let markOverlay = UIView()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        contentView.clipsToBounds = true
+        contentView.layer.cornerCurve = .continuous
+        layer.cornerCurve = .continuous
+        markOverlay.isUserInteractionEnabled = false
+        markOverlay.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(markOverlay)
+        markOverlay.pinEdges(to: contentView)
+        applyChrome()
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: cardRadius).cgPath
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        applyChrome()
+    }
+
+    private func applyChrome() {
+        let isDark = traitCollection.userInterfaceStyle == .dark
+        contentView.backgroundColor = Theme.Color.surface
+        contentView.layer.cornerRadius = cardRadius
+        layer.cornerRadius = cardRadius
+        markOverlay.backgroundColor = Theme.Color.accentSoft
+        markOverlay.isHidden = !isMarked
+        let borderColor = isMarked ? Theme.Color.accent : Theme.Color.line
+        contentView.layer.borderWidth = isMarked ? 2 : (showsHairline ? 1 : 0)
+        contentView.layer.borderColor = borderColor.resolvedColor(with: traitCollection).cgColor
+        layer.shadowColor = UIColor(hex: 0x1B0F4A).cgColor
+        layer.shadowOpacity = isDark || isMarked ? 0 : 0.07
+        layer.shadowRadius = 14
+        layer.shadowOffset = CGSize(width: 0, height: 6)
+    }
+}
+
+
+enum ChipSizing {
+    /// How wide a `ChipView` with this title and symbol lays out at the current text size.
+    static func width(title: String, symbol: String?) -> CGFloat {
+        let chip = ChipView(title: title, symbol: symbol)
+        return ceil(chip.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).width)
+    }
+
+}
+
+
+class SuggestionsSectionHeaderView: UICollectionReusableView {
+    enum Prominence {
+        case hero
+        case section
+        case label
+    }
+
+    static let reuseIdentifier = "SuggestionsSectionHeaderView"
     let titleLabel = UILabel()
     let subtitleLabel = UILabel()
-    let actionButton = UIButton(type: .system)
+    let actionButton = PixieButton(style: .plain, size: .small)
+    private let textStack = UIStackView()
+    private var leadingConstraint: NSLayoutConstraint!
+    private var trailingConstraint: NSLayoutConstraint!
+    private var bottomConstraint: NSLayoutConstraint!
+
+    var horizontalInset: CGFloat = 0 {
+        didSet {
+            leadingConstraint.constant = horizontalInset
+            trailingConstraint.constant = -horizontalInset
+        }
+    }
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -37,42 +127,48 @@ class SectionHeaderView: UICollectionReusableView {
         fatalError("init(coder:) has not been implemented")
     }
     private func setupUI() {
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.useScaledFont(.title2, size: 22, weight: .bold)
-        titleLabel.textColor = .label
-        titleLabel.numberOfLines = 0
         titleLabel.accessibilityTraits = .header
-        addSubview(titleLabel)
-        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        subtitleLabel.useScaledFont(.subheadline, size: 14)
-        subtitleLabel.textColor = .secondaryLabel
-        subtitleLabel.numberOfLines = 0
-        addSubview(subtitleLabel)
-        actionButton.translatesAutoresizingMaskIntoConstraints = false
-        actionButton.titleLabel?.font = .scaled(.subheadline, size: 15, weight: .medium)
-        actionButton.titleLabel?.adjustsFontForContentSizeCategory = true
+        textStack.axis = .vertical
+        textStack.spacing = 2
+        textStack.addArrangedSubview(titleLabel)
+        textStack.addArrangedSubview(subtitleLabel)
+        textStack.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(textStack)
+        actionButton.isHidden = true
         addSubview(actionButton)
-
-        let horizontalPadding: CGFloat = 8
-
+        leadingConstraint = textStack.leadingAnchor.constraint(equalTo: leadingAnchor)
+        trailingConstraint = textStack.trailingAnchor.constraint(equalTo: trailingAnchor)
+        bottomConstraint = textStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Theme.Space.md)
         NSLayoutConstraint.activate([
-            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalPadding),
-            titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: 8),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -horizontalPadding),
-            subtitleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalPadding),
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
-            subtitleLabel.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -horizontalPadding),
-            subtitleLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12),
-            actionButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -horizontalPadding),
-            actionButton.centerYAnchor.constraint(equalTo: centerYAnchor)
+            textStack.topAnchor.constraint(equalTo: topAnchor),
+            leadingConstraint,
+            trailingConstraint,
+            bottomConstraint,
+            actionButton.trailingAnchor.constraint(equalTo: textStack.trailingAnchor, constant: Theme.Space.md),
+            actionButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor)
         ])
     }
-    func configure(title: String, subtitle: String?, actionTitle: String? = nil) {
-        titleLabel.text = title
-        subtitleLabel.text = subtitle
-        subtitleLabel.isHidden = subtitle == nil
-        if let actionTitle = actionTitle {
-            actionButton.setTitle(actionTitle, for: .normal)
+    func configure(title: String, subtitle: String?, actionTitle: String? = nil, prominence: Prominence = .section) {
+        switch prominence {
+        case .hero:
+            titleLabel.setStyledText(title, .title)
+            bottomConstraint.constant = -Theme.Space.lg
+        case .section:
+            titleLabel.setStyledText(title, .title2)
+            bottomConstraint.constant = -Theme.Space.md
+        case .label:
+            titleLabel.setStyledText(title, .caption)
+            bottomConstraint.constant = -Theme.Space.sm
+        }
+        if let subtitle {
+            subtitleLabel.setStyledText(subtitle, .footnote)
+            subtitleLabel.isHidden = false
+        } else {
+            subtitleLabel.attributedText = nil
+            subtitleLabel.isHidden = true
+        }
+        if let actionTitle {
+            actionButton.title = actionTitle
             actionButton.isHidden = false
         } else {
             actionButton.isHidden = true
@@ -90,6 +186,17 @@ class CreativePromptsHeaderView: UICollectionReusableView {
     var categories: [CreativePrompt] = []
     var selectedIndex = 0
     var onCategorySelected: ((Int) -> Void)?
+    private var scrollLeading: NSLayoutConstraint!
+    private var scrollTrailing: NSLayoutConstraint!
+
+    var horizontalInset: CGFloat = 0 {
+        didSet {
+            scrollLeading.constant = -horizontalInset
+            scrollTrailing.constant = horizontalInset
+            stackView.layoutMargins = UIEdgeInsets(top: 0, left: horizontalInset, bottom: 0, right: horizontalInset)
+        }
+    }
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -99,121 +206,71 @@ class CreativePromptsHeaderView: UICollectionReusableView {
     }
     private func setupUI() {
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.useScaledFont(.title2, size: 22, weight: .bold)
-        titleLabel.textColor = .label
-        titleLabel.numberOfLines = 0
         titleLabel.accessibilityTraits = .header
         addSubview(titleLabel)
         subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        subtitleLabel.useScaledFont(.subheadline, size: 14)
-        subtitleLabel.textColor = .secondaryLabel
-        subtitleLabel.numberOfLines = 0
         addSubview(subtitleLabel)
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.showsHorizontalScrollIndicator = false
         addSubview(scrollView)
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.axis = .horizontal
-        stackView.spacing = 8
-        stackView.layoutMargins = .init(top: .zero, left: -16, bottom: .zero, right: .zero)
+        stackView.spacing = Theme.Space.sm
         stackView.isLayoutMarginsRelativeArrangement = true
         stackView.distribution = .fill
+        stackView.alignment = .center
         scrollView.addSubview(stackView)
 
-        let horizontalPadding: CGFloat = 8
+        scrollLeading = scrollView.leadingAnchor.constraint(equalTo: leadingAnchor)
+        scrollTrailing = scrollView.trailingAnchor.constraint(equalTo: trailingAnchor)
         NSLayoutConstraint.activate([
-            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalPadding),
-            titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: 8),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -horizontalPadding),
-            subtitleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalPadding),
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
-            subtitleLabel.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -horizontalPadding),
-            scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            scrollView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 12),
-            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12),
+            titleLabel.topAnchor.constraint(equalTo: topAnchor),
+            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor),
+            titleLabel.trailingAnchor.constraint(equalTo: trailingAnchor),
+            subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
+            subtitleLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
+            scrollLeading,
+            scrollTrailing,
+            scrollView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: Theme.Space.md),
+            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Theme.Space.sm),
             scrollView.frameLayoutGuide.heightAnchor.constraint(equalTo: scrollView.contentLayoutGuide.heightAnchor),
-            stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            stackView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-            stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor)
+            stackView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            stackView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            stackView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            stackView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor)
         ])
     }
     func configure(categories: [CreativePrompt], selectedIndex: Int, onCategorySelected: @escaping (Int) -> Void) {
         self.categories = categories
         self.selectedIndex = selectedIndex
         self.onCategorySelected = onCategorySelected
-        titleLabel.text = String(localized: "Creative Prompts")
-        subtitleLabel.text = String(localized: "Tap a category, then select a prompt")
+        titleLabel.setStyledText(String(localized: "Creative Prompts"), .title2)
+        subtitleLabel.setStyledText(String(localized: "Tap a category, then select a prompt"), .footnote)
         stackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        let leadingPadding = UIView()
-        leadingPadding.widthAnchor.constraint(equalToConstant: 16).isActive = true
-        stackView.addArrangedSubview(leadingPadding)
         for (index, category) in categories.enumerated() {
-            let button = UIButton(type: .custom)
-            button.tag = index
-            var config = UIButton.Configuration.plain()
-            config.title = category.category
-            config.image = UIImage(systemName: category.symbol)
-            config.cornerStyle = .capsule
-            config.background.strokeWidth = 1
-            config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { attributes in
-                var attributes = attributes
-                attributes.font = UIFont.scaled(.subheadline, size: 14, weight: .medium)
-                return attributes
-            }
-            config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
-            config.imagePadding = 6
-            config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(textStyle: .footnote, scale: .medium)
-            button.configuration = config
-            button.heightAnchor.constraint(greaterThanOrEqualToConstant: 36).isActive = true
-            updateButtonAppearance(button, isSelected: index == selectedIndex, color: category.color)
-            button.addAction(UIAction { [weak self] _ in
+            let chip = ChipView(title: category.category, symbol: category.symbol, isSelected: index == selectedIndex)
+            chip.onTap = { [weak self] in
                 self?.selectCategory(at: index)
-            }, for: .touchUpInside)
-            stackView.addArrangedSubview(button)
+            }
+            stackView.addArrangedSubview(chip)
         }
-        let trailingPadding = UIView()
-        trailingPadding.widthAnchor.constraint(equalToConstant: 16).isActive = true
-        stackView.addArrangedSubview(trailingPadding)
     }
     private func selectCategory(at index: Int) {
         guard index != selectedIndex else { return }
-        let previousButtonIndex = selectedIndex + 1
-        let newButtonIndex = index + 1
-        if previousButtonIndex < stackView.arrangedSubviews.count,
-           let previousButton = stackView.arrangedSubviews[previousButtonIndex] as? UIButton {
-            updateButtonAppearance(previousButton, isSelected: false, color: categories[selectedIndex].color)
-        }
-        if newButtonIndex < stackView.arrangedSubviews.count,
-           let newButton = stackView.arrangedSubviews[newButtonIndex] as? UIButton {
-            updateButtonAppearance(newButton, isSelected: true, color: categories[index].color)
+        for (position, view) in stackView.arrangedSubviews.enumerated() {
+            (view as? ChipView)?.isSelected = position == index
         }
         selectedIndex = index
         onCategorySelected?(index)
     }
-    private func updateButtonAppearance(_ button: UIButton, isSelected: Bool, color: UIColor) {
-        let fill = color.darkenedForWhiteText()
-        button.isSelected = isSelected
-        Motion.animate(0.2) {
-            var config = button.configuration
-            config?.baseForegroundColor = isSelected ? .white : .label
-            config?.imageColorTransformer = UIConfigurationColorTransformer { _ in isSelected ? .white : color }
-            config?.background.backgroundColor = isSelected ? fill : .clear
-            config?.background.strokeColor = isSelected ? fill : .separator
-            button.configuration = config
-            button.transform = isSelected && !Motion.isReduced ? CGAffineTransform(scaleX: 1.05, y: 1.05) : .identity
-        }
-    }
 }
 
 
+/// A recent library photo: a rounded square thumbnail that fills the photo strip.
 class ImageCell: UICollectionViewCell {
     static let reuseIdentifier = "ImageCell"
     let imageView = UIImageView()
-    let overlayView = UIView()
-    let iconImageView = UIImageView()
-    let label = UILabel()
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -222,69 +279,275 @@ class ImageCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     private func setupUI() {
-        contentView.layer.cornerRadius = 16
+        contentView.layer.cornerRadius = Theme.Radius.md
+        contentView.layer.cornerCurve = .continuous
         contentView.clipsToBounds = true
+        contentView.backgroundColor = Theme.Color.fill
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.contentMode = .scaleAspectFill
         contentView.addSubview(imageView)
-        overlayView.translatesAutoresizingMaskIntoConstraints = false
-        overlayView.backgroundColor = .systemGray6
-        contentView.addSubview(overlayView)
-        iconImageView.translatesAutoresizingMaskIntoConstraints = false
-        iconImageView.tintColor = .brandText
-        iconImageView.contentMode = .scaleAspectFit
-        overlayView.addSubview(iconImageView)
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.useScaledFont(.footnote, size: 13, weight: .medium)
-        label.textColor = .brandText
-        label.textAlignment = .center
-        label.numberOfLines = 0
-        overlayView.addSubview(label)
-        NSLayoutConstraint.activate([
-            imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            overlayView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            overlayView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            overlayView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            overlayView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            iconImageView.centerXAnchor.constraint(equalTo: overlayView.centerXAnchor),
-            iconImageView.centerYAnchor.constraint(equalTo: overlayView.centerYAnchor, constant: -12),
-            iconImageView.widthAnchor.constraint(equalToConstant: 32),
-            iconImageView.heightAnchor.constraint(equalToConstant: 32),
-            label.topAnchor.constraint(equalTo: iconImageView.bottomAnchor, constant: 8),
-            label.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 8),
-            label.trailingAnchor.constraint(equalTo: overlayView.trailingAnchor, constant: -8)
-        ])
+        imageView.pinEdges(to: contentView)
         isAccessibilityElement = true
+        accessibilityLabel = String(localized: "Recent photo")
+        accessibilityTraits = .button
     }
-    func configure(with image: UIImage?, isAddButton: Bool = false, isSelectedPhoto: Bool = false) {
-        contentView.layer.borderWidth = isSelectedPhoto ? 3 : 0
-        contentView.layer.borderColor = UIColor.systemPurple.cgColor
-        if isAddButton {
-            imageView.image = nil
-            overlayView.isHidden = false
-            overlayView.layer.borderWidth = 2
-            overlayView.layer.borderColor = UIColor.brandText.withAlphaComponent(0.5).cgColor
-            overlayView.layer.cornerRadius = 16
-            iconImageView.image = UIImage(systemName: "photo.badge.plus")
-            label.text = String(localized: "Choose Image")
-            accessibilityLabel = String(localized: "Choose Image")
-            accessibilityTraits = .button
-        } else {
-            imageView.image = image
-            overlayView.isHidden = true
-            accessibilityLabel = isSelectedPhoto ? String(localized: "Your photo") : String(localized: "Recent photo")
-            accessibilityTraits = isSelectedPhoto ? [.button, .selected] : .button
-        }
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        contentView.layer.borderWidth = 1
+        contentView.layer.borderColor = Theme.Color.line.resolvedColor(with: traitCollection).cgColor
+    }
+    func configure(with image: UIImage?) {
+        imageView.image = image
+        contentView.layer.borderWidth = 1
+        contentView.layer.borderColor = Theme.Color.line.resolvedColor(with: traitCollection).cgColor
     }
 }
 
 
-/// The first-run shortcut next to "Choose Image": the old photo the onboarding restores,
+/// The picked photo as a 3:4 card with a Change capsule beside it, and a remove control when the
+/// owner handles removal.
+final class SelectedPhotoCell: UICollectionViewCell {
+    static let reuseIdentifier = "SelectedPhotoCell"
+    static let cardWidth: CGFloat = 160
+    var onChange: (() -> Void)?
+    var onRemove: (() -> Void)?
+    private let cardView = UIView()
+    private let photoView = UIImageView()
+    private let removeButton = UIButton(type: .custom)
+    private let removeDisc = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+    private let hintLabel = UILabel()
+    private lazy var changeButton = PixieButton(style: .secondary, size: .medium, title: String(localized: "Change"), symbol: "photo.on.rectangle") { [weak self] in
+        self?.onChange?()
+    }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupUI()
+    }
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    private func setupUI() {
+        isAccessibilityElement = false
+        cardView.translatesAutoresizingMaskIntoConstraints = false
+        cardView.layer.cornerRadius = Theme.Radius.xl - 4
+        cardView.layer.cornerCurve = .continuous
+        cardView.layer.shadowColor = UIColor(hex: 0x1B0F4A).cgColor
+        cardView.layer.shadowRadius = 18
+        cardView.layer.shadowOffset = CGSize(width: 0, height: 8)
+        cardView.describe(String(localized: "Your photo"), traits: [.image, .selected])
+        contentView.addSubview(cardView)
+
+        photoView.translatesAutoresizingMaskIntoConstraints = false
+        photoView.contentMode = .scaleAspectFill
+        photoView.clipsToBounds = true
+        photoView.backgroundColor = Theme.Color.fill
+        photoView.layer.cornerRadius = Theme.Radius.xl - 4
+        photoView.layer.cornerCurve = .continuous
+        photoView.layer.borderWidth = 1
+        cardView.addSubview(photoView)
+        photoView.pinEdges(to: cardView)
+
+        let tap = UITapGestureRecognizer(target: self, action: #selector(cardTapped))
+        cardView.addGestureRecognizer(tap)
+
+        removeButton.translatesAutoresizingMaskIntoConstraints = false
+        removeButton.accessibilityLabel = String(localized: "Remove photo")
+        removeButton.addAction(UIAction { [weak self] _ in
+            HapticsManager.shared.selection()
+            self?.onRemove?()
+        }, for: .touchUpInside)
+        removeDisc.translatesAutoresizingMaskIntoConstraints = false
+        removeDisc.isUserInteractionEnabled = false
+        removeDisc.layer.cornerRadius = 14
+        removeDisc.clipsToBounds = true
+        let glyph = UIImageView(image: UIImage(systemName: "xmark", withConfiguration: UIImage.SymbolConfiguration(pointSize: 11, weight: .bold)))
+        glyph.tintColor = .white
+        glyph.translatesAutoresizingMaskIntoConstraints = false
+        removeDisc.contentView.addSubview(glyph)
+        removeButton.addSubview(removeDisc)
+        contentView.addSubview(removeButton)
+
+        hintLabel.apply(.callout)
+        hintLabel.text = String(localized: "Tap an edit below, or describe your own")
+        changeButton.translatesAutoresizingMaskIntoConstraints = false
+        let column = UIStackView(arrangedSubviews: [hintLabel, changeButton])
+        column.axis = .vertical
+        column.alignment = .leading
+        column.spacing = Theme.Space.md
+        column.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(column)
+
+        let columnCentering = column.centerYAnchor.constraint(equalTo: cardView.centerYAnchor)
+        columnCentering.priority = .defaultHigh
+        NSLayoutConstraint.activate([
+            columnCentering,
+            cardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            cardView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            cardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -Theme.Space.sm),
+            cardView.widthAnchor.constraint(equalToConstant: Self.cardWidth),
+            cardView.heightAnchor.constraint(equalTo: cardView.widthAnchor, multiplier: 4.0 / 3.0),
+            removeButton.widthAnchor.constraint(equalToConstant: 44),
+            removeButton.heightAnchor.constraint(equalToConstant: 44),
+            removeButton.centerXAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -22),
+            removeButton.centerYAnchor.constraint(equalTo: cardView.topAnchor, constant: 22),
+            removeDisc.widthAnchor.constraint(equalToConstant: 28),
+            removeDisc.heightAnchor.constraint(equalToConstant: 28),
+            removeDisc.centerXAnchor.constraint(equalTo: removeButton.centerXAnchor),
+            removeDisc.centerYAnchor.constraint(equalTo: removeButton.centerYAnchor),
+            glyph.centerXAnchor.constraint(equalTo: removeDisc.contentView.centerXAnchor),
+            glyph.centerYAnchor.constraint(equalTo: removeDisc.contentView.centerYAnchor),
+            column.leadingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: Theme.Space.lg),
+            column.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            column.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor),
+            contentView.bottomAnchor.constraint(greaterThanOrEqualTo: column.bottomAnchor)
+        ])
+        applyAppearance()
+    }
+    /// The row's height at the current text size for a row `width` points wide, measured from a real cell.
+    static func height(forWidth width: CGFloat) -> CGFloat {
+        let probe = SelectedPhotoCell(frame: CGRect(x: 0, y: 0, width: width, height: 400))
+        let size = probe.contentView.systemLayoutSizeFitting(
+            CGSize(width: width, height: UIView.layoutFittingCompressedSize.height),
+            withHorizontalFittingPriority: .required,
+            verticalFittingPriority: .fittingSizeLevel
+        )
+        return ceil(size.height)
+    }
+    @objc private func cardTapped() {
+        HapticsManager.shared.selection()
+        onChange?()
+    }
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        cardView.layer.shadowPath = UIBezierPath(roundedRect: cardView.bounds, cornerRadius: cardView.layer.cornerRadius).cgPath
+    }
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        applyAppearance()
+    }
+    private func applyAppearance() {
+        let isDark = traitCollection.userInterfaceStyle == .dark
+        cardView.layer.shadowOpacity = isDark ? 0 : 0.14
+        photoView.layer.borderColor = Theme.Color.line.resolvedColor(with: traitCollection).cgColor
+    }
+    func configure(with image: UIImage?, canRemove: Bool) {
+        photoView.image = image
+        removeButton.isHidden = !canRemove
+    }
+}
+
+
+/// The empty-state hero: a wide drop-zone with a dashed gradient hairline that asks for a photo.
+final class PhotoDropZoneCell: UICollectionViewCell {
+    static let reuseIdentifier = "PhotoDropZoneCell"
+    private let card = UIView()
+    private let dashBorder = DashedGradientBorderView()
+    private let badge = IconBadge(symbol: "plus", size: 56, symbolScale: 0.5)
+    private let titleLabel = UILabel()
+    private static let cornerRadius = Theme.Radius.xl - 4
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupUI()
+    }
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    private func setupUI() {
+        card.translatesAutoresizingMaskIntoConstraints = false
+        card.layer.cornerRadius = Self.cornerRadius
+        card.layer.cornerCurve = .continuous
+        contentView.addSubview(card)
+        card.pinEdges(to: contentView)
+
+        dashBorder.cornerRadius = Self.cornerRadius
+        card.addSubview(dashBorder)
+        dashBorder.pinEdges(to: card)
+
+        titleLabel.apply(.headline)
+        titleLabel.textAlignment = .center
+        titleLabel.text = String(localized: "Choose a photo")
+
+        let stack = UIStackView(arrangedSubviews: [badge, titleLabel])
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = Theme.Space.md
+        stack.isUserInteractionEnabled = false
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(stack)
+
+        let ratio = contentView.heightAnchor.constraint(greaterThanOrEqualTo: contentView.widthAnchor, multiplier: 9.0 / 16.0)
+        ratio.priority = UILayoutPriority(999)
+        NSLayoutConstraint.activate([
+            ratio,
+            stack.centerXAnchor.constraint(equalTo: card.centerXAnchor),
+            stack.centerYAnchor.constraint(equalTo: card.centerYAnchor),
+            stack.leadingAnchor.constraint(greaterThanOrEqualTo: card.leadingAnchor, constant: Theme.Space.xl),
+            stack.trailingAnchor.constraint(lessThanOrEqualTo: card.trailingAnchor, constant: -Theme.Space.xl),
+            stack.topAnchor.constraint(greaterThanOrEqualTo: card.topAnchor, constant: Theme.Space.xl),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: card.bottomAnchor, constant: -Theme.Space.xl)
+        ])
+
+        describe(String(localized: "Choose a photo"), hint: String(localized: "Pick one, then tap an edit"), traits: .button)
+        applyAppearance()
+    }
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        applyAppearance()
+    }
+    private func applyAppearance() {
+        card.backgroundColor = Theme.Color.accentSoft
+    }
+}
+
+
+/// A dashed rounded outline drawn in the brand gradient: the gradient layer is masked by the dashed stroke.
+private final class DashedGradientBorderView: UIView {
+    override class var layerClass: AnyClass { CAGradientLayer.self }
+    private var gradientLayer: CAGradientLayer { layer as! CAGradientLayer }
+    private let dashShape = CAShapeLayer()
+    var cornerRadius: CGFloat = 0
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        isUserInteractionEnabled = false
+        translatesAutoresizingMaskIntoConstraints = false
+        gradientLayer.startPoint = CGPoint(x: 0, y: 0)
+        gradientLayer.endPoint = CGPoint(x: 1, y: 1)
+        dashShape.fillColor = nil
+        dashShape.strokeColor = UIColor.black.cgColor
+        dashShape.lineWidth = 1.5
+        dashShape.lineDashPattern = [7, 6]
+        dashShape.lineCap = .round
+        gradientLayer.mask = dashShape
+        applyColors()
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        dashShape.frame = bounds
+        dashShape.path = UIBezierPath(roundedRect: bounds.insetBy(dx: 1, dy: 1), cornerRadius: cornerRadius).cgPath
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        applyColors()
+    }
+
+    private func applyColors() {
+        gradientLayer.colors = Theme.Color.gradient.map { $0.resolvedColor(with: traitCollection).cgColor }
+    }
+}
+
+
+/// The first-run shortcut next to "Choose a photo": the old photo the onboarding restores,
 /// offered as a ready-made input so a new person can see a result before using their own photo.
-class SampleTileCell: UICollectionViewCell {
+class SampleTileCell: CardCell {
     static let reuseIdentifier = "SampleTileCell"
     private let thumbnailView = UIImageView()
     private let badgeView = UIImageView()
@@ -293,6 +556,8 @@ class SampleTileCell: UICollectionViewCell {
     private let textStack = UIStackView()
     private static let title = String(localized: "Try a sample photo")
     private static let subtitle = String(localized: "Restores an old photo with one of your free images")
+    private static let thumbnailWidth: CGFloat = 54
+    private static let padding: CGFloat = 12
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -302,144 +567,126 @@ class SampleTileCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     private func setupUI() {
-        contentView.backgroundColor = .brandTint
-        contentView.layer.cornerRadius = 16
-        contentView.layer.cornerCurve = .continuous
-        contentView.layer.borderWidth = 1.5
-        contentView.layer.borderColor = UIColor.brandText.withAlphaComponent(0.5).cgColor
-        contentView.clipsToBounds = true
-
         thumbnailView.translatesAutoresizingMaskIntoConstraints = false
         thumbnailView.image = UIImage(named: "onboarding_before_1")
         thumbnailView.contentMode = .scaleAspectFill
-        thumbnailView.layer.cornerRadius = 10
+        thumbnailView.layer.cornerRadius = Theme.Radius.sm
         thumbnailView.layer.cornerCurve = .continuous
         thumbnailView.clipsToBounds = true
-        for axis in [NSLayoutConstraint.Axis.horizontal, .vertical] {
-            thumbnailView.setContentHuggingPriority(.defaultLow, for: axis)
-            thumbnailView.setContentCompressionResistancePriority(.defaultLow, for: axis)
-        }
         contentView.addSubview(thumbnailView)
 
         badgeView.translatesAutoresizingMaskIntoConstraints = false
         badgeView.image = UIImage(systemName: "sparkles")
         badgeView.tintColor = .white
-        badgeView.backgroundColor = .brand
+        badgeView.backgroundColor = Theme.Color.accent
         badgeView.contentMode = .center
         badgeView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 11, weight: .bold)
         badgeView.layer.cornerRadius = 11
         contentView.addSubview(badgeView)
 
+        titleLabel.apply(.subhead, color: Theme.Color.ink)
         titleLabel.text = Self.title
-        titleLabel.useScaledFont(.subheadline, size: 15, weight: .semibold)
-        titleLabel.textColor = .label
-        titleLabel.numberOfLines = 0
+        subtitleLabel.apply(.footnote)
         subtitleLabel.text = Self.subtitle
-        subtitleLabel.useScaledFont(.caption1, size: 12)
-        subtitleLabel.textColor = .secondaryLabel
-        subtitleLabel.numberOfLines = 0
         textStack.axis = .vertical
-        textStack.spacing = 4
+        textStack.spacing = 2
         textStack.addArrangedSubview(titleLabel)
         textStack.addArrangedSubview(subtitleLabel)
         textStack.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(textStack)
 
-        let thumbnailHeight = thumbnailView.heightAnchor.constraint(equalTo: contentView.heightAnchor, constant: -24)
-        thumbnailHeight.priority = .defaultHigh
+        let padding = Self.padding
+        let textCentering = textStack.centerYAnchor.constraint(equalTo: thumbnailView.centerYAnchor)
+        textCentering.priority = .defaultHigh
         NSLayoutConstraint.activate([
-            thumbnailView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
-            thumbnailView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            thumbnailView.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: 12),
-            thumbnailHeight,
-            thumbnailView.widthAnchor.constraint(equalTo: thumbnailView.heightAnchor, multiplier: 0.75),
+            textCentering,
+            thumbnailView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: padding),
+            thumbnailView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: padding),
+            thumbnailView.widthAnchor.constraint(equalToConstant: Self.thumbnailWidth),
+            thumbnailView.heightAnchor.constraint(equalTo: thumbnailView.widthAnchor, multiplier: 4.0 / 3.0),
+            thumbnailView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -padding),
 
             badgeView.widthAnchor.constraint(equalToConstant: 22),
             badgeView.heightAnchor.constraint(equalToConstant: 22),
             badgeView.leadingAnchor.constraint(equalTo: thumbnailView.leadingAnchor, constant: -6),
             badgeView.topAnchor.constraint(equalTo: thumbnailView.topAnchor, constant: -6),
 
-            textStack.leadingAnchor.constraint(equalTo: thumbnailView.trailingAnchor, constant: 12),
-            textStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
-            textStack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            textStack.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: 10),
-            textStack.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -10)
+            textStack.leadingAnchor.constraint(equalTo: thumbnailView.trailingAnchor, constant: padding),
+            textStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -padding),
+            textStack.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: padding),
+            textStack.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -padding)
         ])
 
         describe("\(Self.title). \(Self.subtitle).", traits: .button)
     }
 
+    /// The card's height at the current text size for a card `width` points wide, measured from a real cell.
+    static func height(forWidth width: CGFloat) -> CGFloat {
+        let probe = SampleTileCell(frame: CGRect(x: 0, y: 0, width: width, height: 400))
+        probe.updateLabelWidths(forCellWidth: width)
+        let size = probe.contentView.systemLayoutSizeFitting(
+            CGSize(width: width, height: UIView.layoutFittingCompressedSize.height),
+            withHorizontalFittingPriority: .required,
+            verticalFittingPriority: .fittingSizeLevel
+        )
+        return ceil(size.height)
+    }
+
+    private func updateLabelWidths(forCellWidth width: CGFloat) {
+        let textWidth = max(0, width - Self.padding - Self.thumbnailWidth - Self.padding - Self.padding)
+        titleLabel.preferredMaxLayoutWidth = textWidth
+        subtitleLabel.preferredMaxLayoutWidth = textWidth
+    }
+
+    override func preferredLayoutAttributesFitting(_ layoutAttributes: UICollectionViewLayoutAttributes) -> UICollectionViewLayoutAttributes {
+        updateLabelWidths(forCellWidth: layoutAttributes.size.width)
+        return super.preferredLayoutAttributesFitting(layoutAttributes)
+    }
+
     /// The text column is whatever the thumbnail and the margins leave, so both labels are told that
     /// width before the cell lays out; a label measured without one reports a single line and truncates.
     override func layoutSubviews() {
-        let thumbnailWidth = max(0, contentView.bounds.height - 24) * 0.75
-        let textWidth = max(0, contentView.bounds.width - 12 - thumbnailWidth - 12 - 12)
-        titleLabel.preferredMaxLayoutWidth = textWidth
-        subtitleLabel.preferredMaxLayoutWidth = textWidth
+        updateLabelWidths(forCellWidth: contentView.bounds.width)
         super.layoutSubviews()
     }
 }
 
 
+/// A template or edit idea as a `ChipView`; the cell is the touch target, the chip only draws.
 class QuickActionCell: UICollectionViewCell {
     static let reuseIdentifier = "QuickActionCell"
-    let iconImageView = UIImageView()
-    let titleLabel = UILabel()
+    private var chip: ChipView?
     override init(frame: CGRect) {
         super.init(frame: frame)
-        setupUI()
+        isAccessibilityElement = true
     }
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    private func setupUI() {
-        contentView.layer.cornerRadius = 20
-        contentView.clipsToBounds = true
-        iconImageView.translatesAutoresizingMaskIntoConstraints = false
-        iconImageView.tintColor = .white
-        iconImageView.contentMode = .scaleAspectFit
-        contentView.addSubview(iconImageView)
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.useScaledFont(.footnote, size: 13, weight: .medium)
-        titleLabel.textColor = .white
-        titleLabel.numberOfLines = 1
-        titleLabel.lineBreakMode = .byTruncatingTail
-        titleLabel.minimumScaleFactor = 0.8
-        titleLabel.adjustsFontSizeToFitWidth = true
-        contentView.addSubview(titleLabel)
-        NSLayoutConstraint.activate([
-            iconImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 14),
-            iconImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            iconImageView.widthAnchor.constraint(equalToConstant: 18),
-            iconImageView.heightAnchor.constraint(equalToConstant: 18),
-            titleLabel.leadingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: 8),
-            titleLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            titleLabel.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: 10),
-            titleLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -10),
-            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -14)
-        ])
-        isAccessibilityElement = true
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        chip?.removeFromSuperview()
+        chip = nil
     }
     func configure(with action: QuickAction, isSelected: Bool = false, category: String) {
-        contentView.backgroundColor = action.color.darkenedForWhiteText()
-        iconImageView.image = UIImage(systemName: action.icon)
-        titleLabel.text = action.title
+        chip?.removeFromSuperview()
+        let chip = ChipView(title: action.title, symbol: action.icon, isSelected: isSelected)
+        chip.isUserInteractionEnabled = false
+        chip.isAccessibilityElement = false
+        contentView.addSubview(chip)
+        NSLayoutConstraint.activate([
+            chip.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            chip.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            chip.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
+        ])
+        self.chip = chip
         accessibilityLabel = String(localized: "\(category): \(action.title)")
         accessibilityTraits = isSelected ? [.button, .selected] : .button
-        if isSelected {
-            contentView.layer.borderWidth = 3
-            contentView.layer.borderColor = UIColor.systemBlue.cgColor
-            contentView.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        } else {
-            contentView.layer.borderWidth = 0
-            contentView.transform = .identity
-        }
-        contentView.layer.masksToBounds = true
     }
 }
 
 
-class PromptCardCell: UICollectionViewCell {
+class PromptCardCell: CardCell {
     static let reuseIdentifier = "PromptCardCell"
     let label = UILabel()
     override init(frame: CGRect) {
@@ -450,19 +697,16 @@ class PromptCardCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     private func setupUI() {
-        contentView.layer.cornerRadius = 16
-        contentView.layer.borderWidth = 1
-        contentView.clipsToBounds = true
+        cardRadius = Theme.Radius.md
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.useScaledFont(.footnote, size: 13)
-        label.textAlignment = .center
+        label.apply(.footnote, color: Theme.Color.ink)
         label.lineBreakMode = .byTruncatingTail
         contentView.addSubview(label)
         NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 10),
-            label.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -10),
-            label.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
-            label.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8)
+            label.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 14),
+            label.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -14),
+            label.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
+            label.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10)
         ])
         isAccessibilityElement = true
         updateLineLimit()
@@ -480,28 +724,19 @@ class PromptCardCell: UICollectionViewCell {
     }
     func configure(with prompt: String, color: UIColor, isSelected: Bool = false, category: String) {
         label.text = prompt
-        label.textColor = .label
+        isMarked = isSelected
         accessibilityLabel = String(localized: "\(category): \(prompt)")
         accessibilityTraits = isSelected ? [.button, .selected] : .button
-        if isSelected {
-            contentView.backgroundColor = color.withAlphaComponent(0.3)
-            contentView.layer.borderColor = color.cgColor
-            contentView.layer.borderWidth = 2
-        } else {
-            contentView.backgroundColor = color.withAlphaComponent(0.1)
-            contentView.layer.borderColor = color.withAlphaComponent(0.3).cgColor
-            contentView.layer.borderWidth = 1
-        }
     }
 }
 
 
-class StylePresetCell: UICollectionViewCell {
+class StylePresetCell: CardCell {
     static let reuseIdentifier = "StylePresetCell"
-    private let gradientLayer = CAGradientLayer()
-    let iconImageView = UIImageView()
+    private var badge: IconBadge?
     let nameLabel = UILabel()
     let descriptionLabel = UILabel()
+    private let badgeSlot = UIView()
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -509,108 +744,86 @@ class StylePresetCell: UICollectionViewCell {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        gradientLayer.frame = contentView.bounds
-    }
     private func setupUI() {
-        contentView.layer.cornerRadius = 12
-        contentView.clipsToBounds = true
-        gradientLayer.startPoint = CGPoint(x: 0, y: 0.5)
-        gradientLayer.endPoint = CGPoint(x: 1, y: 0.5)
-        contentView.layer.insertSublayer(gradientLayer, at: 0)
-        iconImageView.translatesAutoresizingMaskIntoConstraints = false
-        iconImageView.tintColor = .white
-        iconImageView.contentMode = .scaleAspectFit
-        contentView.addSubview(iconImageView)
-        nameLabel.translatesAutoresizingMaskIntoConstraints = false
-        nameLabel.useScaledFont(.caption1, size: 12, weight: .semibold)
-        nameLabel.textColor = .white
-        contentView.addSubview(nameLabel)
-        descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
-        descriptionLabel.useScaledFont(.caption2, size: 10)
-        descriptionLabel.textColor = .white
-        contentView.addSubview(descriptionLabel)
+        cardRadius = Theme.Radius.md
+        badgeSlot.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(badgeSlot)
+        nameLabel.apply(.subhead, color: Theme.Color.ink)
+        nameLabel.numberOfLines = 1
+        descriptionLabel.apply(.footnote)
+        descriptionLabel.numberOfLines = 1
+        let stack = UIStackView(arrangedSubviews: [nameLabel, descriptionLabel])
+        stack.axis = .vertical
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(stack)
         NSLayoutConstraint.activate([
-            iconImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
-            iconImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            iconImageView.widthAnchor.constraint(equalToConstant: 20),
-            iconImageView.heightAnchor.constraint(equalToConstant: 20),
-            nameLabel.leadingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: 8),
-            nameLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
-            nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -8),
-            descriptionLabel.leadingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: 8),
-            descriptionLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 2),
-            descriptionLabel.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -8),
-            descriptionLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -10)
+            badgeSlot.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
+            badgeSlot.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            badgeSlot.widthAnchor.constraint(equalToConstant: 32),
+            badgeSlot.heightAnchor.constraint(equalToConstant: 32),
+            stack.leadingAnchor.constraint(equalTo: badgeSlot.trailingAnchor, constant: 10),
+            stack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -10),
+            stack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            stack.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: 8),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -8)
         ])
         isAccessibilityElement = true
     }
     func configure(with style: StylePreset, isSelected: Bool = false) {
-        gradientLayer.colors = style.gradientColors.map { $0.darkenedForWhiteText().cgColor }
-        iconImageView.image = UIImage(systemName: style.icon)
+        badge?.removeFromSuperview()
+        let badge = IconBadge(symbol: style.icon, colors: style.gradientColors.map { $0.darkenedForWhiteText(minimumContrast: 3) }, size: 32)
+        badgeSlot.addSubview(badge)
+        badge.pinEdges(to: badgeSlot)
+        self.badge = badge
         nameLabel.text = style.name
         descriptionLabel.text = style.description
+        isMarked = isSelected
         accessibilityLabel = String(localized: "Style: \(style.name)")
         accessibilityHint = style.description
         accessibilityTraits = isSelected ? [.button, .selected] : .button
-        if isSelected {
-            contentView.layer.borderWidth = 3
-            contentView.layer.borderColor = UIColor.systemBlue.cgColor
-            contentView.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        } else {
-            contentView.layer.borderWidth = 0
-            contentView.transform = .identity
-        }
     }
 }
 
 
 class ModifierChipCell: UICollectionViewCell {
     static let reuseIdentifier = "ModifierChipCell"
-    let label = UILabel()
+    private var chip: ChipView?
     override init(frame: CGRect) {
         super.init(frame: frame)
-        setupUI()
+        isAccessibilityElement = true
     }
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    private func setupUI() {
-        contentView.backgroundColor = UIColor.secondarySystemFill
-        contentView.layer.cornerRadius = 16
-        contentView.clipsToBounds = true
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.useScaledFont(.subheadline, size: 14, weight: .medium)
-        label.textColor = .label
-        contentView.addSubview(label)
-        NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
-            label.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
-            label.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            label.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: 6),
-            label.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -6)
-        ])
-        isAccessibilityElement = true
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        chip?.removeFromSuperview()
+        chip = nil
     }
     func configure(with text: String, isSelected: Bool = false, category: String) {
-        label.text = text
+        chip?.removeFromSuperview()
+        let chip = ChipView(title: text, isSelected: isSelected)
+        chip.isUserInteractionEnabled = false
+        chip.isAccessibilityElement = false
+        contentView.addSubview(chip)
+        NSLayoutConstraint.activate([
+            chip.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            chip.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            chip.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
+        ])
+        self.chip = chip
         accessibilityLabel = String(localized: "\(category): \(text)")
         accessibilityTraits = isSelected ? [.button, .selected] : .button
-        if isSelected {
-            contentView.backgroundColor = UIColor.brand
-            label.textColor = .white
-        } else {
-            contentView.backgroundColor = UIColor.secondarySystemFill
-            label.textColor = .label
-        }
     }
 }
 
 
+/// A modifier category tab: single-select, drawn as an accent-outlined pill so it reads as a tab
+/// beside the filled toggle chips.
 class CategoryChipCell: UICollectionViewCell {
     static let reuseIdentifier = "CategoryChipCell"
     let label = UILabel()
+    private let pill = PillView()
     override var isSelected: Bool {
         didSet {
             updateAppearance()
@@ -624,21 +837,30 @@ class CategoryChipCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     private func setupUI() {
-        contentView.layer.cornerRadius = 16
-        contentView.layer.borderWidth = 1
-        contentView.clipsToBounds = true
+        pill.translatesAutoresizingMaskIntoConstraints = false
+        pill.layer.borderWidth = 1.5
+        pill.layer.cornerCurve = .continuous
+        contentView.addSubview(pill)
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.useScaledFont(.subheadline, size: 14, weight: .medium)
+        label.apply(.subhead)
+        label.numberOfLines = 1
         label.textAlignment = .center
-        contentView.addSubview(label)
+        pill.addSubview(label)
         NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
-            label.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
-            label.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            label.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: 6),
-            label.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -6)
+            pill.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            pill.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            pill.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            pill.heightAnchor.constraint(greaterThanOrEqualToConstant: 38),
+            label.leadingAnchor.constraint(equalTo: pill.leadingAnchor, constant: 14),
+            label.trailingAnchor.constraint(equalTo: pill.trailingAnchor, constant: -14),
+            label.topAnchor.constraint(equalTo: pill.topAnchor, constant: 9),
+            label.bottomAnchor.constraint(equalTo: pill.bottomAnchor, constant: -9)
         ])
         isAccessibilityElement = true
+        updateAppearance()
+    }
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
         updateAppearance()
     }
     func configure(with text: String) {
@@ -648,15 +870,17 @@ class CategoryChipCell: UICollectionViewCell {
     private func updateAppearance() {
         accessibilityTraits = isSelected ? [.button, .selected] : .button
         Motion.animate(0.2) {
-            if self.isSelected {
-                self.contentView.backgroundColor = .label
-                self.contentView.layer.borderColor = UIColor.label.cgColor
-                self.label.textColor = .systemBackground
-            } else {
-                self.contentView.backgroundColor = .clear
-                self.contentView.layer.borderColor = UIColor.separator.cgColor
-                self.label.textColor = .label
-            }
+            self.pill.backgroundColor = self.isSelected ? Theme.Color.accentSoft : .clear
+            self.pill.layer.borderColor = (self.isSelected ? Theme.Color.accent : Theme.Color.line).resolvedColor(with: self.traitCollection).cgColor
+            self.label.textColor = self.isSelected ? Theme.Color.accentText : Theme.Color.ink
         }
+    }
+}
+
+
+private final class PillView: UIView {
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        layer.cornerRadius = bounds.height / 2
     }
 }

@@ -78,6 +78,24 @@ final class ListRowView: UIControl {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError() }
 
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        applyLayout()
+    }
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        applyLayout()
+    }
+
+    /// At accessibility text sizes the icon, text and value stack vertically so titles are never squeezed.
+    private func applyLayout() {
+        let stacked = traitCollection.preferredContentSizeCategory.isAccessibilityCategory
+        row.axis = stacked ? .vertical : .horizontal
+        row.alignment = stacked ? .leading : .center
+        row.spacing = stacked ? Theme.Space.sm : Theme.Space.md
+    }
+
     override var isHighlighted: Bool {
         didSet {
             guard !Motion.isReduced else { return }

@@ -156,3 +156,50 @@ struct EditPreset: Hashable {
         )
     ]
 }
+
+extension EditPreset {
+    static let popularIDs = ["headshot", "restore", "figurine", "pet-portrait", "headshot-pack"]
+
+    var isPopular: Bool { Self.popularIDs.contains(id) }
+
+    var isSeasonal: Bool { id == "halloween" }
+
+    var artName: String? {
+        switch id {
+        case "headshot": return "preset_headshot"
+        case "restore": return "preset_restore"
+        case "figurine": return "preset_figurine"
+        case "pet-portrait": return "preset_pet"
+        case "headshot-pack": return "preset_pack"
+        default: return nil
+        }
+    }
+
+    /// The preset colour as a two-stop gradient whose darker end still holds a white glyph.
+    var gradientColors: [UIColor] {
+        let base = tint
+        let end = UIColor { traits in
+            base.resolvedColor(with: traits).darkenedForWhiteText(minimumContrast: 3)
+        }
+        let start = UIColor { traits in
+            end.resolvedColor(with: traits).lightened()
+        }
+        return [start, end]
+    }
+
+    static func popular() -> [EditPreset] {
+        popularIDs.compactMap { preset(id: $0) }
+    }
+
+    static func moreEdits(on date: Date = Date()) -> [EditPreset] {
+        all(on: date).filter { !$0.isPopular }
+    }
+}
+
+private extension UIColor {
+    func lightened() -> UIColor {
+        var hue: CGFloat = 0, saturation: CGFloat = 0, brightness: CGFloat = 0, alpha: CGFloat = 0
+        guard getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha) else { return self }
+        return UIColor(hue: hue, saturation: max(0, saturation - 0.08), brightness: min(1, brightness + 0.16), alpha: alpha)
+    }
+}

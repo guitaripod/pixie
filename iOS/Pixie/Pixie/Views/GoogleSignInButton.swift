@@ -1,77 +1,47 @@
 import UIKit
-import GoogleSignIn
 
 class GoogleSignInButtonWrapper: UIView {
-    
-    private let signInButton = GIDSignInButton()
-    private let loadingScrim = UIView()
-    private let loadingIndicator = UIActivityIndicatorView(style: .medium)
-    
+
+    private let signInButton = OAuthButton()
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupButton()
     }
-    
+
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupButton()
     }
-    
+
     private func setupButton() {
         translatesAutoresizingMaskIntoConstraints = false
-        
-        signInButton.translatesAutoresizingMaskIntoConstraints = false
-        signInButton.style = .wide
-        signInButton.accessibilityLabel = String(localized: "Sign in with Google")
-        
+
+        signInButton.configure(
+            provider: .google,
+            title: String(localized: "Sign in with Google"),
+            backgroundColor: .white,
+            textColor: UIColor(hex: 0x1F1F1F),
+            borderColor: nil,
+            iconName: nil
+        )
         addSubview(signInButton)
-        
-        loadingScrim.translatesAutoresizingMaskIntoConstraints = false
-        loadingScrim.backgroundColor = UIColor.black.withAlphaComponent(0.45)
-        loadingScrim.layer.cornerRadius = 4
-        loadingScrim.isHidden = true
-        loadingScrim.hideFromAccessibility()
-        addSubview(loadingScrim)
-        
-        loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
-        loadingIndicator.color = .white
-        loadingScrim.addSubview(loadingIndicator)
-        
-        NSLayoutConstraint.activate([
-            signInButton.topAnchor.constraint(equalTo: topAnchor),
-            signInButton.leadingAnchor.constraint(equalTo: leadingAnchor),
-            signInButton.trailingAnchor.constraint(equalTo: trailingAnchor),
-            signInButton.bottomAnchor.constraint(equalTo: bottomAnchor),
-            
-            loadingScrim.topAnchor.constraint(equalTo: topAnchor),
-            loadingScrim.leadingAnchor.constraint(equalTo: leadingAnchor),
-            loadingScrim.trailingAnchor.constraint(equalTo: trailingAnchor),
-            loadingScrim.bottomAnchor.constraint(equalTo: bottomAnchor),
-            
-            loadingIndicator.centerXAnchor.constraint(equalTo: loadingScrim.centerXAnchor),
-            loadingIndicator.centerYAnchor.constraint(equalTo: loadingScrim.centerYAnchor)
-        ])
+        signInButton.pinEdges(to: self)
     }
-    
+
     func addAction(_ action: UIAction, for controlEvents: UIControl.Event) {
         signInButton.addAction(action, for: controlEvents)
     }
-    
+
     var isEnabled: Bool = true {
         didSet {
             signInButton.isEnabled = isEnabled
         }
     }
-    
+
     var isLoading = false {
         didSet {
-            guard isLoading != oldValue else { return }
-            loadingScrim.isHidden = !isLoading
-            if isLoading {
-                loadingIndicator.startAnimating()
-            } else {
-                loadingIndicator.stopAnimating()
-            }
+            signInButton.isLoading = isLoading
         }
     }
 }

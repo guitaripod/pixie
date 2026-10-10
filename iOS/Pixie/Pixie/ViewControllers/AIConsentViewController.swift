@@ -33,80 +33,49 @@ final class AIConsentViewController: UIViewController {
         if let sheet = consent.sheetPresentationController {
             sheet.detents = [.medium(), .large()]
             sheet.prefersGrabberVisible = true
+            sheet.preferredCornerRadius = Theme.Radius.sheet
         }
         presenter.present(consent, animated: true)
         return true
     }
 
-    private lazy var iconView: UIImageView = {
-        let config = UIImage.SymbolConfiguration(pointSize: 40, weight: .semibold)
-        let imageView = UIImageView(image: UIImage(systemName: "cloud.fill", withConfiguration: config))
-        imageView.tintColor = .brandText
-        imageView.hideFromAccessibility()
-        return imageView
-    }()
+    private lazy var iconBadge = IconBadge(symbol: "cloud.fill", size: 64, symbolScale: 0.46)
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        label.text = String(localized: "Made with cloud AI")
-        label.font = UIFont.preferredFont(forTextStyle: .title2).rounded()
-        label.adjustsFontForContentSizeCategory = true
-        label.textAlignment = .center
-        label.numberOfLines = 0
+        label.setStyledText(String(localized: "Made with cloud AI"), .title, alignment: .center)
+        label.accessibilityTraits = .header
         return label
     }()
 
     private lazy var bodyLabel: UILabel = {
         let label = UILabel()
-        label.text = CloudAIConsent.disclosure
-        label.font = .preferredFont(forTextStyle: .subheadline)
-        label.adjustsFontForContentSizeCategory = true
-        label.textColor = .label
-        label.textAlignment = .center
-        label.numberOfLines = 0
+        label.setStyledText(CloudAIConsent.disclosure, .body, color: Theme.Color.inkSecondary, alignment: .center)
         label.lineBreakMode = .byWordWrapping
         label.setContentCompressionResistancePriority(.required, for: .vertical)
         return label
     }()
 
-    private lazy var continueButton: UIButton = {
-        var config: UIButton.Configuration
-        if #available(iOS 26.0, *) {
-            config = .prominentGlass()
-        } else {
-            config = .borderedProminent()
+    private lazy var continueButton = PixieButton(style: .primary, size: .large, title: String(localized: "Continue")) { [weak self] in
+        CloudAIConsent.grant()
+        HapticsManager.shared.notification(.success)
+        self?.dismiss(animated: true) {
+            self?.onContinue?()
         }
-        config.baseBackgroundColor = .brand
-        config.baseForegroundColor = .white
-        config.title = String(localized: "Continue")
-        config.cornerStyle = .capsule
-        config.buttonSize = .large
-        return UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
-            CloudAIConsent.grant()
-            HapticsManager.shared.notification(.success)
-            self?.dismiss(animated: true) {
-                self?.onContinue?()
-            }
-        })
-    }()
+    }
 
-    private lazy var cancelButton: UIButton = {
-        var config = UIButton.Configuration.plain()
-        config.title = String(localized: "Not now")
-        config.baseForegroundColor = .secondaryLabel
-        return UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
-            self?.dismiss(animated: true)
-        })
-    }()
+    private lazy var cancelButton = PixieButton(style: .plain, size: .medium, title: String(localized: "Not now")) { [weak self] in
+        self?.dismiss(animated: true)
+    }
 
     /// The icon, title and disclosure read as one card, so VoiceOver speaks the whole
     /// disclosure in one go instead of stopping at each piece.
     private lazy var disclosureCard: UIStackView = {
-        let card = UIStackView(arrangedSubviews: [iconView, titleLabel, bodyLabel])
+        let card = UIStackView(arrangedSubviews: [iconBadge, titleLabel, bodyLabel])
         card.axis = .vertical
-        card.alignment = .fill
-        card.spacing = 14
-        iconView.contentMode = .center
+        card.alignment = .center
+        card.spacing = Theme.Space.md
+        card.setCustomSpacing(Theme.Space.lg, after: iconBadge)
         let title = titleLabel.text ?? ""
         card.describe("\(title). \(CloudAIConsent.disclosure)")
         return card
@@ -114,12 +83,7 @@ final class AIConsentViewController: UIViewController {
 
     private lazy var cancelFootnote: UILabel = {
         let label = UILabel()
-        label.text = String(localized: "Pixie asks again before your first image.")
-        label.font = .preferredFont(forTextStyle: .footnote)
-        label.adjustsFontForContentSizeCategory = true
-        label.textColor = .secondaryLabel
-        label.textAlignment = .center
-        label.numberOfLines = 0
+        label.setStyledText(String(localized: "Pixie asks again before your first image."), .footnote, color: Theme.Color.inkTertiary, alignment: .center)
         return label
     }()
 
@@ -132,16 +96,17 @@ final class AIConsentViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = Theme.Color.surfaceRaised
 
         let stack = UIStackView(arrangedSubviews: [disclosureCard, continueButton, cancelButton, cancelFootnote])
         stack.axis = .vertical
-        stack.spacing = 14
+        stack.spacing = Theme.Space.sm
         stack.alignment = .center
+        stack.setCustomSpacing(Theme.Space.xxl, after: disclosureCard)
         stack.setCustomSpacing(0, after: cancelButton)
         stack.translatesAutoresizingMaskIntoConstraints = false
 
-        CenteredScrollContent.make(containing: stack, in: view, horizontalInset: 28)
+        CenteredScrollContent.make(containing: stack, in: view, horizontalInset: Theme.Space.xxl)
         continueButton.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         disclosureCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         cancelFootnote.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true

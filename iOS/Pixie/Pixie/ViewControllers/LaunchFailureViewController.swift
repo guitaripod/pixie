@@ -21,19 +21,11 @@ final class LaunchFailureViewController: UIViewController {
         NotificationCenter.default.removeObserver(self)
     }
 
-    private lazy var iconView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.tintColor = .systemOrange
-        imageView.contentMode = .center
-        imageView.hideFromAccessibility()
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        return imageView
-    }()
+    private lazy var iconBadge = IconBadge(symbol: "icloud.slash", size: 88, symbolScale: 0.42)
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        label.useScaledFont(.title1, size: 30, weight: .bold, rounded: true)
-        label.numberOfLines = 0
+        label.apply(.title, color: Theme.Color.onBackdrop)
         label.textAlignment = .center
         label.accessibilityTraits = .header
         return label
@@ -41,68 +33,61 @@ final class LaunchFailureViewController: UIViewController {
 
     private lazy var bodyLabel: UILabel = {
         let label = UILabel()
-        label.text = String(localized: "Pixie needs the internet once to set up your free images. Check your connection and try again.")
-        label.font = .preferredFont(forTextStyle: .body)
-        label.textColor = .secondaryLabel
-        label.numberOfLines = 0
-        label.textAlignment = .center
-        label.adjustsFontForContentSizeCategory = true
+        label.setStyledText(
+            String(localized: "Pixie needs the internet once to set up your free images. Check your connection and try again."),
+            .callout,
+            color: Theme.Color.onBackdropSecondary,
+            alignment: .center
+        )
         return label
     }()
 
     private lazy var stillFailingLabel: UILabel = {
         let label = UILabel()
-        label.text = String(localized: "Still can't reach Pixie. Check your connection or try again in a minute.")
-        label.font = .preferredFont(forTextStyle: .callout)
-        label.textColor = .label
-        label.numberOfLines = 0
-        label.textAlignment = .center
-        label.adjustsFontForContentSizeCategory = true
+        label.setStyledText(
+            String(localized: "Still can't reach Pixie. Check your connection or try again in a minute."),
+            .callout,
+            color: Theme.Color.onBackdrop,
+            alignment: .center
+        )
         label.isHidden = true
         return label
     }()
 
-    private lazy var retryButton: UIButton = {
-        var config: UIButton.Configuration
-        if #available(iOS 26.0, *) {
-            config = .prominentGlass()
-        } else {
-            config = .borderedProminent()
-        }
-        config.baseBackgroundColor = .brand
-        config.baseForegroundColor = .white
-        config.title = String(localized: "Try Again")
-        config.cornerStyle = .capsule
-        config.buttonSize = .large
-        config.imagePadding = 8
-        return UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
-            self?.retry()
-        })
-    }()
+    private lazy var retryButton = PixieButton(style: .primary, size: .large, title: String(localized: "Try Again")) { [weak self] in
+        self?.retry()
+    }
 
-    private lazy var signInButton: UIButton = {
-        var config = UIButton.Configuration.plain()
-        config.title = String(localized: "Sign in instead")
-        config.baseForegroundColor = .secondaryLabel
-        return UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
-            self?.onSignIn()
-        })
-    }()
+    private lazy var signInButton = BackdropTextButton(title: String(localized: "Sign in instead")) { [weak self] in
+        self?.onSignIn()
+    }
+
+    override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
+        view.overrideUserInterfaceStyle = .dark
+        view.backgroundColor = Theme.Color.backdrop
 
-        let stack = UIStackView(arrangedSubviews: [iconView, titleLabel, bodyLabel, stillFailingLabel, retryButton, signInButton])
+        let backdrop = InkBackdropView()
+        backdrop.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(backdrop)
+        backdrop.pinEdges(to: view)
+
+        let stack = UIStackView(arrangedSubviews: [iconBadge, titleLabel, bodyLabel, stillFailingLabel, retryButton, signInButton])
         stack.axis = .vertical
-        stack.spacing = 16
+        stack.spacing = Theme.Space.md
         stack.alignment = .center
-        stack.setCustomSpacing(28, after: bodyLabel)
-        stack.setCustomSpacing(28, after: stillFailingLabel)
+        stack.setCustomSpacing(Theme.Space.xxl, after: iconBadge)
+        stack.setCustomSpacing(Theme.Space.xxxl, after: bodyLabel)
+        stack.setCustomSpacing(Theme.Space.xxxl, after: stillFailingLabel)
+        stack.setCustomSpacing(Theme.Space.sm, after: retryButton)
         stack.translatesAutoresizingMaskIntoConstraints = false
 
-        CenteredScrollContent.make(containing: stack, in: view, horizontalInset: 32)
+        CenteredScrollContent.make(containing: stack, in: view, horizontalInset: Theme.Space.xxxl, maxContentWidth: Theme.Width.button + 2 * Theme.Space.xxxl)
         retryButton.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        bodyLabel.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stillFailingLabel.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
         NotificationCenter.default.addObserver(
             self, selector: #selector(networkStatusChanged), name: .networkStatusChanged, object: nil)
@@ -114,8 +99,7 @@ final class LaunchFailureViewController: UIViewController {
     private func applyConnectionState(announcingChange: Bool) {
         let offline = !NetworkMonitor.shared.isConnected
         defer { lastShownOffline = offline }
-        let config = UIImage.SymbolConfiguration(pointSize: 56, weight: .semibold)
-        iconView.image = UIImage(systemName: offline ? "wifi.slash" : "exclamationmark.icloud", withConfiguration: config)
+        iconBadge.setSymbol(offline ? "wifi.slash" : "icloud.slash")
         titleLabel.text = offline ? String(localized: "You're offline") : String(localized: "Couldn't get set up")
         if announcingChange, lastShownOffline != offline, let text = titleLabel.text {
             Announce.screenChanged(text)
@@ -163,8 +147,7 @@ final class LaunchFailureViewController: UIViewController {
 
     private func setRetrying(_ retrying: Bool) {
         isRetrying = retrying
-        retryButton.configuration?.showsActivityIndicator = retrying
-        retryButton.configuration?.title = retrying ? String(localized: "Retrying…") : String(localized: "Try Again")
-        retryButton.isEnabled = !retrying
+        retryButton.isLoading = retrying
+        retryButton.title = retrying ? String(localized: "Retrying…") : String(localized: "Try Again")
     }
 }

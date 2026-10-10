@@ -2,14 +2,19 @@ import UIKit
 
 class AdminCreditAdjustmentViewController: UIViewController {
     
-    private let scrollView = UIScrollView()
-    private let contentStackView = UIStackView()
     private let haptics = HapticManager.shared
     
     private let searchBar = UISearchBar()
     private let tableView = UITableView()
     private let loadingView = UIActivityIndicatorView(style: .large)
-    private let emptyStateLabel = UILabel()
+    private let promptStateView = StateView(
+        symbol: "magnifyingglass",
+        title: String(localized: "Search for users to adjust their credits")
+    )
+    private let noResultsStateView = StateView(
+        symbol: "person.crop.circle.badge.questionmark",
+        title: String(localized: "No users found")
+    )
     private let errorView = AdminInlineMessageView()
     private let searchSpinner = UIActivityIndicatorView(style: .medium)
     private var searchMagnifier: UIView?
@@ -38,7 +43,7 @@ class AdminCreditAdjustmentViewController: UIViewController {
     
     private func setupUI() {
         title = String(localized: "Credit Adjustments")
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = Theme.Color.canvas
         
         searchBar.translatesAutoresizingMaskIntoConstraints = false
         searchBar.placeholder = String(localized: "Search users by email or ID")
@@ -47,6 +52,7 @@ class AdminCreditAdjustmentViewController: UIViewController {
         searchBar.accessibilityLabel = String(localized: "Search users")
         searchBar.searchTextField.accessibilityLabel = String(localized: "Search users")
         searchMagnifier = searchBar.searchTextField.leftView
+        searchBar.tintColor = Theme.Color.accentText
         searchSpinner.hidesWhenStopped = true
         
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -61,18 +67,15 @@ class AdminCreditAdjustmentViewController: UIViewController {
         
         loadingView.translatesAutoresizingMaskIntoConstraints = false
         loadingView.hidesWhenStopped = true
+        loadingView.color = Theme.Color.accentText
         
-        emptyStateLabel.translatesAutoresizingMaskIntoConstraints = false
-        emptyStateLabel.text = String(localized: "Search for users to adjust their credits")
-        emptyStateLabel.useScaledFont(.body, size: 17)
-        emptyStateLabel.textColor = .secondaryLabel
-        emptyStateLabel.textAlignment = .center
-        emptyStateLabel.numberOfLines = 0
+        noResultsStateView.isHidden = true
         
         view.addSubview(searchBar)
         view.addSubview(tableView)
         view.addSubview(loadingView)
-        view.addSubview(emptyStateLabel)
+        view.addSubview(promptStateView)
+        view.addSubview(noResultsStateView)
         errorView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(errorView)
     }
@@ -91,10 +94,15 @@ class AdminCreditAdjustmentViewController: UIViewController {
             loadingView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             
-            emptyStateLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            emptyStateLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            emptyStateLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 32),
-            emptyStateLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32),
+            promptStateView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            promptStateView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            promptStateView.leadingAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 32),
+            promptStateView.trailingAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32),
+
+            noResultsStateView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            noResultsStateView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            noResultsStateView.leadingAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 32),
+            noResultsStateView.trailingAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -32),
             
             errorView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             errorView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
@@ -117,7 +125,7 @@ class AdminCreditAdjustmentViewController: UIViewController {
         }
         
         setSearching(true)
-        emptyStateLabel.isHidden = true
+        hideEmptyStates()
         
         Task {
             do {
@@ -160,23 +168,22 @@ class AdminCreditAdjustmentViewController: UIViewController {
     }
     
     private func showSearchError(_ message: String, query: String) {
-        emptyStateLabel.isHidden = true
+        hideEmptyStates()
         haptics.notification(.error)
         errorView.show(message) { [weak self] in
             self?.searchUsers(query: query)
         }
     }
     
+    private func hideEmptyStates() {
+        promptStateView.isHidden = true
+        noResultsStateView.isHidden = true
+    }
+    
     private func updateEmptyState() {
-        if searchResults.isEmpty && !searchBar.text!.isEmpty {
-            emptyStateLabel.text = String(localized: "No users found")
-            emptyStateLabel.isHidden = false
-        } else if searchResults.isEmpty {
-            emptyStateLabel.text = String(localized: "Search for users to adjust their credits")
-            emptyStateLabel.isHidden = false
-        } else {
-            emptyStateLabel.isHidden = true
-        }
+        let isSearching = !(searchBar.text ?? "").isEmpty
+        promptStateView.isHidden = !(searchResults.isEmpty && !isSearching)
+        noResultsStateView.isHidden = !(searchResults.isEmpty && isSearching)
     }
     
     private func showAdjustmentDialog(for user: UserSearchResult) {
@@ -269,7 +276,7 @@ final class AdminBadgeLabel: UILabel {
 
 class UserSearchResultCell: UITableViewCell {
     
-    private let containerView = UIView()
+    private let card = SurfaceView(style: .card)
     private let emailLabel = UILabel()
     private let idLabel = UILabel()
     private let creditsLabel = UILabel()
@@ -288,65 +295,55 @@ class UserSearchResultCell: UITableViewCell {
         backgroundColor = .clear
         selectionStyle = .none
         
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        containerView.backgroundColor = .secondarySystemGroupedBackground
-        containerView.layer.cornerRadius = 12
-        containerView.layer.shadowColor = UIColor.black.cgColor
-        containerView.layer.shadowOpacity = 0.05
-        containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
-        containerView.layer.shadowRadius = 4
+        emailLabel.apply(.headline)
         
-        emailLabel.useScaledFont(.body, size: 17, weight: .medium)
-        emailLabel.numberOfLines = 0
+        idLabel.apply(.footnote)
         
-        idLabel.useScaledFont(.footnote, size: 13)
-        idLabel.textColor = .secondaryLabel
-        idLabel.numberOfLines = 0
-        
-        creditsLabel.useScaledFont(.body, size: 17, weight: .semibold)
-        creditsLabel.textColor = .brandText
+        creditsLabel.apply(.numeral(17), color: Theme.Color.accentText)
+        creditsLabel.numberOfLines = 1
         creditsLabel.textAlignment = .right
         creditsLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
         
         adminBadge.text = String(localized: "ADMIN")
-        adminBadge.useScaledFont(.caption2, size: 11, weight: .bold)
-        adminBadge.textColor = .white
-        adminBadge.backgroundColor = .systemOrange
-        adminBadge.layer.cornerRadius = 4
+        adminBadge.font = Theme.TextStyle.caption.font
+        adminBadge.adjustsFontForContentSizeCategory = true
+        adminBadge.textColor = Theme.Color.accentText
+        adminBadge.backgroundColor = Theme.Color.accentSoft
+        adminBadge.layer.cornerRadius = 9
+        adminBadge.layer.cornerCurve = .continuous
         adminBadge.layer.masksToBounds = true
         adminBadge.textAlignment = .center
         adminBadge.isHidden = true
         
         let textStack = UIStackView(arrangedSubviews: [emailLabel, idLabel])
         textStack.axis = .vertical
-        textStack.spacing = 4
+        textStack.spacing = Theme.Space.xs
         
         let trailingStack = UIStackView(arrangedSubviews: [creditsLabel, adminBadge])
         trailingStack.axis = .vertical
         trailingStack.alignment = .trailing
-        trailingStack.spacing = 4
+        trailingStack.spacing = Theme.Space.xs
         trailingStack.setContentCompressionResistancePriority(.required, for: .horizontal)
         
         let rowStack = UIStackView(arrangedSubviews: [textStack, trailingStack])
         rowStack.translatesAutoresizingMaskIntoConstraints = false
         rowStack.axis = .horizontal
         rowStack.alignment = .center
-        rowStack.spacing = 12
+        rowStack.spacing = Theme.Space.md
         
-        contentView.addSubview(containerView)
-        containerView.addSubview(rowStack)
+        contentView.addSubview(card)
+        card.contentView.addSubview(rowStack)
+        rowStack.pinEdges(to: card.contentView, insets: UIEdgeInsets(top: Theme.Space.lg, left: Theme.Space.lg, bottom: Theme.Space.lg, right: Theme.Space.lg))
         
+        let width = card.widthAnchor.constraint(equalTo: contentView.widthAnchor, constant: -2 * Theme.Space.lg)
+        width.priority = .defaultHigh
         NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
-            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
-            
-            rowStack.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
-            rowStack.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            rowStack.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            rowStack.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16),
-            containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 60)
+            card.topAnchor.constraint(equalTo: contentView.topAnchor, constant: Theme.Space.sm),
+            card.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -Theme.Space.sm),
+            card.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            card.widthAnchor.constraint(lessThanOrEqualToConstant: Theme.Width.form),
+            card.heightAnchor.constraint(greaterThanOrEqualToConstant: 60),
+            width
         ])
     }
     
@@ -397,7 +394,7 @@ final class AdminAdjustmentFormViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = String(localized: "Adjust Credits")
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = Theme.Color.canvas
         setupNavigation()
         setupFields()
         setupLayout()
@@ -418,9 +415,7 @@ final class AdminAdjustmentFormViewController: UIViewController {
     }
 
     private func setupFields() {
-        summaryLabel.useScaledFont(.subheadline, size: 15)
-        summaryLabel.textColor = .secondaryLabel
-        summaryLabel.numberOfLines = 0
+        summaryLabel.apply(.callout)
         summaryLabel.text = String(localized: "Current balance: \(user.credits) credits\nUser: \(user.email ?? user.id)")
 
         directionControl.selectedSegmentIndex = 0
@@ -433,9 +428,7 @@ final class AdminAdjustmentFormViewController: UIViewController {
         reasonField.returnKeyType = .done
         reasonField.delegate = self
 
-        errorLabel.useScaledFont(.footnote, size: 13)
-        errorLabel.textColor = .systemRed
-        errorLabel.numberOfLines = 0
+        errorLabel.apply(.footnote, color: Theme.Color.danger)
         errorLabel.isHidden = true
     }
 
@@ -443,11 +436,18 @@ final class AdminAdjustmentFormViewController: UIViewController {
         field.placeholder = placeholder
         field.accessibilityLabel = placeholder
         field.keyboardType = keyboard
-        field.borderStyle = .roundedRect
-        field.font = .scaled(.body, size: 17)
+        field.borderStyle = .none
+        field.backgroundColor = Theme.Color.fill
+        field.layer.cornerRadius = Theme.Radius.md
+        field.layer.cornerCurve = .continuous
+        field.leftView = UIView(frame: CGRect(x: 0, y: 0, width: Theme.Space.lg, height: 1))
+        field.leftViewMode = .always
+        field.font = Theme.TextStyle.body.font
+        field.textColor = Theme.Color.ink
+        field.tintColor = Theme.Color.accentText
         field.adjustsFontForContentSizeCategory = true
         field.addAction(UIAction { [weak self] _ in self?.fieldsChanged() }, for: .editingChanged)
-        field.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+        field.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
     }
 
     private func setupLayout() {
@@ -457,8 +457,8 @@ final class AdminAdjustmentFormViewController: UIViewController {
         let stack = UIStackView(arrangedSubviews: [summaryLabel, directionControl, amountField, reasonField, errorLabel])
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.axis = .vertical
-        stack.spacing = 16
-        stack.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+        stack.spacing = Theme.Space.lg
+        stack.layoutMargins = UIEdgeInsets(top: Theme.Space.lg, left: Theme.Space.xl, bottom: Theme.Space.lg, right: Theme.Space.xl)
         stack.isLayoutMarginsRelativeArrangement = true
         view.addSubview(scrollView)
         scrollView.addSubview(stack)

@@ -5,13 +5,13 @@ import UIKit
 class SettingsViewController: UIViewController {
     private static let selectableModels: [ImageModel] = [.gemini, .geminiPro, .openai]
     private static let cacheSizeTimeout: UInt64 = 10_000_000_000
+    private static let supportURL = URL(string: "https://x.com/guitaripod")
 
-    private let tableView = UITableView(frame: .zero, style: .grouped)
+    private let column = SettingsColumnView()
     private let authenticationManager = AuthenticationManager.shared
     private let configurationManager = ConfigurationManager.shared
     private let cacheManager = CacheManager.shared
     private let haptics = HapticManager.shared
-    private let networkService = AppContainer.shared.networkService
 
     private var cacheSize: String = String(localized: "Calculating...")
     private var isCacheSizePending = true
@@ -20,6 +20,29 @@ class SettingsViewController: UIViewController {
     private var isTestingConnection = false
     private var isDeletingAccount = false
     private var deletionOverlay: AccountDeletionProgressView?
+    private var isAdvancedExpanded = false
+    private var builtSignature = ""
+    private var lastCompressionHaptic = -1
+
+    private var appearanceStack: UIStackView?
+    private var appearanceTiles: [AppTheme: SettingsAppearanceTile] = [:]
+    private var modelCards: [ImageModel: SettingsOptionCard] = [:]
+    private var qualityGroup: SettingsChipGroup?
+    private var sizeGroup: SettingsChipGroup?
+    private var formatGroup: SettingsChipGroup?
+    private var backgroundGroup: SettingsChipGroup?
+    private var moderationGroup: SettingsChipGroup?
+    private var compressionSlider: PercentSlider?
+    private var compressionValueLabel: UILabel?
+    private var compressionNote: UILabel?
+    private var advancedRow: SettingsRowView?
+    private var advancedBody: UIView?
+    private var consentSwitch: UISwitch?
+    private var consentRow: SettingsRowView?
+    private var cacheRow: SettingsRowView?
+    private var connectionRow: SettingsRowView?
+    private var deleteRow: SettingsRowView?
+    private var signInButton: PixieButton?
 
     private enum ConnectionStatus {
         case idle
@@ -28,91 +51,41 @@ class SettingsViewController: UIViewController {
         case error(String)
     }
 
-    private enum Section: Int, CaseIterable {
-        case appearance
-        case imageDefaults
-        case advanced
-        case storage
-        case api
-        case admin
-        case help
-        case account
-
-        var title: String {
-            switch self {
-            case .appearance: return String(localized: "Appearance")
-            case .imageDefaults: return String(localized: "Image defaults")
-            case .advanced: return String(localized: "Advanced")
-            case .storage: return String(localized: "Storage")
-            case .api: return String(localized: "API")
-            case .admin: return String(localized: "Admin")
-            case .help: return String(localized: "Help & Support")
-            case .account: return String(localized: "Account")
-            }
-        }
-
-        var isVisible: Bool {
-            if self == .admin {
-                return AuthenticationManager.shared.currentUser?.isAdmin == true
-            }
-            return true
-        }
-    }
-
-    private enum AppearanceRow: Int, CaseIterable {
-        case theme
-    }
-
-    private enum ImageDefaultsRow: Int, CaseIterable {
-        case model
-        case quality
-        case size
-    }
-
-    private enum AdvancedRow: Int, CaseIterable {
-        case format
-        case compression
-        case background
-        case moderation
-    }
-
-    private enum StorageRow: Int, CaseIterable {
-        case cache
-    }
-
-    private enum APIRow: Int, CaseIterable {
-        case connection
-    }
-
-    private enum AdminRow: Int, CaseIterable {
-        case dashboard
-    }
-
-    private enum HelpRow: Int, CaseIterable {
-        case documentation
-        case cloudAIConsent
-        case moreApps
-        case about
-    }
-
-    private enum AccountRow: Int, CaseIterable {
-        case userId
-        case logout
-        case deleteAccount
-    }
-
     override func viewDidLoad() {
         super.viewDidLoad()
 
         title = String(localized: "Settings")
-        view.backgroundColor = .systemGroupedBackground
+        navigationItem.largeTitleDisplayMode = .always
+        view.backgroundColor = Theme.Color.canvas
 
-        setupTableView()
-        setupConstraints()
+        column.install(in: view)
         setupNotifications()
+        buildContent()
         loadCacheSize()
 
         preferredContentSize = CGSize(width: 600, height: 800)
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.navigationBar.prefersLargeTitles = true
+        if builtSignature != accountSignature {
+            buildContent()
+        } else {
+            refreshFromConfiguration()
+            refreshConsent()
+        }
+        loadCacheSize()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.navigationBar.prefersLargeTitles = false
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        updateAdaptiveAxes()
     }
 
     private func setupNotifications() {
@@ -126,14 +99,501 @@ class SettingsViewController: UIViewController {
 
     @objc private func configurationDidChange() {
         DispatchQueue.main.async { [weak self] in
-            self?.refreshCompressionRow()
+            self?.refreshFromConfiguration()
         }
     }
 
-    /// Reloads only the compression row so a segmented control the person is using keeps its VoiceOver focus.
-    private func refreshCompressionRow() {
-        guard let indexPath = indexPathForRow(AdvancedRow.compression, inSection: .advanced) else { return }
-        tableView.reloadRows(at: [indexPath], with: .none)
+    private var isAnonymousAccount: Bool {
+        authenticationManager.isAnonymous
+    }
+
+    private var isAdmin: Bool {
+        authenticationManager.currentUser?.isAdmin == true
+    }
+
+    private var authProvider: AuthProvider? {
+        guard let raw = try? AppContainer.shared.keychainManager.getString(forKey: KeychainKeys.authProvider) else { return nil }
+        return AuthProvider(rawValue: raw)
+    }
+
+    private var accountSignature: String {
+        [
+            isAnonymousAccount ? "anonymous" : "account",
+            authProvider?.rawValue ?? "-",
+            authenticationManager.currentUser?.id ?? "-",
+            isAdmin ? "admin" : "user",
+        ].joined(separator: "|")
+    }
+
+    private func updateAdaptiveAxes() {
+        let stacked = traitCollection.preferredContentSizeCategory.isAccessibilityCategory
+        appearanceStack?.axis = stacked ? .vertical : .horizontal
+        appearanceStack?.alignment = stacked ? .fill : .top
+    }
+
+    private func buildContent() {
+        builtSignature = accountSignature
+        column.removeAllContent()
+        signInButton = nil
+
+        column.stack.addArrangedSubview(makeAccountSection())
+        column.stack.addArrangedSubview(makeAppearanceSection())
+        column.stack.addArrangedSubview(makeDefaultsSection())
+        column.stack.addArrangedSubview(makeAdvancedSection())
+        column.stack.addArrangedSubview(makePrivacySection())
+        column.stack.addArrangedSubview(makeSupportSection())
+        if isAdmin {
+            column.stack.addArrangedSubview(makeAdminSection())
+        }
+        column.stack.addArrangedSubview(makeDangerSection())
+
+        refreshFromConfiguration()
+        refreshConsent()
+        updateAdaptiveAxes()
+    }
+
+    private func subheading(_ text: String) -> UILabel {
+        let label = UILabel()
+        label.apply(.subhead, color: Theme.Color.ink)
+        label.text = text
+        label.accessibilityTraits = .header
+        return label
+    }
+
+    private func labelledGroup(_ title: String, _ group: SettingsChipGroup) -> UIStackView {
+        let stack = UIStackView(arrangedSubviews: [subheading(title), group])
+        stack.axis = .vertical
+        stack.spacing = Theme.Space.sm
+        return stack
+    }
+
+    private func inset(_ stack: UIStackView, in card: SurfaceView, padding: CGFloat = Theme.Space.lg) {
+        card.contentView.addSubview(stack)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.pinEdges(to: card.contentView, insets: UIEdgeInsets(top: padding, left: padding, bottom: padding, right: padding))
+    }
+
+    private func makeAccountSection() -> UIView {
+        let isAnonymous = isAnonymousAccount
+        let provider = authProvider
+
+        let title: String
+        let detail: String?
+        let symbol: String
+        if isAnonymous {
+            title = String(localized: "Not signed in")
+            detail = String(localized: "Your images and credits are only on this device")
+            symbol = "person.crop.circle.badge.questionmark"
+        } else if let provider {
+            title = String(localized: "Signed in with \(provider.displayName)")
+            detail = nil
+            symbol = Self.symbol(for: provider)
+        } else {
+            title = String(localized: "Signed in")
+            detail = nil
+            symbol = "person.crop.circle.fill"
+        }
+
+        let badge = IconBadge(symbol: symbol, size: 52)
+        let titleLabel = UILabel()
+        titleLabel.apply(.title2)
+        titleLabel.text = title
+        titleLabel.accessibilityTraits = .header
+        let textStack = UIStackView(arrangedSubviews: [titleLabel])
+        textStack.axis = .vertical
+        textStack.spacing = Theme.Space.xs
+        if let detail {
+            let detailLabel = UILabel()
+            detailLabel.apply(.callout)
+            detailLabel.text = detail
+            textStack.addArrangedSubview(detailLabel)
+        }
+        let header = UIStackView(arrangedSubviews: [badge, textStack])
+        header.axis = .horizontal
+        header.alignment = .center
+        header.spacing = Theme.Space.lg
+
+        let content = UIStackView(arrangedSubviews: [header])
+        content.axis = .vertical
+        content.spacing = Theme.Space.lg
+
+        if isAnonymous {
+            let button = PixieButton(style: .primary, size: .large, title: String(localized: "Sign in to back up"), symbol: "apple.logo") { [weak self] in
+                self?.startAppleLink()
+            }
+            signInButton = button
+            content.addArrangedSubview(button)
+        } else if let id = authenticationManager.currentUser?.id {
+            content.addArrangedSubview(SettingsCopyableIDView(title: String(localized: "User ID"), value: id))
+        }
+
+        let card = SurfaceView(style: .card, cornerRadius: Theme.Radius.xl)
+        inset(content, in: card, padding: Theme.Space.xl)
+        return SettingsLayout.section(title: String(localized: "Account"), content: [card])
+    }
+
+    private static func symbol(for provider: AuthProvider) -> String {
+        switch provider {
+        case .apple: return "apple.logo"
+        case .google: return "g.circle.fill"
+        case .github: return "chevron.left.forwardslash.chevron.right"
+        }
+    }
+
+    private func makeAppearanceSection() -> UIView {
+        let entries: [(AppTheme, String, UIUserInterfaceStyle?)] = [
+            (.system, String(localized: "System"), nil),
+            (.light, String(localized: "Light"), .light),
+            (.dark, String(localized: "Dark"), .dark),
+        ]
+        appearanceTiles = [:]
+        var tiles: [UIView] = []
+        for (theme, name, style) in entries {
+            let tile = SettingsAppearanceTile(title: name, style: style)
+            tile.onTap = { [weak self] in self?.select(theme: theme) }
+            appearanceTiles[theme] = tile
+            tiles.append(tile)
+        }
+        let stack = UIStackView(arrangedSubviews: tiles)
+        stack.axis = .horizontal
+        stack.distribution = .fillEqually
+        stack.alignment = .top
+        stack.spacing = Theme.Space.md
+        stack.accessibilityContainerType = .semanticGroup
+        stack.accessibilityLabel = String(localized: "Theme")
+        appearanceStack = stack
+        return SettingsLayout.section(title: String(localized: "Appearance"), content: [stack])
+    }
+
+    private func makeDefaultsSection() -> UIView {
+        modelCards = [:]
+        let cards = Self.selectableModels.map { model -> SettingsOptionCard in
+            let card = SettingsOptionCard(title: model.displayName, detail: model.description)
+            card.onTap = { [weak self] in self?.select(model: model) }
+            modelCards[model] = card
+            return card
+        }
+        let cardStack = UIStackView(arrangedSubviews: cards)
+        cardStack.axis = .vertical
+        cardStack.spacing = Theme.Space.sm
+        cardStack.accessibilityContainerType = .semanticGroup
+        cardStack.accessibilityLabel = String(localized: "Model")
+
+        let quality = SettingsChipGroup(options: Self.qualityOptions, selected: nil, label: String(localized: "Quality"))
+        quality.onSelect = { [weak self] id in self?.configurationManager.defaultQuality = id }
+        qualityGroup = quality
+        let size = SettingsChipGroup(options: Self.sizeOptions, selected: nil, label: String(localized: "Size"))
+        size.onSelect = { [weak self] id in self?.configurationManager.defaultSize = id }
+        sizeGroup = size
+
+        let optionsStack = UIStackView(arrangedSubviews: [labelledGroup(String(localized: "Quality"), quality), labelledGroup(String(localized: "Size"), size)])
+        optionsStack.axis = .vertical
+        optionsStack.spacing = Theme.Space.lg
+        let optionsCard = SurfaceView(style: .card)
+        inset(optionsStack, in: optionsCard)
+
+        let hint = SettingsLayout.footnote(String(localized: "Quality, size and the advanced options apply to GPT Image. Higher quality costs more credits."))
+
+        return SettingsLayout.section(
+            title: String(localized: "Defaults"),
+            content: [subheading(String(localized: "Model")), cardStack, optionsCard, hint]
+        )
+    }
+
+    private func makeAdvancedSection() -> UIView {
+        let header = SettingsRowView(title: String(localized: "Advanced"), symbol: "slider.horizontal.3", showsChevron: true)
+        header.onTap = { [weak self] in self?.toggleAdvanced() }
+        header.setExpanded(isAdvancedExpanded)
+        advancedRow = header
+
+        let format = SettingsChipGroup(options: Self.formatOptions, selected: nil, label: String(localized: "Format"))
+        format.onSelect = { [weak self] id in self?.configurationManager.defaultOutputFormat = id }
+        formatGroup = format
+        let background = SettingsChipGroup(options: Self.backgroundOptions, selected: nil, label: String(localized: "Background"))
+        background.onSelect = { [weak self] id in self?.configurationManager.defaultBackground = id }
+        backgroundGroup = background
+        let moderation = SettingsChipGroup(options: Self.moderationOptions, selected: nil, label: String(localized: "Moderation"))
+        moderation.onSelect = { [weak self] id in self?.configurationManager.defaultModeration = id }
+        moderationGroup = moderation
+
+        let compressionTitle = UILabel()
+        compressionTitle.apply(.subhead, color: Theme.Color.ink)
+        compressionTitle.text = String(localized: "Compression Level")
+        compressionTitle.hideFromAccessibility()
+        let valueLabel = UILabel()
+        valueLabel.apply(.numeral(17))
+        valueLabel.textColor = Theme.Color.inkSecondary
+        valueLabel.numberOfLines = 1
+        valueLabel.setContentHuggingPriority(.required, for: .horizontal)
+        valueLabel.hideFromAccessibility()
+        compressionValueLabel = valueLabel
+        let compressionHeader = UIStackView(arrangedSubviews: [compressionTitle, valueLabel])
+        compressionHeader.axis = .horizontal
+        compressionHeader.alignment = .firstBaseline
+        compressionHeader.spacing = Theme.Space.sm
+
+        let slider = PercentSlider()
+        slider.minimumValue = 0
+        slider.maximumValue = 100
+        slider.accessibilityLabel = String(localized: "Compression Level")
+        slider.addTarget(self, action: #selector(compressionChanged(_:)), for: .valueChanged)
+        slider.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+        compressionSlider = slider
+
+        let note = SettingsLayout.footnote("")
+        compressionNote = note
+
+        let compression = UIStackView(arrangedSubviews: [compressionHeader, slider, note])
+        compression.axis = .vertical
+        compression.spacing = Theme.Space.sm
+
+        let groups = UIStackView(arrangedSubviews: [
+            labelledGroup(String(localized: "Format"), format),
+            compression,
+            labelledGroup(String(localized: "Background"), background),
+            labelledGroup(String(localized: "Moderation"), moderation),
+        ])
+        groups.axis = .vertical
+        groups.spacing = Theme.Space.xl
+        groups.isLayoutMarginsRelativeArrangement = true
+        groups.layoutMargins = UIEdgeInsets(top: Theme.Space.lg, left: Theme.Space.lg, bottom: Theme.Space.lg, right: Theme.Space.lg)
+
+        let body = UIStackView(arrangedSubviews: [RowDivider(inset: 0), groups])
+        body.axis = .vertical
+        body.isHidden = !isAdvancedExpanded
+        advancedBody = body
+
+        let stack = UIStackView(arrangedSubviews: [header, body])
+        stack.axis = .vertical
+        let card = SurfaceView(style: .card)
+        card.contentView.addSubview(stack)
+        stack.pinEdges(to: card.contentView)
+        refreshAdvancedAccessibility()
+        return card
+    }
+
+    private func makePrivacySection() -> UIView {
+        let consentSwitch = UISwitch()
+        consentSwitch.accessibilityLabel = String(localized: "Cloud AI Consent")
+        consentSwitch.accessibilityHint = CloudAIConsent.disclosure
+        consentSwitch.addAction(UIAction { [weak self] _ in self?.presentCloudAIConsentOptions() }, for: .valueChanged)
+        self.consentSwitch = consentSwitch
+
+        let consent = SettingsRowView(title: String(localized: "Cloud AI Consent"), symbol: "cloud.fill")
+        consent.setAccessory(consentSwitch)
+        consent.isAccessibilityElement = false
+        consent.onTap = { [weak self] in self?.presentCloudAIConsentOptions() }
+        consentRow = consent
+
+        let cache = SettingsRowView(title: String(localized: "Image Cache"), symbol: "internaldrive.fill", value: cacheSize)
+        cacheRow = cache
+
+        let clear = SettingsRowView(title: String(localized: "Clear Cache"), symbol: "trash.fill", colors: SettingsTint.solid(Theme.Color.danger), showsChevron: false)
+        clear.accessibilityTraits = .button
+        clear.onTap = { [weak self] in self?.clearCacheTapped() }
+
+        let connection = SettingsRowView(title: String(localized: "API Connection"), subtitle: String(localized: "Test connection to Pixie servers"), symbol: "antenna.radiowaves.left.and.right")
+        connection.accessibilityTraits = .button
+        connection.onTap = { [weak self] in self?.testConnection() }
+        connectionRow = connection
+        applyConnectionStatus()
+
+        let card = SettingsLayout.card(rows: [consent, cache, clear, connection])
+        return SettingsLayout.section(title: String(localized: "Privacy & data"), content: [card, SettingsLayout.footnote(CloudAIConsent.disclosure)])
+    }
+
+    private func makeSupportSection() -> UIView {
+        let help = ListRowView(title: String(localized: "Help"), subtitle: String(localized: "Learn how to use Pixie"), symbol: "questionmark.circle.fill", showsChevron: true)
+        help.onTap = { [weak self] in self?.presentHelpDocumentation() }
+
+        let contact = ListRowView(title: String(localized: "Contact"), subtitle: String(localized: "@guitaripod on X"), symbol: "bubble.left.fill", showsChevron: true)
+        contact.onTap = { [weak self] in self?.openSupport() }
+
+        let moreApps = ListRowView(title: String(localized: "More Apps"), subtitle: String(localized: "Other apps by this developer"), symbol: "square.grid.2x2.fill", showsChevron: true)
+        moreApps.onTap = { [weak self] in
+            guard let self else { return }
+            Midgar.present(from: self)
+        }
+
+        var rows: [UIView] = [help, contact, moreApps]
+        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
+           let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+            rows.append(ListRowView(title: String(localized: "Version"), value: "\(version) (\(build))", symbol: "info.circle.fill"))
+        }
+        return SettingsLayout.section(title: String(localized: "Support"), content: [SettingsLayout.card(rows: rows)])
+    }
+
+    private func makeAdminSection() -> UIView {
+        let dashboard = ListRowView(title: String(localized: "Admin Dashboard"), symbol: "person.badge.shield.checkmark", showsChevron: true)
+        dashboard.onTap = { [weak self] in self?.presentAdminDashboard() }
+        return SettingsLayout.section(title: String(localized: "Admin"), content: [SettingsLayout.card(rows: [dashboard])])
+    }
+
+    private func makeDangerSection() -> UIView {
+        var rows: [UIView] = []
+        if !isAnonymousAccount {
+            let logout = SettingsRowView(
+                title: String(localized: "Log Out"),
+                subtitle: String(localized: "Sign out of your account"),
+                symbol: "rectangle.portrait.and.arrow.right",
+                colors: SettingsTint.solid(Theme.Color.danger)
+            )
+            logout.accessibilityTraits = .button
+            logout.onTap = { [weak self] in self?.handleLogout() }
+            rows.append(logout)
+        }
+        let delete = SettingsRowView(
+            title: String(localized: "Delete Account"),
+            symbol: "trash.fill",
+            colors: SettingsTint.solid(Theme.Color.danger),
+            titleColor: Theme.Color.danger
+        )
+        delete.accessibilityTraits = .button
+        delete.onTap = { [weak self] in self?.handleDeleteAccount() }
+        delete.setBusy(isDeletingAccount)
+        deleteRow = delete
+        rows.append(delete)
+
+        let card = SettingsLayout.card(rows: rows, style: .tinted(Theme.Color.danger.withAlphaComponent(0.10)))
+        return SettingsLayout.section(title: String(localized: "Danger zone"), content: [card])
+    }
+
+    private static var qualityOptions: [SettingsChipGroup.Option] {
+        [
+            .init(id: "low", title: String(localized: "Low"), symbol: nil),
+            .init(id: "medium", title: String(localized: "Medium"), symbol: nil),
+            .init(id: "high", title: String(localized: "High"), symbol: nil),
+            .init(id: "auto", title: String(localized: "Auto"), symbol: nil),
+        ]
+    }
+
+    private static var sizeOptions: [SettingsChipGroup.Option] {
+        [
+            .init(id: "1024x1024", title: String(localized: "Square"), symbol: "square"),
+            .init(id: "1792x1024", title: String(localized: "Landscape"), symbol: "rectangle"),
+            .init(id: "1024x1792", title: String(localized: "Portrait"), symbol: "rectangle.portrait"),
+            .init(id: "auto", title: String(localized: "Auto"), symbol: "wand.and.stars"),
+        ]
+    }
+
+    private static var formatOptions: [SettingsChipGroup.Option] {
+        [
+            .init(id: "png", title: "PNG", symbol: nil),
+            .init(id: "jpeg", title: "JPEG", symbol: nil),
+            .init(id: "webp", title: "WebP", symbol: nil),
+        ]
+    }
+
+    private static var backgroundOptions: [SettingsChipGroup.Option] {
+        [
+            .init(id: "auto", title: String(localized: "Auto"), symbol: nil),
+            .init(id: "transparent", title: String(localized: "Transparent"), symbol: nil),
+            .init(id: "opaque", title: String(localized: "Opaque"), symbol: nil),
+            .init(id: "none", title: String(localized: "None"), symbol: nil),
+        ]
+    }
+
+    private static var moderationOptions: [SettingsChipGroup.Option] {
+        [
+            .init(id: "default", title: String(localized: "Default"), symbol: nil),
+            .init(id: "auto", title: String(localized: "Auto"), symbol: nil),
+            .init(id: "low", title: String(localized: "Low"), symbol: nil),
+        ]
+    }
+
+    private func normalized(_ raw: String, allowed: [String], fallback: String) -> String {
+        allowed.contains(raw) ? raw : fallback
+    }
+
+    private var normalizedSize: String {
+        switch configurationManager.defaultSize {
+        case "1024x1024", "square": return "1024x1024"
+        case "1792x1024", "landscape": return "1792x1024"
+        case "1024x1792", "portrait": return "1024x1792"
+        default: return "auto"
+        }
+    }
+
+    private var normalizedFormat: String {
+        let raw = configurationManager.defaultOutputFormat
+        return normalized(raw == "jpg" ? "jpeg" : raw, allowed: ["png", "jpeg", "webp"], fallback: "webp")
+    }
+
+    /// Brings every control in line with the stored configuration, leaving a slider alone while a finger is on it.
+    private func refreshFromConfiguration() {
+        for (theme, tile) in appearanceTiles {
+            tile.isSelected = theme == configurationManager.theme
+        }
+        let model = ImageModel(rawValue: configurationManager.defaultModel).flatMap { Self.selectableModels.contains($0) ? $0 : nil } ?? .gemini
+        for (candidate, card) in modelCards {
+            card.isSelected = candidate == model
+        }
+        qualityGroup?.select(normalized(configurationManager.defaultQuality, allowed: ["low", "medium", "high", "auto"], fallback: "low"))
+        sizeGroup?.select(normalizedSize)
+        formatGroup?.select(normalizedFormat)
+        backgroundGroup?.select(normalized(configurationManager.defaultBackground, allowed: ["auto", "transparent", "opaque", "none"], fallback: "auto"))
+        moderationGroup?.select(normalized(configurationManager.defaultModeration, allowed: ["default", "auto", "low"], fallback: "auto"))
+        refreshCompression()
+    }
+
+    private func refreshCompression() {
+        let level = configurationManager.defaultCompression
+        let isAvailable = configurationManager.defaultOutputFormat != "png"
+        if let slider = compressionSlider {
+            if !slider.isTracking { slider.value = Float(level) }
+            slider.isEnabled = isAvailable
+            slider.alpha = isAvailable ? 1 : 0.5
+        }
+        compressionValueLabel?.text = String(localized: "\(level)%")
+        compressionValueLabel?.alpha = isAvailable ? 1 : 0.5
+        compressionNote?.text = advancedFooterText
+    }
+
+    private var advancedFooterText: String {
+        configurationManager.defaultOutputFormat == "png"
+            ? String(localized: "Compression isn't available for PNG")
+            : String(localized: "Compression applies to JPEG and WebP")
+    }
+
+    private func refreshConsent() {
+        consentSwitch?.setOn(CloudAIConsent.isGranted, animated: false)
+    }
+
+    private func select(theme: AppTheme) {
+        guard configurationManager.theme != theme else { return }
+        configurationManager.theme = theme
+        updateAppearance()
+    }
+
+    private func select(model: ImageModel) {
+        configurationManager.defaultModel = model.value
+    }
+
+    @objc private func compressionChanged(_ sender: UISlider) {
+        let value = Int(sender.value)
+        if value % 5 == 0, value != lastCompressionHaptic {
+            haptics.impact(.sliderTick)
+            lastCompressionHaptic = value
+        }
+        configurationManager.defaultCompression = value
+        compressionValueLabel?.text = String(localized: "\(value)%")
+    }
+
+    private func toggleAdvanced() {
+        isAdvancedExpanded.toggle()
+        haptics.impact(.click)
+        Motion.spring(0.35, damping: 0.85) {
+            self.advancedBody?.isHidden = !self.isAdvancedExpanded
+            self.advancedRow?.setExpanded(self.isAdvancedExpanded)
+            self.view.layoutIfNeeded()
+        }
+        refreshAdvancedAccessibility()
+        Announce.say(isAdvancedExpanded ? String(localized: "Expanded") : String(localized: "Collapsed"))
+    }
+
+    private func refreshAdvancedAccessibility() {
+        advancedRow?.accessibilityValue = isAdvancedExpanded ? String(localized: "Expanded") : String(localized: "Collapsed")
+        advancedRow?.accessibilityTraits = .button
     }
 
     /// Reads the cache size and gives up after the timeout so the row never stays on "Calculating..." forever.
@@ -159,36 +619,7 @@ class SettingsViewController: UIViewController {
         guard request == cacheSizeRequest else { return }
         isCacheSizePending = false
         cacheSize = text
-        if let indexPath = indexPathForRow(StorageRow.cache, inSection: .storage) {
-            tableView.reloadRows(at: [indexPath], with: .none)
-        }
-    }
-
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-
-        tableView.reloadData()
-        loadCacheSize()
-    }
-
-    private func setupTableView() {
-        tableView.delegate = self
-        tableView.dataSource = self
-        tableView.separatorStyle = .none
-        tableView.estimatedSectionFooterHeight = 44
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        tableView.register(ClearCacheFooterView.self, forHeaderFooterViewReuseIdentifier: ClearCacheFooterView.reuseIdentifier)
-        tableView.register(SettingsTextFooterView.self, forHeaderFooterViewReuseIdentifier: SettingsTextFooterView.reuseIdentifier)
-        view.addSubview(tableView)
-    }
-
-    private func setupConstraints() {
-        NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
+        cacheRow?.setValue(text)
     }
 
     private func handleLogout() {
@@ -292,594 +723,43 @@ class SettingsViewController: UIViewController {
             deletionOverlay?.remove()
             deletionOverlay = nil
         }
-        if let indexPath = indexPathForRow(AccountRow.deleteAccount, inSection: .account) {
-            tableView.reloadRows(at: [indexPath], with: .none)
-        }
+        deleteRow?.setBusy(deleting)
     }
 
-    private var advancedFooterText: String {
-        configurationManager.defaultOutputFormat == "png"
-            ? String(localized: "Compression isn't available for PNG")
-            : String(localized: "Compression applies to JPEG and WebP")
-    }
-
-    private func refreshAdvancedFooter() {
-        if let section = sectionIndex(for: .advanced),
-           let footer = tableView.footerView(forSection: section) as? SettingsTextFooterView {
-            footer.text = advancedFooterText
-        }
-        tableView.performBatchUpdates(nil)
-    }
-}
-
-extension SettingsViewController: UITableViewDataSource {
-    func numberOfSections(in tableView: UITableView) -> Int {
-        return Section.allCases.filter { $0.isVisible }.count
-    }
-
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        let visibleSections = Section.allCases.filter { $0.isVisible }
-        guard section < visibleSections.count else { return 0 }
-
-        switch visibleSections[section] {
-        case .appearance:
-            return AppearanceRow.allCases.count
-        case .imageDefaults:
-            return ImageDefaultsRow.allCases.count
-        case .advanced:
-            return AdvancedRow.allCases.count
-        case .storage:
-            return StorageRow.allCases.count
-        case .api:
-            return APIRow.allCases.count
-        case .admin:
-            return AdminRow.allCases.count
-        case .help:
-            return HelpRow.allCases.count
-        case .account:
-            return AccountRow.allCases.count
-        }
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let visibleSections = Section.allCases.filter { $0.isVisible }
-        guard indexPath.section < visibleSections.count else {
-            return UITableViewCell()
-        }
-
-        let section = visibleSections[indexPath.section]
-
-        switch section {
-        case .appearance:
-            return configureAppearanceCell(at: indexPath)
-        case .imageDefaults:
-            return configureImageDefaultsCell(at: indexPath)
-        case .advanced:
-            return configureAdvancedCell(at: indexPath)
-        case .storage:
-            return configureStorageCell(at: indexPath)
-        case .api:
-            return configureAPICell(at: indexPath)
-        case .admin:
-            return configureAdminCell(at: indexPath)
-        case .help:
-            return configureHelpCell(at: indexPath)
-        case .account:
-            return configureAccountCell(at: indexPath)
-        }
-    }
-
-    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        let visibleSections = Section.allCases.filter { $0.isVisible }
-        guard section < visibleSections.count else { return nil }
-        return visibleSections[section].title
-    }
-
-    /// A row of label text plus a segmented control; the control is exposed to VoiceOver as a labelled group whose segments announce which one is selected.
-    private func segmentedCell(title: String, items: [String], selectedIndex: Int, action: Selector) -> UITableViewCell {
-        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-        cell.selectionStyle = .none
-
-        let label = UILabel()
-        label.text = title
-        label.font = .preferredFont(forTextStyle: .body)
-        label.adjustsFontForContentSizeCategory = true
-        label.numberOfLines = 0
-        label.hideFromAccessibility()
-
-        let segmentedControl = UISegmentedControl(items: items)
-        segmentedControl.selectedSegmentIndex = selectedIndex
-        segmentedControl.accessibilityContainerType = .semanticGroup
-        segmentedControl.accessibilityLabel = title
-        segmentedControl.addTarget(self, action: action, for: .valueChanged)
-
-        let stack = UIStackView(arrangedSubviews: [label, segmentedControl])
-        stack.axis = .vertical
-        stack.alignment = .fill
-        stack.spacing = 8
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        cell.contentView.addSubview(stack)
-
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: cell.contentView.topAnchor, constant: 8),
-            stack.leadingAnchor.constraint(equalTo: cell.contentView.leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -16),
-            stack.bottomAnchor.constraint(equalTo: cell.contentView.bottomAnchor, constant: -8)
-        ])
-
-        return cell
-    }
-
-    /// A cell laid out by `UIListContentConfiguration`, which switches to a stacked layout at accessibility text sizes.
-    private func contentCell(subtitle: Bool = false, _ configure: (inout UIListContentConfiguration) -> Void) -> UITableViewCell {
-        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-        var content: UIListContentConfiguration = subtitle ? .subtitleCell() : .valueCell()
-        content.textProperties.numberOfLines = 0
-        content.secondaryTextProperties.numberOfLines = 0
-        configure(&content)
-        cell.contentConfiguration = content
-        return cell
-    }
-
-    private func configureAppearanceCell(at indexPath: IndexPath) -> UITableViewCell {
-        guard let row = AppearanceRow(rawValue: indexPath.row) else {
-            return UITableViewCell()
-        }
-
-        switch row {
-        case .theme:
-            let selectedIndex: Int
-            switch configurationManager.theme {
-            case .system: selectedIndex = 0
-            case .light: selectedIndex = 1
-            case .dark: selectedIndex = 2
-            }
-            return segmentedCell(
-                title: String(localized: "Theme"),
-                items: [String(localized: "System"), String(localized: "Light"), String(localized: "Dark")],
-                selectedIndex: selectedIndex,
-                action: #selector(themeChanged(_:))
-            )
-        }
-    }
-
-    private func configureImageDefaultsCell(at indexPath: IndexPath) -> UITableViewCell {
-        guard let row = ImageDefaultsRow(rawValue: indexPath.row) else {
-            return UITableViewCell()
-        }
-
-        switch row {
-        case .model:
-            let defaultModel = ImageModel(rawValue: configurationManager.defaultModel) ?? .gemini
-            return segmentedCell(
-                title: String(localized: "AI Model"),
-                items: Self.selectableModels.map(\.displayName),
-                selectedIndex: Self.selectableModels.firstIndex(of: defaultModel) ?? 0,
-                action: #selector(modelChanged(_:))
-            )
-
-        case .quality:
-            let selectedIndex: Int
-            switch configurationManager.defaultQuality {
-            case "low": selectedIndex = 0
-            case "medium": selectedIndex = 1
-            case "high": selectedIndex = 2
-            case "auto": selectedIndex = 3
-            default: selectedIndex = 0
-            }
-            return segmentedCell(
-                title: String(localized: "Quality"),
-                items: [String(localized: "Low"), String(localized: "Medium"), String(localized: "High"), String(localized: "Auto")],
-                selectedIndex: selectedIndex,
-                action: #selector(qualityChanged(_:))
-            )
-
-        case .size:
-            let selectedIndex: Int
-            switch configurationManager.defaultSize {
-            case "1024x1024", "square": selectedIndex = 0
-            case "1792x1024", "landscape": selectedIndex = 1
-            case "1024x1792", "portrait": selectedIndex = 2
-            case "auto": selectedIndex = 3
-            default: selectedIndex = 3
-            }
-            return segmentedCell(
-                title: String(localized: "Size"),
-                items: [String(localized: "Square"), String(localized: "Landscape"), String(localized: "Portrait"), String(localized: "Auto")],
-                selectedIndex: selectedIndex,
-                action: #selector(sizeChanged(_:))
-            )
-        }
-    }
-
-    private func configureAdvancedCell(at indexPath: IndexPath) -> UITableViewCell {
-        guard let row = AdvancedRow(rawValue: indexPath.row) else {
-            return UITableViewCell()
-        }
-
-        switch row {
-        case .format:
-            let selectedIndex: Int
-            switch configurationManager.defaultOutputFormat {
-            case "png": selectedIndex = 0
-            case "jpeg", "jpg": selectedIndex = 1
-            case "webp": selectedIndex = 2
-            default: selectedIndex = 2
-            }
-            return segmentedCell(
-                title: String(localized: "Format"),
-                items: ["PNG", "JPEG", "WebP"],
-                selectedIndex: selectedIndex,
-                action: #selector(formatChanged(_:))
-            )
-
-        case .compression:
-            let isAvailable = configurationManager.defaultOutputFormat != "png"
-            let cell = contentCell { content in
-                content.text = String(localized: "Compression Level")
-                content.secondaryText = String(localized: "\(configurationManager.defaultCompression)%")
-                if !isAvailable {
-                    content.textProperties.color = .secondaryLabel
-                    content.secondaryTextProperties.color = .secondaryLabel
-                }
-            }
-            if isAvailable {
-                cell.accessoryType = .disclosureIndicator
-                cell.selectionStyle = .default
-                cell.accessibilityTraits.insert(.button)
-            } else {
-                cell.selectionStyle = .none
-                cell.accessibilityTraits.insert(.notEnabled)
-                cell.accessibilityHint = String(localized: "Compression isn't available for PNG")
-            }
-            return cell
-
-        case .background:
-            let selectedIndex: Int
-            switch configurationManager.defaultBackground {
-            case "auto": selectedIndex = 0
-            case "transparent": selectedIndex = 1
-            case "opaque": selectedIndex = 2
-            case "none": selectedIndex = 3
-            default: selectedIndex = 0
-            }
-            return segmentedCell(
-                title: String(localized: "Background"),
-                items: [String(localized: "Auto"), String(localized: "Transparent"), String(localized: "Opaque"), String(localized: "None")],
-                selectedIndex: selectedIndex,
-                action: #selector(backgroundChanged(_:))
-            )
-
-        case .moderation:
-            let selectedIndex: Int
-            switch configurationManager.defaultModeration {
-            case "default": selectedIndex = 0
-            case "auto": selectedIndex = 1
-            case "low": selectedIndex = 2
-            default: selectedIndex = 1
-            }
-            return segmentedCell(
-                title: String(localized: "Moderation"),
-                items: [String(localized: "Default"), String(localized: "Auto"), String(localized: "Low")],
-                selectedIndex: selectedIndex,
-                action: #selector(moderationChanged(_:))
-            )
-        }
-    }
-
-    private func configureStorageCell(at indexPath: IndexPath) -> UITableViewCell {
-        guard let row = StorageRow(rawValue: indexPath.row) else {
-            return UITableViewCell()
-        }
-
-        switch row {
-        case .cache:
-            let cell = contentCell { content in
-                content.text = String(localized: "Image Cache")
-                content.secondaryText = cacheSize
-            }
-            cell.selectionStyle = .none
-            return cell
-        }
-    }
-
-    private func configureAPICell(at indexPath: IndexPath) -> UITableViewCell {
-        guard let row = APIRow(rawValue: indexPath.row) else {
-            return UITableViewCell()
-        }
-
-        switch row {
-        case .connection:
-            var accessory: UIView?
-            var detail = String(localized: "Test connection to Pixie servers")
-
-            switch connectionStatus {
-            case .idle:
-                break
-            case .testing:
-                let spinner = UIActivityIndicatorView(style: .medium)
-                spinner.startAnimating()
-                accessory = spinner
-            case .success:
-                let checkmark = UIImageView(image: UIImage(systemName: "checkmark.circle.fill"))
-                checkmark.tintColor = .systemGreen
-                accessory = checkmark
-                detail = String(localized: "Connected successfully")
-            case .error(let message):
-                let warning = UIImageView(image: UIImage(systemName: "exclamationmark.triangle.fill"))
-                warning.tintColor = .systemRed
-                accessory = warning
-                detail = message
-            }
-
-            let cell = contentCell(subtitle: true) { content in
-                content.text = String(localized: "API Connection")
-                content.secondaryText = detail
-            }
-            cell.accessoryView = accessory
-            cell.accessibilityTraits.insert(.button)
-            return cell
-        }
-    }
-
-    private func configureAdminCell(at indexPath: IndexPath) -> UITableViewCell {
-        guard let row = AdminRow(rawValue: indexPath.row) else {
-            return UITableViewCell()
-        }
-
-        switch row {
-        case .dashboard:
-            let cell = contentCell { content in
-                content.text = String(localized: "Admin Dashboard")
-            }
-            cell.accessoryType = .disclosureIndicator
-            cell.accessibilityTraits.insert(.button)
-            return cell
-        }
-    }
-
-    private func configureHelpCell(at indexPath: IndexPath) -> UITableViewCell {
-        guard let row = HelpRow(rawValue: indexPath.row) else {
-            return UITableViewCell()
-        }
-
-        switch row {
-        case .documentation:
-            let cell = contentCell { content in
-                content.text = String(localized: "Help Documentation")
-                content.secondaryText = String(localized: "Learn how to use Pixie")
-            }
-            cell.accessoryType = .disclosureIndicator
-            cell.accessibilityTraits.insert(.button)
-            return cell
-        case .cloudAIConsent:
-            let cell = contentCell { content in
-                content.text = String(localized: "Cloud AI Consent")
-                content.secondaryText = CloudAIConsent.isGranted ? String(localized: "Granted") : String(localized: "Not granted")
-            }
-            cell.accessoryType = .disclosureIndicator
-            cell.accessibilityTraits.insert(.button)
-            return cell
-        case .moreApps:
-            let cell = contentCell { content in
-                content.text = String(localized: "More Apps")
-                content.secondaryText = String(localized: "Other apps by this developer")
-            }
-            cell.accessoryType = .disclosureIndicator
-            cell.accessibilityTraits.insert(.button)
-            return cell
-        case .about:
-            let cell = contentCell { content in
-                content.text = String(localized: "About")
-                if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
-                   let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
-                    content.secondaryText = String(localized: "Version \(version) (\(build))")
-                }
-            }
-            cell.selectionStyle = .none
-            return cell
-        }
-    }
-
-    private func configureAccountCell(at indexPath: IndexPath) -> UITableViewCell {
-        guard let row = AccountRow(rawValue: indexPath.row) else {
-            return UITableViewCell()
-        }
-
-        switch row {
-        case .userId:
-            if authenticationManager.isAnonymous {
-                let cell = contentCell { content in
-                    content.text = String(localized: "Sign in with Apple")
-                    content.secondaryText = String(localized: "Sync & keep your credits")
-                }
-                cell.accessoryType = .disclosureIndicator
-                cell.selectionStyle = .default
-                cell.accessibilityTraits.insert(.button)
-                return cell
-            }
-            let cell = contentCell { content in
-                content.text = String(localized: "User ID")
-                content.secondaryText = authenticationManager.currentUser?.id ?? String(localized: "Not logged in")
-            }
-            cell.selectionStyle = .none
-            return cell
-        case .logout:
-            let cell = contentCell { content in
-                content.text = String(localized: "Log Out")
-                content.textProperties.color = .systemRed
-                content.secondaryText = String(localized: "Sign out of your account")
-            }
-            cell.accessibilityTraits.insert(.button)
-            return cell
-        case .deleteAccount:
-            let cell = contentCell { content in
-                content.text = String(localized: "Delete Account")
-                content.textProperties.color = .systemRed
-                content.image = UIImage(systemName: "trash")
-                content.imageProperties.tintColor = .systemRed
-            }
-            cell.accessibilityTraits.insert(.button)
-            if isDeletingAccount {
-                let spinner = UIActivityIndicatorView(style: .medium)
-                spinner.startAnimating()
-                cell.accessoryView = spinner
-                cell.selectionStyle = .none
-                cell.contentView.alpha = 0.5
-                cell.accessibilityTraits.insert(.notEnabled)
-            }
-            return cell
-        }
-    }
-}
-
-extension SettingsViewController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        haptics.impact(.click)
-
-        let visibleSections = Section.allCases.filter { $0.isVisible }
-        guard indexPath.section < visibleSections.count else { return }
-
-        let section = visibleSections[indexPath.section]
-
-        switch section {
-        case .appearance, .imageDefaults, .storage:
-            break
-        case .advanced:
-            handleAdvancedSelection(at: indexPath)
-        case .api:
-            handleAPISelection(at: indexPath)
-        case .admin:
-            handleAdminSelection(at: indexPath)
-        case .help:
-            handleHelpSelection(at: indexPath)
-        case .account:
-            handleAccountSelection(at: indexPath)
-        }
-    }
-
-    func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        let visibleSections = Section.allCases.filter { $0.isVisible }
-        guard section < visibleSections.count else { return nil }
-
-        switch visibleSections[section] {
-        case .storage:
-            let footer = tableView.dequeueReusableHeaderFooterView(withIdentifier: ClearCacheFooterView.reuseIdentifier) as? ClearCacheFooterView
-            footer?.onTap = { [weak self] in
-                self?.clearCacheTapped()
-            }
-            return footer
-        case .advanced:
-            let footer = tableView.dequeueReusableHeaderFooterView(withIdentifier: SettingsTextFooterView.reuseIdentifier) as? SettingsTextFooterView
-            footer?.text = advancedFooterText
-            return footer
-        default:
-            return nil
-        }
-    }
-
-    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        let visibleSections = Section.allCases.filter { $0.isVisible }
-        guard section < visibleSections.count else { return 0 }
-
-        switch visibleSections[section] {
-        case .storage, .advanced:
-            return UITableView.automaticDimension
-        default:
-            return 0
-        }
-    }
-
-    private func handleAdvancedSelection(at indexPath: IndexPath) {
-        guard let row = AdvancedRow(rawValue: indexPath.row) else { return }
-
-        switch row {
-        case .format, .background, .moderation:
-            break
-        case .compression:
-            if configurationManager.defaultOutputFormat != "png" {
-                presentCompressionSelector()
-            }
-        }
-    }
-
-    private func handleAPISelection(at indexPath: IndexPath) {
-        guard let row = APIRow(rawValue: indexPath.row) else { return }
-
-        switch row {
-        case .connection:
-            testConnection()
-        }
-    }
-
-    private func handleAdminSelection(at indexPath: IndexPath) {
-        guard let row = AdminRow(rawValue: indexPath.row) else { return }
-
-        switch row {
-        case .dashboard:
-            presentAdminDashboard()
-        }
-    }
-
-    private func handleHelpSelection(at indexPath: IndexPath) {
-        guard let row = HelpRow(rawValue: indexPath.row) else { return }
-
-        switch row {
-        case .documentation:
-            presentHelpDocumentation()
-        case .cloudAIConsent:
-            presentCloudAIConsentOptions(at: indexPath)
-        case .moreApps:
-            Midgar.present(from: self)
-        case .about:
-            break
-        }
-    }
-
-    private func presentCloudAIConsentOptions(at indexPath: IndexPath) {
+    private func presentCloudAIConsentOptions() {
         let granted = CloudAIConsent.isGranted
         let alert = UIAlertController(
             title: String(localized: "Cloud AI Consent"),
             message: String(localized: "Pixie sends your prompts and attached photos to Google Gemini and OpenAI to create images. Withdrawing consent pauses image generation until you grant it again."),
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel) { [weak self] _ in
+            self?.refreshConsent()
+        })
         if granted {
             alert.addAction(UIAlertAction(title: String(localized: "Withdraw Consent"), style: .destructive) { [weak self] _ in
                 CloudAIConsent.withdraw()
-                self?.tableView.reloadRows(at: [indexPath], with: .automatic)
+                self?.refreshConsent()
             })
         } else {
             alert.addAction(UIAlertAction(title: String(localized: "Grant Consent"), style: .default) { [weak self] _ in
                 CloudAIConsent.grant()
-                self?.tableView.reloadRows(at: [indexPath], with: .automatic)
+                self?.refreshConsent()
             })
         }
         present(alert, animated: true)
     }
 
-    private func handleAccountSelection(at indexPath: IndexPath) {
-        guard let row = AccountRow(rawValue: indexPath.row) else { return }
-
-        switch row {
-        case .userId:
-            if authenticationManager.isAnonymous { startAppleLink() }
-        case .logout:
-            handleLogout()
-        case .deleteAccount:
-            handleDeleteAccount()
-        }
-    }
-
     private func startAppleLink() {
         haptics.impact(.click)
+        signInButton?.isLoading = true
         AppleLinkCoordinator.shared.start(from: self) { [weak self] result in
             guard let self else { return }
+            self.signInButton?.isLoading = false
             switch result {
             case .success:
                 self.haptics.notification(.success)
-                self.tableView.reloadData()
+                self.buildContent()
             case .failure(let error):
                 if (error as NSError).code == ASAuthorizationError.canceled.rawValue { return }
                 self.presentAppleLinkError(error)
@@ -902,53 +782,14 @@ extension SettingsViewController: UITableViewDelegate {
         navigationController?.pushViewController(adminVC, animated: true)
     }
 
-    @objc private func themeChanged(_ sender: UISegmentedControl) {
-        haptics.impact(.click)
-        let themes: [AppTheme] = [.system, .light, .dark]
-        configurationManager.theme = themes[sender.selectedSegmentIndex]
-        updateAppearance()
+    private func presentHelpDocumentation() {
+        let helpVC = HelpViewController()
+        navigationController?.pushViewController(helpVC, animated: true)
     }
 
-    @objc private func modelChanged(_ sender: UISegmentedControl) {
-        haptics.impact(.click)
-        let index = sender.selectedSegmentIndex
-        guard Self.selectableModels.indices.contains(index) else { return }
-        configurationManager.defaultModel = Self.selectableModels[index].value
-    }
-
-    @objc private func qualityChanged(_ sender: UISegmentedControl) {
-        haptics.impact(.click)
-        let qualities = ["low", "medium", "high", "auto"]
-        configurationManager.defaultQuality = qualities[sender.selectedSegmentIndex]
-    }
-
-    @objc private func sizeChanged(_ sender: UISegmentedControl) {
-        haptics.impact(.click)
-        let sizes = ["1024x1024", "1792x1024", "1024x1792", "auto"]
-        configurationManager.defaultSize = sizes[sender.selectedSegmentIndex]
-    }
-
-    @objc private func formatChanged(_ sender: UISegmentedControl) {
-        haptics.impact(.click)
-        let formats = ["png", "jpeg", "webp"]
-        configurationManager.defaultOutputFormat = formats[sender.selectedSegmentIndex]
-
-        if let compressionPath = indexPathForRow(AdvancedRow.compression, inSection: .advanced) {
-            tableView.reloadRows(at: [compressionPath], with: .fade)
-        }
-        refreshAdvancedFooter()
-    }
-
-    @objc private func backgroundChanged(_ sender: UISegmentedControl) {
-        haptics.impact(.click)
-        let backgrounds = ["auto", "transparent", "opaque", "none"]
-        configurationManager.defaultBackground = backgrounds[sender.selectedSegmentIndex]
-    }
-
-    @objc private func moderationChanged(_ sender: UISegmentedControl) {
-        haptics.impact(.click)
-        let moderations = ["default", "auto", "low"]
-        configurationManager.defaultModeration = moderations[sender.selectedSegmentIndex]
+    private func openSupport() {
+        guard let url = Self.supportURL else { return }
+        UIApplication.shared.open(url)
     }
 
     @objc private func clearCacheTapped() {
@@ -969,9 +810,7 @@ extension SettingsViewController: UITableViewDelegate {
             Task {
                 await MainActor.run {
                     self.cacheSize = String(localized: "Clearing...")
-                    if let indexPath = self.indexPathForRow(StorageRow.cache, inSection: .storage) {
-                        self.tableView.reloadRows(at: [indexPath], with: .none)
-                    }
+                    self.cacheRow?.setValue(self.cacheSize)
                 }
 
                 await self.cacheManager.clearCache()
@@ -983,15 +822,42 @@ extension SettingsViewController: UITableViewDelegate {
         present(alert, animated: true)
     }
 
+    private func applyConnectionStatus() {
+        guard let row = connectionRow else { return }
+        switch connectionStatus {
+        case .idle:
+            row.setAccessory(nil)
+            row.setSubtitle(String(localized: "Test connection to Pixie servers"))
+        case .testing:
+            let spinner = UIActivityIndicatorView(style: .medium)
+            spinner.startAnimating()
+            spinner.hideFromAccessibility()
+            row.setAccessory(spinner)
+            row.setSubtitle(String(localized: "Test connection to Pixie servers"))
+        case .success:
+            row.setAccessory(Self.statusIcon("checkmark.circle.fill", color: Theme.Color.success))
+            row.setSubtitle(String(localized: "Connected successfully"))
+        case .error(let message):
+            row.setAccessory(Self.statusIcon("exclamationmark.triangle.fill", color: Theme.Color.danger))
+            row.setSubtitle(message)
+        }
+    }
+
+    private static func statusIcon(_ name: String, color: UIColor) -> UIImageView {
+        let icon = UIImageView(image: UIImage(systemName: name))
+        icon.tintColor = color
+        icon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .title3)
+        icon.hideFromAccessibility()
+        return icon
+    }
+
     private func testConnection() {
         guard !isTestingConnection else { return }
+        haptics.impact(.click)
 
         isTestingConnection = true
         connectionStatus = .testing
-
-        if let indexPath = indexPathForRow(APIRow.connection, inSection: .api) {
-            tableView.reloadRows(at: [indexPath], with: .none)
-        }
+        applyConnectionStatus()
 
         Task {
             do {
@@ -1008,11 +874,7 @@ extension SettingsViewController: UITableViewDelegate {
                     self.isTestingConnection = false
                     self.haptics.impact(.success)
                     Announce.say(String(localized: "Connected successfully"))
-
-                    if let indexPath = self.indexPathForRow(APIRow.connection, inSection: .api) {
-                        self.tableView.reloadRows(at: [indexPath], with: .fade)
-                    }
-
+                    self.applyConnectionStatus()
                     self.resetConnectionStatus(after: 3_000_000_000)
                 }
             } catch {
@@ -1021,11 +883,7 @@ extension SettingsViewController: UITableViewDelegate {
                     self.isTestingConnection = false
                     self.haptics.impact(.error)
                     Announce.say(error.localizedDescription)
-
-                    if let indexPath = self.indexPathForRow(APIRow.connection, inSection: .api) {
-                        self.tableView.reloadRows(at: [indexPath], with: .fade)
-                    }
-
+                    self.applyConnectionStatus()
                     self.resetConnectionStatus(after: 5_000_000_000)
                 }
             }
@@ -1036,28 +894,8 @@ extension SettingsViewController: UITableViewDelegate {
         Task { [self] in
             try? await Task.sleep(nanoseconds: nanoseconds)
             connectionStatus = .idle
-            if let indexPath = indexPathForRow(APIRow.connection, inSection: .api) {
-                tableView.reloadRows(at: [indexPath], with: .fade)
-            }
+            applyConnectionStatus()
         }
-    }
-
-    private func presentHelpDocumentation() {
-        let helpVC = HelpViewController()
-        navigationController?.pushViewController(helpVC, animated: true)
-    }
-
-    private func presentCompressionSelector() {
-        let compressionVC = CompressionSelectorViewController(
-            currentLevel: configurationManager.defaultCompression,
-            onLevelChanged: { [weak self] level in
-                self?.configurationManager.defaultCompression = level
-                self?.haptics.impact(.sliderTick)
-            }
-        )
-
-        let nav = UINavigationController(rootViewController: compressionVC)
-        present(nav, animated: true)
     }
 
     private func updateAppearance() {
@@ -1080,16 +918,6 @@ extension SettingsViewController: UITableViewDelegate {
             }
         }
     }
-
-    private func indexPathForRow<T: CaseIterable & RawRepresentable>(_ row: T, inSection section: Section) -> IndexPath? where T.RawValue == Int {
-        guard let sectionIndex = sectionIndex(for: section) else { return nil }
-        return IndexPath(row: row.rawValue, section: sectionIndex)
-    }
-
-    private func sectionIndex(for section: Section) -> Int? {
-        let visibleSections = Section.allCases.filter { $0.isVisible }
-        return visibleSections.firstIndex(of: section)
-    }
 }
 
 extension AppTheme {
@@ -1102,64 +930,8 @@ extension AppTheme {
     }
 }
 
-private final class ClearCacheFooterView: UITableViewHeaderFooterView {
-    static let reuseIdentifier = "ClearCacheFooterView"
-
-    var onTap: (() -> Void)?
-
-    private let button = UIButton(type: .system)
-
-    override init(reuseIdentifier: String?) {
-        super.init(reuseIdentifier: reuseIdentifier)
-        configureButton()
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    private func configureButton() {
-        var config = UIButton.Configuration.plain()
-        config.title = String(localized: "Clear Cache")
-        config.baseForegroundColor = .systemRed
-        config.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
-        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
-            var outgoing = incoming
-            outgoing.font = UIFont.scaled(.body, size: 17, weight: .medium)
-            return outgoing
-        }
-        button.configuration = config
-        button.addAction(UIAction { [weak self] _ in
-            self?.onTap?()
-        }, for: .touchUpInside)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(button)
-
-        NSLayoutConstraint.activate([
-            button.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            button.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
-            button.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
-            button.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.layoutMarginsGuide.leadingAnchor),
-            button.trailingAnchor.constraint(lessThanOrEqualTo: contentView.layoutMarginsGuide.trailingAnchor),
-            button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
-        ])
-    }
-}
-
-private final class SettingsTextFooterView: UITableViewHeaderFooterView {
-    static let reuseIdentifier = "SettingsTextFooterView"
-
-    var text: String? {
-        didSet {
-            var content = UIListContentConfiguration.groupedFooter()
-            content.text = text
-            contentConfiguration = content
-        }
-    }
-}
-
 private final class AccountDeletionProgressView: UIView {
-    private let card = UIView()
+    private let card = SurfaceView(style: .raised, cornerRadius: Theme.Radius.xl)
     private let spinner = UIActivityIndicatorView(style: .large)
     private let messageLabel = UILabel()
 
@@ -1198,17 +970,11 @@ private final class AccountDeletionProgressView: UIView {
         backgroundColor = UIColor.black.withAlphaComponent(0.4)
         accessibilityViewIsModal = true
 
-        card.backgroundColor = .secondarySystemBackground
-        card.layer.cornerRadius = 16
-        card.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(card)
-
+        spinner.color = Theme.Color.accentText
         spinner.hideFromAccessibility()
 
+        messageLabel.apply(.headline)
         messageLabel.text = String(localized: "Deleting your account…")
-        messageLabel.useScaledFont(.body, size: 17, weight: .medium)
-        messageLabel.textColor = .label
-        messageLabel.numberOfLines = 0
         messageLabel.textAlignment = .center
         messageLabel.isAccessibilityElement = true
         messageLabel.accessibilityTraits = [.staticText, .updatesFrequently]
@@ -1216,21 +982,22 @@ private final class AccountDeletionProgressView: UIView {
         let stack = UIStackView(arrangedSubviews: [spinner, messageLabel])
         stack.axis = .vertical
         stack.alignment = .center
-        stack.spacing = 16
+        stack.spacing = Theme.Space.lg
         stack.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(stack)
+        card.contentView.addSubview(stack)
+        addSubview(card)
 
         NSLayoutConstraint.activate([
             card.centerXAnchor.constraint(equalTo: centerXAnchor),
             card.centerYAnchor.constraint(equalTo: centerYAnchor),
             card.widthAnchor.constraint(lessThanOrEqualToConstant: 320),
-            card.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 24),
-            card.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -24),
+            card.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: Theme.Space.xxl),
+            card.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -Theme.Space.xxl),
 
-            stack.topAnchor.constraint(equalTo: card.topAnchor, constant: 24),
-            stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 24),
-            stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -24),
-            stack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -24)
+            stack.topAnchor.constraint(equalTo: card.contentView.topAnchor, constant: Theme.Space.xxl),
+            stack.leadingAnchor.constraint(equalTo: card.contentView.leadingAnchor, constant: Theme.Space.xxl),
+            stack.trailingAnchor.constraint(equalTo: card.contentView.trailingAnchor, constant: -Theme.Space.xxl),
+            stack.bottomAnchor.constraint(equalTo: card.contentView.bottomAnchor, constant: -Theme.Space.xxl)
         ])
     }
 }

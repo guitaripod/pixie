@@ -3,7 +3,10 @@ import UIKit
 class ImagePreviewViewController: UIViewController {
     private let imageView = UIImageView()
     private let scrollView = UIScrollView()
-    private let editButton = UIButton(type: .system)
+    private let scrimView = GradientView(colors: [UIColor.black.withAlphaComponent(0), UIColor.black.withAlphaComponent(0.7)], start: CGPoint(x: 0.5, y: 0), end: CGPoint(x: 0.5, y: 1))
+    private lazy var editButton = PixieButton(style: .primary, size: .large, title: String(localized: "Edit Image"), symbol: "wand.and.stars") { [weak self] in
+        self?.editButtonTapped()
+    }
     private var image: UIImage
     var onEditConfirmed: (() -> Void)?
     init(image: UIImage) {
@@ -39,29 +42,9 @@ class ImagePreviewViewController: UIViewController {
         }
     }
     private func setupEditButton() {
-        editButton.translatesAutoresizingMaskIntoConstraints = false
-        var config: UIButton.Configuration
-        if #available(iOS 26.0, *) {
-            config = .prominentGlass()
-        } else {
-            config = .borderedProminent()
-        }
-        config.title = String(localized: "Edit Image")
-        config.image = UIImage(systemName: "wand.and.stars")
-        config.imagePlacement = .leading
-        config.imagePadding = 8
-        config.cornerStyle = .capsule
-        config.baseBackgroundColor = .brand
-        config.baseForegroundColor = .white
-        config.contentInsets = NSDirectionalEdgeInsets(top: 14, leading: 24, bottom: 14, trailing: 24)
-        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
-            var outgoing = incoming
-            outgoing.font = .scaled(.body, size: 17, weight: .semibold)
-            return outgoing
-        }
-        editButton.configuration = config
+        scrimView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(scrimView)
         editButton.accessibilityLabel = String(localized: "Edit this image")
-        editButton.addTarget(self, action: #selector(editButtonTapped), for: .touchUpInside)
         editButton.setupPointerInteraction()
         view.addSubview(editButton)
     }
@@ -80,12 +63,16 @@ class ImagePreviewViewController: UIViewController {
         ]
         if onEditConfirmed != nil {
             constraints.append(contentsOf: [
-                editButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+                editButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -Theme.Space.xl),
                 editButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
-                editButton.leadingAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
-                editButton.trailingAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
-                editButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 150),
-                editButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 50)
+                editButton.leadingAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.leadingAnchor, constant: Theme.Space.xl),
+                editButton.trailingAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -Theme.Space.xl),
+                editButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 200),
+                editButton.widthAnchor.constraint(lessThanOrEqualToConstant: Theme.Width.button),
+                scrimView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                scrimView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+                scrimView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+                scrimView.topAnchor.constraint(equalTo: editButton.topAnchor, constant: -Theme.Space.xxxl)
             ])
         }
         NSLayoutConstraint.activate(constraints)
@@ -117,7 +104,7 @@ class ImagePreviewViewController: UIViewController {
             if let sheet = sheetPresentationController {
                 sheet.detents = [.large()]
                 sheet.prefersGrabberVisible = true
-                sheet.preferredCornerRadius = 20
+                sheet.preferredCornerRadius = Theme.Radius.sheet
                 sheet.prefersScrollingExpandsWhenScrolledToEdge = false
             }
         }

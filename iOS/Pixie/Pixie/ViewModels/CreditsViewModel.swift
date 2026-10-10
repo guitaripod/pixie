@@ -212,6 +212,30 @@ extension CreditTransaction {
             : String(localized: "\(magnitudeText) credits added")
     }
 
+    var badgeSymbol: String {
+        let text = description.lowercased()
+        switch kind {
+        case .spent: return symbolName
+        case .purchased: return "creditcard.fill"
+        case .bonus: return "gift.fill"
+        case .refund: return "arrow.uturn.backward"
+        case .added: return text.contains("admin") ? "person.badge.shield.checkmark.fill" : "plus"
+        }
+    }
+
+    var badgeColors: [UIColor] {
+        switch kind {
+        case .spent: return [UIColor(hex: 0x6C47FF), UIColor(hex: 0xB04BFF)]
+        case .purchased, .added: return [UIColor(hex: 0x0E9F6E), UIColor(hex: 0x34C99A)]
+        case .bonus: return [UIColor(hex: 0xFF6FA3), UIColor(hex: 0xFF9A6F)]
+        case .refund: return [UIColor(hex: 0x2F80ED), UIColor(hex: 0x56B8F2)]
+        }
+    }
+
+    var amountColor: UIColor {
+        isDebit ? Theme.Color.ink : Theme.Color.success
+    }
+
     var symbolName: String {
         let text = description.lowercased()
         switch kind {

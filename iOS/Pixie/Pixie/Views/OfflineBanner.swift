@@ -1,9 +1,8 @@
 import UIKit
 
 class OfflineBanner: UIView {
-    private static let bannerColor = UIColor(red: 0.75, green: 0.13, blue: 0.11, alpha: 1)
-
-    private let containerView = UIView()
+    private let pillView = UIView()
+    private let tintView = UIView()
     private let stackView = UIStackView()
     private let iconImageView = UIImageView()
     private let messageLabel = UILabel()
@@ -30,24 +29,32 @@ class OfflineBanner: UIView {
         translatesAutoresizingMaskIntoConstraints = false
         accessibilityElementsHidden = true
 
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        containerView.backgroundColor = Self.bannerColor
-        containerView.layer.shadowColor = UIColor.black.cgColor
-        containerView.layer.shadowOpacity = 0.1
-        containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
-        containerView.layer.shadowRadius = 4
-        addSubview(containerView)
+        pillView.translatesAutoresizingMaskIntoConstraints = false
+        pillView.backgroundColor = Theme.Color.surfaceRaised
+        pillView.layer.cornerCurve = .continuous
+        pillView.layer.borderWidth = 1
+        pillView.layer.shadowColor = UIColor(hex: 0x1B0F4A).cgColor
+        pillView.layer.shadowRadius = 16
+        pillView.layer.shadowOffset = CGSize(width: 0, height: 6)
+        addSubview(pillView)
+
+        tintView.translatesAutoresizingMaskIntoConstraints = false
+        tintView.backgroundColor = Theme.Color.danger.withAlphaComponent(0.14)
+        tintView.layer.cornerCurve = .continuous
+        tintView.clipsToBounds = true
+        tintView.isUserInteractionEnabled = false
+        pillView.addSubview(tintView)
 
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.axis = .horizontal
         stackView.alignment = .center
-        stackView.spacing = 8
+        stackView.spacing = Theme.Space.sm
         stackView.distribution = .fill
-        containerView.addSubview(stackView)
+        pillView.addSubview(stackView)
 
         iconImageView.image = UIImage(systemName: "wifi.slash")
-        iconImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .subheadline)
-        iconImageView.tintColor = .white
+        iconImageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .subheadline, scale: .medium)
+        iconImageView.tintColor = Theme.Color.danger
         iconImageView.contentMode = .scaleAspectFit
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         iconImageView.setContentHuggingPriority(.required, for: .horizontal)
@@ -55,32 +62,53 @@ class OfflineBanner: UIView {
         iconImageView.hideFromAccessibility()
         stackView.addArrangedSubview(iconImageView)
 
+        messageLabel.apply(.subhead, color: Theme.Color.ink)
         messageLabel.text = String(localized: "No Internet Connection")
-        messageLabel.textColor = .white
-        messageLabel.useScaledFont(.subheadline, size: 14, weight: .medium)
-        messageLabel.numberOfLines = 0
         stackView.addArrangedSubview(messageLabel)
+        applyAppearance()
     }
 
     private func setupConstraints() {
+        let margin = Theme.Space.lg
         NSLayoutConstraint.activate([
-            containerView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            containerView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            containerView.topAnchor.constraint(equalTo: topAnchor),
-            containerView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            pillView.centerXAnchor.constraint(equalTo: centerXAnchor),
+            pillView.topAnchor.constraint(equalTo: topAnchor, constant: Theme.Space.sm),
+            pillView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Theme.Space.sm),
+            pillView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: margin),
+            pillView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -margin),
 
-            stackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            stackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            stackView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 8),
-            stackView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -8)
+            tintView.topAnchor.constraint(equalTo: pillView.topAnchor),
+            tintView.bottomAnchor.constraint(equalTo: pillView.bottomAnchor),
+            tintView.leadingAnchor.constraint(equalTo: pillView.leadingAnchor),
+            tintView.trailingAnchor.constraint(equalTo: pillView.trailingAnchor),
+
+            stackView.leadingAnchor.constraint(equalTo: pillView.leadingAnchor, constant: Theme.Space.lg),
+            stackView.trailingAnchor.constraint(equalTo: pillView.trailingAnchor, constant: -Theme.Space.lg),
+            stackView.topAnchor.constraint(equalTo: pillView.topAnchor, constant: 10),
+            stackView.bottomAnchor.constraint(equalTo: pillView.bottomAnchor, constant: -10),
         ])
     }
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        let radius = min(pillView.bounds.height / 2, Theme.Radius.lg)
+        pillView.layer.cornerRadius = radius
+        tintView.layer.cornerRadius = radius
+        pillView.layer.shadowPath = UIBezierPath(roundedRect: pillView.bounds, cornerRadius: radius).cgPath
         syncHiddenOffset()
     }
-    
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        applyAppearance()
+    }
+
+    /// Layer colours do not follow dynamic colours by themselves, so they are resolved again whenever the appearance changes.
+    private func applyAppearance() {
+        pillView.layer.borderColor = Theme.Color.danger.withAlphaComponent(0.4).resolvedColor(with: traitCollection).cgColor
+        pillView.layer.shadowOpacity = traitCollection.userInterfaceStyle == .dark ? 0 : 0.12
+    }
+
     /// Height the banner needs at the current width and text size, used to park it exactly above the safe area while hidden.
     private var fittingHeight: CGFloat {
         if bounds.height > 0 { return bounds.height }
@@ -88,14 +116,14 @@ class OfflineBanner: UIView {
         let target = CGSize(width: width, height: UIView.layoutFittingCompressedSize.height)
         return systemLayoutSizeFitting(target, withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel).height
     }
-    
+
     /// Keeps a hidden banner parked exactly its own height above the top edge when its text size or width changes.
     private func syncHiddenOffset() {
         guard !isShowing, bounds.height > 0, let topConstraint = topConstraint else { return }
         guard abs(topConstraint.constant + bounds.height) > 0.5 else { return }
         topConstraint.constant = -bounds.height
     }
-    
+
     private func startMonitoring() {
         NotificationCenter.default.addObserver(
             self,
@@ -134,7 +162,7 @@ class OfflineBanner: UIView {
             topConstraint.constant = 0
         }
 
-        Motion.animate(0.3, options: [.curveEaseOut]) {
+        Motion.spring(0.4, damping: 0.82, options: [.curveEaseOut]) {
             self.superview?.layoutIfNeeded()
             self.alpha = 1
         }
@@ -150,7 +178,7 @@ class OfflineBanner: UIView {
             topConstraint.constant = -fittingHeight
         }
 
-        Motion.animate(0.3, options: [.curveEaseIn]) {
+        Motion.animate(0.25, options: [.curveEaseIn]) {
             self.superview?.layoutIfNeeded()
             self.alpha = 0
         }

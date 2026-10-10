@@ -25,46 +25,9 @@ class ChatGenerationViewController: UIViewController {
     private let offlineBanner = OfflineBanner()
     private let keyboardTracker = KeyboardOverlapView()
     private let creditsViewModel = CreditsViewModel()
-    private lazy var balanceChipButton: UIButton = {
-        var config = UIButton.Configuration.plain()
-        config.image = UIImage(systemName: "sparkles")
-        config.imagePadding = 4
-        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(textStyle: .subheadline, scale: .small)
-            .applying(UIImage.SymbolConfiguration(weight: .semibold))
-        config.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 6, bottom: 12, trailing: 6)
-        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { attributes in
-            var attributes = attributes
-            attributes.font = ChatGenerationViewController.balanceChipFont
-            attributes.foregroundColor = .label
-            return attributes
-        }
-        let button = UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
-            guard let self else { return }
-            self.haptics.impact(.click)
-            CreditStoreViewController.present(from: self)
-        })
-        button.widthAnchor.constraint(greaterThanOrEqualToConstant: ChatGenerationViewController.minimumBarButtonSize).isActive = true
-        button.accessibilityLabel = String(localized: "Credits")
-        button.accessibilityHint = String(localized: "Opens the credit store")
-        return button
-    }()
-    private static let minimumBarButtonSize: CGFloat = 44
-    private static let maximumBarFontSize: CGFloat = 24
-
-    /// Navigation bar text scales with Dynamic Type up to a cap, so the four bar items still
-    /// fit beside each other at the largest sizes.
-    private static func cappedBarFont(_ style: UIFont.TextStyle, base: UIFont) -> UIFont {
-        UIFontMetrics(forTextStyle: style).scaledFont(for: base, maximumPointSize: maximumBarFontSize)
-    }
-
-    private static var balanceChipFont: UIFont {
-        cappedBarFont(.subheadline, base: .monospacedDigitSystemFont(ofSize: 15, weight: .semibold))
-    }
-
-    private static var newChatFont: UIFont {
-        cappedBarFont(.callout, base: .systemFont(ofSize: 16, weight: .medium))
-    }
-    private lazy var balanceChipItem = UIBarButtonItem(customView: balanceChipButton)
+    private let topBar = ChatTopBar()
+    private let topFade = EdgeFadeView(edge: .top)
+    private let bottomFade = EdgeFadeView(edge: .bottom)
     private var notificationObserver: NSObjectProtocol?
     private var presetLinkObserver: NSObjectProtocol?
     private var pendingPreset: EditPreset?
@@ -83,7 +46,7 @@ class ChatGenerationViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupConstraints()
-        setupNavigationBar()
+        setupTopBar()
         setupHandlers()
         setupBindings()
         setupNotificationObserver()
@@ -95,14 +58,24 @@ class ChatGenerationViewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         inputBar.refitExpandedHeight()
+        updateSuggestionsInsets()
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
+        topBar.setShowsAdminBadge(AuthenticationManager.shared.currentUser?.isAdmin ?? false)
         #if DEBUG
         if DemoMode.isActive { return }
         #endif
         Task { await creditsViewModel.loadBalance() }
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if let navigationController, navigationController.topViewController !== self {
+            navigationController.setNavigationBarHidden(false, animated: animated)
+        }
     }
 
     private var onboardingShown = false
@@ -187,6 +160,7 @@ class ChatGenerationViewController: UIViewController {
         chatView.alpha = 1
         currentState = .chat
         updateAccessibilityVisibility()
+        updateTopBarLeading(animated: false)
         let messages: [ChatMessage]
         switch scenario {
         case .edit:
@@ -199,6 +173,9 @@ class ChatGenerationViewController: UIViewController {
             messages = conversation
         }
         chatView.setMessages(messages, animated: false)
+        if messages.last?.role == .loading {
+            inputBar.setGenerating(true)
+        }
         if let latest = messages.last(where: { $0.role == .assistant })?.images?.first {
             toolbarMode = .edit(selectedImage: SelectedImage(image: latest, url: nil, displayName: nil))
             inputBar.setEditMode(true, selectedImage: latest)
@@ -216,7 +193,7 @@ class ChatGenerationViewController: UIViewController {
         }
     }
     private func setupUI() {
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = Theme.Color.canvas
         suggestionsView.translatesAutoresizingMaskIntoConstraints = false
         suggestionsView.alpha = 1
         suggestionsView.selectedSuggestionsManager = selectedSuggestionsManager
@@ -226,9 +203,12 @@ class ChatGenerationViewController: UIViewController {
         chatView.delegate = self
         view.addSubview(chatView)
         updateAccessibilityVisibility()
+        view.addSubview(topFade)
+        view.addSubview(bottomFade)
         inputBar.translatesAutoresizingMaskIntoConstraints = false
         inputBar.selectedSuggestionsManager = selectedSuggestionsManager
         view.addSubview(inputBar)
+        view.addSubview(topBar)
         offlineBanner.alpha = 0
         view.addSubview(offlineBanner)
         installKeyboardTracker()
@@ -258,116 +238,109 @@ class ChatGenerationViewController: UIViewController {
         ])
     }
     private func setupConstraints() {
-        leadingConstraint = inputBar.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor)
-        trailingConstraint = inputBar.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
-        
+        let safe = view.safeAreaLayoutGuide
+        leadingConstraint = inputBar.leadingAnchor.constraint(equalTo: safe.leadingAnchor)
+        trailingConstraint = inputBar.trailingAnchor.constraint(equalTo: safe.trailingAnchor)
+        leadingConstraint.priority = .defaultHigh
+        trailingConstraint.priority = .defaultHigh
+
         NSLayoutConstraint.activate([
             leadingConstraint,
             trailingConstraint,
-            inputBar.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            inputBar.leadingAnchor.constraint(greaterThanOrEqualTo: safe.leadingAnchor),
+            inputBar.trailingAnchor.constraint(lessThanOrEqualTo: safe.trailingAnchor),
+            inputBar.centerXAnchor.constraint(equalTo: safe.centerXAnchor),
+            inputBar.widthAnchor.constraint(lessThanOrEqualToConstant: Theme.Width.form + 24),
+            inputBar.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor)
         ])
-        
-        let bannerTopConstraint = offlineBanner.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -36)
+
+        let bannerTopConstraint = offlineBanner.topAnchor.constraint(equalTo: safe.topAnchor, constant: -36)
         offlineBanner.setTopConstraint(bannerTopConstraint)
         NSLayoutConstraint.activate([
-            offlineBanner.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            offlineBanner.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            offlineBanner.leadingAnchor.constraint(equalTo: safe.leadingAnchor),
+            offlineBanner.trailingAnchor.constraint(equalTo: safe.trailingAnchor),
             bannerTopConstraint
         ])
 
-        suggestionsBottomConstraint = suggestionsView.bottomAnchor.constraint(equalTo: inputBar.topAnchor)
+        let barTop = topBar.topAnchor.constraint(equalTo: safe.topAnchor, constant: Theme.Space.sm)
+        barTop.priority = .defaultHigh
         NSLayoutConstraint.activate([
-            suggestionsView.topAnchor.constraint(equalTo: offlineBanner.bottomAnchor),
-            suggestionsView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            suggestionsView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            barTop,
+            topBar.topAnchor.constraint(greaterThanOrEqualTo: offlineBanner.bottomAnchor, constant: Theme.Space.xs),
+            topBar.leadingAnchor.constraint(equalTo: safe.leadingAnchor, constant: Theme.Space.md),
+            topBar.trailingAnchor.constraint(equalTo: safe.trailingAnchor, constant: -Theme.Space.md),
+            topFade.topAnchor.constraint(equalTo: view.topAnchor),
+            topFade.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            topFade.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            topFade.bottomAnchor.constraint(equalTo: topBar.bottomAnchor, constant: Theme.Space.xxl),
+            bottomFade.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            bottomFade.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            bottomFade.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            bottomFade.topAnchor.constraint(equalTo: inputBar.composerGuide.topAnchor, constant: -44)
+        ])
+
+        suggestionsBottomConstraint = suggestionsView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        NSLayoutConstraint.activate([
+            suggestionsView.topAnchor.constraint(equalTo: view.topAnchor),
+            suggestionsView.leadingAnchor.constraint(equalTo: safe.leadingAnchor),
+            suggestionsView.trailingAnchor.constraint(equalTo: safe.trailingAnchor),
             suggestionsBottomConstraint
         ])
-        chatBottomConstraint = chatView.bottomAnchor.constraint(equalTo: inputBar.topAnchor)
+        chatBottomConstraint = chatView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         NSLayoutConstraint.activate([
-            chatView.topAnchor.constraint(equalTo: offlineBanner.bottomAnchor),
-            chatView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            chatView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            chatView.topAnchor.constraint(equalTo: view.topAnchor),
+            chatView.leadingAnchor.constraint(equalTo: safe.leadingAnchor),
+            chatView.trailingAnchor.constraint(equalTo: safe.trailingAnchor),
             chatBottomConstraint
         ])
     }
-    private func setupNavigationBar() {
-        navigationItem.leftBarButtonItem = makeNewChatBarButton()
-        navigationItem.rightBarButtonItems = [makeSettingsBarButton(), balanceChipItem, makeGalleryBarButton()]
+
+    private static let suggestionsTopClearance: CGFloat = 76
+
+    /// The suggestions scroll under the top bar and the composer, so they need at least the
+    /// room both take; a larger inset the view sets for itself is left alone.
+    private func updateSuggestionsInsets() {
+        guard inputBar.bounds.height > 0 else { return }
+        let capsuleTop = inputBar.convert(inputBar.composerGuide.layoutFrame, to: view).minY
+        let covered = view.bounds.height - capsuleTop
+        let bottom = max(covered - view.safeAreaInsets.bottom, 0)
+        var inset = suggestionsView.contentInset
+        let top = max(inset.top, Self.suggestionsTopClearance)
+        let wanted = max(inset.bottom, bottom)
+        chatView.composerClearance = bottom + Theme.Space.lg
+        guard abs(inset.top - top) > 0.5 || abs(inset.bottom - wanted) > 0.5 else { return }
+        inset.top = top
+        inset.bottom = wanted
+        suggestionsView.contentInset = inset
+    }
+
+    private func setupTopBar() {
+        topBar.onNewChat = { [weak self] in self?.newChatTapped() }
+        topBar.onCredits = { [weak self] in
+            guard let self else { return }
+            self.haptics.impact(.click)
+            CreditStoreViewController.present(from: self)
+        }
+        topBar.onGallery = { [weak self] in self?.galleryTapped() }
+        topBar.onSettings = { [weak self] in self?.settingsTapped() }
+        topBar.setShowsAdminBadge(AuthenticationManager.shared.currentUser?.isAdmin ?? false)
         updateBalanceChip(creditsViewModel.balance?.balance)
     }
 
-    private func makeNewChatBarButton() -> UIBarButtonItem {
-        var config = UIButton.Configuration.plain()
-        config.image = UIImage(systemName: "sparkles")
-        config.title = String(localized: " New").trimmingCharacters(in: .whitespaces)
-        config.imagePadding = 4
-        config.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 8, bottom: 12, trailing: 8)
-        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { attributes in
-            var attributes = attributes
-            attributes.font = ChatGenerationViewController.newChatFont
-            return attributes
-        }
-        let button = UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
-            self?.newChatTapped()
-        })
-        button.accessibilityLabel = String(localized: "New Chat")
-        return UIBarButtonItem(customView: button)
-    }
-
-    private func makeGalleryBarButton() -> UIBarButtonItem {
-        let item = UIBarButtonItem(image: UIImage(systemName: "photo.on.rectangle"), style: .plain, target: self, action: #selector(galleryTapped))
-        item.accessibilityLabel = String(localized: "Gallery")
-        return item
-    }
-
-    private func makeSettingsBarButton() -> UIBarButtonItem {
-        let isAdmin = AuthenticationManager.shared.currentUser?.isAdmin ?? false
-        let item = isAdmin
-            ? UIBarButtonItem(customView: makeAdminSettingsButton())
-            : UIBarButtonItem(image: UIImage(systemName: "gearshape"), style: .plain, target: self, action: #selector(settingsTapped))
-        item.accessibilityLabel = String(localized: "Settings")
-        return item
-    }
-
-    /// The settings button for an admin carries an orange dot; the word "Admin" is its value
-    /// so the dot is not the only sign.
-    private func makeAdminSettingsButton() -> UIButton {
-        var config = UIButton.Configuration.plain()
-        config.image = UIImage(systemName: "gearshape")
-        config.baseForegroundColor = view.tintColor
-        let button = UIButton(configuration: config, primaryAction: UIAction { [weak self] _ in
-            self?.settingsTapped()
-        })
-        button.accessibilityLabel = String(localized: "Settings")
-        button.accessibilityValue = String(localized: "Admin")
-        let badge = UIView()
-        badge.backgroundColor = .systemOrange
-        badge.layer.cornerRadius = 6
-        badge.isUserInteractionEnabled = false
-        badge.translatesAutoresizingMaskIntoConstraints = false
-        button.addSubview(badge)
-        NSLayoutConstraint.activate([
-            button.widthAnchor.constraint(equalToConstant: ChatGenerationViewController.minimumBarButtonSize),
-            button.heightAnchor.constraint(equalToConstant: ChatGenerationViewController.minimumBarButtonSize),
-            badge.topAnchor.constraint(equalTo: button.centerYAnchor, constant: -14),
-            badge.trailingAnchor.constraint(equalTo: button.centerXAnchor, constant: 14),
-            badge.widthAnchor.constraint(equalToConstant: 12),
-            badge.heightAnchor.constraint(equalToConstant: 12)
-        ])
-        return button
+    private func updateTopBarLeading(animated: Bool) {
+        topBar.setLeadingStyle(currentState == .chat ? .newChat : .wordmark, animated: animated)
     }
 
     private func updateBalanceChip(_ balance: Int?) {
         #if DEBUG
         if DemoMode.isActive {
-            balanceChipButton.configuration?.title = NumberFormatter.localizedString(from: NSNumber(value: DemoContent.balance), number: .decimal)
+            topBar.setCredits(text: NumberFormatter.localizedString(from: NSNumber(value: DemoContent.balance), number: .decimal), isLow: false, value: nil)
             return
         }
         #endif
         inputBar.setAvailableBalance(balance)
         guard let balance else {
-            balanceChipButton.configuration?.title = nil
-            balanceChipButton.accessibilityValue = nil
+            topBar.setCredits(text: "", isLow: false, value: nil)
             return
         }
         let imageCost = estimatedCreditCost()
@@ -376,12 +349,9 @@ class ChatGenerationViewController: UIViewController {
             ? WelcomeCredits.freeImages(balance: balance, imageCost: imageCost) : nil
         let title = freeImages.map { String(localized: "\($0) free") }
             ?? NumberFormatter.localizedString(from: NSNumber(value: balance), number: .decimal)
-        balanceChipButton.configuration?.title = title
         let spoken = freeImages.map { String(localized: "\($0) free images left") }
             ?? String(localized: "\(balance) credits")
-        balanceChipButton.accessibilityValue = isLow ? "\(spoken), \(String(localized: "Not enough credits"))" : spoken
-        balanceChipButton.configuration?.image = UIImage(systemName: isLow ? "exclamationmark.circle.fill" : "sparkles")
-        balanceChipButton.configuration?.baseForegroundColor = isLow ? .systemOrange : .brandText
+        topBar.setCredits(text: title, isLow: isLow, value: isLow ? "\(spoken), \(String(localized: "Not enough credits"))" : spoken)
     }
 
     private func refreshBalanceChip() {
@@ -401,7 +371,19 @@ class ChatGenerationViewController: UIViewController {
         inputBar.onSend = { [weak self] prompt in
             self?.handleSendPrompt(prompt)
         }
-        inputBar.onExpandedChanged = { isExpanded in
+        inputBar.onAddPhoto = { [weak self] in
+            self?.pendingPreset = nil
+            self?.presentPhotoPicker()
+        }
+        inputBar.onStop = { [weak self] in
+            self?.cancelGeneration()
+        }
+        inputBar.onGetCredits = { [weak self] in
+            guard let self else { return }
+            _ = self.hasCredits(for: self.estimatedCreditCost())
+        }
+        inputBar.onLayoutChanged = { [weak self] in
+            self?.updateSuggestionsInsets()
         }
         chatView.onStarterPromptSelected = { [weak self] prompt in
             guard let self else { return }
@@ -417,6 +399,9 @@ class ChatGenerationViewController: UIViewController {
         }
         suggestionsView.onPresetSelected = { [weak self] preset in
             self?.presetTapped(preset)
+        }
+        suggestionsView.onPhotoRemoved = { [weak self] in
+            self?.switchToGenerateMode()
         }
         suggestionsView.onSampleTapped = { [weak self] in
             self?.sampleTapped()
@@ -464,8 +449,7 @@ class ChatGenerationViewController: UIViewController {
         viewModel.isGeneratingPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isGenerating in
-                self?.inputBar.isUserInteractionEnabled = !isGenerating
-                self?.updateNavigationForGenerating(isGenerating)
+                self?.inputBar.setGenerating(isGenerating)
                 if isGenerating {
                     Announce.say(String(localized: "Creating your image"))
                 }
@@ -548,6 +532,7 @@ class ChatGenerationViewController: UIViewController {
         }
         currentState = newState
         updateAccessibilityVisibility()
+        updateTopBarLeading(animated: animated)
         if animated {
             toView.alpha = 0
             toView.transform = CGAffineTransform(translationX: 0, y: 20)
@@ -789,23 +774,8 @@ class ChatGenerationViewController: UIViewController {
         let settingsVC = SettingsViewController()
         navigationController?.pushViewController(settingsVC, animated: true)
     }
-    @objc private func cancelGeneration() {
-        haptics.impact(.click)
+    private func cancelGeneration() {
         viewModel.cancelGeneration()
-    }
-    private func updateNavigationForGenerating(_ isGenerating: Bool) {
-        if isGenerating {
-            let cancelButton = UIBarButtonItem(
-                title: String(localized: "Cancel"),
-                style: .plain,
-                target: self,
-                action: #selector(cancelGeneration)
-            )
-            cancelButton.tintColor = .systemRed
-            navigationItem.rightBarButtonItem = cancelButton
-        } else {
-            navigationItem.rightBarButtonItems = [makeSettingsBarButton(), balanceChipItem, makeGalleryBarButton()]
-        }
     }
     /// The system photo picker runs out of process and needs no library permission, so
     /// picking a photo never starts with a permission prompt.
@@ -882,8 +852,11 @@ class ChatGenerationViewController: UIViewController {
     @objc private func handleBackgroundTap(_ gesture: UITapGestureRecognizer) {
         let location = gesture.location(in: view)
         let inputBarFrame = inputBar.convert(inputBar.bounds, to: view)
-        if !inputBarFrame.contains(location) && inputBar.isExpanded {
+        guard !inputBarFrame.contains(location) else { return }
+        if inputBar.isExpanded {
             inputBar.collapse()
+        } else if inputBar.isEditingText {
+            inputBar.resignFirstResponder()
         }
     }
 }
@@ -951,12 +924,15 @@ extension ChatGenerationViewController: ChatTableViewDelegate {
                 switch result {
                 case .success:
                     self?.showBatchSaveSuccess(count: targets.count)
+                    self?.chatView.showActionSucceeded(.save, for: message)
                 case .failure(let error):
                     self?.showBatchSaveError(error)
                 }
             }
         case .share:
-            ImageSharingService.shared.shareImages(targets, from: self, sourceView: sourceView)
+            ImageSharingService.shared.shareImages(targets, from: self, sourceView: sourceView) { [weak self] completed, _ in
+                if completed { self?.chatView.showActionSucceeded(.share, for: message) }
+            }
         case .beforeAfter:
             guard let source = message.sourceImage else { return }
             let composite = BeforeAfterComposer.compose(before: source, after: targets.first ?? first)
@@ -965,19 +941,7 @@ extension ChatGenerationViewController: ChatTableViewDelegate {
     }
     private func showBatchSaveSuccess(count: Int) {
         haptics.impact(.success)
-        guard !UIAccessibility.isVoiceOverRunning else {
-            Announce.say(String(localized: "Saved to Photos"))
-            return
-        }
-        let alert = UIAlertController(
-            title: String(localized: "Saved!"),
-            message: String(localized: "Saved to Photos"),
-            preferredStyle: .alert
-        )
-        present(alert, animated: true)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            alert.dismiss(animated: true)
-        }
+        Announce.say(String(localized: "Saved to Photos"))
     }
     private func showBatchSaveError(_ error: PhotoSavingError) {
         haptics.impact(.error)

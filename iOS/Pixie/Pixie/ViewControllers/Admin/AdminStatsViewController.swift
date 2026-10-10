@@ -2,8 +2,7 @@ import UIKit
 
 class AdminStatsViewController: UIViewController {
     
-    private let scrollView = UIScrollView()
-    private let contentStackView = UIStackView()
+    private let scrollView = SettingsColumnView(spacing: Theme.Space.lg)
     private let refreshControl = UIRefreshControl()
     private let haptics = HapticManager.shared
     
@@ -17,6 +16,8 @@ class AdminStatsViewController: UIViewController {
     
     private let loadingView = UIActivityIndicatorView(style: .large)
     private let errorView = AdminInlineMessageView()
+    
+    private var contentStackView: UIStackView { scrollView.stack }
     
     init() {
         self.adminRepository = AdminRepository(networkService: AppContainer.shared.networkService)
@@ -37,52 +38,44 @@ class AdminStatsViewController: UIViewController {
     
     private func setupUI() {
         title = String(localized: "System Statistics")
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = Theme.Color.canvas
         
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.refreshControl = refreshControl
         refreshControl.addTarget(self, action: #selector(refreshStats), for: .valueChanged)
         
-        contentStackView.translatesAutoresizingMaskIntoConstraints = false
-        contentStackView.axis = .vertical
-        contentStackView.spacing = 16
-        contentStackView.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
-        contentStackView.isLayoutMarginsRelativeArrangement = true
-        
         loadingView.translatesAutoresizingMaskIntoConstraints = false
         loadingView.hidesWhenStopped = true
+        loadingView.color = Theme.Color.accentText
         
         errorView.translatesAutoresizingMaskIntoConstraints = false
         
         userStatsCard.configure(
             title: String(localized: "Users"),
-            icon: UIImage(systemName: "person.2.fill"),
-            color: .systemBlue
+            symbol: "person.2.fill",
+            color: Theme.Color.accent
         )
         
         creditStatsCard.configure(
             title: String(localized: "Credits"),
-            icon: UIImage(systemName: "creditcard.fill"),
-            color: .systemGreen
+            symbol: "creditcard.fill",
+            color: Theme.Color.success
         )
         
         revenueStatsCard.configure(
             title: String(localized: "Revenue"),
-            icon: UIImage(systemName: "dollarsign.circle.fill"),
-            color: .systemOrange
+            symbol: "dollarsign.circle.fill",
+            color: Theme.Color.warning
         )
         
         imageStatsCard.configure(
             title: String(localized: "Images"),
-            icon: UIImage(systemName: "photo.fill"),
-            color: .brandText
+            symbol: "photo.fill",
+            color: Theme.Color.accent
         )
         
-        view.addSubview(scrollView)
+        scrollView.install(in: view, top: Theme.Space.lg)
         view.addSubview(loadingView)
         view.addSubview(errorView)
-        
-        scrollView.addSubview(contentStackView)
         
         contentStackView.addArrangedSubview(userStatsCard)
         contentStackView.addArrangedSubview(creditStatsCard)
@@ -92,17 +85,6 @@ class AdminStatsViewController: UIViewController {
     
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            
-            contentStackView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-            contentStackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-            contentStackView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            contentStackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            contentStackView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
-            
             loadingView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             
@@ -126,8 +108,8 @@ class AdminStatsViewController: UIViewController {
                 }
             } catch {
                 await MainActor.run {
-                    self.showError(error.localizedDescription)
                     self.hideLoading()
+                    self.showError(error.localizedDescription)
                 }
             }
         }
@@ -198,8 +180,10 @@ class AdminStatsViewController: UIViewController {
 class StatsCardView: UIView {
     
     private let titleLabel = UILabel()
-    private let iconImageView = UIImageView()
     private let statsStackView = UIStackView()
+    private var badge: IconBadge?
+    private let card = SurfaceView(style: .card)
+    private let headerStack = UIStackView()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -211,56 +195,34 @@ class StatsCardView: UIView {
     }
     
     private func setupUI() {
-        backgroundColor = .secondarySystemGroupedBackground
-        layer.cornerRadius = 12
-        layer.shadowColor = UIColor.black.cgColor
-        layer.shadowOpacity = 0.1
-        layer.shadowOffset = CGSize(width: 0, height: 2)
-        layer.shadowRadius = 4
-        
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.useScaledFont(.title3, size: 20, weight: .semibold)
-        titleLabel.numberOfLines = 0
+        titleLabel.apply(.title2)
         titleLabel.accessibilityTraits = .header
-        iconImageView.hideFromAccessibility()
         
-        iconImageView.translatesAutoresizingMaskIntoConstraints = false
-        iconImageView.contentMode = .scaleAspectFit
+        headerStack.axis = .horizontal
+        headerStack.alignment = .center
+        headerStack.spacing = Theme.Space.md
+        headerStack.addArrangedSubview(titleLabel)
         
-        statsStackView.translatesAutoresizingMaskIntoConstraints = false
         statsStackView.axis = .vertical
-        statsStackView.spacing = 12
+        statsStackView.spacing = Theme.Space.md
         
-        addSubview(iconImageView)
-        addSubview(titleLabel)
-        addSubview(statsStackView)
+        let content = UIStackView(arrangedSubviews: [headerStack, statsStackView])
+        content.axis = .vertical
+        content.spacing = Theme.Space.lg
+        content.translatesAutoresizingMaskIntoConstraints = false
         
-        let titleCentering = titleLabel.centerYAnchor.constraint(equalTo: iconImageView.centerYAnchor)
-        titleCentering.priority = .defaultHigh
-        
-        NSLayoutConstraint.activate([
-            titleCentering,
-            iconImageView.topAnchor.constraint(equalTo: topAnchor, constant: 16),
-            iconImageView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            iconImageView.widthAnchor.constraint(equalToConstant: 32),
-            iconImageView.heightAnchor.constraint(equalToConstant: 32),
-            
-            titleLabel.topAnchor.constraint(greaterThanOrEqualTo: topAnchor, constant: 16),
-            titleLabel.leadingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: 12),
-            titleLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
-            
-            statsStackView.topAnchor.constraint(greaterThanOrEqualTo: iconImageView.bottomAnchor, constant: 16),
-            statsStackView.topAnchor.constraint(greaterThanOrEqualTo: titleLabel.bottomAnchor, constant: 16),
-            statsStackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            statsStackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
-            statsStackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -16)
-        ])
+        card.contentView.addSubview(content)
+        content.pinEdges(to: card.contentView, insets: UIEdgeInsets(top: Theme.Space.lg, left: Theme.Space.lg, bottom: Theme.Space.lg, right: Theme.Space.lg))
+        addSubview(card)
+        card.pinEdges(to: self)
     }
     
-    func configure(title: String, icon: UIImage?, color: UIColor) {
+    func configure(title: String, symbol: String, color: UIColor) {
         titleLabel.text = title
-        iconImageView.image = icon
-        iconImageView.tintColor = color
+        badge?.removeFromSuperview()
+        let newBadge = IconBadge(symbol: symbol, colors: SettingsTint.solid(color), size: 36)
+        headerStack.insertArrangedSubview(newBadge, at: 0)
+        badge = newBadge
     }
     
     func removeStatItems() {
@@ -272,25 +234,21 @@ class StatsCardView: UIView {
     
     func addStatItem(label: String, value: String, spokenValue: String) {
         let labelView = UILabel()
-        labelView.useScaledFont(.subheadline, size: 15)
-        labelView.textColor = .secondaryLabel
-        labelView.numberOfLines = 0
+        labelView.apply(.subhead)
         labelView.text = label
         labelView.setContentHuggingPriority(.defaultLow, for: .horizontal)
         
         let valueView = UILabel()
-        valueView.useScaledFont(.body, size: 17, weight: .medium)
-        valueView.textColor = .label
+        valueView.apply(.numeral(17))
         valueView.text = value
         valueView.textAlignment = .right
-        valueView.numberOfLines = 0
         valueView.setContentHuggingPriority(.required, for: .horizontal)
         valueView.setContentCompressionResistancePriority(.required, for: .horizontal)
         
         let row = UIStackView(arrangedSubviews: [labelView, valueView])
         row.axis = .horizontal
         row.alignment = .firstBaseline
-        row.spacing = 8
+        row.spacing = Theme.Space.sm
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: 24).isActive = true
         row.describe(label, value: spokenValue)
         

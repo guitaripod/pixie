@@ -176,7 +176,7 @@ final class ChipView: UIControl {
         layer.cornerCurve = .continuous
         label.apply(.subhead, color: Theme.Color.ink)
         label.text = title
-        label.numberOfLines = 1
+        label.numberOfLines = 0
         iconView.contentMode = .scaleAspectFit
         iconView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .subheadline, scale: .medium)
         iconView.setContentHuggingPriority(.required, for: .horizontal)

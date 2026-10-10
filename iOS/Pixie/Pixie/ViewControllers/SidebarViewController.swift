@@ -18,12 +18,40 @@ enum SidebarSection: Int, CaseIterable {
     }
     
     var icon: UIImage? {
+        UIImage(systemName: symbolName)
+    }
+
+    var symbolName: String {
         switch self {
-        case .chat: return UIImage(systemName: "sparkles")
-        case .gallery: return UIImage(systemName: "photo.stack")
-        case .credits: return UIImage(systemName: "dollarsign.circle")
-        case .settings: return UIImage(systemName: "gear")
-        case .admin: return UIImage(systemName: "person.badge.shield.checkmark")
+        case .chat: return "sparkles"
+        case .gallery: return "photo.stack"
+        case .credits: return "dollarsign.circle"
+        case .settings: return "gearshape.fill"
+        case .admin: return "person.badge.shield.checkmark"
+        }
+    }
+}
+
+/// Draws the 28-point gradient tile with a white glyph that stands in front of a sidebar row.
+private enum SidebarBadge {
+    static let size = CGSize(width: 28, height: 28)
+
+    static func image(symbol: String, traits: UITraitCollection) -> UIImage {
+        UIGraphicsImageRenderer(size: size).image { context in
+            let rect = CGRect(origin: .zero, size: size)
+            UIBezierPath(roundedRect: rect, cornerRadius: size.width * 0.3).addClip()
+            let colors = Theme.Color.gradient.map { $0.resolvedColor(with: traits).cgColor } as CFArray
+            if let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: colors, locations: nil) {
+                context.cgContext.drawLinearGradient(gradient, start: .zero, end: CGPoint(x: size.width, y: size.height), options: [])
+            }
+            let configuration = UIImage.SymbolConfiguration(pointSize: 13, weight: .semibold)
+            guard let glyph = UIImage(systemName: symbol, withConfiguration: configuration)?.withTintColor(.white, renderingMode: .alwaysOriginal) else { return }
+            glyph.draw(in: CGRect(
+                x: (size.width - glyph.size.width) / 2,
+                y: (size.height - glyph.size.height) / 2,
+                width: glyph.size.width,
+                height: glyph.size.height
+            ))
         }
     }
 }
@@ -63,14 +91,15 @@ class SidebarViewController: UIViewController {
     
     private func setupCollectionView() {
         var configuration = UICollectionLayoutListConfiguration(appearance: .sidebar)
-        configuration.backgroundColor = .systemGroupedBackground
+        configuration.backgroundColor = Theme.Color.canvas
+        configuration.showsSeparators = false
         configuration.headerMode = .none
         
         let layout = UICollectionViewCompositionalLayout.list(using: configuration)
         
         collectionView = UICollectionView(frame: view.bounds, collectionViewLayout: layout)
         collectionView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        collectionView.backgroundColor = .systemGroupedBackground
+        collectionView.backgroundColor = Theme.Color.canvas
         collectionView.delegate = self
         
         view.addSubview(collectionView)
@@ -78,17 +107,25 @@ class SidebarViewController: UIViewController {
     
     private func configureDataSource() {
         let cellRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, SidebarSection> { cell, indexPath, section in
-            
-            var configuration = UIListContentConfiguration.sidebarCell()
-            configuration.text = section.title
-            configuration.image = section.icon
-            configuration.imageProperties.tintColor = .brandText
-            
-            cell.contentConfiguration = configuration
-            cell.backgroundConfiguration = UIBackgroundConfiguration.listSidebarCell()
             cell.isAccessibilityElement = true
             cell.accessibilityLabel = section.title
             cell.configurationUpdateHandler = { cell, state in
+                var content = UIListContentConfiguration.sidebarCell()
+                content.text = section.title
+                content.textProperties.font = Theme.TextStyle.headline.font
+                content.textProperties.color = state.isSelected ? Theme.Color.accentText : Theme.Color.ink
+                content.image = SidebarBadge.image(symbol: section.symbolName, traits: state.traitCollection)
+                content.imageProperties.reservedLayoutSize = SidebarBadge.size
+                content.imageProperties.maximumSize = SidebarBadge.size
+                content.imageToTextPadding = Theme.Space.md
+                cell.contentConfiguration = content
+
+                var background = UIBackgroundConfiguration.clear()
+                background.backgroundColor = state.isSelected ? Theme.Color.accentSoft : .clear
+                background.cornerRadius = Theme.Radius.md
+                background.backgroundInsets = NSDirectionalEdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0)
+                cell.backgroundConfiguration = background
+
                 cell.accessibilityTraits = state.isSelected ? [.button, .selected] : .button
             }
         }

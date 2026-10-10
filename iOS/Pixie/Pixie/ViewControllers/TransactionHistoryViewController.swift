@@ -5,9 +5,10 @@ class TransactionHistoryViewController: UIViewController {
     private let viewModel: CreditsViewModel
     private var cancellables = Set<AnyCancellable>()
 
-    private let tableView = UITableView(frame: .zero, style: .insetGrouped)
-    private let loadingView = UIActivityIndicatorView(style: .large)
-    private let stateView = HistoryStateView()
+    private let tableView = UITableView(frame: .zero, style: .plain)
+    private let skeletonHost = UIView()
+    private let stateContainer = HistoryStateContainer()
+    private let pagingFooter = PagingFooterView()
     private let refreshControl = UIRefreshControl()
 
     private var groupedTransactions: [(date: String, transactions: [CreditTransaction])] = []
@@ -15,6 +16,7 @@ class TransactionHistoryViewController: UIViewController {
     private var hasFinishedLoading = false
     private var isShowingRefreshError = false
     private var lastAnnouncedState: ListState?
+    private var previousPrefersLargeTitles: Bool?
 
     private static let pageSize = 50
 
@@ -42,22 +44,44 @@ class TransactionHistoryViewController: UIViewController {
         load()
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        guard let bar = navigationController?.navigationBar else { return }
+        previousPrefersLargeTitles = bar.prefersLargeTitles
+        bar.prefersLargeTitles = true
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if let previous = previousPrefersLargeTitles {
+            navigationController?.navigationBar.prefersLargeTitles = previous
+        }
+    }
+
     private func setupUI() {
         title = String(localized: "Transaction History")
-        view.backgroundColor = .systemGroupedBackground
-        navigationItem.largeTitleDisplayMode = .never
+        view.backgroundColor = Theme.Color.canvas
+        navigationItem.largeTitleDisplayMode = .always
 
         setupTableView()
-        setupLoadingView()
+        setupSkeleton()
         setupStateView()
+        setContentScrollView(tableView)
     }
 
     private func setupTableView() {
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.backgroundColor = Theme.Color.canvas
+        tableView.separatorStyle = .none
+        tableView.sectionHeaderTopPadding = 0
         tableView.register(TransactionCell.self, forCellReuseIdentifier: "TransactionCell")
+        tableView.register(DayHeaderView.self, forHeaderFooterViewReuseIdentifier: DayHeaderView.reuseIdentifier)
         tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = 72
+        tableView.estimatedRowHeight = 68
+        tableView.sectionHeaderHeight = UITableView.automaticDimension
+        tableView.estimatedSectionHeaderHeight = 44
+        tableView.tableFooterView = pagingFooter
         tableView.translatesAutoresizingMaskIntoConstraints = false
 
         refreshControl.addAction(UIAction { [weak self] _ in self?.load() }, for: .valueChanged)
@@ -66,40 +90,57 @@ class TransactionHistoryViewController: UIViewController {
         view.addSubview(tableView)
 
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
 
-    private func setupLoadingView() {
-        loadingView.translatesAutoresizingMaskIntoConstraints = false
-        loadingView.hidesWhenStopped = true
-        loadingView.accessibilityLabel = String(localized: "Loading…")
-        view.addSubview(loadingView)
-
+    private func setupSkeleton() {
+        skeletonHost.translatesAutoresizingMaskIntoConstraints = false
+        skeletonHost.describe(String(localized: "Loading…"), traits: .staticText)
+        view.addSubview(skeletonHost)
         NSLayoutConstraint.activate([
-            loadingView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            loadingView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+            skeletonHost.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            skeletonHost.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            skeletonHost.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            skeletonHost.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
+
+        let column = ColumnContainer(in: skeletonHost, top: Theme.Space.xxl, bottom: 0)
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 0
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        for index in 0..<7 {
+            if index > 0 { stack.addArrangedSubview(RowDivider()) }
+            stack.addArrangedSubview(SkeletonRowView())
+        }
+        let card = SurfaceView(style: .card, cornerRadius: Theme.Radius.lg)
+        card.contentView.addSubview(stack)
+        stack.pinEdges(to: card.contentView)
+        column.addSubview(card)
+        card.topAnchor.constraint(equalTo: column.topAnchor).isActive = true
+        card.leadingAnchor.constraint(equalTo: column.leadingAnchor).isActive = true
+        card.trailingAnchor.constraint(equalTo: column.trailingAnchor).isActive = true
     }
 
     private func setupStateView() {
-        stateView.translatesAutoresizingMaskIntoConstraints = false
-        stateView.isHidden = true
-        stateView.onRetry = { [weak self] in
+        stateContainer.translatesAutoresizingMaskIntoConstraints = false
+        stateContainer.isHidden = true
+        stateContainer.onRetry = { [weak self] in
             HapticsManager.shared.selection()
             self?.load()
         }
 
-        view.addSubview(stateView)
+        view.addSubview(stateContainer)
 
         NSLayoutConstraint.activate([
-            stateView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            stateView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            stateView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            stateView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            stateContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            stateContainer.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            stateContainer.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            stateContainer.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
 
@@ -130,18 +171,15 @@ class TransactionHistoryViewController: UIViewController {
     private func render() {
         let state = currentState
         updateRows()
+        updatePagingFooter()
 
         tableView.isHidden = state != .content
-        stateView.isHidden = state != .empty && state != .failed
-        if state == .loading {
-            loadingView.startAnimating()
-        } else {
-            loadingView.stopAnimating()
-        }
+        stateContainer.isHidden = state != .empty && state != .failed
+        skeletonHost.isHidden = state != .loading
 
         switch state {
-        case .empty: stateView.show(.empty)
-        case .failed: stateView.show(.failed)
+        case .empty: stateContainer.show(.empty)
+        case .failed: stateContainer.show(.failed)
         case .loading, .content: break
         }
 
@@ -156,6 +194,13 @@ class TransactionHistoryViewController: UIViewController {
         shownTransactionIds = ids
         groupedTransactions = TransactionDates.group(transactions)
         tableView.reloadData()
+    }
+
+    private func updatePagingFooter() {
+        let isPaging = viewModel.hasMoreTransactions || viewModel.isLoadingMoreTransactions
+        guard pagingFooter.isPaging != isPaging else { return }
+        pagingFooter.isPaging = isPaging
+        tableView.tableFooterView = pagingFooter
     }
 
     /// Keeps the rows on screen when a pull to refresh fails and says so in the navigation bar.
@@ -176,9 +221,9 @@ class TransactionHistoryViewController: UIViewController {
         switch state {
         case .failed:
             HapticsManager.shared.notification(.error)
-            Announce.layoutChanged(stateView)
+            Announce.layoutChanged(stateContainer)
         case .empty:
-            Announce.layoutChanged(stateView)
+            Announce.layoutChanged(stateContainer)
         case .loading, .content:
             break
         }
@@ -196,18 +241,25 @@ extension TransactionHistoryViewController: UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "TransactionCell", for: indexPath) as! TransactionCell
-        let transaction = groupedTransactions[indexPath.section].transactions[indexPath.row]
-        cell.configure(with: transaction, time: TransactionDates.timeText(for: transaction.createdAt))
+        let rows = groupedTransactions[indexPath.section].transactions
+        let transaction = rows[indexPath.row]
+        cell.configure(
+            with: transaction,
+            time: TransactionDates.timeText(for: transaction.createdAt),
+            isFirst: indexPath.row == 0,
+            isLast: indexPath.row == rows.count - 1
+        )
         return cell
     }
-
-    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        return groupedTransactions[section].date
-    }
-
 }
 
 extension TransactionHistoryViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: DayHeaderView.reuseIdentifier) as? DayHeaderView
+        header?.configure(title: groupedTransactions[section].date)
+        return header
+    }
+
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         let isLastSection = indexPath.section == groupedTransactions.count - 1
         let isLastRow = indexPath.row == groupedTransactions[indexPath.section].transactions.count - 1
@@ -216,7 +268,7 @@ extension TransactionHistoryViewController: UITableViewDelegate {
     }
 }
 
-private enum TransactionDates {
+enum TransactionDates {
     private static let isoWithFraction: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -252,6 +304,14 @@ private enum TransactionDates {
         return formatter
     }()
 
+    private static let stampFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        formatter.doesRelativeDateFormatting = true
+        return formatter
+    }()
+
     static func parse(_ dateString: String) -> Date? {
         if let date = isoWithFraction.date(from: dateString) ?? isoPlain.date(from: dateString) {
             return date
@@ -266,6 +326,12 @@ private enum TransactionDates {
         if let date = parse(dateString) { return timeFormatter.string(from: date) }
         if let tIndex = dateString.firstIndex(of: "T") { return String(dateString[..<tIndex]) }
         return dateString
+    }
+
+    /// "Today at 3:41 PM" style stamp for compact lists that have no day header.
+    static func stamp(for dateString: String) -> String {
+        guard let date = parse(dateString) else { return timeText(for: dateString) }
+        return stampFormatter.string(from: date)
     }
 
     /// Today, Yesterday, the weekday inside the last week, otherwise the calendar date.
@@ -299,7 +365,100 @@ private enum TransactionDates {
     }
 }
 
-private final class HistoryStateView: UIView {
+private final class DayHeaderView: UITableViewHeaderFooterView {
+    static let reuseIdentifier = "DayHeaderView"
+
+    private let label = UILabel()
+
+    override init(reuseIdentifier: String?) {
+        super.init(reuseIdentifier: reuseIdentifier)
+        contentView.backgroundColor = Theme.Color.canvas
+        backgroundView = UIView()
+        backgroundView?.backgroundColor = Theme.Color.canvas
+        let column = ColumnContainer(in: contentView, top: Theme.Space.lg, bottom: Theme.Space.sm)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.accessibilityTraits = .header
+        column.addSubview(label)
+        label.pinEdges(to: column, insets: UIEdgeInsets(top: 0, left: Theme.Space.xs, bottom: 0, right: 0))
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError() }
+
+    func configure(title: String) {
+        label.setStyledText(title, .caption)
+    }
+}
+
+private final class PagingFooterView: UIView {
+    private let spinner = UIActivityIndicatorView(style: .medium)
+
+    var isPaging = false {
+        didSet {
+            frame.size.height = isPaging ? 72 : Theme.Space.xxxl
+            if isPaging { spinner.startAnimating() } else { spinner.stopAnimating() }
+        }
+    }
+
+    override init(frame: CGRect) {
+        super.init(frame: CGRect(x: 0, y: 0, width: 1, height: Theme.Space.xxxl))
+        spinner.color = Theme.Color.accentText
+        spinner.hidesWhenStopped = true
+        spinner.translatesAutoresizingMaskIntoConstraints = false
+        spinner.isAccessibilityElement = true
+        spinner.accessibilityLabel = String(localized: "Loading…")
+        addSubview(spinner)
+        NSLayoutConstraint.activate([
+            spinner.centerXAnchor.constraint(equalTo: centerXAnchor),
+            spinner.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
+        autoresizingMask = [.flexibleWidth]
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError() }
+}
+
+private final class SkeletonRowView: UIView {
+    init() {
+        super.init(frame: .zero)
+        translatesAutoresizingMaskIntoConstraints = false
+        let badge = ShimmerView()
+        badge.layer.cornerRadius = 12
+        let title = ShimmerView()
+        title.layer.cornerRadius = 6
+        let subtitle = ShimmerView()
+        subtitle.layer.cornerRadius = 5
+        let amount = ShimmerView()
+        amount.layer.cornerRadius = 6
+        for bar in [badge, title, subtitle, amount] { bar.translatesAutoresizingMaskIntoConstraints = false; addSubview(bar) }
+        NSLayoutConstraint.activate([
+            heightAnchor.constraint(equalToConstant: 68),
+            badge.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Theme.Space.lg),
+            badge.centerYAnchor.constraint(equalTo: centerYAnchor),
+            badge.widthAnchor.constraint(equalToConstant: 40),
+            badge.heightAnchor.constraint(equalToConstant: 40),
+            title.leadingAnchor.constraint(equalTo: badge.trailingAnchor, constant: Theme.Space.md),
+            title.bottomAnchor.constraint(equalTo: centerYAnchor, constant: -3),
+            title.widthAnchor.constraint(equalToConstant: 150),
+            title.heightAnchor.constraint(equalToConstant: 14),
+            subtitle.leadingAnchor.constraint(equalTo: title.leadingAnchor),
+            subtitle.topAnchor.constraint(equalTo: centerYAnchor, constant: 5),
+            subtitle.widthAnchor.constraint(equalToConstant: 90),
+            subtitle.heightAnchor.constraint(equalToConstant: 10),
+            amount.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Theme.Space.lg),
+            amount.centerYAnchor.constraint(equalTo: centerYAnchor),
+            amount.widthAnchor.constraint(equalToConstant: 48),
+            amount.heightAnchor.constraint(equalToConstant: 16),
+        ])
+        hideFromAccessibility()
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError() }
+}
+
+private final class HistoryStateContainer: UIView {
     enum Kind {
         case empty
         case failed
@@ -308,204 +467,103 @@ private final class HistoryStateView: UIView {
     var onRetry: (() -> Void)?
 
     private let scrollView = UIScrollView()
-    private let stack = UIStackView()
-    private let iconView = UIImageView()
-    private let titleLabel = UILabel()
-    private let messageLabel = UILabel()
-    private let retryButton = UIButton(type: .system)
+    private var stateView: StateView?
+    private var shownKind: Kind?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        build()
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    private func build() {
-        iconView.contentMode = .scaleAspectFit
-        iconView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .largeTitle, scale: .large)
-        iconView.hideFromAccessibility()
-
-        titleLabel.useScaledFont(.title3, size: 20, weight: .semibold)
-        titleLabel.textAlignment = .center
-        titleLabel.numberOfLines = 0
-        titleLabel.accessibilityTraits = .header
-
-        messageLabel.useScaledFont(.subheadline, size: 15)
-        messageLabel.textColor = .secondaryLabel
-        messageLabel.textAlignment = .center
-        messageLabel.numberOfLines = 0
-
-        var config = UIButton.Configuration.filled()
-        config.title = String(localized: "Retry")
-        config.baseBackgroundColor = .brand
-        config.baseForegroundColor = .white
-        config.cornerStyle = .capsule
-        config.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 28, bottom: 10, trailing: 28)
-        retryButton.configuration = config
-        retryButton.addAction(UIAction { [weak self] _ in self?.onRetry?() }, for: .touchUpInside)
-        retryButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
-
-        stack.axis = .vertical
-        stack.alignment = .center
-        stack.spacing = 12
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        [iconView, titleLabel, messageLabel, retryButton].forEach { stack.addArrangedSubview($0) }
-        stack.setCustomSpacing(20, after: messageLabel)
-
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.alwaysBounceVertical = true
         addSubview(scrollView)
-        scrollView.addSubview(stack)
+        scrollView.pinEdges(to: self)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError() }
+
+    func show(_ kind: Kind) {
+        guard kind != shownKind else { return }
+        shownKind = kind
+        stateView?.removeFromSuperview()
+
+        let view: StateView
+        switch kind {
+        case .empty:
+            view = StateView(
+                symbol: "clock.arrow.circlepath",
+                title: String(localized: "No activity yet"),
+                message: String(localized: "Credits you spend, buy or receive will show up here.")
+            )
+        case .failed:
+            view = StateView(
+                symbol: "exclamationmark.triangle.fill",
+                title: String(localized: "Couldn't load your activity"),
+                actionTitle: String(localized: "Retry"),
+                colors: [UIColor(hex: 0xFF9F43), UIColor(hex: 0xFF6F61)]
+            ) { [weak self] in
+                self?.onRetry?()
+            }
+        }
+        stateView = view
+        scrollView.addSubview(view)
 
         let fillHeight = scrollView.contentLayoutGuide.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor)
         fillHeight.priority = .defaultLow
-
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: topAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
-
             scrollView.contentLayoutGuide.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
             fillHeight,
-            stack.topAnchor.constraint(greaterThanOrEqualTo: scrollView.contentLayoutGuide.topAnchor, constant: 24),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -24),
-            stack.centerYAnchor.constraint(equalTo: scrollView.contentLayoutGuide.centerYAnchor),
-            stack.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor, constant: 32),
-            stack.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor, constant: -32)
+            view.topAnchor.constraint(greaterThanOrEqualTo: scrollView.contentLayoutGuide.topAnchor, constant: Theme.Space.xxl),
+            view.bottomAnchor.constraint(lessThanOrEqualTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -Theme.Space.xxl),
+            view.centerYAnchor.constraint(equalTo: scrollView.contentLayoutGuide.centerYAnchor),
+            view.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor, constant: Theme.Space.xxxl),
+            view.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor, constant: -Theme.Space.xxxl),
         ])
-    }
-
-    func show(_ kind: Kind) {
-        switch kind {
-        case .empty:
-            iconView.image = UIImage(systemName: "clock.arrow.circlepath")
-            iconView.tintColor = .brandText
-            titleLabel.text = String(localized: "No activity yet")
-            messageLabel.text = String(localized: "Credits you spend, buy or receive will show up here.")
-            retryButton.isHidden = true
-        case .failed:
-            iconView.image = UIImage(systemName: "exclamationmark.triangle.fill")
-            iconView.tintColor = .systemOrange
-            titleLabel.text = String(localized: "Couldn't load your activity")
-            messageLabel.text = nil
-            retryButton.isHidden = false
-        }
-        messageLabel.isHidden = messageLabel.text == nil
     }
 }
 
 class TransactionCell: UITableViewCell {
-    private let iconContainer = UIView()
-    private let iconImageView = UIImageView()
-    private let descriptionLabel = UILabel()
-    private let timeLabel = UILabel()
-    private let amountLabel = UILabel()
-    private let textStack = UIStackView()
-    private let rowStack = UIStackView()
+    private var slice: ColumnContainer!
+    private var row: ListRowView?
+    private let divider = RowDivider()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setupUI()
+        selectionStyle = .none
+        backgroundColor = .clear
+        contentView.backgroundColor = .clear
+        slice = ColumnContainer(in: contentView)
+        slice.backgroundColor = Theme.Color.surface
+        slice.layer.cornerRadius = Theme.Radius.lg
+        slice.layer.cornerCurve = .continuous
+        slice.clipsToBounds = true
+        divider.translatesAutoresizingMaskIntoConstraints = false
+        slice.addSubview(divider)
+        NSLayoutConstraint.activate([
+            divider.leadingAnchor.constraint(equalTo: slice.leadingAnchor),
+            divider.trailingAnchor.constraint(equalTo: slice.trailingAnchor),
+            divider.bottomAnchor.constraint(equalTo: slice.bottomAnchor),
+        ])
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        applyContentSizeLayout()
-    }
+    func configure(with transaction: CreditTransaction, time: String, isFirst: Bool = true, isLast: Bool = true) {
+        row?.removeFromSuperview()
+        let newRow = transaction.makeListRow(stamp: time)
+        slice.insertSubview(newRow, at: 0)
+        newRow.pinEdges(to: slice)
+        row = newRow
 
-    private func setupUI() {
-        selectionStyle = .none
-        backgroundColor = .secondarySystemGroupedBackground
-
-        iconContainer.layer.cornerRadius = 20
-        iconContainer.translatesAutoresizingMaskIntoConstraints = false
-        iconContainer.setContentHuggingPriority(.required, for: .horizontal)
-        iconContainer.setContentCompressionResistancePriority(.required, for: .horizontal)
-
-        iconImageView.contentMode = .scaleAspectFit
-        iconImageView.translatesAutoresizingMaskIntoConstraints = false
-
-        descriptionLabel.useScaledFont(.callout, size: 16, weight: .medium)
-        descriptionLabel.numberOfLines = 0
-
-        timeLabel.useScaledFont(.footnote, size: 13)
-        timeLabel.textColor = .secondaryLabel
-        timeLabel.numberOfLines = 0
-
-        amountLabel.useScaledFont(.body, size: 17, weight: .semibold)
-        amountLabel.textAlignment = .right
-        amountLabel.setContentHuggingPriority(.required, for: .horizontal)
-        amountLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
-
-        textStack.axis = .vertical
-        textStack.spacing = 2
-        textStack.addArrangedSubview(descriptionLabel)
-        textStack.addArrangedSubview(timeLabel)
-
-        rowStack.axis = .horizontal
-        rowStack.alignment = .center
-        rowStack.spacing = 12
-        rowStack.translatesAutoresizingMaskIntoConstraints = false
-        rowStack.addArrangedSubview(iconContainer)
-        rowStack.addArrangedSubview(textStack)
-        rowStack.addArrangedSubview(amountLabel)
-
-        iconContainer.addSubview(iconImageView)
-        contentView.addSubview(rowStack)
-
-        NSLayoutConstraint.activate([
-            iconContainer.widthAnchor.constraint(equalToConstant: 40),
-            iconContainer.heightAnchor.constraint(equalToConstant: 40),
-
-            iconImageView.centerXAnchor.constraint(equalTo: iconContainer.centerXAnchor),
-            iconImageView.centerYAnchor.constraint(equalTo: iconContainer.centerYAnchor),
-            iconImageView.widthAnchor.constraint(equalToConstant: 22),
-            iconImageView.heightAnchor.constraint(equalToConstant: 22),
-
-            rowStack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 14),
-            rowStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -14),
-            rowStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            rowStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
-        ])
-    }
-
-    /// Stacks icon, text and amount vertically at accessibility text sizes so long descriptions keep their full width.
-    private func applyContentSizeLayout() {
-        let isAccessibilitySize = traitCollection.preferredContentSizeCategory.isAccessibilityCategory
-        let axis: NSLayoutConstraint.Axis = isAccessibilitySize ? .vertical : .horizontal
-        guard rowStack.axis != axis else { return }
-        rowStack.axis = axis
-        rowStack.alignment = isAccessibilitySize ? .leading : .center
-        amountLabel.textAlignment = isAccessibilitySize ? .left : .right
-    }
-
-    func configure(with transaction: CreditTransaction, time: String) {
-        descriptionLabel.text = transaction.description
-        timeLabel.text = time
-        timeLabel.isHidden = time.isEmpty
-
-        amountLabel.text = transaction.signedAmountText
-        amountLabel.textColor = transaction.isDebit ? .label : .brandText
-
-        iconImageView.image = UIImage(systemName: transaction.symbolName)
-        if transaction.isDebit {
-            iconContainer.backgroundColor = .systemRed.withAlphaComponent(0.15)
-            iconImageView.tintColor = .systemRed
-        } else {
-            iconContainer.backgroundColor = .brandTint
-            iconImageView.tintColor = .brandText
-        }
+        var corners: CACornerMask = []
+        if isFirst { corners.formUnion([.layerMinXMinYCorner, .layerMaxXMinYCorner]) }
+        if isLast { corners.formUnion([.layerMinXMaxYCorner, .layerMaxXMaxYCorner]) }
+        slice.layer.maskedCorners = corners
+        divider.isHidden = isLast
 
         isAccessibilityElement = true
-        accessibilityLabel = "\(transaction.kindName), \(transaction.description)"
-        accessibilityValue = [transaction.spokenAmount, time].filter { !$0.isEmpty }.joined(separator: ", ")
+        accessibilityLabel = newRow.accessibilityLabel
+        accessibilityValue = newRow.accessibilityValue
     }
 }

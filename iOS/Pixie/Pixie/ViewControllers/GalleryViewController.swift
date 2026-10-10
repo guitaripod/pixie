@@ -20,31 +20,23 @@ final class GalleryViewController: UIViewController {
     private var hasImages = false
     private var isBusy = false
     private var isSelecting = false
+    private var isHeaderTitleHidden = true
+
+    private let selectionBar = GallerySelectionBar()
+    private let navTitleLabel = UILabel()
 
     private static let undoWindow: TimeInterval = 5
     private static let batchConfirmationThreshold = 5
 
-    private lazy var selectButton = UIBarButtonItem(title: String(localized: "Select"), primaryAction: UIAction { [weak self] _ in
-        guard let self else { return }
-        self.setSelecting(!self.isSelecting)
-    })
-
-    private lazy var saveItem = UIBarButtonItem(title: String(localized: "Save"), primaryAction: UIAction { [weak self] _ in
-        guard let self else { return }
-        self.saveImages(self.galleryPageVC.selectedImages)
-    })
-
-    private lazy var shareItem = UIBarButtonItem(title: String(localized: "Share"), primaryAction: UIAction { [weak self] _ in
-        guard let self else { return }
-        self.shareImages(self.galleryPageVC.selectedImages)
-    })
-
-    private lazy var deleteItem: UIBarButtonItem = {
-        let item = UIBarButtonItem(title: String(localized: "Delete"), primaryAction: UIAction { [weak self] _ in
+    private lazy var selectButton: UIBarButtonItem = {
+        let item = UIBarButtonItem(title: String(localized: "Select"), primaryAction: UIAction { [weak self] _ in
             guard let self else { return }
-            self.deleteSelectedImages()
+            self.setSelecting(!self.isSelecting)
         })
-        item.tintColor = .systemRed
+        if #available(iOS 26.0, *) {
+            item.hidesSharedBackground = true
+        }
+        item.tintColor = Theme.Color.accentText
         return item
     }()
 
@@ -52,7 +44,7 @@ final class GalleryViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupNavigationBar()
-        setupToolbar()
+        setupSelectionBar()
 
         NotificationCenter.default.addObserver(
             self,
@@ -66,11 +58,21 @@ final class GalleryViewController: UIViewController {
         NotificationCenter.default.removeObserver(self)
     }
 
+    /// The navigation bar resets its title view to fully opaque whenever it puts it in place,
+    /// so the intended opacity is applied again after each layout.
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        navTitleLabel.alpha = navTitleTargetAlpha
+    }
+
+    private var navTitleTargetAlpha: CGFloat {
+        isSelecting || !isHeaderTitleHidden ? 1 : 0
+    }
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         commitPendingDeletion()
         setSelecting(false)
-        navigationController?.setToolbarHidden(true, animated: animated)
     }
 
     @objc private func appDidEnterBackground() {
@@ -78,59 +80,106 @@ final class GalleryViewController: UIViewController {
     }
 
     private func setupUI() {
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = Theme.Color.canvas
 
         addChild(galleryPageVC)
         view.addSubview(galleryPageVC.view)
         galleryPageVC.view.translatesAutoresizingMaskIntoConstraints = false
         galleryPageVC.didMove(toParent: self)
         galleryPageVC.delegate = self
-
-        NSLayoutConstraint.activate([
-            galleryPageVC.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            galleryPageVC.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            galleryPageVC.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            galleryPageVC.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
+        galleryPageVC.view.pinEdges(to: view)
     }
 
     private func setupNavigationBar() {
         navigationController?.navigationBar.isHidden = false
         navigationItem.largeTitleDisplayMode = .never
-        title = String(localized: "My Images")
+        navigationItem.title = String(localized: "Gallery")
+
+        navTitleLabel.apply(.headline)
+        navTitleLabel.numberOfLines = 1
+        navTitleLabel.accessibilityTraits = .header
+        navTitleLabel.text = String(localized: "Gallery")
+        navTitleLabel.alpha = 0
+        navigationItem.titleView = navTitleLabel
+
         selectButton.isEnabled = false
         selectButton.accessibilityHint = String(localized: "Choose several images to save, share or delete")
         navigationItem.rightBarButtonItem = selectButton
     }
 
-    private func setupToolbar() {
-        saveItem.accessibilityLabel = String(localized: "Save to Photos")
-        toolbarItems = [saveItem, UIBarButtonItem(systemItem: .flexibleSpace), shareItem, UIBarButtonItem(systemItem: .flexibleSpace), deleteItem]
+    private func setupSelectionBar() {
+        selectionBar.isHidden = true
+        selectionBar.alpha = 0
+        selectionBar.onSave = { [weak self] in
+            guard let self else { return }
+            self.saveImages(self.galleryPageVC.selectedImages)
+        }
+        selectionBar.onShare = { [weak self] in
+            guard let self else { return }
+            self.shareImages(self.galleryPageVC.selectedImages)
+        }
+        selectionBar.onDelete = { [weak self] in self?.deleteSelectedImages() }
+        view.addSubview(selectionBar)
+        let width = selectionBar.widthAnchor.constraint(equalTo: view.safeAreaLayoutGuide.widthAnchor, constant: -2 * Theme.Space.lg)
+        width.priority = .defaultHigh
+        NSLayoutConstraint.activate([
+            selectionBar.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            selectionBar.leadingAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.leadingAnchor, constant: Theme.Space.lg),
+            selectionBar.trailingAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -Theme.Space.lg),
+            selectionBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -Theme.Space.md),
+            selectionBar.widthAnchor.constraint(lessThanOrEqualToConstant: Self.selectionBarMaxWidth),
+            width,
+        ])
         updateSelectionUI(count: 0)
     }
+
+    private static let selectionBarMaxWidth: CGFloat = 520
 
     private func setSelecting(_ selecting: Bool) {
         guard selecting != isSelecting else { return }
         isSelecting = selecting
         galleryPageVC.setSelecting(selecting)
-        navigationController?.setToolbarHidden(!selecting, animated: !Motion.isReduced)
+        setSelectionBarVisible(selecting)
         updateSelectionUI(count: 0)
         Announce.layoutChanged()
     }
 
-    /// Keeps the title, the Select/Done button and the toolbar in step with how many
+    private func setSelectionBarVisible(_ visible: Bool) {
+        if visible {
+            selectionBar.isHidden = false
+            selectionBar.transform = Motion.isReduced ? .identity : CGAffineTransform(translationX: 0, y: 40)
+            Motion.spring(0.4, damping: 0.82) {
+                self.selectionBar.alpha = 1
+                self.selectionBar.transform = .identity
+            }
+        } else {
+            Motion.animate(0.2, options: .curveEaseIn) {
+                self.selectionBar.alpha = 0
+                self.selectionBar.transform = Motion.isReduced ? .identity : CGAffineTransform(translationX: 0, y: 40)
+            } completion: { _ in
+                if !self.isSelecting { self.selectionBar.isHidden = true }
+            }
+        }
+    }
+
+    /// Keeps the title, the Select/Done button and the action bar in step with how many
     /// images are chosen, so the count is always in the title and actions only light up
     /// when there is something to act on.
     private func updateSelectionUI(count: Int) {
         selectButton.title = isSelecting ? String(localized: "Done") : String(localized: "Select")
         selectButton.isEnabled = isSelecting || hasImages
+        updateNavigationTitle(count: count)
+        selectionBar.actionsEnabled = isSelecting && count > 0 && !isBusy
+    }
+
+    private func updateNavigationTitle(count: Int) {
         if isSelecting {
-            title = count == 0 ? String(localized: "Select Items") : String(localized: "\(count) selected")
+            navTitleLabel.text = count == 0 ? String(localized: "Select Items") : String(localized: "\(count) selected")
         } else {
-            title = String(localized: "My Images")
+            navTitleLabel.text = String(localized: "Gallery")
         }
-        let canAct = isSelecting && count > 0 && !isBusy
-        [saveItem, shareItem, deleteItem].forEach { $0.isEnabled = canAct }
+        navTitleLabel.alpha = navTitleTargetAlpha
+        navTitleLabel.sizeToFit()
     }
 
     private func setBusy(_ busy: Bool) {
@@ -148,12 +197,11 @@ extension GalleryViewController: GalleryPageViewControllerDelegate {
         let previewVC = ImageDetailViewController(image: image)
         previewVC.delegate = self
 
-        if #available(iOS 15.0, *) {
-            if let sheet = previewVC.sheetPresentationController {
-                sheet.detents = [.medium(), .large()]
-                sheet.prefersGrabberVisible = true
-                sheet.prefersScrollingExpandsWhenScrolledToEdge = false
-            }
+        if let sheet = previewVC.sheetPresentationController {
+            sheet.detents = [.large()]
+            sheet.prefersGrabberVisible = false
+            sheet.preferredCornerRadius = Theme.Radius.sheet
+            sheet.prefersScrollingExpandsWhenScrolledToEdge = false
         }
 
         present(previewVC, animated: true)
@@ -177,6 +225,12 @@ extension GalleryViewController: GalleryPageViewControllerDelegate {
 
     func galleryPageDidRequestCreate(_ viewController: GalleryPageViewController) {
         returnToChat()
+    }
+
+    func galleryPageDidChangeHeaderVisibility(_ viewController: GalleryPageViewController, isTitleHidden: Bool) {
+        isHeaderTitleHidden = isTitleHidden
+        guard !isSelecting else { return }
+        Motion.animate(0.2) { self.updateNavigationTitle(count: 0) }
     }
 }
 
@@ -218,7 +272,7 @@ private extension GalleryViewController {
         case .copyPrompt:
             HapticsManager.shared.notification(.success)
             UIPasteboard.general.string = image.prompt
-            showToast(String(localized: "Prompt copied to clipboard"))
+            showToast(String(localized: "Prompt copied to clipboard"), kind: .success)
 
         case .download:
             HapticsManager.shared.impact(.light)
@@ -274,7 +328,7 @@ private extension GalleryViewController {
         let message = images.count == 1
             ? String(localized: "Image deleted")
             : String(localized: "Deleted \(images.count) images")
-        showToast(message, actionTitle: String(localized: "Undo"), duration: window, isUndo: true) { [weak self] in
+        showToast(message, actionTitle: String(localized: "Undo"), duration: window, kind: .undo) { [weak self] in
             self?.undoPendingDeletion()
         }
     }
@@ -324,7 +378,7 @@ private extension GalleryViewController {
         HapticsManager.shared.notification(.error)
         showToast(failed.count == 1
             ? String(localized: "Could not delete image. Try again later.")
-            : String(localized: "Couldn't delete \(failed.count) images. Try again later."))
+            : String(localized: "Couldn't delete \(failed.count) images. Try again later."), kind: .error)
     }
 
     func saveImages(_ images: [ImageMetadata]) {
@@ -371,24 +425,24 @@ private extension GalleryViewController {
             setSelecting(false)
             showToast(images.count == 1
                 ? String(localized: "Image saved to Photos")
-                : String(localized: "Saved \(images.count) images to Photos"))
+                : String(localized: "Saved \(images.count) images to Photos"), kind: .success)
             return
         }
 
         HapticsManager.shared.notification(.error)
         let retry: () -> Void = { [weak self] in self?.saveImages(outcome.remaining) }
         if outcome.saved > 0 {
-            showToast(String(localized: "Saved \(outcome.saved) of \(images.count) images"), actionTitle: String(localized: "Retry"), action: retry)
+            showToast(String(localized: "Saved \(outcome.saved) of \(images.count) images"), actionTitle: String(localized: "Retry"), kind: .error, action: retry)
         } else if case .permissionDenied? = outcome.error {
-            showToast(String(localized: "Photo library access denied. Please enable access in Settings."), actionTitle: String(localized: "Open Settings")) {
+            showToast(String(localized: "Photo library access denied. Please enable access in Settings."), actionTitle: String(localized: "Open Settings"), kind: .error) {
                 if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(settingsURL)
                 }
             }
         } else if let error = outcome.error {
-            showToast(error.localizedDescription, actionTitle: String(localized: "Retry"), action: retry)
+            showToast(error.localizedDescription, actionTitle: String(localized: "Retry"), kind: .error, action: retry)
         } else {
-            showToast(String(localized: "Couldn't load image."), actionTitle: String(localized: "Retry"), action: retry)
+            showToast(String(localized: "Couldn't load image."), actionTitle: String(localized: "Retry"), kind: .error, action: retry)
         }
     }
 
@@ -404,7 +458,7 @@ private extension GalleryViewController {
                 guard let uiImage = await ImageCache.shared.loadImage(from: image.url) else {
                     setBusy(false)
                     HapticsManager.shared.notification(.error)
-                    showToast(String(localized: "Couldn't load image."), actionTitle: String(localized: "Retry")) { [weak self] in
+                    showToast(String(localized: "Couldn't load image."), actionTitle: String(localized: "Retry"), kind: .error) { [weak self] in
                         self?.shareImages(images)
                     }
                     return
@@ -426,7 +480,7 @@ private extension GalleryViewController {
             toast.setMessage(message)
             return
         }
-        showToast(message, isProgress: true)
+        showToast(message, kind: .progress)
     }
 
     func dismissToast() {
@@ -438,17 +492,16 @@ private extension GalleryViewController {
         _ message: String,
         actionTitle: String? = nil,
         duration: TimeInterval? = nil,
-        isUndo: Bool = false,
-        isProgress: Bool = false,
+        kind: GalleryToastKind,
         action: (() -> Void)? = nil
     ) {
-        if toast?.isUndo == true && !isUndo {
+        if toast?.isUndo == true && kind != .undo {
             commitPendingDeletion()
         }
         toast?.dismiss()
 
-        let lifetime: TimeInterval? = isProgress ? nil : (duration ?? defaultToastDuration(for: message, hasAction: actionTitle != nil))
-        let newToast = GalleryToastView(message: message, actionTitle: actionTitle, isUndo: isUndo, isProgress: isProgress)
+        let lifetime: TimeInterval? = kind == .progress ? nil : (duration ?? defaultToastDuration(for: message, hasAction: actionTitle != nil))
+        let newToast = GalleryToastView(message: message, actionTitle: actionTitle, kind: kind)
         newToast.onAction = { [weak self, weak newToast] in
             action?()
             if self?.toast === newToast {
@@ -456,11 +509,14 @@ private extension GalleryViewController {
             }
         }
         view.addSubview(newToast)
+        let bottom = isSelecting
+            ? newToast.bottomAnchor.constraint(equalTo: selectionBar.topAnchor, constant: -Theme.Space.md)
+            : newToast.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -Theme.Space.xxl)
         NSLayoutConstraint.activate([
             newToast.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            newToast.leadingAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
-            newToast.trailingAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
-            newToast.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+            newToast.leadingAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.leadingAnchor, constant: Theme.Space.lg),
+            newToast.trailingAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -Theme.Space.lg),
+            bottom,
         ])
         toast = newToast
         newToast.present(lifetime: lifetime)
@@ -481,128 +537,13 @@ private struct SaveOutcome {
     var error: PhotoSavingError?
 }
 
-private final class GalleryToastView: UIView {
-
-    let isUndo: Bool
-    let isProgress: Bool
-    var onAction: (() -> Void)?
-
-    private let label = UILabel()
-    private let actionButton = UIButton(type: .system)
-    private var expiry: Task<Void, Never>?
-    private var isDismissing = false
-
-    private static let maxWidth: CGFloat = 560
-
-    init(message: String, actionTitle: String?, isUndo: Bool, isProgress: Bool) {
-        self.isUndo = isUndo
-        self.isProgress = isProgress
-        super.init(frame: .zero)
-        setupUI(message: message, actionTitle: actionTitle)
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    private static let actionTint = UIColor { traits in
-        traits.userInterfaceStyle == .dark
-            ? .brand
-            : UIColor.brandText.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
-    }
-
-    private func setupUI(message: String, actionTitle: String?) {
-        translatesAutoresizingMaskIntoConstraints = false
-        backgroundColor = .label
-        layer.cornerRadius = 16
-        layer.shadowColor = UIColor.black.cgColor
-        layer.shadowOpacity = 0.25
-        layer.shadowRadius = 8
-        layer.shadowOffset = CGSize(width: 0, height: 2)
-
-        label.useScaledFont(.subheadline, size: 14, weight: .medium)
-        label.textColor = .systemBackground
-        label.numberOfLines = 0
-        label.text = message
-        label.setContentCompressionResistancePriority(.required, for: .vertical)
-
-        let stack = UIStackView(arrangedSubviews: [label])
-        stack.axis = .horizontal
-        stack.alignment = .center
-        stack.spacing = 8
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(stack)
-
-        if let actionTitle {
-            var config = UIButton.Configuration.plain()
-            config.title = actionTitle
-            config.baseForegroundColor = Self.actionTint
-            config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12)
-            config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
-                var outgoing = incoming
-                outgoing.font = .scaled(.subheadline, size: 14, weight: .bold)
-                return outgoing
-            }
-            actionButton.configuration = config
-            actionButton.setContentHuggingPriority(.required, for: .horizontal)
-            actionButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-            actionButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
-            actionButton.addAction(UIAction { [weak self] _ in self?.onAction?() }, for: .touchUpInside)
-            actionButton.setupPointerInteraction()
-            stack.addArrangedSubview(actionButton)
-        }
-
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: topAnchor, constant: 6),
-            stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -6),
-            stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: actionTitle == nil ? -16 : -4),
-            widthAnchor.constraint(lessThanOrEqualToConstant: Self.maxWidth),
-            heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
-        ])
-
-        accessibilityViewIsModal = false
-        label.isAccessibilityElement = true
-    }
-
-    func setMessage(_ message: String) {
-        label.text = message
-    }
-
-    func present(lifetime: TimeInterval?) {
-        alpha = 0
-        transform = Motion.isReduced ? .identity : CGAffineTransform(translationX: 0, y: 20)
-        Motion.spring(0.3) {
-            self.alpha = 1
-            self.transform = .identity
-        }
-        guard let lifetime else { return }
-        expiry = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: UInt64(lifetime * 1_000_000_000))
-            guard !Task.isCancelled else { return }
-            await MainActor.run { self?.dismiss() }
-        }
-    }
-
-    func dismiss() {
-        guard !isDismissing else { return }
-        isDismissing = true
-        expiry?.cancel()
-        Motion.animate(0.25) {
-            self.alpha = 0
-            self.transform = Motion.isReduced ? .identity : CGAffineTransform(translationX: 0, y: 20)
-        } completion: { _ in
-            self.removeFromSuperview()
-        }
-    }
-}
-
 protocol GalleryPageViewControllerDelegate: AnyObject {
     func galleryPageDidSelectImage(_ viewController: GalleryPageViewController, image: ImageMetadata)
     func galleryPageDidPerformAction(_ viewController: GalleryPageViewController, action: ImageAction, on image: ImageMetadata)
     func galleryPageDidChangeSelection(_ viewController: GalleryPageViewController, count: Int)
     func galleryPageDidChangeContent(_ viewController: GalleryPageViewController, hasImages: Bool)
     func galleryPageDidRequestCreate(_ viewController: GalleryPageViewController)
+    func galleryPageDidChangeHeaderVisibility(_ viewController: GalleryPageViewController, isTitleHidden: Bool)
 }
 
 protocol ImageDetailViewControllerDelegate: AnyObject {

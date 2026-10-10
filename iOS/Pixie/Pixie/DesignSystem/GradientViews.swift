@@ -66,6 +66,7 @@ final class InkBackdropView: UIView {
 final class ShimmerView: UIView {
     private let highlight = CAGradientLayer()
     private var isAnimating = false
+    private var animatedWidth: CGFloat = 0
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -85,6 +86,10 @@ final class ShimmerView: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         highlight.frame = CGRect(x: -bounds.width, y: 0, width: bounds.width * 3, height: bounds.height)
+        if window != nil, bounds.width != animatedWidth {
+            stop()
+            start()
+        }
     }
 
     override func didMoveToWindow() {
@@ -108,8 +113,9 @@ final class ShimmerView: UIView {
     }
 
     private func start() {
-        guard !isAnimating, !Motion.isReduced else { return }
+        guard !isAnimating, !Motion.isReduced, bounds.width > 0 else { return }
         isAnimating = true
+        animatedWidth = bounds.width
         let slide = CABasicAnimation(keyPath: "transform.translation.x")
         slide.fromValue = 0
         slide.toValue = bounds.width * 2
@@ -121,6 +127,7 @@ final class ShimmerView: UIView {
 
     private func stop() {
         isAnimating = false
+        animatedWidth = 0
         highlight.removeAnimation(forKey: "shimmer")
     }
 }

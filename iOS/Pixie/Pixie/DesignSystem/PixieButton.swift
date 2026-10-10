@@ -98,6 +98,7 @@ final class PixieButton: UIButton {
         var config = UIButton.Configuration.plain()
         config.cornerStyle = .capsule
         config.imagePadding = 8
+        config.titleAlignment = .center
         config.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: size.horizontalInset, bottom: 12, trailing: size.horizontalInset)
         config.title = title
         config.image = symbol.flatMap { UIImage(systemName: $0, withConfiguration: UIImage.SymbolConfiguration(weight: .semibold)) }
