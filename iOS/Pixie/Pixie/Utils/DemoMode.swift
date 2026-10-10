@@ -23,6 +23,9 @@ enum DemoMode: String {
     case help
     case detail
     case consent
+    case auth
+    case launchfailure
+    case splash
 
     static var current: DemoMode? {
         guard let raw = ProcessInfo.processInfo.environment["PX_DEMO"] else { return nil }
@@ -285,6 +288,16 @@ enum DemoRootBuilder {
         switch mode {
         case .onboarding:
             return OnboardingViewController()
+        case .auth:
+            let navigation = UINavigationController(rootViewController: AuthenticationViewController())
+            navigation.navigationBar.isHidden = true
+            return navigation
+        case .launchfailure:
+            return LaunchFailureViewController(onRetry: { false }, onSignIn: {})
+        case .splash:
+            let controller = UIViewController()
+            controller.view = SplashView()
+            return controller
         case .gallery:
             return split(DemoLaunch(section: .gallery))
         case .edit:

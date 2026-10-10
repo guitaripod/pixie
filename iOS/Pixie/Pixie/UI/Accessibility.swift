@@ -15,15 +15,9 @@ extension UILabel {
 }
 
 extension UIColor {
-    static let brand = UIColor(red: 103 / 255, green: 80 / 255, blue: 164 / 255, alpha: 1)
-
-    static let brandText = UIColor { traits in
-        traits.userInterfaceStyle == .dark
-            ? UIColor(red: 196 / 255, green: 178 / 255, blue: 255 / 255, alpha: 1)
-            : UIColor(red: 103 / 255, green: 80 / 255, blue: 164 / 255, alpha: 1)
-    }
-
-    static let brandTint = UIColor.brand.withAlphaComponent(0.14)
+    static let brand = Theme.Color.accent
+    static let brandText = Theme.Color.accentText
+    static let brandTint = Theme.Color.accentSoft
 }
 
 enum Motion {

@@ -240,5 +240,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         }
         
         window?.overrideUserInterfaceStyle = style
+        window?.tintColor = Theme.Color.accentText
+        window?.backgroundColor = Theme.Color.canvas
+        Theme.applyGlobalAppearance()
     }
 }
