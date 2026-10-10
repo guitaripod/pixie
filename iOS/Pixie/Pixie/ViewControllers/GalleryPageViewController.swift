@@ -226,7 +226,7 @@ final class GalleryPageViewController: UIViewController {
     private func configure(header: GalleryHeaderView) {
         let metrics = GalleryGrid.metrics(containerWidth: collectionView.bounds.width, traits: traitCollection)
         let padding = metrics.insets.left == 0 ? Theme.screenMargin(for: traitCollection) : 0
-        header.configure(count: showsSkeleton ? nil : headerCount, horizontalPadding: padding)
+        header.configure(count: showsSkeleton ? nil : headerCount, horizontalPadding: padding, isShort: traitCollection.verticalSizeClass == .compact)
     }
     
     /// The number in the "N images" line: the server's total when it is known, less the images
@@ -751,13 +751,15 @@ enum GalleryGrid {
         let insets: UIEdgeInsets
     }
 
-    static let narrowWidth: CGFloat = 480
+    /// Side gutters only come once the grid is wider than a phone-class pane; narrower panes,
+    /// such as the inner display of a foldable beside a sidebar, give the thumbnails the whole width.
+    static let gutterMinimumWidth: CGFloat = 690
     static let bottomInset: CGFloat = 96
     static let titleScrollThreshold: CGFloat = 40
 
     static func metrics(containerWidth: CGFloat, traits: UITraitCollection) -> Metrics {
         let layout = AdaptiveLayout(traitCollection: traits)
-        let insets = containerWidth < narrowWidth ? UIEdgeInsets.zero : layout.contentInsets
+        let insets = containerWidth < gutterMinimumWidth ? UIEdgeInsets.zero : layout.contentInsets
         let columns = layout.galleryColumns(containerWidth: containerWidth - insets.left - insets.right)
         return Metrics(columns: columns, spacing: 1, insets: insets)
     }

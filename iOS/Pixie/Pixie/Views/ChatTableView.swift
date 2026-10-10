@@ -69,12 +69,14 @@ class ChatTableView: UIView {
                 return cell
             case .assistant:
                 let cell = tableView.dequeueReusableCell(withIdentifier: AssistantMessageCell.identifier, for: indexPath) as! AssistantMessageCell
-                cell.configure(with: message, maxImageHeight: self?.maxResultImageHeight ?? 0)
+                let fit = self?.resultFit(for: message)
+                cell.configure(with: message, maxImageHeight: fit?.imageHeight ?? 0, actionsBeside: fit?.actionsBeside ?? false)
                 cell.delegate = self
                 return cell
             case .loading:
                 let cell = tableView.dequeueReusableCell(withIdentifier: LoadingMessageCell.identifier, for: indexPath) as! LoadingMessageCell
-                cell.configure(with: message, aspect: self?.expectedAspect(of: message) ?? 1, maxImageHeight: self?.maxResultImageHeight ?? 0)
+                let fit = self?.resultFit(for: message)
+                cell.configure(with: message, aspect: self?.expectedAspect(of: message) ?? 1, maxImageHeight: fit?.imageHeight ?? 0, actionsBeside: fit?.actionsBeside ?? false)
                 cell.startAnimating()
                 return cell
             }
@@ -85,31 +87,67 @@ class ChatTableView: UIView {
         traitCollection.verticalSizeClass == .compact
     }
 
-    /// A result never outgrows the band between the top bar and the composer: with the room
-    /// its actions and turn spacing take, it is as tall as that band leaves, and never more
-    /// than 70% of the transcript. Zero means the table has no size yet and the width decides.
-    private var maxResultImageHeight: CGFloat {
-        guard tableView.bounds.height > 0 else { return 0 }
+    /// How a result is laid out: how tall its picture may be and whether Save, Share and
+    /// Compare stand in a column beside it instead of in a row under it.
+    struct ResultFit {
+        let imageHeight: CGFloat
+        let actionsBeside: Bool
+    }
+
+    /// A result never outgrows the band between the top bar and the composer. Under its
+    /// picture the actions take a row of the band; beside it they take a column of the width.
+    /// The column wins when it lets the picture grow, which is what a window wider than tall
+    /// or a narrow pane beside a sidebar gives; a phone held upright, where the width is what
+    /// limits the picture, keeps its row. The picture is never more than
+    /// 70% of the transcript. Zero means the table has no size yet and the width decides.
+    private func resultFit(columns: Int, rows: Int, aspect: CGFloat) -> ResultFit {
+        guard tableView.bounds.height > 0 else { return ResultFit(imageHeight: 0, actionsBeside: false) }
         let visible = tableView.bounds.height - topInset - bottomInset
         let share = tableView.bounds.height * Self.maximumResultHeightShare
-        return max(min(visible - Self.resultActionsHeight, share), Self.minimumResultImageHeight)
+        let below = max(min(visible - Self.resultActionsHeight, share), Self.minimumResultImageHeight)
+        let stacked = ResultFit(imageHeight: below, actionsBeside: false)
+        guard !traitCollection.preferredContentSizeCategory.isAccessibilityCategory else { return stacked }
+        let beside = max(min(visible - ChatColumnCell.turnSpacing * 2, share), Self.minimumResultImageHeight)
+        let belowHeight = AssistantMessageCell.imageHeight(
+            width: min(AssistantMessageCell.widthCap(columns: columns, rows: rows, aspect: aspect, maxHeight: below), columnWidth),
+            columns: columns, rows: rows, aspect: aspect)
+        let besideWidth = min(
+            AssistantMessageCell.widthCap(columns: columns, rows: rows, aspect: aspect, maxHeight: beside),
+            columnWidth - AssistantMessageCell.sideActionsWidth - AssistantMessageCell.sideActionsSpacing)
+        guard besideWidth > 0 else { return stacked }
+        let besideHeight = AssistantMessageCell.imageHeight(width: besideWidth, columns: columns, rows: rows, aspect: aspect)
+        guard besideHeight > belowHeight else { return stacked }
+        return ResultFit(imageHeight: besideHeight, actionsBeside: true)
+    }
+
+    private func resultFit(for message: ChatMessage) -> ResultFit {
+        guard let images = message.images, !images.isEmpty else {
+            return resultFit(columns: 1, rows: 1, aspect: expectedAspect(of: message))
+        }
+        let columns = images.count == 1 ? 1 : 2
+        return resultFit(columns: columns, rows: (images.count + columns - 1) / columns, aspect: images[0].clampedAspect)
+    }
+
+    private var columnWidth: CGFloat {
+        let margin = Theme.screenMargin(for: traitCollection)
+        return min(bounds.width - tableView.contentInset.left - tableView.contentInset.right - margin * 2, ChatColumnCell.maximumColumnWidth)
     }
     private static let resultActionsHeight: CGFloat = 80
     private static let minimumResultImageHeight: CGFloat = 96
     private static let maximumResultHeightShare: CGFloat = 0.7
 
-    /// The width the newest result card takes at the current size, so the composer can match
-    /// it instead of spanning a pane far wider than the picture above it.
+    /// The width the newest result takes at the current size with its actions, so the composer
+    /// can match it instead of spanning a pane far wider than the picture above it.
     var latestResultWidth: CGFloat? {
         guard let message = dataSource.snapshot().itemIdentifiers.last(where: { $0.role == .assistant }),
               let images = message.images, !images.isEmpty else { return nil }
         let columns = images.count == 1 ? 1 : 2
         let rows = (images.count + columns - 1) / columns
-        let margin = Theme.screenMargin(for: traitCollection)
-        let column = min(bounds.width - tableView.contentInset.left - tableView.contentInset.right - margin * 2, ChatColumnCell.maximumColumnWidth)
-        guard maxResultImageHeight > 0 else { return column }
-        let cap = AssistantMessageCell.widthCap(columns: columns, rows: rows, aspect: images[0].clampedAspect, maxHeight: maxResultImageHeight)
-        return min(cap, column)
+        let fit = resultFit(for: message)
+        guard fit.imageHeight > 0 else { return columnWidth }
+        let cap = AssistantMessageCell.widthCap(columns: columns, rows: rows, aspect: images[0].clampedAspect, maxHeight: fit.imageHeight)
+        let beside = fit.actionsBeside ? AssistantMessageCell.sideActionsWidth + AssistantMessageCell.sideActionsSpacing : 0
+        return min(cap + beside, columnWidth)
     }
 
     /// The height-to-width ratio a generating card reserves: the one of the photo being
@@ -127,6 +165,11 @@ class ChatTableView: UIView {
         let base = composerClearance ?? Self.regularBottomInset
         return keyboardInset + base + (keyboardInset > 0 ? 0 : safeAreaInsets.bottom)
     }
+    /// The room kept between the last turn and the composer's capsule in a short window, where
+    /// every point of the band counts: most of the composer's soft edge, so the actions under a
+    /// result stay clear of the fade without a wide gap above the composer.
+    static let shortWindowComposerGap: CGFloat = Theme.Space.xxxl + Theme.Space.xs
+
     /// The height of the floating composer, so the last turn always rests above it in every
     /// window size.
     var composerClearance: CGFloat? {
@@ -459,14 +502,15 @@ class ChatColumnCell: UITableViewCell {
     }
 
     /// Sizes a card: as wide as the column unless `maxWidth` is smaller, in which case it
-    /// narrows and stays centred. With an `aspect` (height over width) the height follows the width.
+    /// narrows and stays centred, `centerOffset` points to the side of the centre. With an `aspect`
+    /// (height over width) the height follows the width.
     @discardableResult
-    func sizeCard(_ card: UIView, in container: UIView, aspect: CGFloat?, maxWidth: CGFloat?) -> [NSLayoutConstraint] {
+    func sizeCard(_ card: UIView, in container: UIView, aspect: CGFloat?, maxWidth: CGFloat?, centerOffset: CGFloat = 0) -> [NSLayoutConstraint] {
         let fillWidth = card.widthAnchor.constraint(equalTo: container.widthAnchor)
         fillWidth.priority = .defaultHigh
         var constraints = [
             fillWidth,
-            card.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            card.centerXAnchor.constraint(equalTo: container.centerXAnchor, constant: centerOffset),
             card.topAnchor.constraint(equalTo: container.topAnchor),
             card.bottomAnchor.constraint(equalTo: container.bottomAnchor),
             card.widthAnchor.constraint(lessThanOrEqualTo: container.widthAnchor)
@@ -656,10 +700,14 @@ private final class ResultActionButton: UIButton {
     /// The width the icon, the gap and the full title need, which the row compares with the
     /// share it can give this capsule.
     var titledWidth: CGFloat {
+        Self.titledWidth(caption: caption, symbol: symbol)
+    }
+
+    static func titledWidth(caption: String, symbol: String) -> CGFloat {
         let font = Theme.TextStyle.subhead.font
         let title = (caption as NSString).size(withAttributes: [.font: font]).width.rounded(.up)
-        let icon = (UIImage(systemName: symbol, withConfiguration: Self.symbolConfiguration)?.size.width ?? 0).rounded(.up)
-        return title + icon + Self.imagePadding + Self.horizontalInset * 2
+        let icon = (UIImage(systemName: symbol, withConfiguration: symbolConfiguration)?.size.width ?? 0).rounded(.up)
+        return title + icon + imagePadding + horizontalInset * 2
     }
 
     private static let imagePadding: CGFloat = 5
@@ -760,6 +808,7 @@ class AssistantMessageCell: ChatColumnCell {
     private var actionRow: ResultActionRow?
     private var actionButtons: [ResultAction: ResultActionButton] = [:]
     private var canCompare = false
+    private var actionsBeside = false
     private var imageCornerRadius: CGFloat = Theme.Radius.xl
     private static let cardRadius: CGFloat = 24
     private static let gridGap: CGFloat = 6
@@ -792,21 +841,30 @@ class AssistantMessageCell: ChatColumnCell {
         updateActionAxis()
     }
 
-    func configure(with message: ChatMessage, maxImageHeight: CGFloat = 0) {
+    func configure(with message: ChatMessage, maxImageHeight: CGFloat = 0, actionsBeside: Bool = false) {
         contentStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
         imageViews.removeAll()
         actionButtons.removeAll()
         actionRow = nil
+        self.actionsBeside = actionsBeside
+        contentStackView.alignment = actionsBeside ? .center : .fill
         isAccessibilityElement = false
         accessibilityLabel = nil
         accessibilityTraits = .none
         if let images = message.images, !images.isEmpty {
             canCompare = message.sourceImage != nil
-            contentStackView.addArrangedSubview(makeImageCard(images, maxImageHeight: maxImageHeight))
+            let card = makeImageCard(images, maxImageHeight: maxImageHeight)
             let row = makeActionRow(canCompare: canCompare)
             actionRow = row
-            contentStackView.addArrangedSubview(row)
             updateActionAxis()
+            if actionsBeside {
+                let pair = makeSideBySide(card, row, imageHeight: maxImageHeight, images: images)
+                contentStackView.addArrangedSubview(pair)
+                pair.widthAnchor.constraint(lessThanOrEqualTo: contentStackView.widthAnchor).isActive = true
+            } else {
+                contentStackView.addArrangedSubview(card)
+                contentStackView.addArrangedSubview(row)
+            }
         } else if let text = message.content, !text.isEmpty {
             contentStackView.addArrangedSubview(makeNotice(text))
             describe(String(localized: "Pixie: \(text)"), traits: .staticText)
@@ -828,9 +886,29 @@ class AssistantMessageCell: ChatColumnCell {
     }
 
     /// Three capsules side by side, stacked once the text is large enough that they would
-    /// not fit on a line.
+    /// not fit on a line, and always stacked when they stand beside the picture.
     private func updateActionAxis() {
-        actionRow?.axis = traitCollection.preferredContentSizeCategory.isAccessibilityCategory ? .vertical : .horizontal
+        let stacked = actionsBeside || traitCollection.preferredContentSizeCategory.isAccessibilityCategory
+        actionRow?.axis = stacked ? .vertical : .horizontal
+    }
+
+    /// The picture with its actions in a column to the right, the pair centred in the column
+    /// of the transcript and the actions centred on the picture's height.
+    private func makeSideBySide(_ card: UIView, _ row: UIView, imageHeight: CGFloat, images: [UIImage]) -> UIView {
+        let columns = images.count == 1 ? 1 : 2
+        let rows = (images.count + columns - 1) / columns
+        let width = Self.widthCap(columns: columns, rows: rows, aspect: images[0].clampedAspect, maxHeight: imageHeight)
+        let pair = UIStackView(arrangedSubviews: [card, row])
+        pair.axis = .horizontal
+        pair.alignment = .center
+        pair.spacing = Self.sideActionsSpacing
+        let cardWidth = card.widthAnchor.constraint(equalToConstant: width)
+        cardWidth.priority = UILayoutPriority(rawValue: 900)
+        NSLayoutConstraint.activate([
+            cardWidth,
+            row.widthAnchor.constraint(equalToConstant: Self.sideActionsWidth)
+        ])
+        return pair
     }
 
     private func makeNotice(_ text: String) -> UIView {
@@ -876,6 +954,24 @@ class AssistantMessageCell: ChatColumnCell {
         let maxWidth = maxImageHeight > 0 ? Self.widthCap(columns: columns, rows: rows, aspect: aspect, maxHeight: maxImageHeight) : nil
         sizeCard(card, in: container, aspect: nil, maxWidth: maxWidth)
         return container
+    }
+
+    fileprivate static let sideActionsSpacing: CGFloat = Theme.Space.md
+
+    /// The width of the column of actions beside a picture: the widest of the three titles in
+    /// the current language and text size, with its icon and padding.
+    fileprivate static var sideActionsWidth: CGFloat {
+        let titles = [(String(localized: "Save"), "square.and.arrow.down"),
+                      (String(localized: "Share"), "square.and.arrow.up"),
+                      (String(localized: "Compare"), "rectangle.split.2x1")]
+        return (titles.map { ResultActionButton.titledWidth(caption: $0.0, symbol: $0.1) }.max() ?? 0) + Theme.Space.xs
+    }
+
+    /// The height a card of `width` takes at `aspect`, the inverse of `widthCap`.
+    fileprivate static func imageHeight(width: CGFloat, columns: Int, rows: Int, aspect: CGFloat) -> CGFloat {
+        if columns == 1 { return width * aspect }
+        let cellWidth = (width - Self.gridGap) / 2
+        return cellWidth * aspect * CGFloat(rows) + Self.gridGap * CGFloat(rows - 1)
     }
 
     fileprivate static func widthCap(columns: Int, rows: Int, aspect: CGFloat, maxHeight: CGFloat) -> CGFloat {
@@ -1117,12 +1213,15 @@ class LoadingMessageCell: ChatColumnCell {
         describe(String(localized: "Generating image"), traits: .staticText)
     }
 
-    func configure(with message: ChatMessage, aspect: CGFloat, maxImageHeight: CGFloat) {
+    /// With `actionsBeside` the card sits where the picture will, left of the room the result's
+    /// column of actions takes, so the result lands in place.
+    func configure(with message: ChatMessage, aspect: CGFloat, maxImageHeight: CGFloat, actionsBeside: Bool = false) {
         startedAt = message.timestamp
         titleLabel.text = String(localized: "Creating your image") + "\u{2026}"
         updateElapsed()
         NSLayoutConstraint.deactivate(sizingConstraints)
-        sizingConstraints = sizeCard(card, in: container, aspect: aspect, maxWidth: maxImageHeight > 0 ? maxImageHeight / aspect : nil)
+        let offset = actionsBeside ? -(AssistantMessageCell.sideActionsWidth + AssistantMessageCell.sideActionsSpacing) / 2 : 0
+        sizingConstraints = sizeCard(card, in: container, aspect: aspect, maxWidth: maxImageHeight > 0 ? maxImageHeight / aspect : nil, centerOffset: offset)
     }
 
     func startAnimating() {

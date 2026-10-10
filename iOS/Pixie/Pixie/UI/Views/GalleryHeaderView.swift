@@ -43,8 +43,12 @@ final class GalleryHeaderView: UICollectionReusableView {
     }
 
     /// The count line stays hidden until the first page has arrived, so the title never
-    /// shows a misleading "0 images" while the grid is still loading.
-    func configure(count: Int?, horizontalPadding: CGFloat) {
+    /// shows a misleading "0 images" while the grid is still loading. In a short window the
+    /// count stands beside the title instead of under it, which gives a row back to the grid.
+    func configure(count: Int?, horizontalPadding: CGFloat, isShort: Bool = false) {
+        stack.axis = isShort ? .horizontal : .vertical
+        stack.alignment = isShort ? .lastBaseline : .fill
+        stack.spacing = isShort ? Theme.Space.md : Theme.Space.xs
         leadingConstraint.constant = horizontalPadding
         trailingConstraint.constant = -horizontalPadding
         if let count, count > 0 {

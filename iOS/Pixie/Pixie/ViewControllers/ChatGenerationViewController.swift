@@ -337,7 +337,8 @@ class ChatGenerationViewController: UIViewController {
         let capsuleTop = inputBar.convert(inputBar.composerGuide.layoutFrame, to: view).minY
         let covered = view.bounds.height - capsuleTop
         let fade = FullScreenSuggestionsView.composerFadeClearance
-        chatView.composerClearance = max(covered - view.safeAreaInsets.bottom, 0) + fade
+        let chatGap = traitCollection.verticalSizeClass == .compact ? ChatTableView.shortWindowComposerGap : fade
+        chatView.composerClearance = max(covered - view.safeAreaInsets.bottom, 0) + chatGap
         var inset = suggestionsView.contentInset
         let top = max(inset.top, Self.suggestionsTopClearance)
         let wanted = covered + fade
