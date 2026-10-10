@@ -368,6 +368,16 @@ class SampleTileCell: UICollectionViewCell {
 
         describe("\(Self.title). \(Self.subtitle).", traits: .button)
     }
+
+    /// The text column is whatever the thumbnail and the margins leave, so both labels are told that
+    /// width before the cell lays out; a label measured without one reports a single line and truncates.
+    override func layoutSubviews() {
+        let thumbnailWidth = max(0, contentView.bounds.height - 24) * 0.75
+        let textWidth = max(0, contentView.bounds.width - 12 - thumbnailWidth - 12 - 12)
+        titleLabel.preferredMaxLayoutWidth = textWidth
+        subtitleLabel.preferredMaxLayoutWidth = textWidth
+        super.layoutSubviews()
+    }
 }
 
 
