@@ -9,15 +9,17 @@ app:
   store_url: https://apps.apple.com/app/id6751730339
   campaign_url_template: "https://apps.apple.com/app/id6751730339?pt=TODO&ct={campaign}"
   platforms: [ios, ipados]
-  price_model: "free (25 welcome credits) + consumable credit packs $2.99-$99.99; no subscription, ever"
+  price_model: "free (3 free images: 65 welcome credits, no sign-up) + consumable credit packs, prices in the store; no subscription, ever"
 
 voice:
   tone: "playful but precise; creator-first; anti-subscription-fatigue without being preachy"
   pillars:
     - "No subscription, ever. Pay for what you make — credits never expire."
-    - "Chat your way to the image: conversation in, pro-grade image out (Nano Banana + GPT image)"
+    - "One tap, pro result: headshot, restored old photo, 3D figurine and more, then refine it by chat"
+    - "Try before you commit: a sample photo, 3 free images, no sign-up; delete your account and its data anytime in Settings"
+    - "Made for everyone: VoiceOver, Dynamic Type, Reduce Motion, iPhone Duo and iPad"
     - "Control like a pro: quality tiers, exact sizes, transparent backgrounds, batch up to 10"
-  never: ["fake urgency", "AI-slop hashtag walls", "claims of on-device generation", "price claims in screenshots"]
+  never: ["fake urgency", "AI-slop hashtag walls", "claims of on-device generation", "price claims in screenshots", "Nano Banana in the name, subtitle or screenshots (1.6.0 was rejected over it)", "a Restore Purchases button (credits are consumables)"]
 
 content_engines:
   daily_art:
@@ -43,12 +45,14 @@ cadence:
 
 assets:
   screenshot_rig: >
-    DEBUG env PX_DEMO = create|edit|gallery|store on iPhone 17 Pro Max (1320x2868)
-    and iPad Pro 13" M5 (2064x2752). Staging details in docs/store-playbook.md §3.
+    marketing/shoot.sh captures DEBUG PX_DEMO screens (home, refine, pack, gallery, start, ...) on an
+    iPhone 17 Pro Max simulator (1320x2868) and an iPad Pro 13" (2064x2752) with PX_RAW_SUBDIR=ipad;
+    marketing/compose_screenshots.py frames them from marketing/listing/<locale>.json into
+    marketing/appstore*/<locale>/. raw/ and appstore*/ are ignored by git.
   icon: iOS/Pixie/Pixie/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png
 
 ops:
   metrics_skill: .claude/skills/revenue-ops
-  playbook: docs/store-playbook.md
+  playbook: ~/.config/midgar/OPERATIONS.md   # App Store, RevenueCat and release mechanics
   asc_api_key_id: DSS2FFU68G   # p8 at ~/.appstoreconnect/private_keys/ on the operator machine
-  backend: "this repo IS the backend (mako tenant 'pixie'); D1 ledger is first-party metrics truth"
+  backend: "guitaripod/mako (~/Dev/rust/mako, tenant 'pixie'); its D1 ledger is first-party metrics truth"
