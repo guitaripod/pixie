@@ -124,7 +124,7 @@ class ChatTableView: UIView {
     }
     private static let regularBottomInset: CGFloat = 120
     private static let shortWindowBottomInset: CGFloat = 20
-    private static let topBarClearance: CGFloat = 76
+    private static let topBarClearance: CGFloat = 88
 
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
@@ -668,7 +668,9 @@ private final class ResultActionButton: UIButton {
             return outgoing
         }
         config.baseForegroundColor = isSuccess ? Theme.Color.success : Theme.Color.ink
-        config.background.backgroundColor = isSuccess ? Theme.Color.success.withAlphaComponent(0.16) : Theme.Color.fill
+        config.background.backgroundColor = isSuccess ? Theme.Color.success.withAlphaComponent(0.16) : Theme.Color.surface
+        config.background.strokeColor = isSuccess ? Theme.Color.success.withAlphaComponent(0.4) : Theme.Color.line
+        config.background.strokeWidth = 1
         configuration = config
     }
 }

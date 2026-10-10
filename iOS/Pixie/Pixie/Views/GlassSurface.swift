@@ -108,6 +108,12 @@ final class EdgeFadeView: UIView {
         let solid = canvas.withAlphaComponent(0.96).cgColor
         let soft = canvas.withAlphaComponent(0.7).cgColor
         let clear = canvas.withAlphaComponent(0).cgColor
-        gradientLayer.colors = edge == .top ? [solid, soft, clear] : [clear, soft, solid]
+        if edge == .top {
+            gradientLayer.locations = [0, 0.55, 1]
+            gradientLayer.colors = [solid, soft, clear]
+        } else {
+            gradientLayer.locations = [0, 0.3, 0.55, 1]
+            gradientLayer.colors = [clear, soft, solid, solid]
+        }
     }
 }

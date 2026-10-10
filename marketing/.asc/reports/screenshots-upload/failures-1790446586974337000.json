@@ -1,0 +1,87 @@
+{
+  "versionLocalizationId": "6b202ae5-e351-47f2-bc89-2159b6cf6c26",
+  "path": ".asc/reports/screenshots-upload/failures-1790446586974337000.json",
+  "rootPath": "/Users/marcus/Dev/rust/pixie/marketing/appstore-ipad",
+  "deviceType": "IPAD_PRO_3GEN_129",
+  "displayType": "APP_IPAD_PRO_3GEN_129",
+  "replace": true,
+  "setId": "3aae2b54-2cdb-401c-84a1-c7f3f20a590a",
+  "files": [
+    "/Users/marcus/Dev/rust/pixie/marketing/appstore-ipad/es-ES/01_headshot.png",
+    "/Users/marcus/Dev/rust/pixie/marketing/appstore-ipad/es-ES/02_presets.png",
+    "/Users/marcus/Dev/rust/pixie/marketing/appstore-ipad/es-ES/03_restore.png",
+    "/Users/marcus/Dev/rust/pixie/marketing/appstore-ipad/es-ES/04_figurine.png",
+    "/Users/marcus/Dev/rust/pixie/marketing/appstore-ipad/es-ES/05_refine.png",
+    "/Users/marcus/Dev/rust/pixie/marketing/appstore-ipad/es-ES/06_pack.png",
+    "/Users/marcus/Dev/rust/pixie/marketing/appstore-ipad/es-ES/07_pet.png",
+    "/Users/marcus/Dev/rust/pixie/marketing/appstore-ipad/es-ES/08_store.png"
+  ],
+  "orderedIds": [
+    "682d53dc-e219-4bbe-8baa-dea355b545cc",
+    "bcc2ae5a-3d78-4b4d-91bf-c7607886cac5",
+    "db068e82-b51f-4341-831a-23964ab53c00",
+    "f70bdaba-8d80-4cf5-8a03-1d5346b05e4f",
+    "2b02d098-1d92-4069-919d-ecf492b11821",
+    "11a1fb44-5fb4-4438-b9e6-38edf524c794",
+    "a816c9aa-0b1e-4341-8b3f-811dcd0d4d1a",
+    "e1ee1a64-ee38-43a7-8616-cf906628f458"
+  ],
+  "results": [
+    {
+      "fileName": "01_headshot.png",
+      "filePath": "/Users/marcus/Dev/rust/pixie/marketing/appstore-ipad/es-ES/01_headshot.png",
+      "assetId": "682d53dc-e219-4bbe-8baa-dea355b545cc",
+      "state": "COMPLETE"
+    },
+    {
+      "fileName": "02_presets.png",
+      "filePath": "/Users/marcus/Dev/rust/pixie/marketing/appstore-ipad/es-ES/02_presets.png",
+      "assetId": "bcc2ae5a-3d78-4b4d-91bf-c7607886cac5",
+      "state": "COMPLETE"
+    },
+    {
+      "fileName": "03_restore.png",
+      "filePath": "/Users/marcus/Dev/rust/pixie/marketing/appstore-ipad/es-ES/03_restore.png",
+      "assetId": "db068e82-b51f-4341-831a-23964ab53c00",
+      "state": "COMPLETE"
+    },
+    {
+      "fileName": "04_figurine.png",
+      "filePath": "/Users/marcus/Dev/rust/pixie/marketing/appstore-ipad/es-ES/04_figurine.png",
+      "assetId": "f70bdaba-8d80-4cf5-8a03-1d5346b05e4f",
+      "state": "COMPLETE"
+    },
+    {
+      "fileName": "05_refine.png",
+      "filePath": "/Users/marcus/Dev/rust/pixie/marketing/appstore-ipad/es-ES/05_refine.png",
+      "assetId": "2b02d098-1d92-4069-919d-ecf492b11821",
+      "state": "COMPLETE"
+    },
+    {
+      "fileName": "06_pack.png",
+      "filePath": "/Users/marcus/Dev/rust/pixie/marketing/appstore-ipad/es-ES/06_pack.png",
+      "assetId": "11a1fb44-5fb4-4438-b9e6-38edf524c794",
+      "state": "COMPLETE"
+    },
+    {
+      "fileName": "07_pet.png",
+      "filePath": "/Users/marcus/Dev/rust/pixie/marketing/appstore-ipad/es-ES/07_pet.png",
+      "assetId": "a816c9aa-0b1e-4341-8b3f-811dcd0d4d1a",
+      "state": "COMPLETE"
+    },
+    {
+      "fileName": "08_store.png",
+      "filePath": "/Users/marcus/Dev/rust/pixie/marketing/appstore-ipad/es-ES/08_store.png",
+      "assetId": "e1ee1a64-ee38-43a7-8616-cf906628f458",
+      "state": "COMPLETE"
+    }
+  ],
+  "failures": [
+    {
+      "fileName": "screenshot ordering",
+      "error": "The request cannot be fulfilled because of the state of another resource.: Can't Reorder Assets while Ready For Review appScreenshotSets"
+    }
+  ],
+  "error": "The request cannot be fulfilled because of the state of another resource.: Can't Reorder Assets while Ready For Review appScreenshotSets",
+  "generatedAt": "2026-09-26T18:16:26Z"
+}

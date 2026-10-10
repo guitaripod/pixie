@@ -401,7 +401,7 @@ final class ImageDetailViewController: UIViewController {
         facts = []
         if let metadata = image.metadata {
             if let model = metadata.model {
-                facts.append((String(localized: "Model"), model))
+                facts.append((String(localized: "Model"), ImageModel(rawValue: model)?.displayName ?? model))
             }
             facts.append((String(localized: "Size"), "\(metadata.width) × \(metadata.height)"))
             if let quality = metadata.quality {

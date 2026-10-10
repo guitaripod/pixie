@@ -29,7 +29,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-DEMO_ART = os.path.join(ROOT, "..", "iOS", "Pixie", "Pixie", "Resources", "Assets.xcassets", "DemoArt")
+DEMO_ART = os.path.join(ROOT, "..", "iOS", "Pixie", "Pixie", "Resources", "DemoAssets.xcassets", "DemoArt")
 STRING_CATALOG = os.path.join(ROOT, "..", "iOS", "Pixie", "Pixie", "Resources", "Localizable.xcstrings")
 APP_LANGUAGE = {"de-DE": "de", "es-ES": "es", "es-MX": "es", "fr-FR": "fr", "it": "it", "ja": "ja", "ko": "ko",
                 "pl": "pl", "pt-BR": "pt-BR", "zh-Hans": "zh-Hans", "zh-Hant": "zh-Hant"}

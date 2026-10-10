@@ -340,7 +340,7 @@ class ChatGenerationViewController: UIViewController {
         #endif
         inputBar.setAvailableBalance(balance)
         guard let balance else {
-            topBar.setCredits(text: "", isLow: false, value: nil)
+            topBar.setCredits(text: "—", isLow: false, value: nil)
             return
         }
         let imageCost = estimatedCreditCost()

@@ -22,7 +22,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         }
         #endif
 
-        let splashViewController = UIViewController()
+        let splashViewController = SplashHostViewController()
         splashViewController.modalPresentationStyle = .fullScreen
         let splashView = SplashView(frame: windowScene.coordinateSpace.bounds)
         splashViewController.view = splashView
@@ -153,7 +153,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     @MainActor
     func restartAsNewUser() {
         guard let window else { return }
-        let splashViewController = UIViewController()
+        let splashViewController = SplashHostViewController()
         splashViewController.view = SplashView(frame: window.bounds)
         Motion.transition(with: window, duration: 0.3, options: .transitionCrossDissolve) {
             window.rootViewController = splashViewController
@@ -244,4 +244,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.backgroundColor = Theme.Color.canvas
         Theme.applyGlobalAppearance()
     }
+}
+
+final class SplashHostViewController: UIViewController {
+    override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
 }
