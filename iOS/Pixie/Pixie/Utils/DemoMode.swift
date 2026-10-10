@@ -26,6 +26,9 @@ enum DemoMode: String {
     case auth
     case launchfailure
     case splash
+    case generating
+    case cost
+    case notice
 
     static var current: DemoMode? {
         guard let raw = ProcessInfo.processInfo.environment["PX_DEMO"] else { return nil }
@@ -322,6 +325,36 @@ enum DemoRootBuilder {
             return split(DemoLaunch(scenario: .conversation(DemoChatBuilder.presetConversation(presetID: "headshot-pack", before: "demo_man", after: ["demo_pack_1", "demo_pack_2", "demo_pack_3", "demo_pack_4"]))))
         case .pet:
             return split(DemoLaunch(scenario: .conversation(DemoChatBuilder.presetConversation(presetID: "pet-portrait", before: "demo_dog", after: ["demo_royal_dog"]))))
+        case .generating:
+            let preset = EditPreset.preset(id: "restore")
+            let source = DemoMode.image("demo_oldphoto")
+            let request = ChatMessage(
+                id: "demo-generating",
+                text: preset?.title,
+                images: nil,
+                isUser: true,
+                timestamp: Date().addingTimeInterval(-6),
+                metadata: nil,
+                editingImage: source
+            )
+            return split(DemoLaunch(scenario: .conversation([request, ChatMessage(role: .loading)])))
+        case .notice:
+            let source = DemoMode.image("demo_selfie")
+            let request = ChatMessage(
+                id: "demo-notice",
+                text: String(localized: "Pro headshot"),
+                images: nil,
+                isUser: true,
+                timestamp: Date().addingTimeInterval(-6),
+                metadata: nil,
+                editingImage: source
+            )
+            let declined = ChatMessage(role: .assistant, content: String(localized: "The model declined to make this image."))
+            return split(DemoLaunch(scenario: .conversation([request, declined])))
+        case .cost:
+            return split(DemoLaunch(section: .credits) { _, navigation in
+                navigation.pushViewController(CostEstimatorViewController(viewModel: CreditsViewModel()), animated: false)
+            })
         case .refine:
             return split(DemoLaunch(scenario: .conversation(DemoChatBuilder.refineConversation())))
         case .store:
