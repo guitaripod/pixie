@@ -8,8 +8,7 @@ marketing/appstore-ipad/<locale>/, skipping entries with no capture; geometry sc
 
 Raw 1320x2868 captures live in marketing/raw/<locale>/<screen>.png (produced by marketing/shoot.sh,
 which launches the localized app in PX_DEMO mode on an iPhone 17 Pro Max simulator). Each entry in
-marketing/listing/<locale>.json names its screen, headline and subhead; the capture is set into a
-rounded device frame on the brand gradient and the captions are typeset above it.
+marketing/listing/<locale>.json names its screen, headline and subhead; the capture is set into the device's Apple bezel (rendered by the `frames` CLI, any device type) on the brand gradient and the captions are typeset above it.
 
 An entry with "panel": "beforeafter" needs no capture: it names a "before" and an "after" image from the
 app's DemoArt asset catalog (real outputs of the app's preset prompts) and a "tag", the preset's English
@@ -21,7 +20,9 @@ localized "before" and "after" badge words.
 import glob
 import json
 import os
+import subprocess
 import sys
+import tempfile
 import unicodedata
 
 import numpy as np
@@ -62,6 +63,7 @@ GLOW = (120, 70, 190)
 HEADLINE_COLOR = (255, 255, 255)
 SUBHEAD_COLOR = (200, 171, 239)
 FRAME_COLOR = (18, 14, 34)
+FRAME_BEZEL = "Black"
 
 SANS_PATH = "/System/Library/Fonts/SFNS.ttf"
 SANS_FALLBACK = "/System/Library/Fonts/HelveticaNeue.ttc"
@@ -230,28 +232,23 @@ def background():
     return Image.fromarray(np.clip(canvas, 0, 255).astype(np.uint8))
 
 
-def framed_phone(capture):
-    width = PHONE_RIGHT - PHONE_LEFT
-    height = round(capture.height * width / capture.width)
-    screen = capture.resize((width, height), Image.LANCZOS)
-    mask = Image.new("L", screen.size, 0)
-    ImageDraw.Draw(mask).rounded_rectangle((0, 0, width - 1, height - 1), PHONE_RADIUS, fill=255)
-    frame = Image.new("RGBA", (width + 2 * PHONE_BORDER, height + 2 * PHONE_BORDER), (0, 0, 0, 0))
-    ImageDraw.Draw(frame).rounded_rectangle(
-        (0, 0, frame.width - 1, frame.height - 1), PHONE_RADIUS + PHONE_BORDER, fill=FRAME_COLOR + (255,)
+def framed_phone(path):
+    """The capture inside Apple's own bezel for its device, rendered by the frames CLI and trimmed to the device."""
+    out_dir = tempfile.mkdtemp(prefix="frames-")
+    run = subprocess.run(
+        ["frames", "--json", "-o", out_dir, "-c", FRAME_BEZEL, path], check=True, capture_output=True, text=True
     )
-    frame.paste(screen, (PHONE_BORDER, PHONE_BORDER), mask)
-    return frame
+    framed = Image.open(json.loads(run.stdout)["output"]).convert("RGBA")
+    framed = framed.crop(framed.getchannel("A").getbbox())
+    width = PHONE_RIGHT - PHONE_LEFT + 2 * PHONE_BORDER
+    return framed.resize((width, round(framed.height * width / framed.width)), Image.LANCZOS)
 
 
 def paste_with_shadow(canvas, phone, xy):
     x, y = xy
-    shadow = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
-    ImageDraw.Draw(shadow).rounded_rectangle(
-        (x - 12, y - 4, x + phone.width + 12, y + phone.height + 40), PHONE_RADIUS + 12, fill=(0, 0, 0, 150)
-    )
-    shadow = shadow.filter(ImageFilter.GaussianBlur(34))
-    canvas.alpha_composite(shadow)
+    silhouette = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+    silhouette.paste((0, 0, 0, 150), (x, y + 18), phone.getchannel("A"))
+    canvas.alpha_composite(silhouette.filter(ImageFilter.GaussianBlur(34)))
     canvas.alpha_composite(phone, (x, y))
 
 
@@ -271,11 +268,12 @@ def caption_bottom(headline, subhead):
 
 
 def compose(entry, locale, fonts, phone_top):
-    capture = Image.open(raw_path(locale, entry["screen"])).convert("RGB")
-    assert capture.size == SIZE, f"{locale}/{entry['screen']}: unexpected capture size {capture.size}"
+    path = raw_path(locale, entry["screen"])
+    with Image.open(path) as capture:
+        assert capture.size == SIZE, f"{locale}/{entry['screen']}: unexpected capture size {capture.size}"
     canvas = background().convert("RGBA")
     draw_captions(canvas, entry, locale, fonts)
-    paste_with_shadow(canvas, framed_phone(capture), (PHONE_LEFT - PHONE_BORDER, phone_top))
+    paste_with_shadow(canvas, framed_phone(path), (PHONE_LEFT - PHONE_BORDER, phone_top))
     return canvas.crop((0, 0) + SIZE).convert("RGB")
 
 
