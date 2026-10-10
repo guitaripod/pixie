@@ -184,12 +184,44 @@ private class SelectableCard: UIControl {
         }
     }
 
+    var wrappingLabels: [(label: UILabel, inset: CGFloat, lines: Int)] = [] {
+        didSet { applyLineLimits() }
+    }
+
+    private func applyLineLimits() {
+        let unlimited = traitCollection.preferredContentSizeCategory.isAccessibilityCategory
+        for (label, _, lines) in wrappingLabels {
+            label.numberOfLines = unlimited ? 0 : lines
+        }
+    }
+
+    /// A label measured before its card has a width reports a height for a sliver-wide column, which
+    /// is what made a card or pill balloon when the panel showed or a model changed. Each label is told
+    /// the width it will really have and is capped to the lines it needs; accessibility text sizes
+    /// lift the cap so nothing is cut.
+    override func layoutSubviews() {
+        applyLineLimits()
+        for (label, inset, _) in wrappingLabels {
+            label.preferredMaxLayoutWidth = max(0, bounds.width - inset)
+        }
+        super.layoutSubviews()
+    }
+
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         applyState()
     }
 
     func selectionDidChange() {}
+
+    /// A card has no intrinsic height, so without a stated preference a spare point of panel height
+    /// would be shared out among the cards. Sitting just under a label's compression resistance, it
+    /// pulls the card down to its natural size yet never squeezes its text.
+    func prefersHeight(_ height: CGFloat) {
+        let preferred = heightAnchor.constraint(equalToConstant: height)
+        preferred.priority = UILayoutPriority(740)
+        preferred.isActive = true
+    }
 
     private func applyState() {
         backgroundColor = isSelected ? Theme.Color.accentSoft : Theme.Color.fill
@@ -247,6 +279,8 @@ private final class ModelCardView: SelectableCard {
             markView.centerXAnchor.constraint(equalTo: trailingAnchor, constant: -6),
             markView.centerYAnchor.constraint(equalTo: topAnchor, constant: 6),
         ])
+        prefersHeight(112)
+        wrappingLabels = [(nameLabel, 20, 2), (blurbLabel, 20, 3), (costLabel, 20, 1)]
         accessibilityLabel = model.displayName
         accessibilityValue = "\(model.composerBlurb), \(model.composerCostText)"
         selectionDidChange()
@@ -291,6 +325,8 @@ private final class QualityPillView: SelectableCard {
             stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
             heightAnchor.constraint(greaterThanOrEqualToConstant: 56),
         ])
+        prefersHeight(56)
+        wrappingLabels = [(titleLabel, 8, 1), (costLabel, 8, 1)]
         accessibilityLabel = title
         selectionDidChange()
     }
@@ -383,6 +419,8 @@ private final class SizeTileView: SelectableCard {
             stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -2),
             heightAnchor.constraint(greaterThanOrEqualToConstant: 76),
         ])
+        prefersHeight(76)
+        wrappingLabels = [(label, 4, 2)]
         accessibilityLabel = title
         selectionDidChange()
     }
@@ -462,6 +500,17 @@ extension ImageModel {
     }
 }
 
+/// Reports each layout pass, which is the moment its content has changed size: the panel itself
+/// is not laid out when only a group inside it appears or collapses.
+private final class LayoutReportingScrollView: UIScrollView {
+    var onLayout: (() -> Void)?
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        onLayout?()
+    }
+}
+
 final class ComposerOptionsPanel: UIView {
     enum Change {
         case model
@@ -480,7 +529,7 @@ final class ComposerOptionsPanel: UIView {
     private let surface = SurfaceView(style: .raised, cornerRadius: Theme.Radius.xl)
     private let grabberArea = UIView()
     private let grabber = UIView()
-    private let scrollView = UIScrollView()
+    private let scrollView = LayoutReportingScrollView()
     private let content = UIStackView()
     private let qualityPills: [QualityPillView]
     private let modelGroup: ChoiceGroup
@@ -498,6 +547,10 @@ final class ComposerOptionsPanel: UIView {
     private let compressionNote = UILabel()
     private let compressionSlider = PercentSlider()
     private var maxHeightConstraint: NSLayoutConstraint!
+    private lazy var fittedHeight = heightAnchor.constraint(equalToConstant: Self.grabberHeight)
+    private static let grabberHeight: CGFloat = 36
+    private static let contentTopInset = Theme.Space.xs
+    private static let contentBottomInset = Theme.Space.xl
     private var showsAdvanced = false
     private var isOpenAIVisible = false
     private var isEditMode = false
@@ -639,16 +692,17 @@ final class ComposerOptionsPanel: UIView {
         scrollView.showsVerticalScrollIndicator = false
         scrollView.alwaysBounceVertical = false
         scrollView.keyboardDismissMode = .interactive
+        scrollView.onLayout = { [weak self] in self?.refitHeight() }
         surface.contentView.addSubview(scrollView)
 
-        let fitContent = scrollView.heightAnchor.constraint(equalTo: scrollView.contentLayoutGuide.heightAnchor)
-        fitContent.priority = UILayoutPriority(750)
+        fittedHeight.priority = UILayoutPriority(999)
+        fittedHeight.isActive = true
 
         NSLayoutConstraint.activate([
             grabberArea.topAnchor.constraint(equalTo: surface.contentView.topAnchor),
             grabberArea.leadingAnchor.constraint(equalTo: surface.contentView.leadingAnchor),
             grabberArea.trailingAnchor.constraint(equalTo: surface.contentView.trailingAnchor),
-            grabberArea.heightAnchor.constraint(equalToConstant: 36),
+            grabberArea.heightAnchor.constraint(equalToConstant: Self.grabberHeight),
             grabber.centerXAnchor.constraint(equalTo: grabberArea.centerXAnchor),
             grabber.centerYAnchor.constraint(equalTo: grabberArea.centerYAnchor, constant: 2),
             grabber.widthAnchor.constraint(equalToConstant: 36),
@@ -657,7 +711,6 @@ final class ComposerOptionsPanel: UIView {
             scrollView.leadingAnchor.constraint(equalTo: surface.contentView.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: surface.contentView.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: surface.contentView.bottomAnchor),
-            fitContent,
         ])
     }
 
@@ -694,12 +747,34 @@ final class ComposerOptionsPanel: UIView {
 
         let inset = Theme.Space.lg
         NSLayoutConstraint.activate([
-            content.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: Theme.Space.xs),
-            content.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -Theme.Space.xl),
+            content.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: Self.contentTopInset),
+            content.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -Self.contentBottomInset),
             content.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor, constant: inset),
             content.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor, constant: -inset),
             content.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -inset * 2),
         ])
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        refitHeight()
+    }
+
+    /// The panel is exactly as tall as its content, or as tall as the screen allows with the rest
+    /// scrolling. Measuring the content once its cards have a width and have told their labels how
+    /// wide they are keeps the height from depending on which layout pass ran first.
+    private func refitHeight() {
+        let width = bounds.width - Theme.Space.lg * 2
+        guard width > 0 else { return }
+        let fitting = content.systemLayoutSizeFitting(
+            CGSize(width: width, height: UIView.layoutFittingCompressedSize.height),
+            withHorizontalFittingPriority: .required,
+            verticalFittingPriority: .fittingSizeLevel
+        ).height
+        let wanted = ceil(Self.grabberHeight + Self.contentTopInset + fitting + Self.contentBottomInset)
+        guard abs(fittedHeight.constant - wanted) > 0.5 else { return }
+        fittedHeight.constant = wanted
+        superview?.setNeedsLayout()
     }
 
     private func setupGestures() {

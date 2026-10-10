@@ -409,6 +409,7 @@ class ChatInputBar: UIView {
 
         let focusTap = UITapGestureRecognizer(target: self, action: #selector(focusPrompt))
         focusTap.cancelsTouchesInView = false
+        focusTap.delegate = self
         capsule.addGestureRecognizer(focusTap)
     }
 
@@ -747,6 +748,19 @@ class ChatInputBar: UIView {
             guard let self else { return }
             Announce.layoutChanged(expanded ? self.panel.firstFocusTarget : self.optionsButton)
         }
+    }
+}
+
+extension ChatInputBar: UIGestureRecognizerDelegate {
+    /// A tap on the options, attach or send button must only run that button: focusing the prompt as
+    /// well collapsed the options panel in the same tap that was meant to close or open it.
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        var view = touch.view
+        while let current = view, current !== capsule {
+            if current is UIControl { return false }
+            view = current.superview
+        }
+        return true
     }
 }
 

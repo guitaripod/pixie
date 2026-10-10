@@ -11,6 +11,9 @@ enum SuggestionsViewState {
 class FullScreenSuggestionsView: UIView {
     static let topBarClearance: CGFloat = 76
     static let composerClearance: CGFloat = 120
+    /// How far above the composer the last row rests so it clears the composer's soft edge, on top of
+    /// the composer itself. The home layout is judged without it, as the rows above are meant to dissolve into it.
+    static let composerFadeClearance: CGFloat = 56
     private static let sectionSpacing: CGFloat = 28
     private static let chipRowHeight: CGFloat = 44
 
@@ -220,7 +223,7 @@ class FullScreenSuggestionsView: UIView {
     }
     /// The scrollable band between the top bar and the composer; the home layout adapts to its height.
     private var visibleHeight: CGFloat {
-        bounds.height - collectionView.contentInset.top - collectionView.contentInset.bottom
+        bounds.height - collectionView.contentInset.top - max(0, collectionView.contentInset.bottom - Self.composerFadeClearance)
     }
     /// A short band (a folded display, landscape, a small phone) drops the Recent strip and tightens the
     /// hero so the Popular edits stay above the composer. Entering and leaving use different heights so a
@@ -249,7 +252,7 @@ class FullScreenSuggestionsView: UIView {
         let height = max(1, bounds.height)
         let start = min(1, safeAreaInsets.top / height)
         let end = min(1, (safeAreaInsets.top + 56) / height)
-        let bottomStart = min(1, max(end, (height - collectionView.contentInset.bottom - safeAreaInsets.bottom) / height))
+        let bottomStart = min(1, max(end, (height - collectionView.contentInset.bottom) / height))
         let bottomEnd = min(1, bottomStart + Self.bottomFadeLength / height)
         topFade.colors = [UIColor.clear.cgColor, UIColor.clear.cgColor, UIColor.black.cgColor, UIColor.black.cgColor, UIColor.clear.cgColor]
         topFade.locations = [0, NSNumber(value: Double(start)), NSNumber(value: Double(end)), NSNumber(value: Double(bottomStart)), NSNumber(value: Double(bottomEnd))]

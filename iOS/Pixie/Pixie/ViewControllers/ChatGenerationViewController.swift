@@ -329,17 +329,18 @@ class ChatGenerationViewController: UIViewController {
         composerWidthConstraint.constant = width
     }
 
-    /// The suggestions scroll under the top bar and the composer, so they need at least the
-    /// room both take; a larger inset the view sets for itself is left alone.
+    /// The suggestions scroll under the top bar and the composer. The bottom inset follows the composer
+    /// exactly, plus room for its soft edge, so the last row rests clear of it and the space is given
+    /// back when a keyboard or a taller capsule goes away.
     private func updateSuggestionsInsets() {
         guard inputBar.bounds.height > 0 else { return }
         let capsuleTop = inputBar.convert(inputBar.composerGuide.layoutFrame, to: view).minY
         let covered = view.bounds.height - capsuleTop
-        let bottom = max(covered - view.safeAreaInsets.bottom, 0)
+        let fade = FullScreenSuggestionsView.composerFadeClearance
+        chatView.composerClearance = max(covered - view.safeAreaInsets.bottom, 0) + fade
         var inset = suggestionsView.contentInset
         let top = max(inset.top, Self.suggestionsTopClearance)
-        let wanted = max(inset.bottom, bottom)
-        chatView.composerClearance = bottom + Theme.Space.lg
+        let wanted = covered + fade
         guard abs(inset.top - top) > 0.5 || abs(inset.bottom - wanted) > 0.5 else { return }
         inset.top = top
         inset.bottom = wanted
