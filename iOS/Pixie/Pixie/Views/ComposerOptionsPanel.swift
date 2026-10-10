@@ -547,6 +547,7 @@ final class ComposerOptionsPanel: UIView {
     private let compressionNote = UILabel()
     private let compressionSlider = PercentSlider()
     private var maxHeightConstraint: NSLayoutConstraint!
+    private var contentSizeObservation: NSKeyValueObservation?
     private lazy var fittedHeight = heightAnchor.constraint(equalToConstant: Self.grabberHeight)
     private static let grabberHeight: CGFloat = 36
     private static let contentTopInset = Theme.Space.xs
@@ -641,6 +642,7 @@ final class ComposerOptionsPanel: UIView {
     func setMaximumHeight(_ height: CGFloat) {
         guard abs(maxHeightConstraint.constant - height) > 0.5 else { return }
         maxHeightConstraint.constant = height
+        refitHeightWhenSettled()
     }
 
     func setQualityCosts(_ ranges: [ClosedRange<Int>]) {
@@ -663,10 +665,11 @@ final class ComposerOptionsPanel: UIView {
             self.layoutFromTopOfHierarchy()
         }
         if animated {
-            Motion.animate(0.3, animations: apply)
+            Motion.animate(0.3, animations: apply) { [weak self] _ in self?.refitHeightWhenSettled() }
         } else {
             apply()
         }
+        refitHeightWhenSettled()
     }
 
     func setEditMode(_ editMode: Bool) {
@@ -693,6 +696,7 @@ final class ComposerOptionsPanel: UIView {
         scrollView.alwaysBounceVertical = false
         scrollView.keyboardDismissMode = .interactive
         scrollView.onLayout = { [weak self] in self?.refitHeight() }
+        contentSizeObservation = scrollView.observe(\.contentSize) { [weak self] _, _ in self?.refitHeight() }
         surface.contentView.addSubview(scrollView)
 
         fittedHeight.priority = UILayoutPriority(999)
@@ -772,9 +776,19 @@ final class ComposerOptionsPanel: UIView {
             verticalFittingPriority: .fittingSizeLevel
         ).height
         let wanted = ceil(Self.grabberHeight + Self.contentTopInset + fitting + Self.contentBottomInset)
-        guard abs(fittedHeight.constant - wanted) > 0.5 else { return }
-        fittedHeight.constant = wanted
-        superview?.setNeedsLayout()
+        if abs(fittedHeight.constant - wanted) > 0.5 {
+            fittedHeight.constant = wanted
+            superview?.setNeedsLayout()
+        } else if !isHidden, abs(bounds.height - min(wanted, maxHeightConstraint.constant)) > 1 {
+            superview?.setNeedsLayout()
+        }
+    }
+
+    /// A panel that shows or hides groups can finish its animation without any layout pass seeing the
+    /// final content, so the height is measured again once the change has settled.
+    private func refitHeightWhenSettled() {
+        refitHeight()
+        DispatchQueue.main.async { [weak self] in self?.refitHeight() }
     }
 
     private func setupGestures() {
@@ -816,7 +830,7 @@ final class ComposerOptionsPanel: UIView {
             self.advancedContainer.alpha = self.showsAdvanced ? 1 : 0
             self.advancedContainer.isHidden = !self.showsAdvanced
             self.layoutFromTopOfHierarchy()
-        })
+        }) { [weak self] _ in self?.refitHeightWhenSettled() }
         onAdvancedToggled?(advancedRow)
     }
 
