@@ -16,7 +16,7 @@ class CostEstimatorViewController: UIViewController {
     private let noteLabel = UILabel()
 
     private let balanceBlock = UIStackView()
-    private let divider = UIView()
+    private let divider = HairlineView()
     private let amountSpacer = UIView()
     private let balanceLabel = UILabel()
     private let balanceAmountLabel = UILabel()
@@ -112,9 +112,6 @@ class CostEstimatorViewController: UIViewController {
 
         setupBalanceBlock()
 
-        divider.backgroundColor = Theme.Color.line
-        divider.translatesAutoresizingMaskIntoConstraints = false
-        divider.heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale).isActive = true
 
         let content = UIStackView(arrangedSubviews: [resultSummary, divider, balanceBlock])
         content.axis = .vertical

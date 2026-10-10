@@ -125,12 +125,9 @@ final class RowDivider: UIView {
         super.init(frame: .zero)
         translatesAutoresizingMaskIntoConstraints = false
         backgroundColor = .clear
-        let line = UIView()
-        line.backgroundColor = Theme.Color.line
-        line.translatesAutoresizingMaskIntoConstraints = false
+        let line = HairlineView()
         addSubview(line)
         NSLayoutConstraint.activate([
-            heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale),
             line.leadingAnchor.constraint(equalTo: leadingAnchor, constant: inset),
             line.trailingAnchor.constraint(equalTo: trailingAnchor),
             line.topAnchor.constraint(equalTo: topAnchor),

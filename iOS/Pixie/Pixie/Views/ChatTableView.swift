@@ -11,7 +11,7 @@ class ChatTableView: UIView {
         tv.backgroundColor = .clear
         tv.separatorStyle = .none
         tv.keyboardDismissMode = .interactive
-        tv.contentInsetAdjustmentBehavior = .never
+        tv.contentInsetAdjustmentBehavior = .never // duo-audit:ignore the view lays itself out from safeAreaInsets, the top bar and the composer
         tv.allowsSelection = false
         tv.estimatedRowHeight = 320
         tv.delegate = self

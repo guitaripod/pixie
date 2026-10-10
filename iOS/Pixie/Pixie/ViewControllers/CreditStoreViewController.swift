@@ -192,9 +192,7 @@ final class CreditStoreViewController: UIViewController {
     private lazy var bottomBar: UIVisualEffectView = {
         let bar = UIVisualEffectView(effect: UIBlurEffect(style: .systemChromeMaterial))
         bar.translatesAutoresizingMaskIntoConstraints = false
-        let hairline = UIView()
-        hairline.backgroundColor = Theme.Color.line
-        hairline.translatesAutoresizingMaskIntoConstraints = false
+        let hairline = HairlineView()
         bar.contentView.addSubview(hairline)
         let column = ColumnContainer(in: bar.contentView, maxWidth: Theme.Width.form, top: Theme.Space.md, bottom: 0)
         barColumn = column
@@ -209,7 +207,6 @@ final class CreditStoreViewController: UIViewController {
             hairline.topAnchor.constraint(equalTo: bar.contentView.topAnchor),
             hairline.leadingAnchor.constraint(equalTo: bar.contentView.leadingAnchor),
             hairline.trailingAnchor.constraint(equalTo: bar.contentView.trailingAnchor),
-            hairline.heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale),
         ])
         return bar
     }()

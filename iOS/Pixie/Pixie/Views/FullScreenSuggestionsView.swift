@@ -23,7 +23,7 @@ class FullScreenSuggestionsView: UIView {
         let layout = createLayout()
         let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
         cv.backgroundColor = .clear
-        cv.contentInsetAdjustmentBehavior = .never
+        cv.contentInsetAdjustmentBehavior = .never // duo-audit:ignore the view lays itself out from safeAreaInsets, the top bar and the composer
         cv.alwaysBounceVertical = true
         cv.delegate = self
         return cv

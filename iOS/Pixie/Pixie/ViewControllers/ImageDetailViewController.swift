@@ -113,7 +113,7 @@ final class ImageDetailViewController: UIViewController {
         stageScrollView.maximumZoomScale = 4.0
         stageScrollView.showsVerticalScrollIndicator = false
         stageScrollView.showsHorizontalScrollIndicator = false
-        stageScrollView.contentInsetAdjustmentBehavior = .never
+        stageScrollView.contentInsetAdjustmentBehavior = .never // duo-audit:ignore the view lays itself out from safeAreaInsets, the top bar and the composer
         stageScrollView.clipsToBounds = true
         stageScrollView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(stageScrollView)
@@ -150,7 +150,7 @@ final class ImageDetailViewController: UIViewController {
     private func setupSheet() {
         sheetScrollView.alwaysBounceVertical = true
         sheetScrollView.showsVerticalScrollIndicator = false
-        sheetScrollView.contentInsetAdjustmentBehavior = .never
+        sheetScrollView.contentInsetAdjustmentBehavior = .never // duo-audit:ignore the view lays itself out from safeAreaInsets, the top bar and the composer
         sheetScrollView.delegate = self
         sheetScrollView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(sheetScrollView)
