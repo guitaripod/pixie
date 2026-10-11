@@ -235,7 +235,8 @@ final class ChipView: UIControl {
 
 final class CreditPill: UIControl {
     private let iconView = UIImageView(image: UIImage(systemName: "sparkles"))
-    private let label = UILabel()
+    private let label = CountingLabel()
+    private var amountKind: String?
     private let stack = UIStackView()
     private let background = UIVisualEffectView(effect: GlassMaterial.effect(interactive: true))
 
@@ -255,6 +256,7 @@ final class CreditPill: UIControl {
         iconView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .subheadline, scale: .medium)
         iconView.setContentHuggingPriority(.required, for: .horizontal)
         label.apply(.numeral(16), color: Theme.Color.ink)
+        label.monospaceDigits()
         label.numberOfLines = 1
         stack.addArrangedSubview(iconView)
         stack.addArrangedSubview(label)
@@ -288,10 +290,38 @@ final class CreditPill: UIControl {
     }
 
     func configure(text: String, isLow: Bool, accessibilityLabel spoken: String, hint: String?) {
-        label.text = text
+        label.setValue(nil, placeholder: text, format: { _ in text }, animated: false)
+        applyAppearance(isLow: isLow, accessibilityLabel: spoken, hint: hint)
+    }
+
+    /// Shows a number that rolls to its new value, with a small pulse when it grows. `kind`
+    /// names what the number counts; when it changes the text is replaced instead of rolled.
+    func configure(amount: Int?, kind: String, format: @escaping (Int) -> String, isLow: Bool, accessibilityLabel spoken: String, hint: String?) {
+        let previous = label.value
+        let isVisible = window != nil
+        let sameKind = kind == amountKind
+        amountKind = kind
+        let update = { self.label.setValue(amount, format: format, animated: isVisible && sameKind) }
+        if isVisible, !sameKind, previous != nil {
+            Motion.transition(with: label, duration: 0.25, options: .transitionCrossDissolve, animations: update)
+        } else {
+            update()
+        }
+        applyAppearance(isLow: isLow, accessibilityLabel: spoken, hint: hint)
+        if isVisible, sameKind, let previous, let amount, amount > previous { pulse() }
+    }
+
+    private func applyAppearance(isLow: Bool, accessibilityLabel spoken: String, hint: String?) {
         iconView.image = UIImage(systemName: isLow ? "exclamationmark.circle.fill" : "sparkles")
         iconView.tintColor = isLow ? Theme.Color.warning : Theme.Color.accentText
         accessibilityLabel = spoken
         accessibilityHint = hint
+    }
+
+    private func pulse() {
+        guard !Motion.isReduced else { return }
+        Motion.spring(0.5, damping: 0.5, animations: { self.transform = CGAffineTransform(scaleX: 1.1, y: 1.1) }, completion: { _ in
+            Motion.spring(0.4, damping: 0.7, animations: { self.transform = .identity })
+        })
     }
 }

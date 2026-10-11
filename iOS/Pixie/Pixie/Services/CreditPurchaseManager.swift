@@ -48,7 +48,7 @@ class CreditPurchaseManager {
     
     private let revenueCatManager = RevenueCatManager.shared
     private let apiService: APIServiceProtocol
-    private let creditsViewModel: CreditsViewModel
+    private let balanceStore: CreditBalanceStore
     
     @Published private(set) var purchaseState: PurchaseState = .idle
     @Published private(set) var offerings: Offerings?
@@ -66,7 +66,7 @@ class CreditPurchaseManager {
     
     private init(apiService: APIServiceProtocol = APIService.shared) {
         self.apiService = apiService
-        self.creditsViewModel = CreditsViewModel(apiService: apiService)
+        self.balanceStore = .shared
         setupBindings()
     }
     
@@ -141,7 +141,8 @@ class CreditPurchaseManager {
             
             if response.success {
                 WelcomeCredits().markCreditsAdded()
-                await creditsViewModel.loadBalance()
+                balanceStore.apply(newBalance: response.newBalance)
+                Task { await balanceStore.refresh() }
                 
                 return .success(CreditPurchaseResult(
                     purchaseId: response.purchaseId,
@@ -150,10 +151,12 @@ class CreditPurchaseManager {
                     amountUsd: ""
                 ))
             } else {
+                Task { await balanceStore.refresh() }
                 return .failure(NSError(domain: "CreditPurchase", code: -1, userInfo: [NSLocalizedDescriptionKey: String(localized: "Purchase validation failed")]))
             }
         } catch {
             print("Error recording purchase: \(error)")
+            Task { await balanceStore.refresh() }
             return .failure(error)
         }
     }

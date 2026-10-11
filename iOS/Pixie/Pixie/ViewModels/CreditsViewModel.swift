@@ -4,10 +4,10 @@ import UIKit
 
 @MainActor
 class CreditsViewModel: ObservableObject {
-    @Published var balance: CreditBalance?
+    @Published private(set) var balance: CreditBalance?
     @Published var transactions: [CreditTransaction] = []
     @Published var creditPacks: [CreditPack] = []
-    @Published var isLoadingBalance = false
+    @Published private(set) var isLoadingBalance = false
     @Published var isLoadingTransactions = false
     @Published var isLoadingPacks = false
     @Published var errorMessage: String?
@@ -21,11 +21,14 @@ class CreditsViewModel: ObservableObject {
     static let lowBalanceThreshold = 50
 
     private let apiService: APIServiceProtocol
+    private let balanceStore: CreditBalanceStore
     private var cancellables = Set<AnyCancellable>()
     private var transactionsPage = 1
     
-    init(apiService: APIServiceProtocol = APIService.shared) {
+    init(apiService: APIServiceProtocol = APIService.shared, balanceStore: CreditBalanceStore? = nil) {
         self.apiService = apiService
+        self.balanceStore = balanceStore ?? .shared
+        mirrorBalanceStore()
     }
     
     func refresh() {
@@ -37,38 +40,28 @@ class CreditsViewModel: ObservableObject {
     }
     
     func loadBalance() async {
-        isLoadingBalance = true
         errorMessage = nil
-
-        #if DEBUG
-        if DemoMode.isActive {
-            balance = CreditBalance(balance: DemoContent.balance, currency: "credits")
-            balanceUpdatedAt = Date()
-            isLoadingBalance = false
-            return
-        }
-        if let raw = ProcessInfo.processInfo.environment["PX_FAKE_BALANCE"], let fake = Int(raw) {
-            balance = CreditBalance(balance: fake, currency: "credits")
-            balanceUpdatedAt = Date()
-            isLoadingBalance = false
-            return
-        }
-        #endif
-
-        do {
-            let balance = try await apiService.getCreditBalance()
-            self.balance = balance
-            self.balanceUpdatedAt = Date()
-            self.balanceErrorMessage = nil
-            self.lowCreditWarning = balance.balance < Self.lowBalanceThreshold
-        } catch {
-            self.errorMessage = error.localizedDescription
-            self.balanceErrorMessage = error.localizedDescription
-        }
-        
-        isLoadingBalance = false
+        await balanceStore.refresh()
     }
-    
+
+    private func mirrorBalanceStore() {
+        balanceStore.$balance
+            .sink { [weak self] balance in
+                self?.balance = balance
+                if let balance { self?.lowCreditWarning = balance.balance < Self.lowBalanceThreshold }
+            }
+            .store(in: &cancellables)
+        balanceStore.$isLoading
+            .sink { [weak self] in self?.isLoadingBalance = $0 }
+            .store(in: &cancellables)
+        balanceStore.$errorMessage
+            .sink { [weak self] in self?.balanceErrorMessage = $0 }
+            .store(in: &cancellables)
+        balanceStore.$updatedAt
+            .sink { [weak self] in self?.balanceUpdatedAt = $0 }
+            .store(in: &cancellables)
+    }
+
     func loadTransactions(limit: Int = 20) async {
         isLoadingTransactions = true
         errorMessage = nil

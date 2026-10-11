@@ -170,6 +170,11 @@ final class ChatTopBar: UIView {
         creditPill.accessibilityValue = value
     }
 
+    func setCredits(amount: Int?, kind: String, format: @escaping (Int) -> String, isLow: Bool, value: String?) {
+        creditPill.configure(amount: amount, kind: kind, format: format, isLow: isLow, accessibilityLabel: String(localized: "Credits"), hint: String(localized: "Opens the credit store"))
+        creditPill.accessibilityValue = value
+    }
+
     func setShowsAdminBadge(_ isAdmin: Bool) {
         settingsButton.showsBadge = isAdmin
         settingsButton.accessibilityValue = isAdmin ? String(localized: "Admin") : nil

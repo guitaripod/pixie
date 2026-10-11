@@ -352,7 +352,9 @@ final class CreditStoreViewController: UIViewController {
     private func showBalance(_ balance: Int) {
         balancePill.isHidden = false
         balancePill.configure(
-            text: "\(NumberFormatter.localizedString(from: NSNumber(value: balance), number: .decimal)) \(String(localized: "credits"))",
+            amount: balance,
+            kind: "credits",
+            format: { "\(NumberFormatter.localizedString(from: NSNumber(value: $0), number: .decimal)) \(String(localized: "credits"))" },
             isLow: balance < CreditsViewModel.lowBalanceThreshold,
             accessibilityLabel: String(localized: "Current balance: \(balance) credits"),
             hint: nil

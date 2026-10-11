@@ -374,18 +374,26 @@ class ChatGenerationViewController: UIViewController {
         #endif
         inputBar.setAvailableBalance(balance)
         guard let balance else {
-            topBar.setCredits(text: "—", isLow: false, value: nil)
+            topBar.setCredits(amount: nil, kind: "credits", format: Self.formattedCredits, isLow: false, value: nil)
             return
         }
         let imageCost = estimatedCreditCost()
         let isLow = balance < imageCost
         let freeImages = WelcomeCredits().isOnWelcomeGrant(balance: balance)
             ? WelcomeCredits.freeImages(balance: balance, imageCost: imageCost) : nil
-        let title = freeImages.map { String(localized: "\($0) free") }
-            ?? NumberFormatter.localizedString(from: NSNumber(value: balance), number: .decimal)
         let spoken = freeImages.map { String(localized: "\($0) free images left") }
             ?? String(localized: "\(balance) credits")
-        topBar.setCredits(text: title, isLow: isLow, value: isLow ? "\(spoken), \(String(localized: "Not enough credits"))" : spoken)
+        topBar.setCredits(
+            amount: freeImages ?? balance,
+            kind: freeImages == nil ? "credits" : "free",
+            format: freeImages == nil ? Self.formattedCredits : { String(localized: "\($0) free") },
+            isLow: isLow,
+            value: isLow ? "\(spoken), \(String(localized: "Not enough credits"))" : spoken
+        )
+    }
+
+    private static func formattedCredits(_ amount: Int) -> String {
+        NumberFormatter.localizedString(from: NSNumber(value: amount), number: .decimal)
     }
 
     private func refreshBalanceChip() {

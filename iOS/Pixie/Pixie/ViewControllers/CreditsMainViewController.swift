@@ -214,7 +214,7 @@ class CreditsMainViewController: UIViewController {
         let isLoadingFirstBalance = viewModel.isLoadingBalance && balance == nil
 
         hero.setLoading(isLoadingFirstBalance)
-        hero.amountText = balance.map { Self.formatted($0.balance) } ?? "–"
+        hero.setAmount(balance?.balance, animated: isViewLoaded && view.window != nil)
         updateStatusLines(for: balance)
         updateFreshness()
         updateErrorBanner()
@@ -381,7 +381,7 @@ private final class BalanceHeroView: UIView {
     private let captionLabel = UILabel()
     private let amountRow = UIStackView()
     private let amountSpacer = UIView()
-    private let amountLabel = UILabel()
+    private let amountLabel = CountingLabel()
     private let creditsLabel = UILabel()
     private let imagesLabel = UILabel()
     private let freePill = StatusPill(solid: false)
@@ -390,8 +390,12 @@ private final class BalanceHeroView: UIView {
     private let summaryStack = UIStackView()
     private let skeleton = UIStackView()
 
-    var amountText = "–" {
-        didSet { amountLabel.text = amountText }
+    func setAmount(_ amount: Int?, animated: Bool) {
+        amountLabel.setValue(amount, placeholder: "–", format: BalanceHeroView.format, animated: animated)
+    }
+
+    private static func format(_ amount: Int) -> String {
+        NumberFormatter.localizedString(from: NSNumber(value: amount), number: .decimal)
     }
 
     var imagesText: String? {
@@ -522,7 +526,7 @@ private final class BalanceHeroView: UIView {
         amountLabel.numberOfLines = 1
         amountLabel.adjustsFontSizeToFitWidth = true
         amountLabel.minimumScaleFactor = 0.5
-        amountLabel.text = amountText
+        amountLabel.monospaceDigits()
         amountLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
 
         creditsLabel.apply(.title2, color: UIColor(white: 1, alpha: 0.80))
