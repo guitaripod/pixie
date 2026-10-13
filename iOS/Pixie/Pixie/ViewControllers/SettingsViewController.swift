@@ -136,6 +136,7 @@ class SettingsViewController: UIViewController {
         column.removeAllContent()
         signInButton = nil
 
+        column.stack.addArrangedSubview(makeMidgarEntry())
         column.stack.addArrangedSubview(makeAccountSection())
         column.stack.addArrangedSubview(makeAppearanceSection())
         column.stack.addArrangedSubview(makeDefaultsSection())
@@ -171,6 +172,12 @@ class SettingsViewController: UIViewController {
         card.contentView.addSubview(stack)
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.pinEdges(to: card.contentView, insets: UIEdgeInsets(top: padding, left: padding, bottom: padding, right: padding))
+    }
+
+    private func makeMidgarEntry() -> UIView {
+        let entry = MidgarEntryView()
+        entry.heightAnchor.constraint(equalToConstant: MidgarEntryView.preferredHeight).isActive = true
+        return entry
     }
 
     private func makeAccountSection() -> UIView {
@@ -409,13 +416,7 @@ class SettingsViewController: UIViewController {
         let contact = ListRowView(title: String(localized: "Contact"), subtitle: String(localized: "@guitaripod on X"), symbol: "bubble.left.fill", showsChevron: true)
         contact.onTap = { [weak self] in self?.openSupport() }
 
-        let moreApps = ListRowView(title: String(localized: "More Apps"), subtitle: String(localized: "Other apps by this developer"), symbol: "square.grid.2x2.fill", showsChevron: true)
-        moreApps.onTap = { [weak self] in
-            guard let self else { return }
-            Midgar.present(from: self)
-        }
-
-        var rows: [UIView] = [help, contact, moreApps]
+        var rows: [UIView] = [help, contact]
         if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
            let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
             rows.append(ListRowView(title: String(localized: "Version"), value: "\(version) (\(build))", symbol: "info.circle.fill"))

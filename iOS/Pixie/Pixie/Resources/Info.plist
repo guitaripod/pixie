@@ -7,6 +7,8 @@
 		<string>com.guitaripod.pixie.refresh</string>
 		<string>com.guitaripod.pixie.processing</string>
 	</array>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -15,6 +17,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>pixie</string>
+				<string>com.guitaripod.pixie</string>
 			</array>
 		</dict>
 		<dict>
@@ -28,6 +31,25 @@
 	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>com.guitaripod.embr</string>
+		<string>com.guitaripod.helia</string>
+		<string>com.guitaripod.payday</string>
+		<string>com.guitaripod.pixie</string>
+		<string>com.guitaripod.psybeam</string>
+		<string>com.guitaripod.tailscode</string>
+		<string>com.marcusziade.aotd</string>
+		<string>com.marcusziade.doublekick</string>
+		<string>com.marcusziade.dreameater</string>
+		<string>com.marcusziade.inventory</string>
+		<string>com.marcusziade.knowtheflag</string>
+		<string>com.marcusziade.psywave</string>
+		<string>com.marcusziade.sforesight</string>
+		<string>com.marcusziade.solarbeam</string>
+		<string>com.midgarcorp.flaccy</string>
+		<string>com.midgarcorp.flaccy.mac</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/guitaripod/MidgarKit",
       "state" : {
-        "revision" : "f7aa628844885b658cbcbdb5de0747f2727be8d6",
-        "version" : "2.1.0"
+        "branch" : "portal-3.0",
+        "revision" : "e5a2a908f5928efba7fd27150229c4fa110cdbc1"
       }
     },
     {
