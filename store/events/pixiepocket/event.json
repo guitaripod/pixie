@@ -1,0 +1,86 @@
+{
+  "referenceName": "Halloween Costume Edit — Oct 2026",
+  "badge": "SPECIAL_EVENT",
+  "purpose": "ATTRACT_NEW_USERS",
+  "priority": "HIGH",
+  "primaryLocale": "en-US",
+  "deepLink": "pixie://preset/halloween",
+  "purchaseRequirement": "NO_COST_ASSOCIATED",
+  "schedule": {
+    "publishStart": "2026-09-30T09:00:00Z",
+    "eventStart": "2026-10-03T00:00:00Z",
+    "eventEnd": "2026-10-31T23:00:00Z"
+  },
+  "localizations": {
+    "de-DE": {
+      "name": "Dein Halloween-Kostüm",
+      "shortDescription": "Aus jedem Selfie ein gruseliges Kostüm-Porträt.",
+      "longDescription": "Den ganzen Oktober: Foto wählen, auf Halloween-Kostüm tippen – Nano Banana macht dich zu Vampir, Hexe oder Skelett."
+    },
+    "en-AU": {
+      "name": "Your Halloween Costume",
+      "shortDescription": "Turn any selfie into a spooky fancy-dress snap.",
+      "longDescription": "All October: pick a photo, tap Halloween costume, and Nano Banana dresses you up as a vampire, witch or skeleton."
+    },
+    "en-GB": {
+      "name": "Your Halloween Costume",
+      "shortDescription": "Turn any selfie into a spooky fancy-dress photo.",
+      "longDescription": "All October: pick a photo, tap Halloween costume, and Nano Banana dresses you up as a vampire, witch or skeleton."
+    },
+    "en-US": {
+      "name": "Your Halloween Costume",
+      "shortDescription": "Turn any selfie into a spooky costume portrait.",
+      "longDescription": "All October: pick a photo, tap Halloween costume, and Nano Banana dresses you up as a vampire, witch or skeleton."
+    },
+    "es-ES": {
+      "name": "Tu disfraz de Halloween",
+      "shortDescription": "Convierte cualquier selfie en un disfraz de miedo.",
+      "longDescription": "Todo octubre: elige una foto, toca Disfraz de Halloween y Nano Banana te viste de vampiro, bruja o esqueleto."
+    },
+    "es-MX": {
+      "name": "Tu disfraz de Halloween",
+      "shortDescription": "Convierte tu selfie en un disfraz que da miedo.",
+      "longDescription": "Todo octubre: elige una foto, toca Disfraz de Halloween y Nano Banana te viste de vampiro, bruja o esqueleto."
+    },
+    "fr-FR": {
+      "name": "Votre costume d'Halloween",
+      "shortDescription": "Transformez un selfie en portrait effrayant.",
+      "longDescription": "En octobre, touchez Costume d'Halloween sur une photo : Nano Banana vous déguise en vampire, sorcière ou squelette."
+    },
+    "it": {
+      "name": "Il tuo costume di Halloween",
+      "shortDescription": "Trasforma un selfie in un costume da paura.",
+      "longDescription": "Tutto ottobre: scegli una foto, tocca Costume di Halloween e Nano Banana ti veste da vampiro, strega o scheletro."
+    },
+    "ja": {
+      "name": "あなたのハロウィン仮装",
+      "shortDescription": "自撮りが一瞬でゾクッとするコスチューム写真に。",
+      "longDescription": "10月限定：写真を選んでハロウィン仮装をタップ。Nano Bananaがヴァンパイアや魔女、骸骨に変身させます。"
+    },
+    "ko": {
+      "name": "나만의 할로윈 코스튬",
+      "shortDescription": "셀카 한 장이 오싹한 코스튬 초상화로 변신.",
+      "longDescription": "10월 한 달 내내: 사진을 고르고 할로윈 코스튬을 탭하면 Nano Banana가 뱀파이어, 마녀, 해골로 변신시켜 드려요."
+    },
+    "pl": {
+      "name": "Twój strój na Halloween",
+      "shortDescription": "Zamień selfie w mroczny portret w przebraniu.",
+      "longDescription": "Październik: wybierz zdjęcie i dotknij Strój na Halloween — Nano Banana zmieni cię w wampira, czarownicę lub szkielet."
+    },
+    "pt-BR": {
+      "name": "Sua fantasia de Halloween",
+      "shortDescription": "Transforme uma selfie em retrato assustador.",
+      "longDescription": "Em outubro: escolha uma foto, toque em Fantasia de Halloween e o Nano Banana te veste de vampiro, bruxa ou esqueleto."
+    },
+    "zh-Hans": {
+      "name": "你的万圣节装扮",
+      "shortDescription": "一张自拍秒变惊悚万圣节装扮照。",
+      "longDescription": "整个十月：选一张照片，点万圣节装扮，Nano Banana就把你变成吸血鬼、女巫或骷髅。"
+    },
+    "zh-Hant": {
+      "name": "你的萬聖節裝扮",
+      "shortDescription": "一張自拍秒變驚悚萬聖節裝扮照。",
+      "longDescription": "整個十月：選一張照片，點萬聖節裝扮，Nano Banana就把你變成吸血鬼、女巫或骷髏。"
+    }
+  }
+}

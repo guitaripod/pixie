@@ -1,0 +1,86 @@
+{
+  "referenceName": "Made for iPhone Duo — Oct 2026",
+  "badge": "MAJOR_UPDATE",
+  "purpose": "ATTRACT_NEW_USERS",
+  "priority": "HIGH",
+  "primaryLocale": "en-US",
+  "deepLink": "pixie://preset/restore",
+  "purchaseRequirement": "NO_COST_ASSOCIATED",
+  "schedule": {
+    "publishStart": "2026-10-16T09:00:00Z",
+    "eventStart": "2026-10-23T00:00:00Z",
+    "eventEnd": "2026-11-22T23:00:00Z"
+  },
+  "localizations": {
+    "de-DE": {
+      "name": "Für iPhone Duo gemacht",
+      "shortDescription": "Bearbeite Fotos auf dem großen inneren Display.",
+      "longDescription": "Foto wählen, eine Ein-Tipp-Bearbeitung tippen und sieh es den Bildschirm füllen mit Seitenleiste und Galerie daneben."
+    },
+    "en-AU": {
+      "name": "Made for iPhone Duo",
+      "shortDescription": "Edit photos across the whole inner display.",
+      "longDescription": "Pick a photo, tap a one-tap edit and see it fill the big screen, with your sidebar and gallery right beside it."
+    },
+    "en-GB": {
+      "name": "Made for iPhone Duo",
+      "shortDescription": "Edit photos across the whole inner display.",
+      "longDescription": "Pick a photo, tap a one-tap edit and see it fill the big screen, with your sidebar and gallery right beside it."
+    },
+    "en-US": {
+      "name": "Made for iPhone Duo",
+      "shortDescription": "Edit photos across the whole inner display.",
+      "longDescription": "Pick a photo, tap a one-tap edit and see it fill the big screen, with your sidebar and gallery right beside it."
+    },
+    "es-ES": {
+      "name": "Hecho para iPhone Duo",
+      "shortDescription": "Edita fotos en toda la pantalla interior.",
+      "longDescription": "Elige foto, toca una edición de un toque, llena la pantalla grande con barra lateral y galería al lado."
+    },
+    "es-MX": {
+      "name": "Hecho para iPhone Duo",
+      "shortDescription": "Edita fotos en toda la pantalla interior.",
+      "longDescription": "Elige una foto, toca edición de un toque y mira cómo llena la pantalla grande con barra lateral y galería al lado."
+    },
+    "fr-FR": {
+      "name": "Conçu pour iPhone Duo",
+      "shortDescription": "Retouchez des photos sur tout l'écran intérieur.",
+      "longDescription": "Choisissez une photo, appuyez sur une retouche rapide et regardez-la remplir l'écran avec barre latérale et galerie."
+    },
+    "it": {
+      "name": "Progettato per iPhone Duo",
+      "shortDescription": "Modifica le foto su tutto lo schermo interno.",
+      "longDescription": "Scegli una foto, tocca una modifica rapida e guardala riempire lo schermo con barra laterale e galleria accanto."
+    },
+    "ja": {
+      "name": "iPhone Duo用に最適化",
+      "shortDescription": "写真を内側ディスプレイ全体で編集。",
+      "longDescription": "写真を選んでワンタップ編集をタップするとビッグスクリーンに映り、サイドバーとギャラリーが横に並びます。"
+    },
+    "ko": {
+      "name": "iPhone Duo를 위해 제작",
+      "shortDescription": "내부 디스플레이 전체에서 사진 편집.",
+      "longDescription": "사진을 고르고 원탭 편집을 누르면 큰 화면에 가득 차며, 사이드바와 갤러리가 옆에 있습니다."
+    },
+    "pl": {
+      "name": "Stworzone dla iPhone Duo",
+      "shortDescription": "Edytuj zdjęcia na całym wewnętrznym ekranie.",
+      "longDescription": "Wybierz zdjęcie, dotknij edycji jednym tapem, jej duży ekran wypełni się z paskiem bocznym i galerią obok."
+    },
+    "pt-BR": {
+      "name": "Feito para iPhone Duo",
+      "shortDescription": "Edite fotos em toda a tela interna.",
+      "longDescription": "Escolha uma foto, toque em uma edição rápida e veja-a preencher a tela grande com barra lateral e galeria ao lado."
+    },
+    "zh-Hans": {
+      "name": "为 iPhone Duo 而生",
+      "shortDescription": "在内屏全面编辑照片。",
+      "longDescription": "选照片，点一键编辑，在大屏幕上完整显示，侧边栏和相库就在旁边。"
+    },
+    "zh-Hant": {
+      "name": "為 iPhone Duo 而生",
+      "shortDescription": "在內屏全面編輯照片。",
+      "longDescription": "選照片，點一鍵編輯，在大螢幕上完整顯示，側邊欄和相庫就在旁邊。"
+    }
+  }
+}
