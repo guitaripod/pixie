@@ -39,7 +39,7 @@ cd android && ./gradlew compileDebugSources
 
 ## Midgar platform (iOS)
 
-- MidgarKit is pinned by URL at `exactVersion` 4.3.1 and AICredits at 1.7.0 in `Pixie.xcodeproj`. The app targets build in Swift 6 with complete strict concurrency and MainActor default isolation; model records, `GalleryCache`, `CacheManager`'s file helpers and the notification delegate are `nonisolated`.
+- MidgarKit and AICredits come from the monorepo's `packages/` by path (local package references in `Pixie.xcodeproj`, decision D15). The app targets build in Swift 6 with complete strict concurrency and MainActor default isolation; model records, `GalleryCache`, `CacheManager`'s file helpers and the notification delegate are `nonisolated`.
 - `Services/PixieMidgar.swift` is the composition root: Midgar ID (keychain group `cc.midgarcorp.shared` after the app's own group, no App Attest entitlement), the gateway client for the portal, signals and `MidgarStore` in `Mode.readOnly`, because RevenueCat still buys and finishes every credit pack (registry engine `rc-full`).
 - Every mako call goes to `https://api.midgarcorp.cc/v1/intelligence` with `X-App-ID: pixiepocket` and `X-Midgar-Token` when the identity answers within 2 seconds (`NetworkService` takes the headers from `PixieMidgar.midgarTokenHeaders()`). AICredits keeps its tenant id `pixie` (`PixieMidgar.creditsAppID`) because its keychain item is `aicredits.pixie`; renaming it would strand every anonymous account. Generated image URLs still come from mako as `openai-image-proxy.guitaripod.workers.dev/r2/...`, the one direct host in the registry's `network_exceptions`.
 - Logging is `MidgarLog` (file `Library/Logs/pixie.log`, categories in `Utils/LogCategories.swift`). Never log prompts, tokens or email addresses.
