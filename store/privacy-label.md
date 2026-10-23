@@ -17,6 +17,7 @@ This replaces whatever label the app carried before, which predates the Midgar I
 | Contact Info, Name | Yes | No | App Functionality | Only when the person signs in with Apple, Google or GitHub: the name the provider shares, stored on the mako account. |
 | Contact Info, Email Address | Yes | No | App Functionality | Only when the person signs in with Apple, Google or GitHub: the address the provider shares (Apple may share a private relay address), stored on the mako account. |
 | Identifiers, User ID | Yes | No | App Functionality | The anonymous mako account id and API key that hold the credit balance and gallery, the random Midgar ID, and the RevenueCat app user id, which is the mako account id. |
+| Identifiers, Device ID | Yes | No | App Functionality | The app reads no advertising identifier and no vendor identifier and sends no attribution token (AICredits' ad attribution is never started). MidgarKit's App Attest key id, per app and per device, stored with the Midgar ID when the ID is created or joined. App Store and TestFlight builds use App Attest's production environment whether or not the app has the App Attest entitlement (Apple, App Attest Environment entitlement), so released builds create it. |
 | Purchases, Purchase History | Yes | No | App Functionality | The App Store transactions of credit packs. RevenueCat verifies them and mako records them against the account. |
 | Photos or Videos | Yes | No | App Functionality | The photos a person attaches for editing, sent to mako and on to Google Gemini or OpenAI (mako keeps no copy), and every image the app generates or edits, which mako stores in the person's private gallery until they delete it or the account. |
 | User Content, Other User Content | Yes | No | App Functionality | The text of every prompt, which mako keeps in its usage record of the request. |
@@ -27,7 +28,6 @@ Everything else is "Data Not Collected".
 ## Data types answered "not collected", and why
 
 - Contacts, Browsing History, Search History, Sensitive Info, Financial Info, Health & Fitness, Location: none. The photo picker hands over only the photos a person chooses; the recent-photos strip is read on the device and only a photo the person taps leaves it.
-- Identifiers, Device ID: the app reads no advertising identifier and no vendor identifier and sends no attribution token (AICredits' ad attribution is never started). This release ships without the App Attest entitlement, so MidgarKit creates no key id yet; once it is enabled, the key id is per app and per device and is used only to prove the app is genuine when the Midgar ID is created or joined. If App Review reads it as a Device ID, the fallback is Device ID, App Functionality, linked.
 - Diagnostics: the session log (`Library/Logs/pixie.log`) stays on the device. MetricKit is not collected.
 - Other Data: none.
 
