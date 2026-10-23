@@ -1,6 +1,6 @@
 import Foundation
 
-struct GenerationOptions {
+nonisolated struct GenerationOptions {
     var prompt: String
     var model: String
     var quantity: Int

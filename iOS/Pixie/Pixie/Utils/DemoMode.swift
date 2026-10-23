@@ -1,7 +1,7 @@
 #if DEBUG
 import UIKit
 
-enum DemoMode: String {
+nonisolated enum DemoMode: String {
     case gallery
     case edit
     case create

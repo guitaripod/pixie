@@ -15,20 +15,33 @@ extension ChatGenerationViewController: UIGestureRecognizerDelegate {
 
 
 extension ChatGenerationViewController: PHPickerViewControllerDelegate {
+    /// Loads the picked photo off the main actor, because the item provider answers on a queue of its own.
+    private nonisolated static func loadImage(from provider: NSItemProvider) async throws -> UIImage {
+        try await withCheckedThrowingContinuation { continuation in
+            provider.loadObject(ofClass: UIImage.self) { object, error in
+                if let image = object as? UIImage {
+                    continuation.resume(returning: image)
+                } else {
+                    continuation.resume(throwing: error ?? CocoaError(.fileReadCorruptFile))
+                }
+            }
+        }
+    }
+
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
         picker.dismiss(animated: true)
         guard let result = results.first else {
             pendingPreset = nil
             return
         }
-        result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
-            DispatchQueue.main.async {
-                guard let image = image as? UIImage else {
-                    self?.pendingPreset = nil
-                    MidgarLog.error("Picked photo could not be loaded: \(error?.localizedDescription ?? "no image")", category: .ui)
-                    return
-                }
+        let provider = result.itemProvider
+        Task { [weak self] in
+            do {
+                let image = try await Self.loadImage(from: provider)
                 self?.photoPicked(image)
+            } catch {
+                self?.pendingPreset = nil
+                MidgarLog.error("Picked photo could not be loaded: \(error.localizedDescription)", category: .ui)
             }
         }
     }

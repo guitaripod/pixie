@@ -696,7 +696,9 @@ final class ComposerOptionsPanel: UIView {
         scrollView.alwaysBounceVertical = false
         scrollView.keyboardDismissMode = .interactive
         scrollView.onLayout = { [weak self] in self?.refitHeight() }
-        contentSizeObservation = scrollView.observe(\.contentSize) { [weak self] _, _ in self?.refitHeight() }
+        contentSizeObservation = scrollView.observe(\.contentSize) { [weak self] _, _ in
+            MainActor.assumeIsolated { self?.refitHeight() }
+        }
         surface.contentView.addSubview(scrollView)
 
         fittedHeight.priority = UILayoutPriority(999)

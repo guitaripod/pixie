@@ -1,4 +1,4 @@
-import ActivityKit
+@preconcurrency import ActivityKit
 import UIKit
 import UserNotifications
 import MidgarCore

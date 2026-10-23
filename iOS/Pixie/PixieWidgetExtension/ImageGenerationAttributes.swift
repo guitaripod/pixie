@@ -1,9 +1,9 @@
 import ActivityKit
 import Foundation
 
-public struct ImageGenerationAttributes: ActivityAttributes {
-    public struct ContentState: Codable, Hashable {
-        public enum Phase: String, Codable, Hashable {
+public nonisolated struct ImageGenerationAttributes: ActivityAttributes {
+    public nonisolated struct ContentState: Codable, Hashable, Sendable {
+        public nonisolated enum Phase: String, Codable, Hashable, Sendable {
             case working
             case ready
             case failed

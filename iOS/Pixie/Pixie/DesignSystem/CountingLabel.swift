@@ -16,7 +16,7 @@ final class CountingLabel: UILabel {
     private var startTime: CFTimeInterval = 0
     private var duration: TimeInterval = 0
 
-    deinit { link?.invalidate() }
+    isolated deinit { link?.invalidate() }
 
     /// Shows `newValue`, counting from what is on screen when `animated` and motion is allowed.
     /// A first value counts up from zero; `nil` stops any count and shows `placeholder`.

@@ -1,6 +1,6 @@
 import Foundation
 
-struct UsageResponse: Codable {
+nonisolated struct UsageResponse: Codable {
     let userId: String
     let totalRequests: Int64
     let totalTokens: Int64
@@ -8,7 +8,7 @@ struct UsageResponse: Codable {
     let periodStart: String
     let periodEnd: String
     
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case userId = "user_id"
         case totalRequests = "total_requests"
         case totalTokens = "total_tokens"
@@ -18,13 +18,13 @@ struct UsageResponse: Codable {
     }
 }
 
-struct UsageDetailsResponse: Codable {
+nonisolated struct UsageDetailsResponse: Codable {
     let userId: String
     let periodStart: String
     let periodEnd: String
     let dailyUsage: [DailyUsage]
     
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case userId = "user_id"
         case periodStart = "period_start"
         case periodEnd = "period_end"
@@ -32,7 +32,7 @@ struct UsageDetailsResponse: Codable {
     }
 }
 
-struct DailyUsage: Codable {
+nonisolated struct DailyUsage: Codable {
     let date: String
     let requests: Int64
     let tokens: Int64

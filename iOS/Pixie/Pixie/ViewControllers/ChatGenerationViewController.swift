@@ -6,7 +6,7 @@ import UniformTypeIdentifiers
 import MidgarCore
 
 class ChatGenerationViewController: UIViewController {
-    enum ViewState {
+    nonisolated enum ViewState {
         case suggestions
         case chat
     }
@@ -195,7 +195,7 @@ class ChatGenerationViewController: UIViewController {
     }
     #endif
     
-    deinit {
+    isolated deinit {
         NotificationCenter.default.removeObserver(self)
         if let observer = notificationObserver {
             NotificationCenter.default.removeObserver(observer)
@@ -542,7 +542,7 @@ class ChatGenerationViewController: UIViewController {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.consumePresetLink()
+            MainActor.assumeIsolated { self?.consumePresetLink() }
         }
         notificationObserver = NotificationCenter.default.addObserver(
             forName: .openChatFromNotification,
@@ -550,10 +550,9 @@ class ChatGenerationViewController: UIViewController {
             queue: .main
         ) { [weak self] notification in
             guard let userInfo = notification.userInfo,
-                  let notificationChatId = userInfo["chatId"] as? String,
-                  notificationChatId == self?.chatId else { return }
-            
-            if self?.currentState == .suggestions {
+                  let notificationChatId = userInfo["chatId"] as? String else { return }
+            MainActor.assumeIsolated {
+                guard notificationChatId == self?.chatId, self?.currentState == .suggestions else { return }
                 self?.transitionToState(.chat, animated: true)
             }
         }

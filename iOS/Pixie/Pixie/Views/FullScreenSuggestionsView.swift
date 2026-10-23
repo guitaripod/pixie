@@ -39,7 +39,7 @@ class FullScreenSuggestionsView: UIView {
     private static let veryShortCardChrome: CGFloat = 40
     private var isCompactHeight = false
     private var isVeryShort = false
-    private var dataSource: UICollectionViewDiffableDataSource<SuggestionsSection, AnyHashable>!
+    private var dataSource: UICollectionViewDiffableDataSource<SuggestionsSection, SuggestionItem>!
     var selectedSuggestionsManager: SelectedSuggestionsManager?
     var onPromptSelected: ((String) -> Void)?
     var onImageSelected: ((UIImage) -> Void)?
@@ -54,7 +54,7 @@ class FullScreenSuggestionsView: UIView {
     private static let selectedPhotoItem = "selected_photo"
     private var recentImages: [UIImage] = []
     private var selectedPhoto: UIImage?
-    private var editSectionItems: [AnyHashable] = []
+    private var editSectionItems: [SuggestionItem] = []
     private let popularPresets = EditPreset.popular()
     private let moreEditPresets = EditPreset.moreEdits()
     private var selectedCreativeCategory = 0
@@ -336,7 +336,7 @@ class FullScreenSuggestionsView: UIView {
     /// In a short window the drop zone sits beside the sample card when the row is wide enough for both.
     private var sharesRowWithSample: Bool {
         let width = bounds.width - 2 * Theme.screenMargin(for: traitCollection)
-        let hasSample = editSectionItems.contains { ($0 as? String) == Self.sampleTileItem }
+        let hasSample = editSectionItems.contains { $0.marker == Self.sampleTileItem }
         return isCompactHeight && hasSample && min(width, Theme.Width.form) >= Self.compactSideBySideWidth
     }
     private func createEditImageSection(environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
@@ -354,14 +354,14 @@ class FullScreenSuggestionsView: UIView {
         } else {
             let items = editSectionItems.map { item -> NSCollectionLayoutItem in
                 let height: CGFloat
-                if (item as? String) == Self.sampleTileItem {
+                if item.marker == Self.sampleTileItem {
                     height = SampleTileCell.height(forWidth: metrics.contentWidth)
-                } else if (item as? String) == Self.selectedPhotoItem {
+                } else if item.marker == Self.selectedPhotoItem {
                     height = SelectedPhotoCell.height(forWidth: metrics.contentWidth, compact: compact)
                 } else {
                     height = compact ? PhotoDropZoneCell.compactRowHeight : metrics.contentWidth * 9 / 16
                 }
-                let isDropZone = (item as? String) == Self.addImageItem
+                let isDropZone = item.marker == Self.addImageItem
                 return NSCollectionLayoutItem(layoutSize: NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: isDropZone && !compact ? .estimated(height) : .absolute(height)))
             }
             let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(240))
@@ -507,14 +507,14 @@ class FullScreenSuggestionsView: UIView {
         }
     }
     private func setupDataSource() {
-        dataSource = UICollectionViewDiffableDataSource<SuggestionsSection, AnyHashable>(collectionView: collectionView) { [weak self] collectionView, indexPath, item in
+        dataSource = UICollectionViewDiffableDataSource<SuggestionsSection, SuggestionItem>(collectionView: collectionView) { [weak self] collectionView, indexPath, item in
             guard let self = self else { return nil }
             switch self.section(at: indexPath.section) {
             case .editImage:
-                if let marker = item as? String, marker == Self.sampleTileItem {
+                if item.marker == Self.sampleTileItem {
                     return collectionView.dequeueReusableCell(withReuseIdentifier: SampleTileCell.reuseIdentifier, for: indexPath)
                 }
-                if let marker = item as? String, marker == Self.selectedPhotoItem {
+                if item.marker == Self.selectedPhotoItem {
                     let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SelectedPhotoCell.reuseIdentifier, for: indexPath) as! SelectedPhotoCell
                     cell.configure(with: self.selectedPhoto, canRemove: self.onPhotoRemoved != nil, compact: self.isCompactHeight)
                     cell.onChange = { [weak self] in self?.onEditImageTapped?() }
@@ -526,17 +526,17 @@ class FullScreenSuggestionsView: UIView {
                 return dropZone
             case .recents:
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ImageCell.reuseIdentifier, for: indexPath) as! ImageCell
-                cell.configure(with: item as? UIImage)
+                cell.configure(with: item.image)
                 return cell
             case .presets:
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PresetCell.reuseIdentifier, for: indexPath) as! PresetCell
-                if let preset = item as? EditPreset {
+                if let preset = item.preset {
                     cell.configure(with: preset)
                 }
                 return cell
             case .moreEdits:
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: MoreEditCell.reuseIdentifier, for: indexPath) as! MoreEditCell
-                if let preset = item as? EditPreset {
+                if let preset = item.preset {
                     cell.configure(with: preset)
                 }
                 return cell
@@ -641,45 +641,45 @@ class FullScreenSuggestionsView: UIView {
         selectedPhoto == nil && ReviewPrompt.successfulGenerationCount == 0
     }
     private func applySnapshot() {
-        var snapshot = NSDiffableDataSourceSnapshot<SuggestionsSection, AnyHashable>()
+        var snapshot = NSDiffableDataSourceSnapshot<SuggestionsSection, SuggestionItem>()
         let popularFirst = isVeryShort && selectedPhoto != nil
         if popularFirst {
             snapshot.appendSections([.presets])
-            snapshot.appendItems(popularPresets.map { $0 as AnyHashable }, toSection: .presets)
+            snapshot.appendItems(popularPresets.map(SuggestionItem.init), toSection: .presets)
         }
         snapshot.appendSections([.editImage])
-        var editItems: [AnyHashable] = []
+        var editItems: [SuggestionItem] = []
         if selectedPhoto != nil {
-            editItems.append(Self.selectedPhotoItem as AnyHashable)
+            editItems.append(SuggestionItem(Self.selectedPhotoItem))
         } else {
-            editItems.append(Self.addImageItem as AnyHashable)
+            editItems.append(SuggestionItem(Self.addImageItem))
             if showsSampleTile {
-                editItems.append(Self.sampleTileItem as AnyHashable)
+                editItems.append(SuggestionItem(Self.sampleTileItem))
             }
         }
         editSectionItems = editItems
         snapshot.appendItems(editItems, toSection: .editImage)
         if !recentImages.isEmpty && !isCompactHeight {
             snapshot.appendSections([.recents])
-            snapshot.appendItems(recentImages.prefix(10).map { $0 as AnyHashable }, toSection: .recents)
+            snapshot.appendItems(recentImages.prefix(10).map(SuggestionItem.init), toSection: .recents)
         }
         if !popularFirst {
             snapshot.appendSections([.presets])
-            snapshot.appendItems(popularPresets.map { $0 as AnyHashable }, toSection: .presets)
+            snapshot.appendItems(popularPresets.map(SuggestionItem.init), toSection: .presets)
         }
         snapshot.appendSections([.moreEdits])
-        snapshot.appendItems(moreEditPresets.map { $0 as AnyHashable }, toSection: .moreEdits)
+        snapshot.appendItems(moreEditPresets.map(SuggestionItem.init), toSection: .moreEdits)
         snapshot.appendSections([.quickActions])
         let actions = isEditMode ? editModeQuickActions : quickActions
-        snapshot.appendItems(actions.map { $0 as AnyHashable }, toSection: .quickActions)
+        snapshot.appendItems(actions.map(SuggestionItem.init), toSection: .quickActions)
         snapshot.appendSections([.creativePrompts])
-        let creativeItems = creativePrompts[selectedCreativeCategory].prompts.map { $0 as AnyHashable }
+        let creativeItems = creativePrompts[selectedCreativeCategory].prompts.map(SuggestionItem.init)
         snapshot.appendItems(creativeItems, toSection: .creativePrompts)
         snapshot.appendSections([.stylePresets])
-        snapshot.appendItems(stylePresets.map { $0 as AnyHashable }, toSection: .stylePresets)
+        snapshot.appendItems(stylePresets.map(SuggestionItem.init), toSection: .stylePresets)
         snapshot.appendSections([.promptModifiers])
-        var modifierItems: [AnyHashable] = modifierCategories.map { $0 as AnyHashable }
-        modifierItems.append(contentsOf: modifiers[selectedModifierCategory].map { $0 as AnyHashable })
+        var modifierItems: [SuggestionItem] = modifierCategories.map(SuggestionItem.init)
+        modifierItems.append(contentsOf: modifiers[selectedModifierCategory].map(SuggestionItem.init))
         snapshot.appendItems(modifierItems, toSection: .promptModifiers)
         dataSource.apply(snapshot, animatingDifferences: true)
     }
@@ -715,16 +715,13 @@ class FullScreenSuggestionsView: UIView {
         var images: [UIImage] = []
         let scale = traitCollection.displayScale
         let targetSize = CGSize(width: 240 * scale, height: 240 * scale)
-        fetchResult.enumerateObjects { asset, _, _ in
-            manager.requestImage(for: asset, targetSize: targetSize, contentMode: .aspectFill, options: options) { image, _ in
-                if let image = image {
-                    images.append(image)
-                    if images.count == fetchResult.count || images.count == 10 {
-                        DispatchQueue.main.async { [weak self] in
-                            self?.recentImages = images
-                            self?.applySnapshot()
-                        }
-                    }
+        fetchResult.enumerateObjects { [weak self] asset, _, _ in
+            manager.requestImage(for: asset, targetSize: targetSize, contentMode: .aspectFill, options: options) { [weak self] image, _ in
+                guard let self, let image else { return }
+                images.append(image)
+                if images.count == fetchResult.count || images.count == 10 {
+                    self.recentImages = images
+                    self.applySnapshot()
                 }
             }
         }
@@ -738,17 +735,17 @@ extension FullScreenSuggestionsView: UICollectionViewDelegate {
         switch section(at: indexPath.section) {
         case .editImage:
             let item = dataSource.itemIdentifier(for: indexPath)
-            if let marker = item as? String, marker == Self.addImageItem {
+            if item?.marker == Self.addImageItem {
                 onEditImageTapped?()
-            } else if let marker = item as? String, marker == Self.sampleTileItem {
+            } else if item?.marker == Self.sampleTileItem {
                 onSampleTapped?()
             }
         case .recents:
-            if let image = dataSource.itemIdentifier(for: indexPath) as? UIImage {
+            if let image = dataSource.itemIdentifier(for: indexPath)?.image {
                 onImageTapped?(image)
             }
         case .presets, .moreEdits:
-            if let preset = dataSource.itemIdentifier(for: indexPath) as? EditPreset {
+            if let preset = dataSource.itemIdentifier(for: indexPath)?.preset {
                 onPresetSelected?(preset)
             }
         case .quickActions:
@@ -821,13 +818,13 @@ extension FullScreenSuggestionsView: UICollectionViewDelegate {
         }
     }
     func collectionView(_ collectionView: UICollectionView, shouldHighlightItemAt indexPath: IndexPath) -> Bool {
-        if let marker = dataSource.itemIdentifier(for: indexPath) as? String, marker == Self.selectedPhotoItem {
+        if dataSource.itemIdentifier(for: indexPath)?.marker == Self.selectedPhotoItem {
             return false
         }
         return true
     }
     func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
-        if let marker = dataSource.itemIdentifier(for: indexPath) as? String, marker == Self.selectedPhotoItem {
+        if dataSource.itemIdentifier(for: indexPath)?.marker == Self.selectedPhotoItem {
             return false
         }
         return true
@@ -881,7 +878,7 @@ extension FullScreenSuggestionsView: UICollectionViewDelegate {
 
 
 
-enum SuggestionsSection: Int, CaseIterable {
+nonisolated enum SuggestionsSection: Int, CaseIterable {
     case editImage
     case recents
     case presets
@@ -893,7 +890,7 @@ enum SuggestionsSection: Int, CaseIterable {
 }
 
 
-struct QuickAction: Hashable {
+nonisolated struct QuickAction: Hashable {
     let icon: String
     let title: String
     let prompt: String
@@ -907,7 +904,7 @@ struct CreativePrompt: Hashable {
     let color: UIColor
 }
 
-struct StylePreset: Hashable {
+nonisolated struct StylePreset: Hashable {
     let name: String
     let description: String
     let prompt: String

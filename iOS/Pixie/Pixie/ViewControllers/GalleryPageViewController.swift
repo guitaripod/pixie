@@ -618,25 +618,23 @@ extension GalleryPageViewController: UICollectionViewDelegate {
             previewVC.preferredContentSize = CGSize(width: 300, height: 400)
             
             if let url = URL(string: image.url) {
-                URLSession.shared.dataTask(with: url) { data, _, _ in
-                    if let data = data, let loadedImage = UIImage(data: data) {
-                        ImageCache.shared.setImage(loadedImage, for: image.url)
-                        
-                        DispatchQueue.main.async {
-                            imageView.image = loadedImage
-                            let aspectRatio = loadedImage.size.width / loadedImage.size.height
-                            var width = min(maxWidth, loadedImage.size.width)
-                            var height = width / aspectRatio
-                            
-                            if height > maxHeight {
-                                height = maxHeight
-                                width = height * aspectRatio
-                            }
-                            
-                            previewVC.preferredContentSize = CGSize(width: width, height: height)
-                        }
+                Task {
+                    guard let (data, _) = try? await URLSession.shared.data(from: url),
+                          let loadedImage = UIImage(data: data) else { return }
+                    ImageCache.shared.setImage(loadedImage, for: image.url)
+
+                    imageView.image = loadedImage
+                    let aspectRatio = loadedImage.size.width / loadedImage.size.height
+                    var width = min(maxWidth, loadedImage.size.width)
+                    var height = width / aspectRatio
+
+                    if height > maxHeight {
+                        height = maxHeight
+                        width = height * aspectRatio
                     }
-                }.resume()
+
+                    previewVC.preferredContentSize = CGSize(width: width, height: height)
+                }
             }
         }
         

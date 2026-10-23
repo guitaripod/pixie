@@ -1,6 +1,6 @@
 import UIKit
 
-class CollectionViewDataSource<Section: Hashable, Item: Hashable> {
+class CollectionViewDataSource<Section: Hashable & Sendable, Item: Hashable & Sendable> {
     typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
     typealias SupplementaryViewProvider = (UICollectionView, String, IndexPath) -> UICollectionReusableView?

@@ -1,6 +1,8 @@
 import Foundation
 
-class GalleryCache {
+/// Holds the gallery pages the last requests returned. Every read and write of `cache` goes through `cacheQueue`, so
+/// the type may be used from any thread.
+nonisolated final class GalleryCache: @unchecked Sendable {
     static let shared = GalleryCache()
     
     private var cache = [String: (response: GalleryResponse, timestamp: Date)]()

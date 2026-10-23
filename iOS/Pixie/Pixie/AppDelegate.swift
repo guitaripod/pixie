@@ -69,35 +69,33 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 }
 
-extension AppDelegate: UNUserNotificationCenterDelegate {
+/// UserNotifications calls its delegate on queues of its own, so the methods are nonisolated and hop to the main
+/// actor only for the one thing that touches UI state.
+nonisolated extension AppDelegate: UNUserNotificationCenterDelegate {
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        willPresent notification: UNNotification,
-        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
-    ) {
-        completionHandler([.banner, .sound, .badge])
+        willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        [.banner, .sound, .badge]
     }
-    
+
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        didReceive response: UNNotificationResponse,
-        withCompletionHandler completionHandler: @escaping () -> Void
-    ) {
+        didReceive response: UNNotificationResponse
+    ) async {
         let userInfo = response.notification.request.content.userInfo
-        
-        if let chatId = userInfo["chatId"] as? String,
-           userInfo["type"] as? String == "generation_complete" {
+        guard let chatId = userInfo["chatId"] as? String,
+              userInfo["type"] as? String == "generation_complete" else { return }
+        await MainActor.run {
             NotificationCenter.default.post(
                 name: .openChatFromNotification,
                 object: nil,
                 userInfo: ["chatId": chatId]
             )
         }
-        
-        completionHandler()
     }
 }
 
-extension Notification.Name {
+nonisolated extension Notification.Name {
     static let openChatFromNotification = Notification.Name("openChatFromNotification")
 }

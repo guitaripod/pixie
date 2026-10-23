@@ -1,6 +1,6 @@
 import UIKit
 
-struct ChatMessage: Hashable {
+nonisolated struct ChatMessage: Hashable {
     let id: String
     let text: String?
     let images: [UIImage]?
@@ -10,7 +10,7 @@ struct ChatMessage: Hashable {
     let editingImage: UIImage?
     let sourceImage: UIImage?
     
-    struct MessageMetadata {
+    nonisolated struct MessageMetadata {
         let model: String?
         let size: String?
         let quality: String?
@@ -31,7 +31,7 @@ struct ChatMessage: Hashable {
     var content: String? {
         return text
     }
-    enum Role {
+    nonisolated enum Role {
         case user
         case assistant
         case loading

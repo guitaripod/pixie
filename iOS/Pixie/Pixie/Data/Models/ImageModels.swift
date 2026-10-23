@@ -1,6 +1,6 @@
 import Foundation
 
-struct ImageGenerationRequest: Codable {
+nonisolated struct ImageGenerationRequest: Codable {
     let prompt: String
     let model: String
     let n: Int
@@ -14,7 +14,7 @@ struct ImageGenerationRequest: Codable {
     let stream: Bool?
     let user: String?
 
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case prompt, model, n, size, quality, background, moderation
         case outputCompression = "output_compression"
         case outputFormat = "output_format"
@@ -23,7 +23,7 @@ struct ImageGenerationRequest: Codable {
     }
 }
 
-struct ImageEditRequest: Codable {
+nonisolated struct ImageEditRequest: Codable {
     let image: [String]
     let prompt: String
     let mask: String?
@@ -39,7 +39,7 @@ struct ImageEditRequest: Codable {
     let stream: Bool
     let user: String?
 
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case image, prompt, mask, model, n, size, quality, background
         case inputFidelity = "input_fidelity"
         case outputFormat = "output_format"
@@ -49,50 +49,50 @@ struct ImageEditRequest: Codable {
     }
 }
 
-struct ImageResponse: Codable {
+nonisolated struct ImageResponse: Codable {
     let created: TimeInterval
     let data: [ImageData]
 }
 
-struct ImageData: Codable {
+nonisolated struct ImageData: Codable {
     let url: String?
     let b64Json: String?
     let revisedPrompt: String?
     
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case url
         case b64Json = "b64_json"
         case revisedPrompt = "revised_prompt"
     }
 }
 
-struct GalleryResponse: Codable {
+nonisolated struct GalleryResponse: Codable {
     let images: [ImageMetadata]
     let total: Int
     let page: Int
     let perPage: Int
     
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case images, total, page
         case perPage = "per_page"
     }
 }
 
-struct UserGalleryResponse: Codable {
+nonisolated struct UserGalleryResponse: Codable {
     let userId: String
     let images: [ImageMetadata]
     let total: Int
     let page: Int
     let perPage: Int
     
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case userId = "user_id"
         case images, total, page
         case perPage = "per_page"
     }
 }
 
-struct ImageMetadata: Codable, Hashable {
+nonisolated struct ImageMetadata: Codable, Hashable {
     let id: String
     let url: String
     let prompt: String
@@ -102,7 +102,7 @@ struct ImageMetadata: Codable, Hashable {
     let metadata: ImageMetadataDetails?
     let tags: [String]?
     
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case id, url, prompt
         case createdAt = "created_at"
         case userId = "user_id"
@@ -112,7 +112,7 @@ struct ImageMetadata: Codable, Hashable {
     }
 }
 
-struct ImageMetadataDetails: Codable, Hashable {
+nonisolated struct ImageMetadataDetails: Codable, Hashable {
     let width: Int
     let height: Int
     let format: String
@@ -122,7 +122,7 @@ struct ImageMetadataDetails: Codable, Hashable {
     let model: String?
     let revisedPrompt: String?
 
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case width, height, format
         case sizeBytes = "size_bytes"
         case creditsUsed = "credits_used"
@@ -131,7 +131,7 @@ struct ImageMetadataDetails: Codable, Hashable {
     }
 }
 
-enum ImageModel: String, CaseIterable {
+nonisolated enum ImageModel: String, CaseIterable {
     case gemini = "gemini-2.5-flash"
     case geminiPro = "gemini-3-pro-image"
     case openai = "gpt-image-1"

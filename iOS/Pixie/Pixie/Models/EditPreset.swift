@@ -2,7 +2,7 @@ import UIKit
 
 /// A one-tap edit: a localized title for the user and a tuned English instruction for
 /// the model, which follows English best whatever language the app runs in.
-struct EditPreset: Hashable {
+nonisolated struct EditPreset: Hashable {
     let id: String
     let symbol: String
     let tint: UIColor

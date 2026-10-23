@@ -33,12 +33,14 @@ class NetworkMonitor: NetworkMonitorProtocol {
     }
     
     deinit {
-        stopMonitoring()
+        monitor.cancel()
     }
     
     func startMonitoring() {
         monitor.pathUpdateHandler = { [weak self] path in
-            self?.updateConnectionStatus(path)
+            Task { @MainActor in
+                self?.updateConnectionStatus(path)
+            }
         }
         monitor.start(queue: queue)
     }
@@ -48,21 +50,19 @@ class NetworkMonitor: NetworkMonitorProtocol {
     }
     
     private func updateConnectionStatus(_ path: NWPath) {
-        DispatchQueue.main.async { [weak self] in
-            self?.isConnected = path.status == .satisfied
-            self?.isExpensive = path.isExpensive
-            self?.connectionType = self?.getConnectionType(from: path) ?? .none
-            
-            NotificationCenter.default.post(
-                name: .networkStatusChanged,
-                object: self,
-                userInfo: [
-                    "isConnected": self?.isConnected ?? false,
-                    "isExpensive": self?.isExpensive ?? false,
-                    "connectionType": self?.connectionType ?? ConnectionType.none
-                ]
-            )
-        }
+        isConnected = path.status == .satisfied
+        isExpensive = path.isExpensive
+        connectionType = getConnectionType(from: path)
+
+        NotificationCenter.default.post(
+            name: .networkStatusChanged,
+            object: self,
+            userInfo: [
+                "isConnected": isConnected,
+                "isExpensive": isExpensive,
+                "connectionType": connectionType
+            ]
+        )
     }
     
     private func getConnectionType(from path: NWPath) -> ConnectionType {

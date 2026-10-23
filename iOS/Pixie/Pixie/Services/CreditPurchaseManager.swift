@@ -21,7 +21,7 @@ struct CreditPackWithPrice {
     let localizedPrice: String
 }
 
-class PurchaseCancelledException: LocalizedError {
+final class PurchaseCancelledException: LocalizedError {
     var errorDescription: String? {
         return String(localized: "Purchase cancelled by user")
     }

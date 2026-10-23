@@ -1,6 +1,6 @@
 import UIKit
 
-class TableViewDataSource<Section: Hashable, Item: Hashable> {
+class TableViewDataSource<Section: Hashable & Sendable, Item: Hashable & Sendable> {
     typealias DataSource = UITableViewDiffableDataSource<Section, Item>
     typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
     

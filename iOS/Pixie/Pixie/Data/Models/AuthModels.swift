@@ -1,37 +1,37 @@
 import Foundation
 
-struct DeviceAuthStatus: Codable {
+nonisolated struct DeviceAuthStatus: Codable {
     let status: String
     let message: String
 }
 
-struct ErrorResponse: Codable {
+nonisolated struct ErrorResponse: Codable {
     let error: ErrorDetail
 }
 
-struct ErrorDetail: Codable {
+nonisolated struct ErrorDetail: Codable {
     let message: String
     let code: String?
     let details: ErrorDetails?
 }
 
-struct ErrorDetails: Codable {
+nonisolated struct ErrorDetails: Codable {
     let requiredCredits: Int?
     let availableCredits: Int?
     
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case requiredCredits = "required_credits"
         case availableCredits = "available_credits"
     }
 }
 
-struct PurchaseRequest: Codable {
+nonisolated struct PurchaseRequest: Codable {
     let packId: String
     let paymentProvider: String
     let paymentId: String
     let paymentCurrency: String?
     
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case packId = "pack_id"
         case paymentProvider = "payment_provider"
         case paymentId = "payment_id"
@@ -39,7 +39,7 @@ struct PurchaseRequest: Codable {
     }
 }
 
-struct CryptoPurchaseResponse: Codable {
+nonisolated struct CryptoPurchaseResponse: Codable {
     let purchaseId: String
     let paymentId: String
     let status: String
@@ -50,7 +50,7 @@ struct CryptoPurchaseResponse: Codable {
     let cryptoCurrency: String
     let expiresAt: String
     
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case purchaseId = "purchase_id"
         case paymentId = "payment_id"
         case status, credits
@@ -62,24 +62,24 @@ struct CryptoPurchaseResponse: Codable {
     }
 }
 
-struct StripePurchaseResponse: Codable {
+nonisolated struct StripePurchaseResponse: Codable {
     let purchaseId: String
     let sessionId: String
     let checkoutUrl: String
     
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case purchaseId = "purchase_id"
         case sessionId = "session_id"
         case checkoutUrl = "checkout_url"
     }
 }
 
-struct PurchaseStatusResponse: Codable {
+nonisolated struct PurchaseStatusResponse: Codable {
     let purchaseId: String
     let status: String
     let paymentStatus: String?
     
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case purchaseId = "purchase_id"
         case status
         case paymentStatus = "payment_status"

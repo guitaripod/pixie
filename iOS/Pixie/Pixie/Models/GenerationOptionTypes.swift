@@ -1,6 +1,6 @@
 import Foundation
 
-enum ImageSize: CaseIterable {
+nonisolated enum ImageSize: CaseIterable {
     case auto, square, landscape, portrait
     
     var displayName: String {
@@ -31,7 +31,7 @@ enum ImageSize: CaseIterable {
     }
 }
 
-enum ImageQuality: CaseIterable {
+nonisolated enum ImageQuality: CaseIterable {
     case low, medium, high, auto
     
     var displayName: String {
@@ -62,7 +62,7 @@ enum ImageQuality: CaseIterable {
     }
 }
 
-enum BackgroundStyle: CaseIterable {
+nonisolated enum BackgroundStyle: CaseIterable {
     case auto, transparent, white, black
     
     var displayName: String {
@@ -84,7 +84,7 @@ enum BackgroundStyle: CaseIterable {
     }
 }
 
-enum OutputFormat: CaseIterable {
+nonisolated enum OutputFormat: CaseIterable {
     case png, jpeg, webp
     
     var displayName: String {
@@ -111,7 +111,7 @@ enum OutputFormat: CaseIterable {
     }
 }
 
-enum ModerationLevel: CaseIterable {
+nonisolated enum ModerationLevel: CaseIterable {
     case auto, low
     
     var displayName: String {

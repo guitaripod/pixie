@@ -1,23 +1,23 @@
 import Foundation
 
-struct CreditBalance: Codable {
+nonisolated struct CreditBalance: Codable {
     let balance: Int
     let currency: String
 }
 
-struct CreditTransactionsResponse: Codable {
+nonisolated struct CreditTransactionsResponse: Codable {
     let transactions: [CreditTransaction]
     let page: Int
     let perPage: Int
     let total: Int?
     
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case transactions, page, total
         case perPage = "per_page"
     }
 }
 
-struct CreditTransaction: Codable {
+nonisolated struct CreditTransaction: Codable {
     let id: String
     let userId: String
     let transactionType: String
@@ -27,7 +27,7 @@ struct CreditTransaction: Codable {
     let referenceId: String?
     let createdAt: String
     
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case id
         case userId = "user_id"
         case transactionType = "type"
@@ -39,11 +39,11 @@ struct CreditTransaction: Codable {
     }
 }
 
-struct CreditPacksResponse: Codable {
+nonisolated struct CreditPacksResponse: Codable {
     let packs: [CreditPack]
 }
 
-struct CreditPack: Codable {
+nonisolated struct CreditPack: Codable {
     let id: String
     let name: String
     let credits: Int
@@ -51,7 +51,7 @@ struct CreditPack: Codable {
     let bonusCredits: Int
     let description: String
     
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case id, name, credits
         case priceUsdCents = "price_usd_cents"
         case bonusCredits = "bonus_credits"
@@ -59,38 +59,38 @@ struct CreditPack: Codable {
     }
 }
 
-struct CreditEstimateRequest: Codable {
+nonisolated struct CreditEstimateRequest: Codable {
     let prompt: String?
     let quality: String
     let size: String
     let n: Int?
     let isEdit: Bool?
     
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case prompt, quality, size, n
         case isEdit = "is_edit"
     }
 }
 
-struct CreditEstimateResponse: Codable {
+nonisolated struct CreditEstimateResponse: Codable {
     let estimatedCredits: Int
     let estimatedUsd: String
     let note: String
     
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case estimatedCredits = "estimated_credits"
         case estimatedUsd = "estimated_usd"
         case note
     }
 }
 
-struct RevenueCatPurchaseValidationResponse: Codable {
+nonisolated struct RevenueCatPurchaseValidationResponse: Codable {
     let success: Bool
     let purchaseId: String
     let creditsAdded: Int
     let newBalance: Int
     
-    enum CodingKeys: String, CodingKey {
+    nonisolated enum CodingKeys: String, CodingKey {
         case success
         case purchaseId = "purchase_id"
         case creditsAdded = "credits_added"

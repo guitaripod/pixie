@@ -9,8 +9,9 @@ class GoogleSignInCoordinator: NSObject {
     
     weak var delegate: GoogleSignInCoordinatorDelegate?
     private weak var presentingViewController: UIViewController?
+    private var isAwaitingSignIn = false
     
-    enum GoogleSignInError: LocalizedError {
+    nonisolated enum GoogleSignInError: LocalizedError {
         case noServerAuthCode
         case noIdToken
         case configurationError
@@ -47,34 +48,39 @@ class GoogleSignInCoordinator: NSObject {
     }
     
     private func performSignInWithTimeout(viewController: UIViewController) {
-        var didComplete = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in
-            guard let self = self, !didComplete else { return }
+        isAwaitingSignIn = true
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(30))
+            guard let self, self.isAwaitingSignIn else { return }
             self.delegate?.googleSignIn(self, didSignInWith: .failure(GoogleSignInError.serviceUnavailable))
         }
-        
+
         GIDSignIn.sharedInstance.signIn(withPresenting: viewController) { [weak self] result, error in
-            didComplete = true
-            guard let self = self else { return }
-            
-            if let error = error {
-                if (error as NSError).code == GIDSignInError.canceled.rawValue {
-                    self.delegate?.googleSignIn(self, didSignInWith: .failure(CancellationError()))
-                } else {
-                    self.delegate?.googleSignIn(self, didSignInWith: .failure(error))
-                }
-                return
+            let outcome = Self.outcome(of: result, error: error)
+            Task { @MainActor in
+                guard let self else { return }
+                self.isAwaitingSignIn = false
+                self.delegate?.googleSignIn(self, didSignInWith: outcome)
             }
-            
-            guard let result = result,
-                  let serverAuthCode = result.serverAuthCode,
-                  let idToken = result.user.idToken?.tokenString else {
-                self.delegate?.googleSignIn(self, didSignInWith: .failure(GoogleSignInError.noServerAuthCode))
-                return
-            }
-            
-            self.delegate?.googleSignIn(self, didSignInWith: .success((serverAuthCode: serverAuthCode, idToken: idToken)))
         }
+    }
+
+    /// What the Google SDK's completion means for the delegate: the codes the server needs, a cancellation, or the
+    /// reason there are none. Reads only the SDK's result, so it can run on whatever thread the SDK calls back on.
+    private nonisolated static func outcome(
+        of result: GIDSignInResult?,
+        error: Error?
+    ) -> Result<(serverAuthCode: String, idToken: String), Error> {
+        if let error {
+            let canceled = (error as NSError).code == GIDSignInError.canceled.rawValue
+            return .failure(canceled ? CancellationError() : error)
+        }
+        guard let result,
+              let serverAuthCode = result.serverAuthCode,
+              let idToken = result.user.idToken?.tokenString else {
+            return .failure(GoogleSignInError.noServerAuthCode)
+        }
+        return .success((serverAuthCode: serverAuthCode, idToken: idToken))
     }
     
     func disconnect() {

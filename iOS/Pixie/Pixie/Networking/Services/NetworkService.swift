@@ -91,11 +91,11 @@ class NetworkService: NetworkServiceProtocol {
         self.apiKey = key
     }
     
-    func clearCache() {
+    func clearCache() async {
         urlCache.removeAllCachedResponses()
         urlCache.diskCapacity = 0
         urlCache.memoryCapacity = 0
-        Thread.sleep(forTimeInterval: 0.1)
+        try? await Task.sleep(for: .milliseconds(100))
         urlCache.diskCapacity = 500 * 1024 * 1024 // 500 MB
         urlCache.memoryCapacity = 100 * 1024 * 1024 // 100 MB
     }

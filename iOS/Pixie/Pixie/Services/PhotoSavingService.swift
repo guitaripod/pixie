@@ -1,7 +1,7 @@
 import UIKit
-import Photos
+@preconcurrency import Photos
 
-enum PhotoSavingError: LocalizedError {
+nonisolated enum PhotoSavingError: LocalizedError {
     case permissionDenied
     case saveFailed(String)
     case albumCreationFailed
@@ -32,106 +32,84 @@ class PhotoSavingService {
     /// Pixie album nor read the new asset back, so the album is used only when the user
     /// already granted full access and success comes from the write itself. If the album
     /// cannot be created or written to, the images still go to the library.
-    func saveToLibrary(_ images: [UIImage], completion: @escaping (Result<Void, PhotoSavingError>) -> Void) {
-        checkPhotoLibraryPermission { [weak self] granted in
-            guard let self, granted else {
-                completion(.failure(.permissionDenied))
-                return
-            }
-            guard PHPhotoLibrary.authorizationStatus(for: .readWrite) == .authorized else {
-                self.writeAssets(images, into: nil, completion: completion)
-                return
-            }
-            self.ensureAlbumExists { result in
-                self.writeAssets(images, into: try? result.get(), completion: completion)
-            }
+    func saveToLibrary(_ images: [UIImage], completion: @escaping @MainActor (Result<Void, PhotoSavingError>) -> Void) {
+        Task {
+            completion(await saveToLibrary(images))
         }
+    }
+
+    func saveToLibrary(_ images: [UIImage]) async -> Result<Void, PhotoSavingError> {
+        guard await hasAddPermission() else { return .failure(.permissionDenied) }
+        guard PHPhotoLibrary.authorizationStatus(for: .readWrite) == .authorized else {
+            return await writeAssets(images, into: nil)
+        }
+        let album = try? await ensureAlbumExists().get()
+        return await writeAssets(images, into: album)
     }
 
     /// Writes the images, adding them to the album when one is given. A write that fails
     /// with an album, for instance because the user deleted it, is retried once without it
     /// so the images are never lost to an album problem.
-    private func writeAssets(
-        _ images: [UIImage],
-        into album: PHAssetCollection?,
-        completion: @escaping (Result<Void, PhotoSavingError>) -> Void
-    ) {
-        PHPhotoLibrary.shared().performChanges({
-            let placeholders = images.compactMap { PHAssetChangeRequest.creationRequestForAsset(from: $0).placeholderForCreatedAsset }
-            if let album, let albumRequest = PHAssetCollectionChangeRequest(for: album) {
-                albumRequest.addAssets(placeholders as NSArray)
-            }
-        }) { [weak self] success, error in
-            DispatchQueue.main.async {
-                if success {
-                    completion(.success(()))
-                } else if album != nil {
-                    self?.pixieAlbum = nil
-                    self?.writeAssets(images, into: nil, completion: completion)
-                } else {
-                    completion(.failure(.saveFailed(error?.localizedDescription ?? String(localized: "Unknown error"))))
+    private func writeAssets(_ images: [UIImage], into album: PHAssetCollection?) async -> Result<Void, PhotoSavingError> {
+        do {
+            try await PHPhotoLibrary.shared().performChanges {
+                let placeholders = images.compactMap { PHAssetChangeRequest.creationRequestForAsset(from: $0).placeholderForCreatedAsset }
+                if let album, let albumRequest = PHAssetCollectionChangeRequest(for: album) {
+                    albumRequest.addAssets(placeholders as NSArray)
                 }
             }
+            return .success(())
+        } catch {
+            guard album != nil else {
+                return .failure(.saveFailed(error.localizedDescription))
+            }
+            pixieAlbum = nil
+            return await writeAssets(images, into: nil)
         }
     }
 
-    private func checkPhotoLibraryPermission(completion: @escaping (Bool) -> Void) {
-        let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
-        
-        switch status {
+    private func hasAddPermission() async -> Bool {
+        switch PHPhotoLibrary.authorizationStatus(for: .addOnly) {
         case .authorized, .limited:
-            completion(true)
+            return true
         case .denied, .restricted:
-            completion(false)
+            return false
         case .notDetermined:
-            PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
-                DispatchQueue.main.async {
-                    completion(status == .authorized || status == .limited)
-                }
-            }
+            let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+            return status == .authorized || status == .limited
         @unknown default:
-            completion(false)
+            return false
         }
     }
     
-    private func ensureAlbumExists(completion: @escaping (Result<PHAssetCollection, PhotoSavingError>) -> Void) {
+    private func ensureAlbumExists() async -> Result<PHAssetCollection, PhotoSavingError> {
         if let album = pixieAlbum {
-            completion(.success(album))
-            return
+            return .success(album)
         }
-        
+        if let existingAlbum = fetchAlbum() {
+            pixieAlbum = existingAlbum
+            return .success(existingAlbum)
+        }
+        return await createAlbum()
+    }
+
+    private func fetchAlbum() -> PHAssetCollection? {
         let fetchOptions = PHFetchOptions()
         fetchOptions.predicate = NSPredicate(format: "title = %@", albumName)
-        let collections = PHAssetCollection.fetchAssetCollections(with: .album, subtype: .any, options: fetchOptions)
-        
-        if let existingAlbum = collections.firstObject {
-            pixieAlbum = existingAlbum
-            completion(.success(existingAlbum))
-        } else {
-            createAlbum(completion: completion)
-        }
+        return PHAssetCollection.fetchAssetCollections(with: .album, subtype: .any, options: fetchOptions).firstObject
     }
     
-    private func createAlbum(completion: @escaping (Result<PHAssetCollection, PhotoSavingError>) -> Void) {
-        var albumPlaceholder: PHObjectPlaceholder?
-        
-        PHPhotoLibrary.shared().performChanges({
-            let createAlbumRequest = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: self.albumName)
-            albumPlaceholder = createAlbumRequest.placeholderForCreatedAssetCollection
-        }) { [weak self] success, error in
-            DispatchQueue.main.async {
-                if success, let placeholder = albumPlaceholder {
-                    let fetchResult = PHAssetCollection.fetchAssetCollections(withLocalIdentifiers: [placeholder.localIdentifier], options: nil)
-                    if let album = fetchResult.firstObject {
-                        self?.pixieAlbum = album
-                        completion(.success(album))
-                    } else {
-                        completion(.failure(.albumCreationFailed))
-                    }
-                } else {
-                    completion(.failure(.albumCreationFailed))
-                }
+    private func createAlbum() async -> Result<PHAssetCollection, PhotoSavingError> {
+        let name = albumName
+        do {
+            try await PHPhotoLibrary.shared().performChanges {
+                _ = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: name)
             }
+        } catch {
+            return .failure(.albumCreationFailed)
         }
+        guard let album = fetchAlbum() else { return .failure(.albumCreationFailed) }
+        pixieAlbum = album
+        return .success(album)
     }
 }
