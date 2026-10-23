@@ -35,7 +35,18 @@ cd android && ./gradlew compileDebugSources
 - **Cost optimization**: when testing image generation, use `--quality low` (4-5 credits), not high (50-80 credits).
 - **API compatibility**: the backend's `/v1/images/generations` matches OpenAI's format; clients should too.
 - **Backend changes** (worker, credits, providers, migrations, rate limiting): make them in `guitaripod/mako`, then consume here.
-- **No automated tests** — validate clients against a running backend (`~/Dev/rust/mako`, `npx wrangler dev`) via the CLI.
+- **iOS tests**: the `PixieTests` target (Swift Testing, hosted in the app) covers `PixieMidgar`, the review-prompt migration, the welcome credits and the gateway address. Run it on the iPhone 17 simulator with `xcodebuild test -project iOS/Pixie/Pixie.xcodeproj -scheme Pixie -destination 'platform=iOS Simulator,id=<udid>'`. Everything else is validated against a running backend (`~/Dev/rust/mako`, `npx wrangler dev`) via the CLI.
+
+## Midgar platform (iOS)
+
+- MidgarKit is pinned by URL at `exactVersion` 4.3.1 and AICredits at 1.7.0 in `Pixie.xcodeproj`. The app targets build in Swift 6 with complete strict concurrency and MainActor default isolation; model records, `GalleryCache`, `CacheManager`'s file helpers and the notification delegate are `nonisolated`.
+- `Services/PixieMidgar.swift` is the composition root: Midgar ID (keychain group `cc.midgarcorp.shared` after the app's own group, no App Attest entitlement), the gateway client for the portal, signals and `MidgarStore` in `Mode.readOnly`, because RevenueCat still buys and finishes every credit pack (registry engine `rc-full`).
+- Every mako call goes to `https://api.midgarcorp.cc/v1/intelligence` with `X-App-ID: pixiepocket` and `X-Midgar-Token` when the identity answers within 2 seconds (`NetworkService` takes the headers from `PixieMidgar.midgarTokenHeaders()`). AICredits keeps its tenant id `pixie` (`PixieMidgar.creditsAppID`) because its keychain item is `aicredits.pixie`; renaming it would strand every anonymous account. Generated image URLs still come from mako as `openai-image-proxy.guitaripod.workers.dev/r2/...`, the one direct host in the registry's `network_exceptions`.
+- Logging is `MidgarLog` (file `Library/Logs/pixie.log`, categories in `Utils/LogCategories.swift`). Never log prompts, tokens or email addresses.
+- `Utils/ReviewPrompt.swift` reports generations to `MidgarReviewPolicy`; the old ask history is carried over once by `LegacyReviewState`.
+- Settings opens the portal with `PixieMidgar.shared.portalConfig`; the About screen (`ViewControllers/AboutSettings.swift`) is MidgarUI rows.
+- Privacy: `Resources/PrivacyInfo.xcprivacy`, `store/privacy-label.md` and the policy in `web/midgarcorp/src/content/legal/pixiepocket/privacy.html` move together. mako keeps prompts and generated images for this tenant (`store_prompts` and `store_images` default to 1).
+- Persistence is not SwiftData: the app keeps files, UserDefaults and the Keychain, so there is nothing to migrate to GRDB.
 
 ## Marketing screenshots
 

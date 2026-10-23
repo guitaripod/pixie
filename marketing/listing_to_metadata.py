@@ -17,7 +17,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 LISTING = os.path.join(ROOT, "listing")
-PRIVACY_URL = "https://mako.midgarcorp.cc/privacy/pixiepocket"
+PRIVACY_URL = "https://midgarcorp.cc/legal/pixiepocket/privacy"
 LIMITS = {"name": 30, "subtitle": 30, "keywords": 100, "promotionalText": 170, "description": 4000, "whatsNew": 4000}
 
 
