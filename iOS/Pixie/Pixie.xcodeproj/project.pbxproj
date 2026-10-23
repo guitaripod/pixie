@@ -24,6 +24,13 @@
 			remoteGlobalIDString = 2CAB91922E3A4E570087EBE7;
 			remoteInfo = PixieWidgetExtensionExtension;
 		};
+		2CAA10072F100000004A0202 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2CB38B002E36AED800E68202 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2CB38B072E36AED800E68202;
+			remoteInfo = Pixie;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -46,6 +53,7 @@
 		2CAB91962E3A4E570087EBE7 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		2CB38B082E36AED800E68202 /* Pixie.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pixie.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2CB38B252E36B0C400E68202 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		2CAA10012F100000004A0202 /* PixieTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PixieTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -82,6 +90,11 @@
 			path = Pixie;
 			sourceTree = "<group>";
 		};
+		2CAA10022F100000004A0202 /* PixieTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PixieTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -105,6 +118,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2CAA10042F100000004A0202 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -113,6 +133,7 @@
 			children = (
 				2CB38B0A2E36AED800E68202 /* Pixie */,
 				2CAB91982E3A4E570087EBE7 /* PixieWidgetExtension */,
+				2CAA10022F100000004A0202 /* PixieTests */,
 				2CB38B242E36B0C400E68202 /* Frameworks */,
 				2CB38B092E36AED800E68202 /* Products */,
 			);
@@ -123,6 +144,7 @@
 			children = (
 				2CB38B082E36AED800E68202 /* Pixie.app */,
 				2CAB91932E3A4E570087EBE7 /* PixieWidgetExtensionExtension.appex */,
+				2CAA10012F100000004A0202 /* PixieTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -190,6 +212,29 @@
 			productReference = 2CB38B082E36AED800E68202 /* Pixie.app */;
 			productType = "com.apple.product-type.application";
 		};
+		2CAA10002F100000004A0202 /* PixieTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2CAA10082F100000004A0202 /* Build configuration list for PBXNativeTarget "PixieTests" */;
+			buildPhases = (
+				2CAA10032F100000004A0202 /* Sources */,
+				2CAA10042F100000004A0202 /* Frameworks */,
+				2CAA10052F100000004A0202 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2CAA10062F100000004A0202 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				2CAA10022F100000004A0202 /* PixieTests */,
+			);
+			name = PixieTests;
+			packageProductDependencies = (
+			);
+			productName = PixieTests;
+			productReference = 2CAA10012F100000004A0202 /* PixieTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -205,6 +250,10 @@
 					};
 					2CB38B072E36AED800E68202 = {
 						CreatedOnToolsVersion = 16.2;
+					};
+					2CAA10002F100000004A0202 = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = 2CB38B072E36AED800E68202;
 					};
 				};
 			};
@@ -240,6 +289,7 @@
 			targets = (
 				2CB38B072E36AED800E68202 /* Pixie */,
 				2CAB91922E3A4E570087EBE7 /* PixieWidgetExtensionExtension */,
+				2CAA10002F100000004A0202 /* PixieTests */,
 			);
 		};
 /* End PBXProject section */
@@ -253,6 +303,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		2CB38B062E36AED800E68202 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2CAA10052F100000004A0202 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -276,6 +333,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2CAA10032F100000004A0202 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -283,6 +347,11 @@
 			isa = PBXTargetDependency;
 			target = 2CAB91922E3A4E570087EBE7 /* PixieWidgetExtensionExtension */;
 			targetProxy = 2CAB91A22E3A4E580087EBE7 /* PBXContainerItemProxy */;
+		};
+		2CAA10062F100000004A0202 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2CB38B072E36AED800E68202 /* Pixie */;
+			targetProxy = 2CAA10072F100000004A0202 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -549,6 +618,48 @@
 			};
 			name = Release;
 		};
+		2CAA10092F100000004A0202 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P4DQK6SRKR;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				MARKETING_VERSION = 1.6.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.guitaripod.PixieTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Pixie.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Pixie";
+			};
+			name = Debug;
+		};
+		2CAA100A2F100000004A0202 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P4DQK6SRKR;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				MARKETING_VERSION = 1.6.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.guitaripod.PixieTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Pixie.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Pixie";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -575,6 +686,15 @@
 			buildConfigurations = (
 				2CB38B1C2E36AED900E68202 /* Debug */,
 				2CB38B1D2E36AED900E68202 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2CAA10082F100000004A0202 /* Build configuration list for PBXNativeTarget "PixieTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2CAA10092F100000004A0202 /* Debug */,
+				2CAA100A2F100000004A0202 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
