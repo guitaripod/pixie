@@ -11,15 +11,15 @@ class ChatGenerationViewController: UIViewController {
     }
     private var currentState: ViewState = .suggestions
     private let suggestionsView = FullScreenSuggestionsView()
-    private let chatView = ChatTableView()
-    private let inputBar = ChatInputBar()
+    let chatView = ChatTableView()
+    let inputBar = ChatInputBar()
     private let selectedSuggestionsManager = SelectedSuggestionsManager()
     private var toolbarMode: ToolbarMode = .generate
     private let chatId = UUID().uuidString
-    private lazy var viewModel = GenerationViewModel(chatId: self.chatId)
+    lazy var viewModel = GenerationViewModel(chatId: self.chatId)
     private var cancellables = Set<AnyCancellable>()
     private var currentOptions = GenerationOptions.default
-    private let haptics = HapticManager.shared
+    let haptics = HapticManager.shared
     private var suggestionsBottomConstraint: NSLayoutConstraint!
     private var chatBottomConstraint: NSLayoutConstraint!
     private let offlineBanner = OfflineBanner()
@@ -39,9 +39,9 @@ class ChatGenerationViewController: UIViewController {
     private let bottomFade = EdgeFadeView(edge: .bottom)
     private var notificationObserver: NSObjectProtocol?
     private var presetLinkObserver: NSObjectProtocol?
-    private var pendingPreset: EditPreset?
-    private var leadingConstraint: NSLayoutConstraint!
-    private var trailingConstraint: NSLayoutConstraint!
+    var pendingPreset: EditPreset?
+    var leadingConstraint: NSLayoutConstraint!
+    var trailingConstraint: NSLayoutConstraint!
     #if DEBUG
     enum DemoScenario {
         case edit, create, empty, fresh
@@ -604,7 +604,7 @@ class ChatGenerationViewController: UIViewController {
         suggestionsView.accessibilityElementsHidden = currentState != .suggestions
         chatView.accessibilityElementsHidden = currentState != .chat
     }
-    private func handleSendPrompt(_ prompt: String) {
+    func handleSendPrompt(_ prompt: String) {
         print("🖋️ ChatGenerationVC: handleSendPrompt called with prompt: \(prompt)")
         guard !prompt.isEmpty else {
             print("🖋️ ChatGenerationVC: Prompt is empty, returning")
@@ -704,7 +704,7 @@ class ChatGenerationViewController: UIViewController {
 
     /// A picked photo goes straight into edit mode, or straight into the preset that asked
     /// for it; there is no confirmation screen in between.
-    private func photoPicked(_ image: UIImage) {
+    func photoPicked(_ image: UIImage) {
         switchToEditMode(with: image, url: nil)
         guard let preset = pendingPreset else { return }
         pendingPreset = nil
@@ -777,7 +777,7 @@ class ChatGenerationViewController: UIViewController {
         alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
         present(alert, animated: true)
     }
-    @objc private func newChatTapped() {
+    @objc func newChatTapped() {
         haptics.impact(.click)
         if case .edit = toolbarMode {
             switchToGenerateMode()
@@ -803,7 +803,7 @@ class ChatGenerationViewController: UIViewController {
             Announce.layoutChanged(suggestionsView)
         }
     }
-    @objc private func galleryTapped() {
+    @objc func galleryTapped() {
         haptics.impact(.click)
         let galleryVC = GalleryViewController()
         navigationController?.pushViewController(galleryVC, animated: true)
@@ -838,7 +838,7 @@ class ChatGenerationViewController: UIViewController {
         present(picker, animated: true)
     }
 
-    private func switchToEditMode(with image: UIImage, url: URL?) {
+    func switchToEditMode(with image: UIImage, url: URL?) {
         haptics.impact(.click)
         toolbarMode = .edit(selectedImage: SelectedImage(image: image, url: url, displayName: nil))
         inputBar.setEditMode(true, selectedImage: image)
@@ -858,7 +858,7 @@ class ChatGenerationViewController: UIViewController {
             self.view.layoutIfNeeded()
         }
     }
-    private func presentImagePreviewForEdit(_ image: UIImage) {
+    func presentImagePreviewForEdit(_ image: UIImage) {
         let previewVC = ImagePreviewViewController(image: image)
         previewVC.modalPresentationStyle = .pageSheet
         previewVC.onEditConfirmed = { [weak self] in
@@ -901,283 +901,6 @@ class ChatGenerationViewController: UIViewController {
         } else if inputBar.isEditingText {
             inputBar.resignFirstResponder()
         }
-    }
-}
-
-
-
-extension ChatGenerationViewController: UIGestureRecognizerDelegate {
-    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-        if touch.view is UIButton || touch.view is UICollectionViewCell {
-            return false
-        }
-        return true
-    }
-}
-
-
-
-extension ChatGenerationViewController: PHPickerViewControllerDelegate {
-    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-        picker.dismiss(animated: true)
-        guard let result = results.first else {
-            pendingPreset = nil
-            return
-        }
-        result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
-            DispatchQueue.main.async {
-                guard let image = image as? UIImage else {
-                    self?.pendingPreset = nil
-                    AppLogger.error("Picked photo could not be loaded: \(error?.localizedDescription ?? "no image")", category: .ui)
-                    return
-                }
-                self?.photoPicked(image)
-            }
-        }
-    }
-}
-
-
-
-extension ChatGenerationViewController: ChatTableViewDelegate {
-    func chatTableView(_ chatTableView: ChatTableView, didTapImageAt index: Int, in message: ChatMessage) {
-        haptics.impact(.click)
-        guard let images = message.images,
-              index < images.count else { return }
-        let image = images[index]
-        let previewVC = ImagePreviewViewController(image: image)
-        previewVC.modalPresentationStyle = .pageSheet
-        present(previewVC, animated: true)
-    }
-    func chatTableView(_ chatTableView: ChatTableView, didLongPressImageAt index: Int, in message: ChatMessage) {
-    }
-    func chatTableView(_ chatTableView: ChatTableView, didSelectImageForEdit index: Int, in message: ChatMessage) {
-        haptics.impact(.click)
-        guard let images = message.images,
-              index < images.count else { return }
-        let image = images[index]
-        switchToEditMode(with: image, url: nil)
-    }
-    func chatTableView(_ chatTableView: ChatTableView, didRequest action: ResultAction, imageIndex: Int?, for message: ChatMessage, from sourceView: UIView) {
-        guard let images = message.images, let first = images.first else { return }
-        let targets = imageIndex.flatMap { images.indices.contains($0) ? [images[$0]] : nil } ?? images
-        switch action {
-        case .save:
-            PhotoSavingService.shared.saveToLibrary(targets) { [weak self] result in
-                switch result {
-                case .success:
-                    self?.showBatchSaveSuccess(count: targets.count)
-                    self?.chatView.showActionSucceeded(.save, for: message)
-                case .failure(let error):
-                    self?.showBatchSaveError(error)
-                }
-            }
-        case .share:
-            ImageSharingService.shared.shareImages(targets, from: self, sourceView: sourceView) { [weak self] completed, _ in
-                if completed { self?.chatView.showActionSucceeded(.share, for: message) }
-            }
-        case .beforeAfter:
-            guard let source = message.sourceImage else { return }
-            let composite = BeforeAfterComposer.compose(before: source, after: targets.first ?? first)
-            ImageSharingService.shared.shareImage(composite, from: self, sourceView: sourceView)
-        }
-    }
-    private func showBatchSaveSuccess(count: Int) {
-        haptics.impact(.success)
-        Announce.say(String(localized: "Saved to Photos"))
-    }
-    private func showBatchSaveError(_ error: PhotoSavingError) {
-        haptics.impact(.error)
-        let alert = UIAlertController(
-            title: String(localized: "Save Failed"),
-            message: error.localizedDescription,
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
-        if case .permissionDenied = error {
-            alert.addAction(UIAlertAction(title: String(localized: "Open Settings"), style: .default) { _ in
-                if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
-                    UIApplication.shared.open(settingsURL)
-                }
-            })
-        }
-        present(alert, animated: true)
-    }
-}
-
-struct GenerationOptions {
-    var prompt: String
-    var model: String
-    var quantity: Int
-    var size: String
-    var sizeDisplay: String
-    var quality: String
-    var stylePreset: String?
-    var modifiers: [String]
-    var removeBackground: Bool
-    var background: String?
-    var upscale: Int?
-    var autoEnhance: Bool
-    var variations: Bool
-    var extractText: Bool
-    var generateSimilar: Bool
-    var outputFormat: String?
-    var compression: Int?
-    var moderation: String?
-    static var `default`: GenerationOptions {
-        GenerationOptions(
-            prompt: "",
-            model: "gemini-2.5-flash",
-            quantity: 1,
-            size: "1024x1024",
-            sizeDisplay: String(localized: "Square"),
-            quality: "low",
-            stylePreset: nil,
-            modifiers: [],
-            removeBackground: false,
-            background: nil,
-            upscale: nil,
-            autoEnhance: false,
-            variations: false,
-            extractText: false,
-            generateSimilar: false,
-            outputFormat: nil,
-            compression: nil,
-            moderation: nil
-        )
-    }
-}
-
-extension ChatGenerationViewController {
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        
-        if traitCollection.horizontalSizeClass != previousTraitCollection?.horizontalSizeClass ||
-           traitCollection.verticalSizeClass != previousTraitCollection?.verticalSizeClass {
-            updateLayoutForSizeClass()
-        }
-    }
-    
-    private func updateLayoutForSizeClass() {
-        leadingConstraint?.constant = 0
-        trailingConstraint?.constant = 0
-
-        Motion.animate(0.3) {
-            self.view.layoutIfNeeded()
-        }
-    }
-    
-    private func setupKeyboardCommands() {
-        addKeyCommand(UIKeyCommand(title: String(localized: "New Chat"),
-                                  action: #selector(newChatTapped),
-                                  input: "N",
-                                  modifierFlags: .command))
-        
-        addKeyCommand(UIKeyCommand(title: String(localized: "Generate"),
-                                  action: #selector(generateWithKeyboard),
-                                  input: "\r",
-                                  modifierFlags: .command))
-        
-        addKeyCommand(UIKeyCommand(title: String(localized: "Open Gallery"),
-                                  action: #selector(galleryTapped),
-                                  input: "G",
-                                  modifierFlags: .command))
-        
-        addKeyCommand(UIKeyCommand(title: String(localized: "Save Image"),
-                                  action: #selector(saveCurrentImage),
-                                  input: "S",
-                                  modifierFlags: .command))
-        
-        addKeyCommand(UIKeyCommand(title: String(localized: "Focus Input"),
-                                  action: #selector(focusInputField),
-                                  input: "L",
-                                  modifierFlags: .command))
-        
-        addKeyCommand(UIKeyCommand(title: String(localized: "Toggle Sidebar"),
-                                  action: #selector(toggleSidebarShortcut),
-                                  input: "\\",
-                                  modifierFlags: .command))
-    }
-    
-    @objc private func generateWithKeyboard() {
-        if let text = inputBar.getCurrentText(), !text.isEmpty {
-            handleSendPrompt(text)
-        }
-    }
-    
-    @objc private func saveCurrentImage() {
-        if let lastMessage = viewModel.messages.last,
-           !lastMessage.isUser,
-           let images = lastMessage.images,
-           let firstImage = images.first {
-            UIImageWriteToSavedPhotosAlbum(firstImage, self, #selector(image(_:didFinishSavingWithError:contextInfo:)), nil)
-        }
-    }
-    
-    @objc private func image(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
-        if error != nil {
-            haptics.notification(.error)
-            Announce.say(String(localized: "Save Failed"))
-        } else {
-            haptics.notification(.success)
-            Announce.say(String(localized: "Saved to Photos"))
-        }
-    }
-    
-    @objc private func focusInputField() {
-        inputBar.becomeFirstResponder()
-    }
-    
-    @objc private func toggleSidebarShortcut() {
-        if let splitVC = self.splitViewController as? MainSplitViewController {
-            if splitVC.displayMode == .oneBesideSecondary {
-                splitVC.preferredDisplayMode = .secondaryOnly
-            } else {
-                splitVC.preferredDisplayMode = .oneBesideSecondary
-            }
-        }
-    }
-    
-    private func setupDragAndDrop() {
-        view.addInteraction(UIDropInteraction(delegate: self))
-        chatView.addInteraction(UIDragInteraction(delegate: self))
-    }
-    
-    override var canBecomeFirstResponder: Bool {
-        return true
-    }
-}
-
-extension ChatGenerationViewController: UIDropInteractionDelegate {
-    func dropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool {
-        return session.hasItemsConforming(toTypeIdentifiers: [UTType.image.identifier])
-    }
-    
-    func dropInteraction(_ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession) -> UIDropProposal {
-        return UIDropProposal(operation: .copy)
-    }
-    
-    func dropInteraction(_ interaction: UIDropInteraction, performDrop session: UIDropSession) {
-        session.loadObjects(ofClass: UIImage.self) { [weak self] items in
-            guard let images = items as? [UIImage], let image = images.first else { return }
-            DispatchQueue.main.async {
-                self?.presentImagePreviewForEdit(image)
-            }
-        }
-    }
-}
-
-extension ChatGenerationViewController: UIDragInteractionDelegate {
-    func dragInteraction(_ interaction: UIDragInteraction, itemsForBeginning session: UIDragSession) -> [UIDragItem] {
-        guard let lastMessage = viewModel.messages.last,
-              !lastMessage.isUser,
-              let images = lastMessage.images,
-              let image = images.first else { return [] }
-        
-        let provider = NSItemProvider(object: image)
-        let dragItem = UIDragItem(itemProvider: provider)
-        dragItem.localObject = image
-        return [dragItem]
     }
 }
 
