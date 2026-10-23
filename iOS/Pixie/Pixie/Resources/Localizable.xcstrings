@@ -32402,66 +32402,66 @@
         }
       }
     },
-    "Pixie sends your prompts and any photos you attach to Google Gemini and OpenAI to create your images. Automated moderation checks every request. Nothing is used to identify you, and you can withdraw consent anytime in Settings." : {
+    "Pixie sends your prompts and any photos you attach to Google Gemini and OpenAI to create your images. Automated moderation checks every request. Your results are saved to your private gallery on Pixie's servers until you delete them or your account. You can withdraw consent anytime in Settings." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pixie sendet deine Prompts und angehängte Fotos an Google Gemini und OpenAI, um deine Bilder zu erstellen. Jede Anfrage wird automatisch moderiert. Nichts davon dient dazu, dich zu identifizieren, und du kannst die Einwilligung jederzeit in den Einstellungen widerrufen."
+            "value" : "Pixie sendet deine Prompts und angehängte Fotos an Google Gemini und OpenAI, um deine Bilder zu erstellen. Jede Anfrage wird automatisch moderiert. Deine Ergebnisse werden in deiner privaten Galerie auf den Servern von Pixie gespeichert, bis du sie oder dein Konto löschst. Du kannst die Einwilligung jederzeit in den Einstellungen widerrufen."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pixie envía tus prompts y las fotos que adjuntes a Google Gemini y OpenAI para crear tus imágenes. Una moderación automática revisa cada solicitud. Nada se usa para identificarte y puedes retirar el consentimiento cuando quieras en Ajustes."
+            "value" : "Pixie envía tus prompts y las fotos que adjuntes a Google Gemini y OpenAI para crear tus imágenes. Una moderación automática revisa cada solicitud. Tus resultados se guardan en tu galería privada en los servidores de Pixie hasta que los borres a ellos o a tu cuenta. Puedes retirar el consentimiento cuando quieras en Ajustes."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pixie envoie vos prompts et les photos que vous joignez à Google Gemini et OpenAI pour créer vos images. Une modération automatique vérifie chaque requête. Rien n'est utilisé pour vous identifier, et vous pouvez retirer votre consentement à tout moment dans les réglages."
+            "value" : "Pixie envoie vos prompts et les photos que vous joignez à Google Gemini et OpenAI pour créer vos images. Une modération automatique vérifie chaque requête. Vos résultats sont enregistrés dans votre galerie privée sur les serveurs de Pixie jusqu'à ce que vous les supprimiez, ou que vous supprimiez votre compte. Vous pouvez retirer votre consentement à tout moment dans les réglages."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pixie invia i tuoi prompt e le foto che alleghi a Google Gemini e OpenAI per creare le immagini. Una moderazione automatica controlla ogni richiesta. Nulla viene usato per identificarti e puoi revocare il consenso quando vuoi nelle impostazioni."
+            "value" : "Pixie invia i tuoi prompt e le foto che alleghi a Google Gemini e OpenAI per creare le immagini. Una moderazione automatica controlla ogni richiesta. I risultati vengono salvati nella tua galleria privata sui server di Pixie finché non li elimini o non elimini il tuo account. Puoi revocare il consenso quando vuoi nelle impostazioni."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pixieは画像を作成するために、プロンプトと添付した写真をGoogle GeminiおよびOpenAIに送信します。すべてのリクエストは自動モデレーションで確認されます。あなたを特定する目的には使われず、同意は「設定」からいつでも撤回できます。"
+            "value" : "Pixieは画像を作成するために、プロンプトと添付した写真をGoogle GeminiおよびOpenAIに送信します。すべてのリクエストは自動モデレーションで確認されます。作成した画像は、あなたが削除するかアカウントを削除するまで、Pixieのサーバー上のプライベートギャラリーに保存されます。同意は「設定」からいつでも撤回できます。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pixie는 이미지를 만들기 위해 프롬프트와 첨부한 사진을 Google Gemini 및 OpenAI로 전송합니다. 모든 요청은 자동 검열을 거칩니다. 개인 식별에는 사용되지 않으며, 설정에서 언제든 동의를 철회할 수 있습니다."
+            "value" : "Pixie는 이미지를 만들기 위해 프롬프트와 첨부한 사진을 Google Gemini 및 OpenAI로 전송합니다. 모든 요청은 자동 검열을 거칩니다. 결과물은 직접 삭제하거나 계정을 삭제할 때까지 Pixie 서버의 비공개 갤러리에 저장됩니다. 설정에서 언제든 동의를 철회할 수 있습니다."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pixie wysyła twoje prompty i dołączone zdjęcia do Google Gemini i OpenAI, aby stworzyć twoje obrazy. Każde żądanie jest automatycznie moderowane. Nic nie służy do twojej identyfikacji, a zgodę możesz wycofać w dowolnym momencie w ustawieniach."
+            "value" : "Pixie wysyła twoje prompty i dołączone zdjęcia do Google Gemini i OpenAI, aby stworzyć twoje obrazy. Każde żądanie jest automatycznie moderowane. Twoje wyniki są zapisywane w prywatnej galerii na serwerach Pixie, dopóki ich nie usuniesz lub nie usuniesz konta. Zgodę możesz wycofać w dowolnym momencie w ustawieniach."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O Pixie envia seus prompts e as fotos que você anexa para o Google Gemini e a OpenAI para criar suas imagens. Uma moderação automática verifica cada solicitação. Nada é usado para identificar você, e você pode retirar o consentimento quando quiser nos ajustes."
+            "value" : "O Pixie envia seus prompts e as fotos que você anexa para o Google Gemini e a OpenAI para criar suas imagens. Uma moderação automática verifica cada solicitação. Seus resultados ficam salvos na sua galeria privada nos servidores do Pixie até você apagá-los ou apagar sua conta. Você pode retirar o consentimento quando quiser nos ajustes."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "为了生成图片，Pixie 会把你的提示词和所附照片发送给 Google Gemini 与 OpenAI。每个请求都会经过自动内容审核。这些内容不会用于识别你的身份，你随时可以在“设置”中撤回授权。"
+            "value" : "为了生成图片，Pixie 会把你的提示词和所附照片发送给 Google Gemini 与 OpenAI。每个请求都会经过自动内容审核。你的作品会保存在 Pixie 服务器上的私人图库中，直到你删除它们或删除账户。你随时可以在“设置”中撤回授权。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "為了生成圖片，Pixie 會將你的提示詞與所附照片傳送給 Google Gemini 與 OpenAI。每個請求都會經過自動內容審核。這些內容不會用來識別你的身分，你隨時可以在「設定」中撤回授權。"
+            "value" : "為了生成圖片，Pixie 會將你的提示詞與所附照片傳送給 Google Gemini 與 OpenAI。每個請求都會經過自動內容審核。你的作品會儲存在 Pixie 伺服器上的私人圖庫中，直到你刪除它們或刪除帳戶。你隨時可以在「設定」中撤回授權。"
           }
         }
       }
@@ -47323,66 +47323,66 @@
         }
       }
     },
-    "Your images and credits are only on this device" : {
+    "Your images and credits live in an anonymous account" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deine Bilder und Credits sind nur auf diesem Gerät"
+            "value" : "Deine Bilder und Credits liegen in einem anonymen Konto"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tus imágenes y créditos solo están en este dispositivo"
+            "value" : "Tus imágenes y créditos están en una cuenta anónima"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vos images et crédits ne sont que sur cet appareil"
+            "value" : "Vos images et crédits sont dans un compte anonyme"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Le tue immagini e i tuoi crediti sono solo su questo dispositivo"
+            "value" : "Le tue immagini e i tuoi crediti sono in un account anonimo"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "画像とクレジットはこのデバイスのみに保存"
+            "value" : "画像とクレジットは匿名アカウントに保存されています"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "이미지와 크레딧은 이 기기에만 있습니다"
+            "value" : "이미지와 크레딧은 익명 계정에 보관됩니다"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Twoje obrazy i kredyty znajdują się tylko na tym urządzeniu"
+            "value" : "Twoje obrazy i kredyty są w anonimowym koncie"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Suas imagens e créditos estão apenas neste aparelho"
+            "value" : "Suas imagens e créditos ficam em uma conta anônima"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "您的图片和积分仅在此设备上"
+            "value" : "您的图片和积分保存在匿名账户中"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "您的圖片和點數僅在此設備上"
+            "value" : "您的圖片和點數保存在匿名帳戶中"
           }
         }
       }

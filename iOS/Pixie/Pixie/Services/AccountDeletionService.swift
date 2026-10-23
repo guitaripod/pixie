@@ -1,6 +1,7 @@
 import Foundation
 import RevenueCat
 import AICreditsCore
+import MidgarCore
 
 enum AccountDeletionError: LocalizedError {
     case notSignedIn
@@ -41,7 +42,7 @@ final class AccountDeletionService {
             try await networkService.delete("/v1/identity")
         } catch let error as NetworkError {
             if case .unauthorized = error {
-                AppLogger.warning("Account deletion: key already invalid, wiping locally", category: .auth)
+                MidgarLog.notice("Account deletion: key already invalid, wiping locally", category: .auth)
             } else {
                 throw AccountDeletionError.server(error.localizedDescription)
             }
@@ -50,7 +51,7 @@ final class AccountDeletionService {
         }
 
         await wipeLocalState()
-        AppLogger.info("Account deleted", category: .auth)
+        MidgarLog.info("Account deleted", category: .auth)
     }
 
     /// Returns the device to a first-launch state: no keys, no identity, no cached or shared

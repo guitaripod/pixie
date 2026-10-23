@@ -3,6 +3,7 @@ import PhotosUI
 import Photos
 import Combine
 import UniformTypeIdentifiers
+import MidgarCore
 
 class ChatGenerationViewController: UIViewController {
     enum ViewState {
@@ -690,7 +691,7 @@ class ChatGenerationViewController: UIViewController {
         options.prompt = preset.prompt
         options.model = model.value
         options.variations = preset.imageCount
-        AppLogger.info("Preset \(preset.id) on \(model.value)", category: .generation)
+        MidgarLog.info("Preset \(preset.id) on \(model.value)", category: .generation)
         startEdit(of: image, options: options, displayText: preset.title)
     }
 

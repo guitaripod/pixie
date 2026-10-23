@@ -386,56 +386,32 @@ final class GalleryPageViewController: UIViewController {
         #endif
 
         guard let apiKey = ConfigurationManager.shared.apiKey, !apiKey.isEmpty else {
-            print("No API key available")
             throw URLError(.userAuthenticationRequired)
         }
-        
+
         guard let userId = AuthenticationManager.shared.currentUser?.id else {
             throw URLError(.userAuthenticationRequired)
         }
-        let urlString = "\(APIService.shared.baseURL)/v1/images/user/\(userId)?page=\(page)&per_page=\(pageSize)"
         let cacheKey = "personal_\(userId)_page_\(page)"
-        
+
         if !isRefreshing, let cachedResponse = GalleryCache.shared.getResponse(for: cacheKey) {
             return cachedResponse
         }
-        
-        guard let url = URL(string: urlString) else {
-            throw URLError(.badURL)
-        }
-        
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw URLError(.badServerResponse)
-        }
-        
-        if httpResponse.statusCode != 200 {
-            let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
-            print("API Error [\(httpResponse.statusCode)]: \(errorMessage)")
-            
-            if httpResponse.statusCode == 401 {
-                throw URLError(.userAuthenticationRequired)
-            } else if httpResponse.statusCode == 404 {
-                return GalleryResponse(images: [], total: 0, page: page, perPage: pageSize)
-            } else {
-                throw URLError(.badServerResponse)
-            }
-        }
-        
-        let decoder = JSONDecoder()
+
         do {
-            let response = try decoder.decode(GalleryResponse.self, from: data)
+            let response = try await AppContainer.shared.networkService.get(
+                "/v1/images/user/\(userId)?page=\(page)&per_page=\(pageSize)",
+                type: GalleryResponse.self
+            )
             GalleryCache.shared.setResponse(response, for: cacheKey)
             return response
-        } catch {
-            throw error
+        } catch NetworkError.unauthorized {
+            throw URLError(.userAuthenticationRequired)
+        } catch NetworkError.notFound {
+            return GalleryResponse(images: [], total: 0, page: page, perPage: pageSize)
         }
     }
-    
+
     /// Takes images off the grid at once while keeping them in the list, so putting them
     /// back lands each one exactly where it was.
     func hide(ids: Set<String>) {

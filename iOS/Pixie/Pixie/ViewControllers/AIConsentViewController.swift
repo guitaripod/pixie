@@ -12,7 +12,7 @@ enum CloudAIConsent {
     }
 
     static var disclosure: String {
-        String(localized: "Pixie sends your prompts and any photos you attach to Google Gemini and OpenAI to create your images. Automated moderation checks every request. Nothing is used to identify you, and you can withdraw consent anytime in Settings.")
+        String(localized: "Pixie sends your prompts and any photos you attach to Google Gemini and OpenAI to create your images. Automated moderation checks every request. Your results are saved to your private gallery on Pixie's servers until you delete them or your account. You can withdraw consent anytime in Settings.")
     }
 
     static func withdraw() {

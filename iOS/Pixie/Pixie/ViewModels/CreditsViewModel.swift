@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import UIKit
+import MidgarCore
 
 @MainActor
 class CreditsViewModel: ObservableObject {
@@ -101,7 +102,7 @@ class CreditsViewModel: ObservableObject {
             transactionsPage += 1
             hasMoreTransactions = Self.hasMore(after: response, loaded: transactions.count, limit: limit)
         } catch {
-            AppLogger.warning("Loading more transactions failed: \(error.localizedDescription)", category: .general)
+            MidgarLog.notice("Loading more transactions failed: \(error.localizedDescription)", category: .general)
         }
     }
 

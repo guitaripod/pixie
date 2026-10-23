@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "git@github.com:guitaripod/AICredits.git",
       "state" : {
-        "revision" : "08f4decb1e55c7d006cca1dcd6152e9ddff2cabb",
-        "version" : "1.3.0"
+        "revision" : "20f8009a2ea6c95cda8148026364cd2bb6206041",
+        "version" : "1.7.0"
       }
     },
     {
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/guitaripod/MidgarKit",
       "state" : {
-        "revision" : "b9e4499149043d247395e1b7e0d91a7fa887db85",
-        "version" : "3.0.0"
+        "revision" : "a63a3fe0579d50976695107347ede3ca5172f601",
+        "version" : "4.3.1"
       }
     },
     {

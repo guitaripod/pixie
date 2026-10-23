@@ -7,9 +7,11 @@ final class AICreditsService {
     let client: AICreditsClient
 
     private init() {
-        let base = URL(string: ConfigurationManager.shared.baseURL)
-            ?? URL(string: "https://mako.midgarcorp.cc")!
-        let config = AICreditsConfig(baseURL: base, appID: "pixie")
+        let config = AICreditsConfig(
+            baseURL: PixieMidgar.intelligenceURL,
+            appID: PixieMidgar.creditsAppID,
+            additionalHeaders: { await PixieMidgar.shared.midgarTokenHeaders() }
+        )
         client = AICreditsClient(config: config, purchaseProvider: HostManagedPurchaseProvider())
     }
 

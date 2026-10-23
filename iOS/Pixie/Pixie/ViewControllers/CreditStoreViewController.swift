@@ -159,7 +159,7 @@ final class CreditStoreViewController: UIViewController {
 
     private lazy var footerStack: UIStackView = {
         let privacy = PixieButton(style: .plain, size: .small, title: String(localized: "Privacy")) { [weak self] in
-            self?.open(url: "https://mako.midgarcorp.cc/privacy/pixie")
+            self?.open(url: AboutSettings.privacyPolicyURL.absoluteString)
         }
         let terms = PixieButton(style: .plain, size: .small, title: String(localized: "Terms")) { [weak self] in
             self?.open(url: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")

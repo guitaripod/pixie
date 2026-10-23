@@ -1,85 +1,70 @@
+import MidgarCommerce
+import MidgarCore
 import StoreKit
 import UIKit
 
-/// Asks for an App Store rating early in real use, and again later if the first ask never turned
-/// into anything, without spending more of Apple's three-per-year budget than it has to.
+/// Asks for an App Store rating after the user has gotten value from the app. A generation that returned images is
+/// this app's core success. `MidgarReviewPolicy` decides whether the ask is due; this type only reports the success
+/// and, when the policy says yes, shows Apple's prompt if nothing else is on screen.
 ///
-/// A generation that actually returned images is the app's core success. The eligibility check
-/// itself is a pure function of the recorded state so it can be tested without StoreKit or a
-/// live scene.
+/// The prompt never fires on a launch, a tap or a preview, never before the second image, and never while a sheet is
+/// already presented.
 @MainActor
 enum ReviewPrompt {
-
-    private enum Keys {
-        static let successCount = "pixie.review.successfulGenerations"
-        static let askDates = "pixie.review.askDates"
-        static let successCountAtLastAsk = "pixie.review.successCountAtLastAsk"
-        static let legacyPromptedVersion = "pixie.review.promptedVersion"
-    }
-
-    private static let firstAskThreshold = 2
-    private static let minDaysBetweenAsks = 14
-    private static let minNewSuccessesBetweenAsks = 3
-    private static let maxAsksPerRollingYear = 3
-    private static let rollingYear: TimeInterval = 365 * 24 * 60 * 60
+    private nonisolated static let successCountKey = "pixie.review.successfulGenerations"
     private static let askDelay: Duration = .milliseconds(1500)
 
-    static var successfulGenerationCount: Int {
-        UserDefaults.standard.integer(forKey: Keys.successCount)
+    /// The success count at which the rating prompt may first fire.
+    nonisolated static let firstAskThreshold = 2
+
+    nonisolated static var successfulGenerationCount: Int {
+        UserDefaults.standard.integer(forKey: successCountKey)
+    }
+
+    nonisolated static let policy: MidgarReviewPolicy = {
+        let storage = MidgarReviewFileStorage(appID: PixieMidgar.appID)
+        LegacyReviewState.migrate(from: .standard, into: storage)
+        return MidgarReviewPolicy(storage: storage)
+    }()
+
+    /// Counts one session. Call it once per launch.
+    static func beginSession() {
+        policy.beginSession()
+    }
+
+    /// Reports a purchase that failed, which holds the prompt back for a week.
+    nonisolated static func notePurchaseFailure() {
+        policy.notePurchaseFailure()
     }
 
     /// Call when a generation returns at least one image.
     static func recordSuccess() {
-        migrateLegacyStateIfNeeded()
+        let successCount = successfulGenerationCount + 1
+        UserDefaults.standard.set(successCount, forKey: successCountKey)
 
-        let defaults = UserDefaults.standard
-        let successCount = defaults.integer(forKey: Keys.successCount) + 1
-        defaults.set(successCount, forKey: Keys.successCount)
-
-        let now = Date()
-        let askDates = storedAskDates(defaults)
-        guard isEligible(
-            successCount: successCount,
-            askDates: askDates,
-            successCountAtLastAsk: defaults.integer(forKey: Keys.successCountAtLastAsk),
-            now: now
-        ) else {
-            AppLogger.info("Review prompt skipped: not eligible at success #\(successCount)", category: .review)
+        let due = policy.noteSuccess()
+        guard due, successCount >= firstAskThreshold else {
+            MidgarLog.info("Review prompt skipped | due: \(due), successCount: \(successCount)", category: .review)
             return
         }
-
         guard canPresentNow else {
-            AppLogger.info("Review prompt skipped: no eligible scene at success #\(successCount)", category: .review)
+            MidgarLog.info("Review prompt skipped | reason: no eligible scene, successCount: \(successCount)", category: .review)
             return
         }
-
-        let askNumber = askDates.count + 1
-        recordAsk(at: now, successCount: successCount, defaults: defaults)
-        AppLogger.info("Review prompt asked (#\(askNumber))", category: .review)
-
         Task {
             try? await Task.sleep(for: askDelay)
-            guard canPresentNow, let scene = activeForegroundScene else {
-                AppLogger.info("Review prompt canceled (#\(askNumber)): scene no longer eligible", category: .review)
-                return
-            }
-            AppStore.requestReview(in: scene)
+            requestReviewIfStillSafe(successCount: successCount)
         }
     }
 
-    /// A pure function of the recorded state: whether an ask is due right now.
-    static func isEligible(successCount: Int, askDates: [Date], successCountAtLastAsk: Int, now: Date) -> Bool {
-        let recentAskCount = askDates.filter { now.timeIntervalSince($0) < rollingYear }.count
-        guard recentAskCount < maxAsksPerRollingYear else { return false }
-
-        guard let lastAskDate = askDates.max() else {
-            return successCount >= firstAskThreshold
+    private static func requestReviewIfStillSafe(successCount: Int) {
+        guard canPresentNow, let scene = activeForegroundScene else {
+            MidgarLog.info("Review prompt dropped | reason: scene no longer eligible, successCount: \(successCount)", category: .review)
+            return
         }
-
-        let daysSinceLastAsk = now.timeIntervalSince(lastAskDate) / (24 * 60 * 60)
-        let newSuccessesSinceLastAsk = successCount - successCountAtLastAsk
-        return daysSinceLastAsk >= Double(minDaysBetweenAsks)
-            && newSuccessesSinceLastAsk >= minNewSuccessesBetweenAsks
+        policy.notePrompted()
+        MidgarLog.info("Review prompt asked | successCount: \(successCount)", category: .review)
+        AppStore.requestReview(in: scene)
     }
 
     private static var canPresentNow: Bool {
@@ -94,30 +79,31 @@ enum ReviewPrompt {
             .compactMap { $0 as? UIWindowScene }
             .first { $0.activationState == .foregroundActive }
     }
+}
 
-    private static func storedAskDates(_ defaults: UserDefaults) -> [Date] {
-        (defaults.array(forKey: Keys.askDates) as? [Double] ?? []).map(Date.init(timeIntervalSince1970:))
+/// The ask history the app kept before `MidgarReviewPolicy`: a list of ask dates, and before that a flag with the app
+/// version that had asked. A person who was asked recently must not be asked again the day the policy changes, so
+/// the newest ask becomes the policy's last prompt the first time it runs.
+nonisolated enum LegacyReviewState {
+    static let askDatesKey = "pixie.review.askDates"
+    static let legacyPromptedVersionKey = "pixie.review.promptedVersion"
+    static let migratedKey = "pixie.review.migratedToMidgar"
+
+    static func migrate(from defaults: UserDefaults, into storage: any MidgarReviewStorage, now: Date = Date()) {
+        guard !defaults.bool(forKey: migratedKey) else { return }
+        defaults.set(true, forKey: migratedKey)
+        guard let lastAsk = lastAsk(in: defaults, now: now) else { return }
+        var state = storage.load()
+        guard state.lastPrompt == nil else { return }
+        state.lastPrompt = lastAsk
+        state.lastPromptedVersion = defaults.string(forKey: legacyPromptedVersionKey)
+        storage.save(state)
     }
 
-    private static func recordAsk(at date: Date, successCount: Int, defaults: UserDefaults) {
-        let dates = storedAskDates(defaults).map(\.timeIntervalSince1970) + [date.timeIntervalSince1970]
-        defaults.set(dates, forKey: Keys.askDates)
-        defaults.set(successCount, forKey: Keys.successCountAtLastAsk)
-    }
-
-    /// The previous mechanism only ever asked once (gated by app version, not by date), so it
-    /// left no timestamp behind. Migration treats "a prompt was shown at some point" as an ask
-    /// that happened just now, which is the conservative reading: it starts the 14-day cooldown
-    /// and spends one of the three yearly asks from today rather than guessing a stale date.
-    private static func migrateLegacyStateIfNeeded() {
-        let defaults = UserDefaults.standard
-        guard defaults.object(forKey: Keys.legacyPromptedVersion) != nil else { return }
-        defer { defaults.removeObject(forKey: Keys.legacyPromptedVersion) }
-        guard defaults.array(forKey: Keys.askDates) == nil else { return }
-
-        let successCount = defaults.integer(forKey: Keys.successCount)
-        defaults.set([Date().timeIntervalSince1970], forKey: Keys.askDates)
-        defaults.set(successCount, forKey: Keys.successCountAtLastAsk)
-        AppLogger.info("Migrated legacy review-prompt state to the dated ask history", category: .review)
+    /// The newest recorded ask, or `now` when only the old per-version flag survives, since its date was never kept.
+    private static func lastAsk(in defaults: UserDefaults, now: Date) -> Date? {
+        let seconds = defaults.array(forKey: askDatesKey) as? [Double] ?? []
+        if let newest = seconds.max() { return Date(timeIntervalSince1970: newest) }
+        return defaults.object(forKey: legacyPromptedVersionKey) == nil ? nil : now
     }
 }

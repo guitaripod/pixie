@@ -12,5 +12,10 @@
 	<array>
 		<string>group.com.guitaripod.Pixie</string>
 	</array>
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+		<string>$(AppIdentifierPrefix)cc.midgarcorp.shared</string>
+	</array>
 </dict>
 </plist>

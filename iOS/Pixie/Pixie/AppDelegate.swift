@@ -1,6 +1,7 @@
 import UIKit
 import UserNotifications
 import RevenueCat
+import MidgarCore
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -9,7 +10,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
-        AppLogger.info("App launched", category: .launch)
+        PixieMidgar.configureLogging()
+        MidgarLog.info("App launched", category: .launch)
 
         warmUpLaunchServicesReceiptPath()
 
@@ -21,6 +23,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         URLCache.shared.removeAllCachedResponses()
         
         _ = RevenueCatManager.shared
+        PixieMidgar.shared.start()
+        ReviewPrompt.beginSession()
         _ = GenerationActivity.shared
         
         let keychainManager = AppContainer.shared.keychainManager

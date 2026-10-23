@@ -1,6 +1,7 @@
 import Foundation
 import RevenueCat
 import UIKit
+import MidgarCore
 
 enum PurchaseState {
     case idle
@@ -80,15 +81,20 @@ final class RevenueCatManager: NSObject {
                 updatePurchaseState(.cancelled)
                 print("Purchase cancelled by user")
             } else {
-                updatePurchaseState(.error(message: error.localizedDescription))
-                print("Purchase error: \(error.localizedDescription)")
+                reportPurchaseFailure(error)
             }
         } catch {
-            updatePurchaseState(.error(message: error.localizedDescription))
-            print("Purchase error: \(error.localizedDescription)")
+            reportPurchaseFailure(error)
         }
     }
     
+    /// Shows the failure and tells the review policy, which holds its prompt back for a week after one.
+    private func reportPurchaseFailure(_ error: Error) {
+        updatePurchaseState(.error(message: error.localizedDescription))
+        ReviewPrompt.notePurchaseFailure()
+        MidgarLog.error("Purchase failed: \(error.localizedDescription)", category: .credits)
+    }
+
     func restorePurchases() async throws -> CustomerInfo {
         let customerInfo = try await Purchases.shared.restorePurchases()
         self.customerInfo = customerInfo

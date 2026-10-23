@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import UIKit
+import MidgarCore
 
 /// The one place the user's credit balance lives, so the home pill, the store, the Credits tab
 /// and the purchase flow all show the same number and move together.
@@ -79,7 +80,7 @@ final class CreditBalanceStore: ObservableObject {
         } catch {
             guard startedAt == revision else { return }
             errorMessage = error.localizedDescription
-            AppLogger.warning("Balance refresh failed: \(error.localizedDescription)", category: .general)
+            MidgarLog.notice("Balance refresh failed: \(error.localizedDescription)", category: .general)
             scheduleRetry()
         }
     }

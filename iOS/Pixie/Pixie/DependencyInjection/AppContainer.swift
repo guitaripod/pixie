@@ -17,7 +17,10 @@ class AppContainer: AppContainerProtocol {
     static let shared = AppContainer()
     
     lazy var networkService: NetworkServiceProtocol = {
-        let service = NetworkService(baseURL: configurationManager.baseURL)
+        let service = NetworkService(
+            baseURL: configurationManager.baseURL,
+            gatewayHeaders: { await PixieMidgar.shared.midgarTokenHeaders() }
+        )
         if let apiKey = configurationManager.apiKey {
             service.setAPIKey(apiKey)
         }

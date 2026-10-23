@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import UIKit
+import MidgarCore
 
 class GenerationViewModel: ObservableObject {
     
@@ -328,10 +329,10 @@ class GenerationViewModel: ObservableObject {
             .appendingPathExtension(prepared.fileExtension)
         do {
             try prepared.data.write(to: fileURL)
-            AppLogger.info("Prepared edit upload: \(prepared.data.count / 1024) KB \(prepared.mimeType)", category: .generation)
+            MidgarLog.info("Prepared edit upload: \(prepared.data.count / 1024) KB \(prepared.mimeType)", category: .generation)
             return fileURL
         } catch {
-            AppLogger.error("Could not stage the edit upload: \(error.localizedDescription)", category: .generation)
+            MidgarLog.error("Could not stage the edit upload: \(error.localizedDescription)", category: .generation)
             return nil
         }
     }

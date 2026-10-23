@@ -13,6 +13,7 @@ enum NetworkError: LocalizedError {
     case noConnection
     case invalidResponse
     case modelDeclined
+    case notFound
     var errorDescription: String? {
         switch self {
         case .invalidURL:
@@ -39,6 +40,8 @@ enum NetworkError: LocalizedError {
             return String(localized: "Invalid response from server")
         case .modelDeclined:
             return String(localized: "The model declined to make this image.")
+        case .notFound:
+            return HTTPURLResponse.localizedString(forStatusCode: 404)
         }
     }
 }
@@ -54,9 +57,19 @@ protocol NetworkServiceProtocol {
 class NetworkService: NetworkServiceProtocol {
     private let session: URLSession
     private let baseURL: String
+    private let gatewayHeaders: @Sendable () async -> [String: String]
     private var apiKey: String?
     private let urlCache: URLCache
-    init(baseURL: String = "https://mako.midgarcorp.cc") {
+
+    /// - Parameters:
+    ///   - baseURL: mako behind the Midgar gateway, which is where every route of this client lives.
+    ///   - gatewayHeaders: Extra headers asked for again on each request, such as the Midgar ID's `X-Midgar-Token`.
+    ///     A call never waits on or fails for them.
+    init(
+        baseURL: String = PixieMidgar.intelligenceURL.absoluteString,
+        gatewayHeaders: @escaping @Sendable () async -> [String: String] = { [:] }
+    ) {
+        self.gatewayHeaders = gatewayHeaders
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 300
         configuration.timeoutIntervalForResource = 300
@@ -86,13 +99,17 @@ class NetworkService: NetworkServiceProtocol {
         urlCache.diskCapacity = 500 * 1024 * 1024 // 500 MB
         urlCache.memoryCapacity = 100 * 1024 * 1024 // 100 MB
     }
-    private func createRequest(for endpoint: String, method: String = "GET") throws -> URLRequest {
+    private func createRequest(for endpoint: String, method: String = "GET") async throws -> URLRequest {
         guard let url = URL(string: "\(baseURL)\(endpoint)") else {
             throw NetworkError.invalidURL
         }
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(PixieMidgar.appID, forHTTPHeaderField: "X-App-ID")
+        for (name, value) in await gatewayHeaders() {
+            request.setValue(value, forHTTPHeaderField: name)
+        }
         request.cachePolicy = .reloadIgnoringLocalCacheData
         if let apiKey = apiKey {
             request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
@@ -100,21 +117,21 @@ class NetworkService: NetworkServiceProtocol {
         return request
     }
     func get<T: Decodable>(_ endpoint: String, type: T.Type) async throws -> T {
-        let request = try createRequest(for: endpoint, method: "GET")
+        let request = try await createRequest(for: endpoint, method: "GET")
         return try await performRequest(request, type: type)
     }
     func post<T: Decodable, U: Encodable>(_ endpoint: String, body: U, type: T.Type) async throws -> T {
-        var request = try createRequest(for: endpoint, method: "POST")
+        var request = try await createRequest(for: endpoint, method: "POST")
         request.httpBody = try JSONEncoder().encode(body)
         return try await performRequest(request, type: type)
     }
     func put<T: Decodable, U: Encodable>(_ endpoint: String, body: U, type: T.Type) async throws -> T {
-        var request = try createRequest(for: endpoint, method: "PUT")
+        var request = try await createRequest(for: endpoint, method: "PUT")
         request.httpBody = try JSONEncoder().encode(body)
         return try await performRequest(request, type: type)
     }
     func delete(_ endpoint: String) async throws {
-        let request = try createRequest(for: endpoint, method: "DELETE")
+        let request = try await createRequest(for: endpoint, method: "DELETE")
         _ = try await performRequest(request, type: EmptyResponse.self)
     }
     func downloadData(from url: URL) async throws -> Data {
@@ -145,6 +162,9 @@ class NetworkService: NetworkServiceProtocol {
         }
         if httpResponse.statusCode == 403 {
             throw NetworkError.forbidden
+        }
+        if httpResponse.statusCode == 404 {
+            throw NetworkError.notFound
         }
         if httpResponse.statusCode == 429 {
             throw NetworkError.tooManyRequests

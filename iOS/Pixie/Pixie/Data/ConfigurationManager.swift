@@ -1,7 +1,7 @@
 import Foundation
 
 protocol ConfigurationManagerProtocol {
-    var baseURL: String { get set }
+    var baseURL: String { get }
     var apiKey: String? { get set }
     var defaultQuality: String { get set }
     var defaultSize: String { get set }
@@ -27,10 +27,9 @@ class ConfigurationManager: ConfigurationManagerProtocol {
     static let configurationDidChangeNotification = Notification.Name("ConfigurationDidChange")
     private let defaults = UserDefaults.standard
     private let keychain = KeychainManager()
-    @UserDefaultsWrapper(key: "pixie.baseURL", defaultValue: "https://mako.midgarcorp.cc")
-    var baseURL: String {
-        didSet { notifyConfigurationChanged() }
-    }
+    /// The stored gateway address of the builds that let `reset()` write one; the address is now fixed in code.
+    private static let retiredBaseURLKey = "pixie.baseURL"
+    var baseURL: String { PixieMidgar.intelligenceURL.absoluteString }
     var apiKey: String? {
         get {
             try? keychain.getString(forKey: KeychainKeys.apiKey)
@@ -93,12 +92,12 @@ class ConfigurationManager: ConfigurationManagerProtocol {
         load()
     }
     func load() {
+        defaults.removeObject(forKey: Self.retiredBaseURLKey)
     }
     func save() {
         notifyConfigurationChanged()
     }
     func reset() {
-        baseURL = "https://mako.midgarcorp.cc"
         apiKey = nil
         defaultModel = "gemini-2.5-flash"
         defaultQuality = "low"

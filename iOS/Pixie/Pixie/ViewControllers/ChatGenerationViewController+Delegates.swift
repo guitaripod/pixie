@@ -1,6 +1,7 @@
 import UIKit
 import PhotosUI
 import UniformTypeIdentifiers
+import MidgarCore
 
 extension ChatGenerationViewController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
@@ -24,7 +25,7 @@ extension ChatGenerationViewController: PHPickerViewControllerDelegate {
             DispatchQueue.main.async {
                 guard let image = image as? UIImage else {
                     self?.pendingPreset = nil
-                    AppLogger.error("Picked photo could not be loaded: \(error?.localizedDescription ?? "no image")", category: .ui)
+                    MidgarLog.error("Picked photo could not be loaded: \(error?.localizedDescription ?? "no image")", category: .ui)
                     return
                 }
                 self?.photoPicked(image)

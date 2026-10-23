@@ -1,4 +1,5 @@
 import UIKit
+import MidgarCore
 
 final class LaunchFailureViewController: UIViewController {
     private let onRetry: () async -> Bool
@@ -110,7 +111,7 @@ final class LaunchFailureViewController: UIViewController {
         let connected = NetworkMonitor.shared.isConnected
         applyConnectionState(announcingChange: !connected)
         guard connected else { return }
-        AppLogger.info("Connectivity returned on the launch failure screen, retrying setup", category: .launch)
+        MidgarLog.info("Connectivity returned on the launch failure screen, retrying setup", category: .launch)
         guard !isRetrying else { return }
         Announce.say(String(localized: "Back online, trying again"))
         retry()

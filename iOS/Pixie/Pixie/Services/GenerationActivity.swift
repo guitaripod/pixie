@@ -1,6 +1,7 @@
 import ActivityKit
 import UIKit
 import UserNotifications
+import MidgarCore
 
 /// Follows one image generation on the Lock Screen and in the Dynamic Island, and keeps the app
 /// running long enough for the card to reach an ending.
@@ -113,7 +114,7 @@ final class GenerationActivity {
             Task { await activity.end(nil, dismissalPolicy: .immediate) }
         }
         endBackgroundTask(run.id)
-        AppLogger.info("Live Activity cancelled", category: .generation)
+        MidgarLog.info("Live Activity cancelled", category: .generation)
     }
 
     /// Pixie came to the front, so every result a card was announcing is on screen now: every card
@@ -127,7 +128,7 @@ final class GenerationActivity {
             Task { await activity.end(nil, dismissalPolicy: .immediate) }
         }
         if !settled.isEmpty {
-            AppLogger.info("Live Activity: \(settled.count) finished card(s) taken down", category: .generation)
+            MidgarLog.info("Live Activity: \(settled.count) finished card(s) taken down", category: .generation)
         }
     }
 
@@ -149,10 +150,10 @@ final class GenerationActivity {
                 content: ActivityContent(
                     state: state, staleDate: startedAt.addingTimeInterval(max(expected * 4, 180))),
                 pushType: nil)
-            AppLogger.info("Live Activity started", category: .generation)
+            MidgarLog.info("Live Activity started", category: .generation)
             return activity
         } catch {
-            AppLogger.error(
+            MidgarLog.error(
                 "Live Activity refused: \(error.localizedDescription)", category: .generation)
             return nil
         }
@@ -177,7 +178,7 @@ final class GenerationActivity {
             self.run = nil
             Task { await activity.end(nil, dismissalPolicy: .immediate) }
             endBackgroundTask(run.id)
-            AppLogger.info("Live Activity ended with Pixie in front", category: .generation)
+            MidgarLog.info("Live Activity ended with Pixie in front", category: .generation)
             return
         }
         let state = state()
@@ -190,7 +191,7 @@ final class GenerationActivity {
             if !Task.isCancelled { await activity.end(content, dismissalPolicy: .after(leaves)) }
             self?.finished(run.id)
         }
-        AppLogger.info("Live Activity \(state.phase.rawValue) in the background", category: .generation)
+        MidgarLog.info("Live Activity \(state.phase.rawValue) in the background", category: .generation)
     }
 
     private func finished(_ id: UUID) {
@@ -210,7 +211,7 @@ final class GenerationActivity {
             let leaves = Date().addingTimeInterval(Self.lockScreenLinger)
             Task { await activity.end(content, dismissalPolicy: .after(leaves)) }
             run.activity = nil
-            AppLogger.info("Live Activity paused: background time ran out", category: .generation)
+            MidgarLog.info("Live Activity paused: background time ran out", category: .generation)
         }
         self.run = run
         endBackgroundTask(id)
@@ -254,7 +255,7 @@ final class GenerationActivity {
             try data.write(to: url, options: .atomic)
             return name
         } catch {
-            AppLogger.error("Live Activity thumbnail not written: \(error.localizedDescription)", category: .generation)
+            MidgarLog.error("Live Activity thumbnail not written: \(error.localizedDescription)", category: .generation)
             return nil
         }
     }

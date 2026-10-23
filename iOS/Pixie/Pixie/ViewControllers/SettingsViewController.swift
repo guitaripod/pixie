@@ -1,5 +1,7 @@
 import AuthenticationServices
-import MidgarKit
+import MidgarCore
+import MidgarPortal
+import MidgarUI
 import UIKit
 
 class SettingsViewController: UIViewController {
@@ -175,7 +177,7 @@ class SettingsViewController: UIViewController {
     }
 
     private func makeMidgarEntry() -> UIView {
-        let entry = MidgarEntryView()
+        let entry = MidgarEntryView(config: PixieMidgar.shared.portalConfig)
         entry.heightAnchor.constraint(equalToConstant: MidgarEntryView.preferredHeight).isActive = true
         return entry
     }
@@ -189,7 +191,7 @@ class SettingsViewController: UIViewController {
         let symbol: String
         if isAnonymous {
             title = String(localized: "Not signed in")
-            detail = String(localized: "Your images and credits are only on this device")
+            detail = String(localized: "Your images and credits live in an anonymous account")
             symbol = "person.crop.circle.badge.questionmark"
         } else if let provider {
             title = String(localized: "Signed in with \(provider.displayName)")
@@ -416,12 +418,10 @@ class SettingsViewController: UIViewController {
         let contact = ListRowView(title: String(localized: "Contact"), subtitle: String(localized: "@guitaripod on X"), symbol: "bubble.left.fill", showsChevron: true)
         contact.onTap = { [weak self] in self?.openSupport() }
 
-        var rows: [UIView] = [help, contact]
-        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
-           let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
-            rows.append(ListRowView(title: String(localized: "Version"), value: "\(version) (\(build))", symbol: "info.circle.fill"))
-        }
-        return SettingsLayout.section(title: String(localized: "Support"), content: [SettingsLayout.card(rows: rows)])
+        let about = ListRowView(title: String(localized: "About"), value: MidgarVersionInfo().display, symbol: "info.circle.fill", showsChevron: true)
+        about.onTap = { [weak self] in self?.presentAbout() }
+
+        return SettingsLayout.section(title: String(localized: "Support"), content: [SettingsLayout.card(rows: [help, contact, about])])
     }
 
     private func makeAdminSection() -> UIView {
@@ -788,6 +788,10 @@ class SettingsViewController: UIViewController {
         navigationController?.pushViewController(helpVC, animated: true)
     }
 
+    private func presentAbout() {
+        navigationController?.pushViewController(AboutSettings.makeViewController(), animated: true)
+    }
+
     private func openSupport() {
         guard let url = Self.supportURL else { return }
         UIApplication.shared.open(url)
@@ -862,13 +866,7 @@ class SettingsViewController: UIViewController {
 
         Task {
             do {
-                let request = URLRequest(url: URL(string: "\(configurationManager.baseURL)/")!, cachePolicy: .reloadIgnoringLocalCacheData)
-                let (_, response) = try await URLSession.shared.data(for: request)
-
-                guard let httpResponse = response as? HTTPURLResponse,
-                      (200...299).contains(httpResponse.statusCode) else {
-                    throw URLError(.badServerResponse)
-                }
+                _ = try await AppContainer.shared.apiService.getCreditPacks()
 
                 await MainActor.run {
                     self.connectionStatus = .success

@@ -1,4 +1,5 @@
 import UIKit
+import MidgarCore
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
@@ -117,7 +118,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         if Self.simulatesBootstrapFailure {
             guard Self.debugBootstrapFailuresRemaining == 0 else {
                 Self.debugBootstrapFailuresRemaining -= 1
-                AppLogger.warning("Simulated anonymous bootstrap failure", category: .auth)
+                MidgarLog.notice("Simulated anonymous bootstrap failure", category: .auth)
                 return false
             }
             return true
@@ -127,7 +128,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             try await AuthenticationManager.shared.bootstrapAnonymous()
             return true
         } catch {
-            AppLogger.warning("Anonymous bootstrap failed: \(error.localizedDescription)", category: .auth)
+            MidgarLog.notice("Anonymous bootstrap failed: \(error.localizedDescription)", category: .auth)
             return false
         }
     }
