@@ -1,15 +1,6 @@
 {
-  "originHash" : "2878924f983097cc429479f5ef93c250f05716ccda2c55ff536048f622efb454",
+  "originHash" : "23f0fdccae70fd87405f9581788dc506a12015286cbcf322aa0bb8c51a8ad040",
   "pins" : [
-    {
-      "identity" : "aicredits",
-      "kind" : "remoteSourceControl",
-      "location" : "git@github.com:guitaripod/AICredits.git",
-      "state" : {
-        "revision" : "20f8009a2ea6c95cda8148026364cd2bb6206041",
-        "version" : "1.7.0"
-      }
-    },
     {
       "identity" : "app-check",
       "kind" : "remoteSourceControl",
@@ -62,15 +53,6 @@
       "state" : {
         "revision" : "56e0ccf09a6dd29dc7e68bdf729598240ca8aa16",
         "version" : "5.0.0"
-      }
-    },
-    {
-      "identity" : "midgarkit",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/guitaripod/MidgarKit",
-      "state" : {
-        "revision" : "a63a3fe0579d50976695107347ede3ca5172f601",
-        "version" : "4.3.1"
       }
     },
     {

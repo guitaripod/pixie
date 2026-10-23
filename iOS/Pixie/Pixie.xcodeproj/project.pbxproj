@@ -279,8 +279,8 @@
 			packageReferences = (
 				2CB109282E37549E004A0202 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				2CAB91B12E3AB5940087EBE7 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
-				ACED175C0000000000000001 /* XCRemoteSwiftPackageReference "AICredits" */,
-				2CAA00012F000001004A0202 /* XCRemoteSwiftPackageReference "MidgarKit" */,
+				ACED175C0000000000000001 /* XCLocalSwiftPackageReference "../../../../packages/AICredits" */,
+				2CAA00012F000001004A0202 /* XCLocalSwiftPackageReference "../../../../packages/MidgarKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2CB38B092E36AED800E68202 /* Products */;
@@ -701,15 +701,18 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		ACED175C0000000000000001 /* XCRemoteSwiftPackageReference "AICredits" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "git@github.com:guitaripod/AICredits.git";
-			requirement = {
-				kind = exactVersion;
-				version = 1.7.0;
-			};
+/* Begin XCLocalSwiftPackageReference section */
+		ACED175C0000000000000001 /* XCLocalSwiftPackageReference "../../../../packages/AICredits" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../../../packages/AICredits";
 		};
+		2CAA00012F000001004A0202 /* XCLocalSwiftPackageReference "../../../../packages/MidgarKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../../../packages/MidgarKit";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
 		2CAB91B12E3AB5940087EBE7 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
@@ -726,20 +729,12 @@
 				minimumVersion = 9.0.0;
 			};
 		};
-		2CAA00012F000001004A0202 /* XCRemoteSwiftPackageReference "MidgarKit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/guitaripod/MidgarKit";
-			requirement = {
-				kind = exactVersion;
-				version = 4.3.1;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		ACED175C0000000000000002 /* AICreditsCore */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = ACED175C0000000000000001 /* XCRemoteSwiftPackageReference "AICredits" */;
+			package = ACED175C0000000000000001 /* XCLocalSwiftPackageReference "../../../../packages/AICredits" */;
 			productName = AICreditsCore;
 		};
 		2CAB91B22E3AB5940087EBE7 /* RevenueCat */ = {
@@ -754,7 +749,7 @@
 		};
 		2CAA00022F000002004A0202 /* MidgarKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 2CAA00012F000001004A0202 /* XCRemoteSwiftPackageReference "MidgarKit" */;
+			package = 2CAA00012F000001004A0202 /* XCLocalSwiftPackageReference "../../../../packages/MidgarKit" */;
 			productName = MidgarKit;
 		};
 /* End XCSwiftPackageProductDependency section */
