@@ -1,235 +1,136 @@
-import Foundation
-import PixiepocketCore
-import RevenueCat
 import Combine
+import Foundation
+import MidgarCore
+import MidgarCredits
+import PixiepocketCore
 
-struct CreditPurchaseResult {
-    let purchaseId: String
-    let credits: Int
-    let newBalance: Int
-    let amountUsd: String
-}
-
-struct RestoredPurchase {
-    let productId: String
-    let purchaseDate: String
-    let expirationDate: String?
-}
-
-struct CreditPackWithPrice {
+nonisolated struct CreditPackWithPrice: Sendable {
     let creditPack: CreditPack
-    let rcPackage: Package
     let localizedPrice: String
 }
 
-final class PurchaseCancelledException: LocalizedError {
-    var errorDescription: String? {
-        return String(localized: "Purchase cancelled by user")
-    }
+/// How a purchase ended, in the cases the store screen shows differently. A purchase that failed is thrown instead.
+enum CreditPurchaseOutcome: Equatable {
+    /// mako credited the pack: `credits` arrived and the wallet now holds `newBalance`.
+    case credited(credits: Int, newBalance: Int)
+    /// The customer paid and mako has not credited yet. The receipt stays queued and the balance follows the credit.
+    case creditPending(credits: Int)
+    /// The purchase waits for someone else's approval (Ask to Buy).
+    case awaitingApproval
+    /// The customer dismissed the purchase sheet.
+    case cancelled
 }
 
-struct RevenueCatPurchaseValidationRequest: Codable {
-    let packId: String
-    let purchaseToken: String
-    let productId: String
-    let platform: String
-    
-    enum CodingKeys: String, CodingKey {
-        case packId = "pack_id"
-        case purchaseToken = "purchase_token"
-        case productId = "product_id"
-        case platform
-    }
-}
-
-
+/// Sells the credit packs through the Midgar wallet: mako's pack list for names, credits and bonus, StoreKit's products
+/// (through MidgarCredits) for the price in the customer's storefront, and `MidgarCredits.buy` for the purchase.
 @MainActor
-class CreditPurchaseManager {
+final class CreditPurchaseManager {
     static let shared = CreditPurchaseManager()
-    
-    private let revenueCatManager = RevenueCatManager.shared
+
+    private let credits: MidgarCredits?
     private let apiService: APIServiceProtocol
     private let balanceStore: CreditBalanceStore
-    
-    @Published private(set) var purchaseState: PurchaseState = .idle
-    @Published private(set) var offerings: Offerings?
+    private let welcomeCredits: WelcomeCredits
+    private let notePurchaseFailure: @MainActor () -> Void
+
+    @Published private(set) var offers: [MidgarCreditsOffer] = []
     @Published private(set) var creditPacks: [CreditPack] = []
-    
-    private var cancellables = Set<AnyCancellable>()
-    
-    private let packageToPackId: [String: String] = [
-        "starter": "starter",
-        "basic": "basic",
-        "popular": "popular",
-        "business": "business",
-        "enterprise": "enterprise"
-    ]
-    
-    private init(apiService: APIServiceProtocol = APIService.shared) {
+
+    /// - Parameters:
+    ///   - credits: The wallet, or nil where the app reaches no Midgar service (a test host): nothing is for sale then.
+    ///   - notePurchaseFailure: Tells the review policy, which holds its prompt back for a week after a failed purchase.
+    init(
+        credits: MidgarCredits? = PixieMidgar.shared.credits,
+        apiService: APIServiceProtocol = APIService.shared,
+        balanceStore: CreditBalanceStore = .shared,
+        welcomeCredits: WelcomeCredits = WelcomeCredits(),
+        notePurchaseFailure: @escaping @MainActor () -> Void = { ReviewPrompt.notePurchaseFailure() }
+    ) {
+        self.credits = credits
         self.apiService = apiService
-        self.balanceStore = .shared
-        setupBindings()
+        self.balanceStore = balanceStore
+        self.welcomeCredits = welcomeCredits
+        self.notePurchaseFailure = notePurchaseFailure
+        prefetch()
     }
-    
-    private func setupBindings() {
-        revenueCatManager.observePurchaseState { [weak self] state in
-            self?.purchaseState = state
-        }
-        
-        revenueCatManager.$offerings
-            .sink { [weak self] offerings in
-                self?.offerings = offerings
-            }
-            .store(in: &cancellables)
-        
+
+    /// Loads the pack list and the prices ahead of the store screen. A host that reaches no Midgar service (a test host
+    /// or a demo capture) makes no network call; its tests ask for each load themselves.
+    private func prefetch() {
+        guard PixieMidgar.reachesMidgarServices else { return }
         Task {
             await fetchCreditPacks()
+            await fetchOffers()
         }
     }
-    
+
     func fetchCreditPacks() async {
         do {
             let response = try await apiService.getCreditPacks()
-            await MainActor.run {
-                self.creditPacks = response.packs
-            }
+            creditPacks = response.packs
         } catch {
-            print("Error fetching credit packs: \(error)")
+            MidgarLog.notice("Credit pack list unavailable: \(error.localizedDescription)", category: .credits)
         }
     }
-    
-    func purchaseCreditPack(package: Package) async -> Result<CreditPurchaseResult, Error> {
+
+    /// Reads the packs StoreKit sells to this customer, with their localized prices. A pack StoreKit does not return is
+    /// left out, so the store screen hides it.
+    func fetchOffers() async {
+        guard let credits else { return }
         do {
-            try await revenueCatManager.purchaseCreditPack(package: package)
-            
-            switch purchaseState {
-            case .success(let purchaseToken, let productId, let packageId):
-                let packId = packageToPackId[packageId] ?? packageId
-                return await validateAndRecordPurchase(
-                    packId: packId,
-                    purchaseToken: purchaseToken,
-                    productId: productId
-                )
-                
-            case .error(let message):
-                return .failure(NSError(domain: "CreditPurchase", code: -1, userInfo: [NSLocalizedDescriptionKey: message]))
-                
-            case .cancelled:
-                return .failure(PurchaseCancelledException())
-                
-            default:
-                return .failure(NSError(domain: "CreditPurchase", code: -1, userInfo: [NSLocalizedDescriptionKey: String(localized: "Unexpected purchase state")]))
-            }
+            offers = try await credits.offers()
         } catch {
-            return .failure(error)
+            MidgarLog.notice("Credit pack prices unavailable: \(error.localizedDescription)", category: .credits)
         }
     }
-    
-    private func validateAndRecordPurchase(
-        packId: String,
-        purchaseToken: String,
-        productId: String
-    ) async -> Result<CreditPurchaseResult, Error> {
+
+    /// Buys one pack and credits it. A cancelled purchase is an outcome, not an error; any failure is noted for the
+    /// review policy and thrown for the screen to show.
+    func purchaseCreditPack(id packID: String) async throws -> CreditPurchaseOutcome {
         do {
-            let request = RevenueCatPurchaseValidationRequest(
-                packId: packId,
-                purchaseToken: purchaseToken,
-                productId: productId,
-                platform: "ios"
-            )
-            
-            let response: RevenueCatPurchaseValidationResponse = try await apiService.validateRevenueCatPurchase(request)
-            
-            if response.success {
-                WelcomeCredits().markCreditsAdded()
-                balanceStore.apply(newBalance: response.newBalance)
-                Task { await balanceStore.refresh() }
-                
-                return .success(CreditPurchaseResult(
-                    purchaseId: response.purchaseId,
-                    credits: response.creditsAdded,
-                    newBalance: response.newBalance,
-                    amountUsd: ""
-                ))
-            } else {
-                Task { await balanceStore.refresh() }
-                return .failure(NSError(domain: "CreditPurchase", code: -1, userInfo: [NSLocalizedDescriptionKey: String(localized: "Purchase validation failed")]))
+            guard let credits else {
+                throw MidgarCreditsError.notConfigured(.purchasesDisabled)
             }
+            return outcome(of: try await credits.buy(packID))
+        } catch is CancellationError {
+            return .cancelled
         } catch {
-            print("Error recording purchase: \(error)")
+            notePurchaseFailure()
+            MidgarLog.error("Purchase failed: \(error.localizedDescription)", category: .credits)
+            throw error
+        }
+    }
+
+    private func outcome(of result: MidgarCreditsPurchaseResult) -> CreditPurchaseOutcome {
+        switch result {
+        case .credited(_, let creditsAdded, let balance):
+            welcomeCredits.markCreditsAdded()
+            balanceStore.apply(newBalance: balance)
             Task { await balanceStore.refresh() }
-            return .failure(error)
+            return .credited(credits: creditsAdded, newBalance: balance)
+        case .creditPending(_, let expectedCredits):
+            return .creditPending(credits: expectedCredits)
+        case .awaitingApproval:
+            return .awaitingApproval
+        case .cancelled:
+            return .cancelled
         }
     }
-    
-    func restorePurchases() async -> Result<[RestoredPurchase], Error> {
-        do {
-            let customerInfo = try await revenueCatManager.restorePurchases()
-            var restoredPurchases: [RestoredPurchase] = []
-            
-            for (_, entitlement) in customerInfo.entitlements.all {
-                if entitlement.isActive {
-                    let productId = entitlement.productIdentifier
-                    restoredPurchases.append(RestoredPurchase(
-                        productId: productId,
-                        purchaseDate: entitlement.latestPurchaseDate?.description ?? "",
-                        expirationDate: entitlement.expirationDate?.description
-                    ))
-                }
-            }
-            
-            return .success(restoredPurchases)
-        } catch {
-            print("Error restoring purchases: \(error)")
-            return .failure(error)
-        }
-    }
-    
+
+    /// mako's packs that StoreKit sells, cheapest first, each with the price StoreKit shows this customer.
     func getCreditPacksWithPricing() -> AnyPublisher<[CreditPackWithPrice], Never> {
-        Publishers.CombineLatest($creditPacks, $offerings)
-            .map { (backendPacks, revenueCatOfferings) -> [CreditPackWithPrice] in
-                guard !backendPacks.isEmpty else { return [] }
-                
-                let defaultOffering = revenueCatOfferings?.current ?? revenueCatOfferings?.all.values.first
-                
-                guard let packages = defaultOffering?.availablePackages else { return [] }
-                
-                var creditPacksWithPrice: [CreditPackWithPrice] = []
-                
-                for pack in backendPacks {
-                    if let rcPackage = packages.first(where: { $0.identifier == pack.id }) {
-                        let creditPack = CreditPack(
-                            id: pack.id,
-                            name: pack.name,
-                            credits: pack.credits,
-                            priceUsdCents: pack.priceUsdCents,
-                            bonusCredits: pack.bonusCredits,
-                            description: pack.description
-                        )
-                        
-                        creditPacksWithPrice.append(CreditPackWithPrice(
-                            creditPack: creditPack,
-                            rcPackage: rcPackage,
-                            localizedPrice: rcPackage.storeProduct.localizedPriceString
-                        ))
-                    }
-                }
-                
-                return creditPacksWithPrice.sorted { $0.creditPack.priceUsdCents < $1.creditPack.priceUsdCents }
-            }
+        Publishers.CombineLatest($creditPacks, $offers)
+            .map(Self.priced)
             .eraseToAnyPublisher()
     }
-    
-    func getCreditsForPackage(_ packId: String) -> (total: Int, base: Int, bonus: Int) {
-        if let pack = creditPacks.first(where: { $0.id == packId }) {
-            let total = pack.credits + pack.bonusCredits
-            return (total, pack.credits, pack.bonusCredits)
-        }
-        
-        return (0, 0, 0)
-    }
-    
-    func resetPurchaseState() {
-        revenueCatManager.resetPurchaseState()
+
+    /// The join, nonisolated because Combine runs it on whichever thread the publisher emits on.
+    private nonisolated static func priced(_ backendPacks: [CreditPack], _ offers: [MidgarCreditsOffer]) -> [CreditPackWithPrice] {
+        let priceByPackID = Dictionary(offers.map { ($0.pack.id, $0.product.displayPrice) }, uniquingKeysWith: { first, _ in first })
+        return backendPacks
+            .compactMap { pack in
+                priceByPackID[pack.id].map { CreditPackWithPrice(creditPack: pack, localizedPrice: $0) }
+            }
+            .sorted { $0.creditPack.priceUsdCents < $1.creditPack.priceUsdCents }
     }
 }

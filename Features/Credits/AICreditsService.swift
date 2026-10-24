@@ -26,6 +26,18 @@ final class AICreditsService {
         return try await client.link(appleIdentityToken: appleIdentityToken)
     }
 
+    /// The api key of the account the app uses today, which MidgarCredits sends as its legacy key so mako links the
+    /// balance from before the move to the Midgar ID's wallet. It is the key every mako call already carries: the one
+    /// in the keychain after a sign-in, which for an anonymous or Apple-linked account is the AICredits identity's
+    /// own. A device that has none yet gets its account registered here, the same one the first launch would register.
+    /// Nil when that fails.
+    func legacyAPIKey() async -> String? {
+        if let key = ConfigurationManager.shared.apiKey, !key.isEmpty {
+            return key
+        }
+        return try? await client.bootstrap().apiKey
+    }
+
     func signOut() async {
         await client.signOut()
     }

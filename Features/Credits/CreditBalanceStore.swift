@@ -1,11 +1,16 @@
 import Foundation
 import Combine
+import MidgarCore
+import MidgarCredits
 import PixiepocketCore
 import UIKit
-import MidgarCore
 
 /// The one place the user's credit balance lives, so the home pill, the store, the Credits tab
-/// and the purchase flow all show the same number and move together.
+/// and the purchase flow all show the same number and move together. It is fed from the Midgar
+/// wallet: every refresh reads the balance there (which also settles a paid purchase mako has not
+/// credited yet) and the wallet's events move it when a credit lands later.
+///
+/// Without a wallet (a test host) it reads nothing and the balance stays unknown.
 @MainActor
 final class CreditBalanceStore: ObservableObject {
     static let shared = CreditBalanceStore()
@@ -15,10 +20,12 @@ final class CreditBalanceStore: ObservableObject {
     @Published private(set) var errorMessage: String?
     @Published private(set) var updatedAt: Date?
 
+    private static let currency = "credits"
     private static let retryDelays: [TimeInterval] = [1, 2, 4, 8, 16, 30]
     private static let foregroundRefreshInterval: TimeInterval = 3
 
-    private let apiService: APIServiceProtocol
+    private let credits: MidgarCredits?
+    private let welcomeCredits: WelcomeCredits
     private var inFlight: Task<Void, Never>?
     private var retryTask: Task<Void, Never>?
     private var failureCount = 0
@@ -26,9 +33,11 @@ final class CreditBalanceStore: ObservableObject {
     private var accountId: String?
     private var cancellables = Set<AnyCancellable>()
 
-    init(apiService: APIServiceProtocol = APIService.shared) {
-        self.apiService = apiService
+    init(credits: MidgarCredits? = PixieMidgar.shared.credits, welcomeCredits: WelcomeCredits = WelcomeCredits()) {
+        self.credits = credits
+        self.welcomeCredits = welcomeCredits
         observeLifecycle()
+        followWallet()
     }
 
     /// Fetches the balance from the server. Calls made while a fetch is running share it, and a
@@ -48,7 +57,7 @@ final class CreditBalanceStore: ObservableObject {
     /// and discards any older fetch still on its way.
     func apply(newBalance: Int) {
         revision += 1
-        publish(CreditBalance(balance: newBalance, currency: balance?.currency ?? "credits"))
+        publish(CreditBalance(balance: newBalance, currency: balance?.currency ?? Self.currency))
     }
 
     /// Forgets the balance when the account goes away so the next one never briefly shows it.
@@ -68,16 +77,17 @@ final class CreditBalanceStore: ObservableObject {
 
         #if DEBUG
         if let demo = Self.debugBalance {
-            publish(CreditBalance(balance: demo, currency: "credits"))
+            publish(CreditBalance(balance: demo, currency: Self.currency))
             return
         }
         #endif
 
+        guard let credits else { return }
         let startedAt = revision
         do {
-            let fetched = try await apiService.getCreditBalance()
+            let read = try await credits.refresh()
             guard startedAt == revision else { return }
-            publish(fetched)
+            publish(CreditBalance(balance: read.credits, currency: Self.currency))
         } catch {
             guard startedAt == revision else { return }
             errorMessage = error.localizedDescription
@@ -105,6 +115,30 @@ final class CreditBalanceStore: ObservableObject {
             guard !Task.isCancelled, let self else { return }
             self.retryTask = nil
             await self.refresh()
+        }
+    }
+
+    /// Follows what the wallet reports until its stream ends: a balance that changed is shown, and a credited
+    /// purchase leaves the welcome state for good, also when the credit arrived after the store closed.
+    private func followWallet() {
+        guard let credits else { return }
+        Task { [weak self] in
+            for await event in await credits.events() {
+                guard let self else { return }
+                await self.handle(event)
+            }
+        }
+    }
+
+    func handle(_ event: MidgarCreditsEvent) async {
+        switch event {
+        case .balanceChanged(let changed):
+            apply(newBalance: changed.credits)
+        case .purchaseCredited:
+            welcomeCredits.markCreditsAdded()
+            if let known = await credits?.balance {
+                apply(newBalance: known.credits)
+            }
         }
     }
 

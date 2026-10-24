@@ -1,7 +1,7 @@
 import Foundation
-import RevenueCat
 import AICreditsCore
 import MidgarCore
+import MidgarCredits
 
 enum AccountDeletionError: LocalizedError {
     case notSignedIn
@@ -17,6 +17,39 @@ enum AccountDeletionError: LocalizedError {
         case .server(let message):
             return String(localized: "Pixie couldn't delete your account: \(message). Nothing was deleted.")
         }
+    }
+}
+
+/// The server half of deleting an account: removes the account at mako and everything it holds for it. With the wallet,
+/// the key goes through `MidgarCredits.deleteLegacyAccount()`, which also erases this app's partition of the wallet for
+/// a user already linked to it. Without the wallet (a host that reaches no Midgar service) the app's own request does
+/// the same. A key mako no longer accepts counts as done.
+struct ServerAccountDeletion {
+    let credits: MidgarCredits?
+    let networkService: NetworkServiceProtocol
+
+    func run() async throws {
+        do {
+            if let credits {
+                try await credits.deleteLegacyAccount()
+            } else {
+                try await networkService.delete("/v1/identity")
+            }
+        } catch let error as MidgarCreditsError {
+            throw Self.deletionError(for: error)
+        } catch let error as NetworkError {
+            if case .unauthorized = error {
+                MidgarLog.notice("Account deletion: key already invalid, wiping locally", category: .auth)
+                return
+            }
+            throw AccountDeletionError.server(error.localizedDescription)
+        } catch {
+            throw AccountDeletionError.server(error.localizedDescription)
+        }
+    }
+
+    private static func deletionError(for error: MidgarCreditsError) -> AccountDeletionError {
+        error == .offline ? .offline : .server(error.localizedDescription)
     }
 }
 
@@ -38,17 +71,7 @@ final class AccountDeletionService {
         guard authenticationService.isAuthenticated else { throw AccountDeletionError.notSignedIn }
         guard NetworkMonitor.shared.isConnected else { throw AccountDeletionError.offline }
 
-        do {
-            try await networkService.delete("/v1/identity")
-        } catch let error as NetworkError {
-            if case .unauthorized = error {
-                MidgarLog.notice("Account deletion: key already invalid, wiping locally", category: .auth)
-            } else {
-                throw AccountDeletionError.server(error.localizedDescription)
-            }
-        } catch {
-            throw AccountDeletionError.server(error.localizedDescription)
-        }
+        try await ServerAccountDeletion(credits: PixieMidgar.shared.credits, networkService: networkService).run()
 
         await wipeLocalState()
         MidgarLog.info("Account deleted", category: .auth)
@@ -64,7 +87,6 @@ final class AccountDeletionService {
         AppContainer.shared.updateNetworkServiceAPIKey()
         await AICreditsService.shared.signOut()
         try? await authenticationService.logout()
-        _ = try? await Purchases.shared.logOut()
 
         await CacheManager.shared.clearCache()
         CacheManager.shared.clearImageCache()

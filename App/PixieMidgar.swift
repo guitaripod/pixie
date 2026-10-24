@@ -1,11 +1,12 @@
 import Foundation
 import MidgarCommerce
 import MidgarCore
+import MidgarCredits
 import MidgarPortal
 
 /// The composition root of everything PixiePocket shares with the other Midgar apps: the Midgar ID, the gateway
-/// client built on it, the anonymous signals client, the read-only purchase store and the gateway address of mako.
-/// One instance lives for the whole process, so there is one identity and one ledger cache.
+/// client built on it, the anonymous signals client, the purchase store, the credit wallet on it and the gateway
+/// address of mako. One instance lives for the whole process, so there is one identity and one ledger cache.
 nonisolated final class PixieMidgar: Sendable {
     /// The registry slug: the `X-App-ID` of every gateway call, which mako resolves to its `pixie` tenant.
     static let appID = "pixiepocket"
@@ -36,8 +37,14 @@ nonisolated final class PixieMidgar: Sendable {
     /// The gateway client that carries the Midgar ID's bearer token, for the ledger and the portal's "Your Midgar".
     let account: MidgarHTTPClient
 
-    /// The read-only ledger store, or nil in a test host or a demo capture.
-    let ledger: MidgarStore?
+    /// The purchase engine for the credit packs: StoreKit 2 with the Midgar ID as `appAccountToken`. Nil in a test host
+    /// or a demo capture, which must not reach the ledger.
+    let store: MidgarStore?
+
+    /// The wallet behind the credit packs: the balance, the purchase and the credit on the Midgar ID, with the api key
+    /// of the old per-app account as the legacy key so the balance from before the move stays linked. Nil where
+    /// `store` is.
+    let credits: MidgarCredits?
 
     private init() {
         let configuration = MidgarHTTPConfiguration(appID: Self.appID)
@@ -45,7 +52,30 @@ nonisolated final class PixieMidgar: Sendable {
         let account = MidgarHTTPClient(configuration: identity.authorizing(configuration))
         self.identity = identity
         self.account = account
-        ledger = Self.reachesMidgarServices ? Self.makeStore(identity: identity, account: account) : nil
+        let commerce = Self.makeCommerce(identity: identity, account: account, configuration: configuration)
+        store = commerce?.store
+        credits = commerce?.credits
+    }
+
+    /// Builds the store and the wallet on it, or nothing where the app reaches no Midgar service. The wallet takes the
+    /// plain configuration, because it authorizes its own requests: the legacy key and the Midgar token travel in
+    /// different headers. Creating the store starts its foreground refresh and its transaction listener, so create it
+    /// once.
+    private static func makeCommerce(
+        identity: MidgarIdentity,
+        account: MidgarHTTPClient,
+        configuration: MidgarHTTPConfiguration
+    ) -> (store: MidgarStore, credits: MidgarCredits)? {
+        guard reachesMidgarServices else { return nil }
+        let store = MidgarStore(configuration: PixiePacks.storeConfiguration(), identity: identity, http: account)
+        let credits = MidgarCredits(
+            configuration: PixiePacks.creditsConfiguration(),
+            http: configuration,
+            identity: identity,
+            purchasing: store,
+            legacyAPIKey: { await AICreditsService.shared.legacyAPIKey() }
+        )
+        return (store, credits)
     }
 
     /// The `X-Midgar-Token` header for a call to mako, which is how mako links the legacy api key to the Midgar ID,
@@ -77,7 +107,7 @@ nonisolated final class PixieMidgar: Sendable {
         }
         MidgarSignals.configure(configuration: MidgarHTTPConfiguration(appID: Self.appID))
         let identity = identity
-        let ledger = ledger
+        let store = store
         Task {
             do {
                 _ = try await identity.midgarId
@@ -85,7 +115,7 @@ nonisolated final class PixieMidgar: Sendable {
             } catch {
                 MidgarLog.info("Midgar ID not available yet: \(error)", category: .account)
             }
-            await Self.logLedgerEntitlements(of: ledger)
+            await Self.logLedgerEntitlements(of: store)
         }
     }
 
@@ -99,33 +129,11 @@ nonisolated final class PixieMidgar: Sendable {
 
     /// Writes the entitlement names the ledger holds for this Midgar ID, so a support log shows whether the ledger
     /// knows the person. Names only, never ids or receipts.
-    private static func logLedgerEntitlements(of ledger: MidgarStore?) async {
-        guard let ledger else { return }
-        await ledger.refresh()
-        let names = await ledger.entitlements.map(\.name).sorted().joined(separator: ", ")
+    private static func logLedgerEntitlements(of store: MidgarStore?) async {
+        guard let store else { return }
+        await store.refresh()
+        let names = await store.entitlements.map(\.name).sorted().joined(separator: ", ")
         MidgarLog.info("Ledger entitlements: \(names.isEmpty ? "none" : names)", category: .commerce)
-    }
-
-    /// The ledger reader. RevenueCat keeps buying, restoring and finishing every purchase (registry engine
-    /// `rc-full`), so the store runs in `Mode.readOnly`: it asks the ledger what the Midgar ID owns and touches no
-    /// transaction. Creating the store starts its foreground refresh, so create it once.
-    private static func makeStore(identity: MidgarIdentity, account: MidgarHTTPClient) -> MidgarStore {
-        MidgarStore(configuration: storeConfiguration, identity: identity, http: account)
-    }
-
-    /// The credit packs are consumables, which the ledger never turns into an entitlement, so no product maps to one.
-    static var storeConfiguration: MidgarStoreConfiguration {
-        MidgarStoreConfiguration(
-            appID: appID,
-            productIDs: creditPackProductIDs,
-            entitlementsByProduct: [:],
-            mode: .readOnly
-        )
-    }
-
-    /// The five credit packs mako sells, named as its `apps.rc_product_prefix` and `credit_packs.pack_id` build them.
-    static var creditPackProductIDs: [String] {
-        ["starter", "basic", "popular", "business", "enterprise"].map { "com.guitaripod.pixie.credits.\($0)" }
     }
 
     /// False inside an XCTest or Swift Testing host and in a DEBUG demo capture, which must not mint identities or

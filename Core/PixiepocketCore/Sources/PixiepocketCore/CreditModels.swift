@@ -133,24 +133,3 @@ public struct CreditEstimateResponse: Codable, Sendable {
         case note
     }
 }
-
-public struct RevenueCatPurchaseValidationResponse: Codable, Sendable {
-    public let success: Bool
-    public let purchaseId: String
-    public let creditsAdded: Int
-    public let newBalance: Int
-
-    public init(success: Bool, purchaseId: String, creditsAdded: Int, newBalance: Int) {
-        self.success = success
-        self.purchaseId = purchaseId
-        self.creditsAdded = creditsAdded
-        self.newBalance = newBalance
-    }
-
-    enum CodingKeys: String, CodingKey {
-        case success
-        case purchaseId = "purchase_id"
-        case creditsAdded = "credits_added"
-        case newBalance = "new_balance"
-    }
-}

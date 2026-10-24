@@ -1,6 +1,5 @@
 import UIKit
 import Combine
-import RevenueCat
 
 struct StorePackDisplay {
     let id: String
@@ -8,7 +7,6 @@ struct StorePackDisplay {
     let baseCredits: Int
     let bonusCredits: Int
     let price: String
-    let rcPackage: Package?
 
     var totalCredits: Int { baseCredits + bonusCredits }
     var bonusPercent: Int { baseCredits > 0 ? Int((Double(bonusCredits) / Double(baseCredits) * 100).rounded()) : 0 }
@@ -63,6 +61,13 @@ final class CreditStoreViewController: UIViewController {
             sheet.preferredCornerRadius = Theme.Radius.sheet
         }
         presenter.present(navigation, animated: true)
+    }
+
+    /// How many credits a request of `cost` is short of the balance, or nil when the balance covers it or is not known
+    /// yet (the server's 402 decides then).
+    static func shortfall(cost: Int, balance: Int?) -> Int? {
+        guard let balance, balance < cost else { return nil }
+        return cost - balance
     }
 
     private lazy var scrollView = ColumnScrollView(spacing: Theme.Space.md, topInset: Theme.Space.sm, bottomInset: Theme.Space.xl)
@@ -235,7 +240,7 @@ final class CreditStoreViewController: UIViewController {
         #endif
         bind()
         viewModel.refresh()
-        loadPacks(retrying: false)
+        loadPacks()
     }
 
     deinit {
@@ -381,8 +386,7 @@ final class CreditStoreViewController: UIViewController {
                         name: $0.creditPack.name,
                         baseCredits: $0.creditPack.credits,
                         bonusCredits: $0.creditPack.bonusCredits,
-                        price: $0.localizedPrice,
-                        rcPackage: $0.rcPackage
+                        price: $0.localizedPrice
                     )
                 }
                 self?.reloadPacks()
@@ -390,7 +394,7 @@ final class CreditStoreViewController: UIViewController {
             .store(in: &cancellables)
     }
 
-    private func loadPacks(retrying: Bool) {
+    private func loadPacks() {
         packsState = .loading
         applyPacksState()
         packsTimeoutTask?.cancel()
@@ -403,8 +407,8 @@ final class CreditStoreViewController: UIViewController {
             await purchaseManager.fetchCreditPacks()
             if purchaseManager.creditPacks.isEmpty {
                 failPacksIfStillEmpty()
-            } else if retrying, purchaseManager.offerings == nil {
-                RevenueCatManager.shared.fetchOfferings()
+            } else if purchaseManager.offers.isEmpty {
+                await purchaseManager.fetchOffers()
             }
         }
     }
@@ -420,7 +424,7 @@ final class CreditStoreViewController: UIViewController {
 
     private func retryPacks() {
         HapticsManager.shared.selection()
-        loadPacks(retrying: true)
+        loadPacks()
     }
 
     /// Shows shimmering cards while packs load, the error state with Retry when they cannot, and the pack list and purchase button once loaded.
@@ -487,36 +491,66 @@ final class CreditStoreViewController: UIViewController {
     }
 
     private func purchaseSelectedPack() {
-        guard let pack = packs.first(where: { $0.id == selectedPackId }), let package = pack.rcPackage, !isPurchasing else { return }
+        guard let pack = packs.first(where: { $0.id == selectedPackId }), !isPurchasing else { return }
         HapticsManager.shared.impact(.medium)
         isPurchasing = true
         ctaButton.isLoading = true
         Announce.say(String(localized: "Processing purchase"))
 
         Task {
-            let result = await purchaseManager.purchaseCreditPack(package: package)
-            await MainActor.run {
-                self.isPurchasing = false
-                self.ctaButton.isLoading = false
-                switch result {
-                case .success(let purchase):
-                    HapticsManager.shared.notification(.success)
-                    Announce.say(String(localized: "\(self.formatted(purchase.credits)) credits added"))
-                    self.ctaButton.title = String(localized: "Added \(self.formatted(purchase.credits)) credits")
-                    self.ctaNoteLabel.text = String(localized: "New balance: \(self.formatted(purchase.newBalance))")
-                    self.ctaButton.isUserInteractionEnabled = false
-                    Task { await self.viewModel.loadBalance() }
-                    self.dismissAfterPurchase()
-                case .failure(let error):
-                    self.updateCTA()
-                    if error is PurchaseCancelledException { return }
-                    HapticsManager.shared.notification(.error)
-                    let alert = UIAlertController(title: String(localized: "Purchase Failed"), message: error.localizedDescription, preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
-                    self.present(alert, animated: true)
-                }
+            do {
+                let outcome = try await purchaseManager.purchaseCreditPack(id: pack.id)
+                endPurchase()
+                show(outcome)
+            } catch {
+                endPurchase()
+                showPurchaseFailure(error)
             }
         }
+    }
+
+    private func endPurchase() {
+        isPurchasing = false
+        ctaButton.isLoading = false
+    }
+
+    /// A credited pack shows what arrived and the new balance; a paid pack mako has not credited yet says the credits
+    /// arrive shortly, and the balance follows the credit on its own; a purchase waiting for approval says so; a
+    /// cancelled one leaves the button as it was.
+    private func show(_ outcome: CreditPurchaseOutcome) {
+        switch outcome {
+        case .credited(let credits, let newBalance):
+            HapticsManager.shared.notification(.success)
+            Announce.say(String(localized: "\(formatted(credits)) credits added"))
+            ctaButton.title = String(localized: "Added \(formatted(credits)) credits")
+            ctaNoteLabel.text = String(localized: "New balance: \(formatted(newBalance))")
+            ctaButton.isUserInteractionEnabled = false
+            Task { await viewModel.loadBalance() }
+            dismissAfterPurchase()
+        case .creditPending:
+            HapticsManager.shared.notification(.success)
+            let note = String(localized: "Your credits arrive shortly. No need to buy again.")
+            Announce.say(note)
+            ctaButton.title = String(localized: "Purchase received")
+            ctaNoteLabel.text = note
+            ctaButton.isUserInteractionEnabled = false
+            dismissAfterPurchase()
+        case .awaitingApproval:
+            updateCTA()
+            let note = String(localized: "Waiting for approval. Your credits arrive as soon as it is approved.")
+            ctaNoteLabel.text = note
+            Announce.say(note)
+        case .cancelled:
+            updateCTA()
+        }
+    }
+
+    private func showPurchaseFailure(_ error: Error) {
+        updateCTA()
+        HapticsManager.shared.notification(.error)
+        let alert = UIAlertController(title: String(localized: "Purchase Failed"), message: error.localizedDescription, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
+        present(alert, animated: true)
     }
 
     /// Closes the store shortly after a purchase, leaving VoiceOver time to read the confirmation first.
@@ -535,13 +569,9 @@ final class CreditStoreViewController: UIViewController {
     #if DEBUG
     private func applyDemoPacks() {
         showBalance(DemoContent.balance)
-        packs = [
-            StorePackDisplay(id: "starter", name: "Starter", baseCredits: 150, bonusCredits: 0, price: "$2.99", rcPackage: nil),
-            StorePackDisplay(id: "basic", name: "Basic", baseCredits: 475, bonusCredits: 75, price: "$9.99", rcPackage: nil),
-            StorePackDisplay(id: "popular", name: "Popular", baseCredits: 1136, bonusCredits: 364, price: "$24.99", rcPackage: nil),
-            StorePackDisplay(id: "business", name: "Business", baseCredits: 2174, bonusCredits: 1076, price: "$49.99", rcPackage: nil),
-            StorePackDisplay(id: "enterprise", name: "Enterprise", baseCredits: 4167, bonusCredits: 2833, price: "$99.99", rcPackage: nil),
-        ]
+        packs = PixiePacks.all.map {
+            StorePackDisplay(id: $0.id, name: $0.name, baseCredits: $0.baseCredits, bonusCredits: $0.bonusCredits, price: $0.listPrice)
+        }
         reloadPacks()
     }
     #endif

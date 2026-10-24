@@ -652,8 +652,8 @@ class ChatGenerationViewController: UIViewController {
     /// Opens the store instead of sending a request the balance cannot cover; an unknown
     /// balance lets the request through and the server's 402 decides.
     private func hasCredits(for cost: Int) -> Bool {
-        guard let balance = creditsViewModel.balance?.balance, balance < cost else { return true }
-        CreditStoreViewController.present(from: self, shortfall: cost - balance)
+        guard let shortfall = CreditStoreViewController.shortfall(cost: cost, balance: creditsViewModel.balance?.balance) else { return true }
+        CreditStoreViewController.present(from: self, shortfall: shortfall)
         return false
     }
 

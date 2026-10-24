@@ -11,7 +11,6 @@
 		2CAB91952E3A4E570087EBE7 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CAB91942E3A4E570087EBE7 /* WidgetKit.framework */; };
 		2CAB91972E3A4E570087EBE7 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CAB91962E3A4E570087EBE7 /* SwiftUI.framework */; };
 		2CAB91A42E3A4E580087EBE7 /* PixieWidgetExtensionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2CAB91932E3A4E570087EBE7 /* PixieWidgetExtensionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		2CAB91B32E3AB5940087EBE7 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 2CAB91B22E3AB5940087EBE7 /* RevenueCat */; };
 		ACED175C0000000000000003 /* AICreditsCore in Frameworks */ = {isa = PBXBuildFile; productRef = ACED175C0000000000000002 /* AICreditsCore */; };
 		2CB1092A2E37549E004A0202 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 2CB109292E37549E004A0202 /* GoogleSignInSwift */; };
 		2CB38B262E36B0C400E68202 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CB38B252E36B0C400E68202 /* StoreKit.framework */; };
@@ -124,7 +123,6 @@
 			files = (
 				2CB38B262E36B0C400E68202 /* StoreKit.framework in Frameworks */,
 				2CB1092A2E37549E004A0202 /* GoogleSignInSwift in Frameworks */,
-				2CAB91B32E3AB5940087EBE7 /* RevenueCat in Frameworks */,
 				ACED175C0000000000000003 /* AICreditsCore in Frameworks */,
 				PXCO0001000000000000AB01 /* PixiepocketCore in Frameworks */,
 			);
@@ -220,7 +218,6 @@
 			name = Pixie;
 			packageProductDependencies = (
 				2CB109292E37549E004A0202 /* GoogleSignInSwift */,
-				2CAB91B22E3AB5940087EBE7 /* RevenueCat */,
 				ACED175C0000000000000002 /* AICreditsCore */,
 				2CAA00022F000002004A0202 /* MidgarKit */,
 				PXCO0001000000000000AA02 /* PixiepocketCore */,
@@ -295,7 +292,6 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				2CB109282E37549E004A0202 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
-				2CAB91B12E3AB5940087EBE7 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 				ACED175C0000000000000001 /* XCLocalSwiftPackageReference "../../../../packages/AICredits" */,
 				2CAA00012F000001004A0202 /* XCLocalSwiftPackageReference "../../../../packages/MidgarKit" */,
 				PXCO0001000000000000AA01 /* XCLocalSwiftPackageReference "../../Core/PixiepocketCore" */,
@@ -644,7 +640,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = P4DQK6SRKR;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.guitaripod.PixieTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -665,7 +661,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = P4DQK6SRKR;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.guitaripod.PixieTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -735,14 +731,6 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		2CAB91B12E3AB5940087EBE7 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.78.0;
-			};
-		};
 		2CB109282E37549E004A0202 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
@@ -758,11 +746,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = ACED175C0000000000000001 /* XCLocalSwiftPackageReference "../../../../packages/AICredits" */;
 			productName = AICreditsCore;
-		};
-		2CAB91B22E3AB5940087EBE7 /* RevenueCat */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 2CAB91B12E3AB5940087EBE7 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
-			productName = RevenueCat;
 		};
 		2CB109292E37549E004A0202 /* GoogleSignInSwift */ = {
 			isa = XCSwiftPackageProductDependency;

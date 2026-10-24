@@ -1,6 +1,5 @@
 import UIKit
 import UserNotifications
-import RevenueCat
 import MidgarCore
 
 @main
@@ -13,8 +12,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         PixieMidgar.configureLogging()
         MidgarLog.info("App launched", category: .launch)
 
-        warmUpLaunchServicesReceiptPath()
-
         UNUserNotificationCenter.current().delegate = self
         
         let categories = createNotificationCategories()
@@ -22,29 +19,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         URLCache.shared.removeAllCachedResponses()
         
-        _ = RevenueCatManager.shared
         PixieMidgar.shared.start()
         ReviewPrompt.beginSession()
         _ = GenerationActivity.shared
         
-        let keychainManager = AppContainer.shared.keychainManager
-        if let user = try? keychainManager.getCodable(forKey: KeychainKeys.userProfile, type: User.self) {
-            Task {
-                try? await RevenueCatManager.shared.setUserId(user.id)
-            }
-        }
-        
         return true
     }
     
-    /// RevenueCat ≤5.78.0 reads `Bundle.main.appStoreReceiptURL` from its background
-    /// "RC Backend Queue" during configure, which crashes deterministically at launch on
-    /// iOS 26.5 devices (purchases-ios#6886). A main-thread access first makes the later
-    /// background read safe. Remove only after RevenueCat ships a real fix.
-    private func warmUpLaunchServicesReceiptPath() {
-        _ = Bundle.main.appStoreReceiptURL
-    }
-
     private func createNotificationCategories() -> Set<UNNotificationCategory> {
         let viewAction = UNNotificationAction(
             identifier: "VIEW_ACTION",
