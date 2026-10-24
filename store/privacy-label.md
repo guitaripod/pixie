@@ -16,9 +16,9 @@ This replaces whatever label the app carried before, which predates the Midgar I
 | --- | --- | --- | --- | --- |
 | Contact Info, Name | Yes | No | App Functionality | Only when the person signs in with Apple, Google or GitHub: the name the provider shares, stored on the mako account. |
 | Contact Info, Email Address | Yes | No | App Functionality | Only when the person signs in with Apple, Google or GitHub: the address the provider shares (Apple may share a private relay address), stored on the mako account. |
-| Identifiers, User ID | Yes | No | App Functionality | The anonymous mako account id and API key that hold the credit balance and gallery, the random Midgar ID, and the RevenueCat app user id, which is the mako account id. |
+| Identifiers, User ID | Yes | No | App Functionality | The anonymous mako account id and API key that hold the credit balance and gallery, and the random Midgar ID. |
 | Identifiers, Device ID | Yes | No | App Functionality | The app reads no advertising identifier and no vendor identifier and sends no attribution token (AICredits' ad attribution is never started). MidgarKit's App Attest key id, per app and per device, stored with the Midgar ID when the ID is created or joined. App Store and TestFlight builds use App Attest's production environment whether or not the app has the App Attest entitlement (Apple, App Attest Environment entitlement), so released builds create it. |
-| Purchases, Purchase History | Yes | No | App Functionality | The App Store transactions of credit packs. RevenueCat verifies them and mako records them against the account. |
+| Purchases, Purchase History | Yes | No | App Functionality | The App Store transactions of credit packs. mako verifies each one from the signed App Store transaction and records it against the account and the Midgar ID, so the purchase history stays linked. |
 | Photos or Videos | Yes | No | App Functionality | The photos a person attaches for editing, sent to mako and on to Google Gemini or OpenAI (mako keeps no copy), and every image the app generates or edits, which mako stores in the person's private gallery until they delete it or the account. |
 | User Content, Other User Content | Yes | No | App Functionality | The text of every prompt, which mako keeps in its usage record of the request. |
 | Usage Data, Product Interaction | No | No | Analytics | The anonymous More Apps events (opened, shown, tapped) sent by MidgarKit with no identifier. |
@@ -39,7 +39,6 @@ Everything else is "Data Not Collected".
 
 ## Third-party SDK notes
 
-- RevenueCat (full purchase mode, RevenueCat finishes every transaction): processes purchase data on our behalf; its manifest declares Purchase History and User ID. The Midgar ID is not sent to RevenueCat in this release, so the two identifiers are not joined by the app.
 - Google Sign-In: used only when the person chooses Google; Google's SDK ships its own manifest. The server auth code and ID token go to mako, which stores the name and email address.
 - MidgarKit: `MidgarPortal` ships a manifest that declares Product Interaction for Analytics, not linked, matching the row above.
 - Google (Gemini) and OpenAI are reached only through mako, which is the service that sends them the prompt or photo.
