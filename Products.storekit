@@ -1,0 +1,102 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : "https://midgarcorp.cc/legal/pixiepocket/privacy"
+      }
+    ]
+  },
+  "identifier" : "B1C1E001",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "2.99",
+      "familyShareable" : false,
+      "internalID" : "B1C1E002",
+      "localizations" : [
+        {
+          "description" : "150 credits for creating images.",
+          "displayName" : "Starter",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.guitaripod.pixie.credits.starter",
+      "referenceName" : "Starter",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : false,
+      "internalID" : "B1C1E003",
+      "localizations" : [
+        {
+          "description" : "550 credits for creating images.",
+          "displayName" : "Basic",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.guitaripod.pixie.credits.basic",
+      "referenceName" : "Basic",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "24.99",
+      "familyShareable" : false,
+      "internalID" : "B1C1E004",
+      "localizations" : [
+        {
+          "description" : "1500 credits for creating images.",
+          "displayName" : "Popular",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.guitaripod.pixie.credits.popular",
+      "referenceName" : "Popular",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "49.99",
+      "familyShareable" : false,
+      "internalID" : "B1C1E005",
+      "localizations" : [
+        {
+          "description" : "3250 credits for creating images.",
+          "displayName" : "Business",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.guitaripod.pixie.credits.business",
+      "referenceName" : "Business",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "99.99",
+      "familyShareable" : false,
+      "internalID" : "B1C1E006",
+      "localizations" : [
+        {
+          "description" : "7000 credits for creating images.",
+          "displayName" : "Enterprise",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.guitaripod.pixie.credits.enterprise",
+      "referenceName" : "Enterprise",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}
