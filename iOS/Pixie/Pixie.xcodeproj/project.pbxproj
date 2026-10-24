@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		PXCO0001000000000000AB01 /* PixiepocketCore in Frameworks */ = {isa = PBXBuildFile; productRef = PXCO0001000000000000AA02 /* PixiepocketCore */; };
 		2CAB91952E3A4E570087EBE7 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CAB91942E3A4E570087EBE7 /* WidgetKit.framework */; };
 		2CAB91972E3A4E570087EBE7 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CAB91962E3A4E570087EBE7 /* SwiftUI.framework */; };
 		2CAB91A42E3A4E580087EBE7 /* PixieWidgetExtensionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2CAB91932E3A4E570087EBE7 /* PixieWidgetExtensionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -57,42 +58,52 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		2CAB91A82E3A4E580087EBE7 /* Exceptions for "PixieWidgetExtension" folder in "PixieWidgetExtensionExtension" target */ = {
+		2CAB91A82E3A4E580087EBE7 /* Exceptions for "widgets" folder in "PixieWidgetExtensionExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = 2CAB91922E3A4E570087EBE7 /* PixieWidgetExtensionExtension */;
 		};
-		2CB38B1A2E36AED900E68202 /* Exceptions for "Pixie" folder in "Pixie" target */ = {
+		2CB38B1A2E36AED900E68202 /* Exceptions for "Resources" folder in "Pixie" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Resources/Info.plist,
+				Info.plist,
 			);
 			target = 2CB38B072E36AED800E68202 /* Pixie */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		2CAB91982E3A4E570087EBE7 /* PixieWidgetExtension */ = {
+		2CAB91982E3A4E570087EBE7 /* widgets */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				2CAB91A82E3A4E580087EBE7 /* Exceptions for "PixieWidgetExtension" folder in "PixieWidgetExtensionExtension" target */,
+				2CAB91A82E3A4E580087EBE7 /* Exceptions for "widgets" folder in "PixieWidgetExtensionExtension" target */,
 			);
-			path = PixieWidgetExtension;
+			path = ../../Platforms/widgets;
 			sourceTree = "<group>";
 		};
-		2CB38B0A2E36AED800E68202 /* Pixie */ = {
+		2CB38B0A2E36AED800E68202 /* App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ../../App;
+			sourceTree = "<group>";
+		};
+		PXCO0003000000000000AA01 /* Features */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ../../Features;
+			sourceTree = "<group>";
+		};
+		PXCO0003000000000000AA02 /* Resources */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				2CB38B1A2E36AED900E68202 /* Exceptions for "Pixie" folder in "Pixie" target */,
+				2CB38B1A2E36AED900E68202 /* Exceptions for "Resources" folder in "Pixie" target */,
 			);
-			path = Pixie;
+			path = ../../Resources;
 			sourceTree = "<group>";
 		};
 		2CAA10022F100000004A0202 /* PixieTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = PixieTests;
+			path = ../../Tests/PixieTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -115,6 +126,7 @@
 				2CB1092A2E37549E004A0202 /* GoogleSignInSwift in Frameworks */,
 				2CAB91B32E3AB5940087EBE7 /* RevenueCat in Frameworks */,
 				ACED175C0000000000000003 /* AICreditsCore in Frameworks */,
+				PXCO0001000000000000AB01 /* PixiepocketCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -131,8 +143,10 @@
 		2CB38AFF2E36AED800E68202 = {
 			isa = PBXGroup;
 			children = (
-				2CB38B0A2E36AED800E68202 /* Pixie */,
-				2CAB91982E3A4E570087EBE7 /* PixieWidgetExtension */,
+				2CB38B0A2E36AED800E68202 /* App */,
+				PXCO0003000000000000AA01 /* Features */,
+				PXCO0003000000000000AA02 /* Resources */,
+				2CAB91982E3A4E570087EBE7 /* widgets */,
 				2CAA10022F100000004A0202 /* PixieTests */,
 				2CB38B242E36B0C400E68202 /* Frameworks */,
 				2CB38B092E36AED800E68202 /* Products */,
@@ -175,7 +189,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				2CAB91982E3A4E570087EBE7 /* PixieWidgetExtension */,
+				2CAB91982E3A4E570087EBE7 /* widgets */,
 			);
 			name = PixieWidgetExtensionExtension;
 			packageProductDependencies = (
@@ -199,7 +213,9 @@
 				2CAB91A32E3A4E580087EBE7 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				2CB38B0A2E36AED800E68202 /* Pixie */,
+				2CB38B0A2E36AED800E68202 /* App */,
+				PXCO0003000000000000AA01 /* Features */,
+				PXCO0003000000000000AA02 /* Resources */,
 			);
 			name = Pixie;
 			packageProductDependencies = (
@@ -207,6 +223,7 @@
 				2CAB91B22E3AB5940087EBE7 /* RevenueCat */,
 				ACED175C0000000000000002 /* AICreditsCore */,
 				2CAA00022F000002004A0202 /* MidgarKit */,
+				PXCO0001000000000000AA02 /* PixiepocketCore */,
 			);
 			productName = Pixie;
 			productReference = 2CB38B082E36AED800E68202 /* Pixie.app */;
@@ -281,6 +298,7 @@
 				2CAB91B12E3AB5940087EBE7 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 				ACED175C0000000000000001 /* XCLocalSwiftPackageReference "../../../../packages/AICredits" */,
 				2CAA00012F000001004A0202 /* XCLocalSwiftPackageReference "../../../../packages/MidgarKit" */,
+				PXCO0001000000000000AA01 /* XCLocalSwiftPackageReference "../../Core/PixiepocketCore" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2CB38B092E36AED800E68202 /* Products */;
@@ -365,7 +383,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = P4DQK6SRKR;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = PixieWidgetExtension/Info.plist;
+				INFOPLIST_FILE = ../../Platforms/widgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PixieWidgetExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
@@ -396,7 +414,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = P4DQK6SRKR;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = PixieWidgetExtension/Info.plist;
+				INFOPLIST_FILE = ../../Platforms/widgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PixieWidgetExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
@@ -421,12 +439,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Pixie/Pixie.entitlements;
+				CODE_SIGN_ENTITLEMENTS = ../../App/Pixie.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = P4DQK6SRKR;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Pixie/Resources/Info.plist;
+				INFOPLIST_FILE = ../../Resources/Info.plist;
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Pixie needs access to save generated images to your photo library";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Pixie needs access to your photo library to edit existing images and save generated images";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
@@ -462,14 +480,14 @@
 				EXCLUDED_SOURCE_FILE_NAMES = DemoAssets.xcassets;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Pixie/Pixie.entitlements;
+				CODE_SIGN_ENTITLEMENTS = ../../App/Pixie.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Pixie App Store 2026";
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = P4DQK6SRKR;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Pixie/Resources/Info.plist;
+				INFOPLIST_FILE = ../../Resources/Info.plist;
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Pixie needs access to save generated images to your photo library";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Pixie needs access to your photo library to edit existing images and save generated images";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
@@ -710,6 +728,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "../../../../packages/MidgarKit";
 		};
+		PXCO0001000000000000AA01 /* XCLocalSwiftPackageReference "../../Core/PixiepocketCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../Core/PixiepocketCore";
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -751,6 +773,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 2CAA00012F000001004A0202 /* XCLocalSwiftPackageReference "../../../../packages/MidgarKit" */;
 			productName = MidgarKit;
+		};
+		PXCO0001000000000000AA02 /* PixiepocketCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = PXCO0001000000000000AA01 /* XCLocalSwiftPackageReference "../../Core/PixiepocketCore" */;
+			productName = PixiepocketCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

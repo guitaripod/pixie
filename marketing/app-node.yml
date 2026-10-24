@@ -49,7 +49,7 @@ assets:
     iPhone 17 Pro Max simulator (1320x2868) and an iPad Pro 13" (2064x2752) with PX_RAW_SUBDIR=ipad;
     marketing/compose_screenshots.py frames them from marketing/listing/<locale>.json into
     marketing/appstore*/<locale>/. raw/ and appstore*/ are ignored by git.
-  icon: iOS/Pixie/Pixie/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png
+  icon: Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png
 
 ops:
   metrics_skill: .claude/skills/revenue-ops

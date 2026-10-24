@@ -33,7 +33,7 @@ Three registers:
 
 Voice: short, concrete, friendly. No "AI-powered", no "stunning", no model names, no prices in marketing copy.
 
-## 3. Tokens (code: `Pixie/DesignSystem/Theme.swift`)
+## 3. Tokens (code: `App/DesignSystem/Theme.swift`)
 
 ### Colour (all dynamic)
 | token | light | dark | use |
@@ -81,7 +81,7 @@ Light: surface cards get a 1-pt `line` border and shadow `#1B0F4A @8%`, radius 2
 ### Motion
 Spring 0.4 s, damping 0.82 for presentation and selection; 0.2 s ease-out for state fades; all through `Motion` (instant under Reduce Motion). Press state: scale 0.97 + haptic selection. Hero moments (result arriving) may use a 0.6 s fade-scale; never loop motion except the generation shimmer (static under Reduce Motion).
 
-## 4. Components (code: `Pixie/DesignSystem/`)
+## 4. Components (code: `App/DesignSystem/`)
 
 - `PixieButton` — `.primary` (gradient capsule, white label, 56 pt), `.secondary` (accentSoft capsule, accentText label), `.plain` (text), `.destructive` (danger tonal); sizes large 56 / medium 46 / small 36; optional leading SF Symbol; `isLoading`; haptic + press scale; Dynamic Type grows the height.
 - `SurfaceView` — card background: radius, hairline, adaptive shadow; styles `.card`, `.sunken` (fill), `.glass`.
