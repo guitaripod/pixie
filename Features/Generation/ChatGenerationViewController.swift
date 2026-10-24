@@ -880,13 +880,13 @@ class ChatGenerationViewController: UIViewController {
         guard let imageMetadata = notification.userInfo?["image"] as? ImageMetadata else { return }
         
         if let url = URL(string: imageMetadata.url) {
-            URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
-                guard let data = data, let image = UIImage(data: data), error == nil else { return }
+            ImageDownloadClient.shared.data(from: url) { [weak self] data in
+                guard let data = data, let image = UIImage(data: data) else { return }
                 
                 DispatchQueue.main.async {
                     self?.presentImagePreviewForEdit(image)
                 }
-            }.resume()
+            }
         }
     }
     

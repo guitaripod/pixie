@@ -311,7 +311,7 @@ class GenerationService {
     
     private func loadImageData(from url: URL) async throws -> Data {
         if url.scheme?.hasPrefix("http") == true {
-            return try await URLSession.shared.data(from: url).0
+            return try await ImageDownloadClient.shared.data(from: url)
         } else {
             return try Data(contentsOf: url)
         }

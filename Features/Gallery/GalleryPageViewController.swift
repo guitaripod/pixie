@@ -620,7 +620,7 @@ extension GalleryPageViewController: UICollectionViewDelegate {
             
             if let url = URL(string: image.url) {
                 Task {
-                    guard let (data, _) = try? await URLSession.shared.data(from: url),
+                    guard let data = try? await ImageDownloadClient.shared.data(from: url),
                           let loadedImage = UIImage(data: data) else { return }
                     ImageCache.shared.setImage(loadedImage, for: image.url)
 
