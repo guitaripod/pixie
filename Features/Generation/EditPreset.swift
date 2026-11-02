@@ -21,7 +21,7 @@ nonisolated struct EditPreset: Hashable {
     /// Every preset in display order, with the seasonal one moved to the front while its
     /// season runs.
     static func all(on date: Date = Date()) -> [EditPreset] {
-        guard isHalloweenSeason(date), let index = catalog.firstIndex(where: { $0.id == "halloween" }) else {
+        guard let id = seasonalID(on: date), let index = catalog.firstIndex(where: { $0.id == id }) else {
             return catalog
         }
         var presets = catalog
@@ -29,9 +29,15 @@ nonisolated struct EditPreset: Hashable {
         return presets
     }
 
-    private static func isHalloweenSeason(_ date: Date) -> Bool {
+    /// The preset whose season runs on `date`: Halloween through 2 November, the holiday
+    /// card from 15 November through 6 January, and none in between.
+    static func seasonalID(on date: Date) -> String? {
         let components = Calendar(identifier: .gregorian).dateComponents([.month, .day], from: date)
-        return components.month == 10 || (components.month == 11 && (components.day ?? 1) <= 2)
+        switch (components.month ?? 0, components.day ?? 1) {
+        case (10, _), (11, ...2): return "halloween"
+        case (11, 15...), (12, _), (1, ...6): return "holiday"
+        default: return nil
+        }
     }
 
     private static let headshotPrompt = "Turn this photo into a professional corporate headshot of the same person. Keep their face, facial features, skin tone, hairstyle and identity exactly the same. Dress them in a smart dark blazer, soft studio lighting, plain light-grey backdrop, head-and-shoulders framing, sharp focus, photorealistic."
@@ -153,6 +159,15 @@ nonisolated struct EditPreset: Hashable {
             subtitle: String(localized: "A spooky costume and makeup"),
             prompt: "Dress the person in this photo in a spectacular Halloween costume with matching makeup, a stylish vampire, witch or skeleton look that suits them, in a moody candle-lit setting with carved pumpkins. Keep their face and identity recognizable. Photorealistic, cinematic lighting.",
             imageCount: 1
+        ),
+        EditPreset(
+            id: "holiday",
+            symbol: "gift.fill",
+            tint: UIColor(red: 0.78, green: 0.12, blue: 0.2, alpha: 1),
+            title: String(localized: "Holiday card"),
+            subtitle: String(localized: "A cozy festive portrait for cards"),
+            prompt: "Turn this photo into a cozy holiday card portrait. Keep every person's and pet's face, features and identity exactly the same. Dress the people in festive knit holiday sweaters and place everyone in a warm living room with a decorated Christmas tree, soft fairy lights and gently falling snow outside the window. Joyful, inviting mood, photorealistic, soft cinematic lighting.",
+            imageCount: 1
         )
     ]
 }
@@ -162,7 +177,9 @@ extension EditPreset {
 
     var isPopular: Bool { Self.popularIDs.contains(id) }
 
-    var isSeasonal: Bool { id == "halloween" }
+    static let seasonalIDs: Set<String> = ["halloween", "holiday"]
+
+    var isSeasonal: Bool { Self.seasonalIDs.contains(id) }
 
     var artName: String? {
         switch id {

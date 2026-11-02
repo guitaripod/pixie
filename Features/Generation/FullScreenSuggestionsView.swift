@@ -50,13 +50,22 @@ class FullScreenSuggestionsView: UIView {
     var onSampleTapped: (() -> Void)?
     var onPhotoRemoved: (() -> Void)?
     private static let addImageItem = "add_image"
+
+    /// Today, or a DEBUG capture's `PX_DATE`.
+    private static var presetDate: Date {
+        #if DEBUG
+        DemoMode.date ?? Date()
+        #else
+        Date()
+        #endif
+    }
     private static let sampleTileItem = "sample_tile"
     private static let selectedPhotoItem = "selected_photo"
     private var recentImages: [UIImage] = []
     private var selectedPhoto: UIImage?
     private var editSectionItems: [SuggestionItem] = []
     private let popularPresets = EditPreset.popular()
-    private let moreEditPresets = EditPreset.moreEdits()
+    private let moreEditPresets = EditPreset.moreEdits(on: FullScreenSuggestionsView.presetDate)
     private var selectedCreativeCategory = 0
     private var selectedModifierCategory = 0
     private var isEditMode = false

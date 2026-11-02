@@ -1,0 +1,86 @@
+{
+  "referenceName": "Holiday Card Photo — Dec 2026",
+  "badge": "SPECIAL_EVENT",
+  "purpose": "ATTRACT_NEW_USERS",
+  "priority": "HIGH",
+  "primaryLocale": "en-US",
+  "deepLink": "pixie://preset/holiday",
+  "purchaseRequirement": "NO_COST_ASSOCIATED",
+  "schedule": {
+    "publishStart": "2026-11-21T09:00:00Z",
+    "eventStart": "2026-11-28T00:00:00Z",
+    "eventEnd": "2026-12-28T23:00:00Z"
+  },
+  "localizations": {
+    "de-DE": {
+      "name": "Dein Festtagskarten-Foto",
+      "shortDescription": "Mach aus jedem Foto ein festliches Porträt.",
+      "longDescription": "Foto wählen, Festtagskarte tippen: Nano Banana zaubert Pullover, Lichterbaum und Schnee, jedes Gesicht bleibt."
+    },
+    "en-AU": {
+      "name": "Your Holiday Card Photo",
+      "shortDescription": "Turn any photo into a cozy festive portrait.",
+      "longDescription": "Pick a photo, tap Holiday card, and Nano Banana adds sweaters, a glowing tree and snow, keeping every face as it is."
+    },
+    "en-GB": {
+      "name": "Your Holiday Card Photo",
+      "shortDescription": "Turn any photo into a cozy festive portrait.",
+      "longDescription": "Pick a photo, tap Holiday card, and Nano Banana adds sweaters, a glowing tree and snow, keeping every face as it is."
+    },
+    "en-US": {
+      "name": "Your Holiday Card Photo",
+      "shortDescription": "Turn any photo into a cozy festive portrait.",
+      "longDescription": "Pick a photo, tap Holiday card, and Nano Banana adds sweaters, a glowing tree and snow, keeping every face as it is."
+    },
+    "es-ES": {
+      "name": "Tu foto de tarjeta navideña",
+      "shortDescription": "Convierte cualquier foto en un retrato festivo.",
+      "longDescription": "Elige una foto, toca Tarjeta festiva y Nano Banana añade jerséis, un árbol iluminado y nieve, sin cambiar caras."
+    },
+    "es-MX": {
+      "name": "Tu foto de tarjeta navideña",
+      "shortDescription": "Convierte cualquier foto en un retrato festivo.",
+      "longDescription": "Elige una foto, toca Tarjeta festiva y Nano Banana añade suéteres, un árbol iluminado y nieve, sin cambiar caras."
+    },
+    "fr-FR": {
+      "name": "Votre photo de carte de fêtes",
+      "shortDescription": "Un portrait festif à partir de votre photo.",
+      "longDescription": "Choisissez une photo, touchez Carte de fêtes : Nano Banana ajoute pulls, sapin illuminé et neige, visages intacts."
+    },
+    "it": {
+      "name": "La tua foto per gli auguri",
+      "shortDescription": "Trasforma ogni foto in un ritratto festivo.",
+      "longDescription": "Scegli una foto, tocca Biglietto festivo e Nano Banana aggiunge maglioni, albero luminoso e neve, volti intatti."
+    },
+    "ja": {
+      "name": "ホリデーカード写真を作ろう",
+      "shortDescription": "どんな写真も温かなお祝いポートレートに。",
+      "longDescription": "写真を選んで「ホリデーカード」をタップ。Nano Bananaがセーターや輝くツリー、雪を加え、顔はそのまま。"
+    },
+    "ko": {
+      "name": "나만의 홀리데이 카드 사진",
+      "shortDescription": "어떤 사진이든 포근한 연말 사진으로.",
+      "longDescription": "사진을 고르고 홀리데이 카드를 누르면 Nano Banana가 스웨터, 빛나는 트리, 눈을 더하고 얼굴은 그대로 지켜요."
+    },
+    "pl": {
+      "name": "Twoje świąteczne zdjęcie",
+      "shortDescription": "Zmień dowolne zdjęcie w świąteczny portret.",
+      "longDescription": "Wybierz zdjęcie, stuknij Kartka świąteczna, a Nano Banana doda swetry, choinkę i śnieg, zachowując twarze."
+    },
+    "pt-BR": {
+      "name": "Sua foto de cartão festivo",
+      "shortDescription": "Transforme qualquer foto num retrato festivo.",
+      "longDescription": "Escolha uma foto, toque em Cartão festivo e o Nano Banana põe suéteres, árvore iluminada e neve, sem mudar rostos."
+    },
+    "zh-Hans": {
+      "name": "你的节日贺卡照",
+      "shortDescription": "把任何照片变成温馨的节日肖像。",
+      "longDescription": "选一张照片，点“节日贺卡”，Nano Banana 会加上毛衣、闪亮的圣诞树和雪花，每张脸都保持不变。"
+    },
+    "zh-Hant": {
+      "name": "你的節日賀卡照",
+      "shortDescription": "把任何照片變成溫馨的節日肖像。",
+      "longDescription": "選一張照片，點「節日賀卡」，Nano Banana 會加上毛衣、閃亮的聖誕樹和雪花，每張臉都保持不變。"
+    }
+  }
+}

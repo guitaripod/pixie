@@ -38,6 +38,16 @@ nonisolated enum DemoMode: String {
 
     static var isActive: Bool { current != nil }
 
+    /// The day the preset list is laid out for, from `PX_DATE` (yyyy-MM-dd), so a capture can
+    /// show another season's preset first.
+    static var date: Date? {
+        guard let raw = ProcessInfo.processInfo.environment["PX_DATE"] else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: raw)
+    }
+
     static func image(_ name: String) -> UIImage {
         UIImage(named: "DemoArt/\(name)") ?? UIImage()
     }
