@@ -1,0 +1,18 @@
+What changed in 1.8.0: everything is counted in edits, there are two quality levels, a free first week, and a new weekly subscription, PixiePocket Plus.
+
+No account or sign-in is required: the app starts anonymously. A device that ran an earlier version keeps its balance; 21 old credits are one edit.
+
+Prices (US): PixiePocket Plus is a weekly auto-renewing subscription at $6.99 a week with 60 edits a week and no free trial. Consumable packs: 10 edits $2.99, 40 edits $9.99, 120 edits $24.99. An image costs 1 edit on Standard and 5 on Max.
+
+Pixie Week: the first successful edit on an account starts it. For 7 days, 5 Standard edits a day are free, decided by our server. A reviewer device gets its week on its first edit with 1.8.0, so it will be in day 1 of the week.
+
+How to test:
+1. Launch the app and finish the three onboarding pages; the last one explains the Pixie Week and asks for consent to send prompts and photos to Google Gemini and OpenAI (Guideline 5.1.2(i)).
+2. Under "Popular edits", tap any edit (for example "Pro headshot") and choose any photo in the system photo picker (no photo-library permission is requested). The edited image arrives in about 15-40 seconds. During the Pixie Week the line under the prompt bar reads "Free today · N left". After the first edit an alert announces the week; "Remind me before it ends" asks for notification permission and schedules one reminder two days before the end.
+3. Tap the edits balance (sparkles, top right) to open the store: PixiePocket Plus is preselected at the top, the three packs are below it. The renewal terms (weekly, cancel in Settings), the Privacy Policy and the Terms of Use are on the same screen.
+4. The sliders button in the prompt bar opens the options: Standard or Max. Max costs 5 edits.
+5. The in-app event deep link pixie://preset/holiday opens the Holiday card edit and its photo picker.
+
+Images are private to each user; there is no public gallery. Every request passes provider content moderation, and a declined or failed request never costs an edit.
+
+Sign in with Apple is optional and only syncs images and edits across devices; any Apple ID works.
