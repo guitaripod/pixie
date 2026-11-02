@@ -1,0 +1,315 @@
+{
+  "version": 1,
+  "subscriptionGroups": [
+    {
+      "referenceName": "PixiePocket Plus",
+      "localizations": {
+        "en-US": {
+          "name": "PixiePocket Plus"
+        },
+        "de-DE": {
+          "name": "PixiePocket Plus"
+        },
+        "es-ES": {
+          "name": "PixiePocket Plus"
+        },
+        "fr-FR": {
+          "name": "PixiePocket Plus"
+        },
+        "it": {
+          "name": "PixiePocket Plus"
+        },
+        "ja": {
+          "name": "PixiePocket Plus"
+        },
+        "ko": {
+          "name": "PixiePocket Plus"
+        },
+        "pl": {
+          "name": "PixiePocket Plus"
+        },
+        "pt-BR": {
+          "name": "PixiePocket Plus"
+        },
+        "zh-Hans": {
+          "name": "PixiePocket Plus"
+        },
+        "zh-Hant": {
+          "name": "PixiePocket Plus"
+        }
+      },
+      "subscriptions": [
+        {
+          "productId": "com.guitaripod.pixie.plus.weekly",
+          "referenceName": "Plus Weekly",
+          "duration": "ONE_WEEK",
+          "groupLevel": 1,
+          "familySharable": false,
+          "price": {
+            "territory": "USA",
+            "amount": "6.99"
+          },
+          "introductoryOffers": [],
+          "localizations": {
+            "en-US": {
+              "name": "Plus Weekly",
+              "description": "60 edits every week, Standard or Max."
+            },
+            "de-DE": {
+              "name": "Plus wöchentlich",
+              "description": "60 Bearbeitungen pro Woche, Standard oder Max."
+            },
+            "es-ES": {
+              "name": "Plus semanal",
+              "description": "60 ediciones cada semana, Standard o Max."
+            },
+            "fr-FR": {
+              "name": "Plus hebdomadaire",
+              "description": "60 retouches chaque semaine, Standard ou Max."
+            },
+            "it": {
+              "name": "Plus settimanale",
+              "description": "60 modifiche ogni settimana, Standard o Max."
+            },
+            "ja": {
+              "name": "Plus（週間）",
+              "description": "毎週60回の編集。StandardまたはMax。"
+            },
+            "ko": {
+              "name": "Plus 주간",
+              "description": "매주 60회 편집, Standard 또는 Max."
+            },
+            "pl": {
+              "name": "Plus tygodniowo",
+              "description": "60 edycji co tydzień, Standard lub Max."
+            },
+            "pt-BR": {
+              "name": "Plus semanal",
+              "description": "60 edições por semana, Standard ou Max."
+            },
+            "zh-Hans": {
+              "name": "Plus 周订阅",
+              "description": "每周 60 次编辑，Standard 或 Max。"
+            },
+            "zh-Hant": {
+              "name": "Plus 週訂閱",
+              "description": "每週 60 次編輯，Standard 或 Max。"
+            }
+          },
+          "reviewScreenshot": "review/plus-weekly.png",
+          "reviewNote": "Weekly auto-renewing subscription with no free trial. While active, our server (mako) grants 60 image edits per week on either tier (Standard = 1 edit, Max = 5). Buy it from the Edits screen: tap the sparkle balance chip at the top right of the home screen; Plus is the first, preselected option."
+        }
+      ]
+    }
+  ],
+  "inAppPurchases": [
+    {
+      "productId": "com.guitaripod.pixie.credits.basic",
+      "type": "CONSUMABLE",
+      "referenceName": "Basic Pack - 500 Credits",
+      "price": {
+        "territory": "USA",
+        "amount": "9.99"
+      },
+      "localizations": {
+        "en-US": {
+          "name": "40 Edits",
+          "description": "40 photo edits. Never expire."
+        },
+        "pl": {
+          "name": "40 edycji",
+          "description": "40 edycji zdjęć. Nigdy nie wygasają."
+        },
+        "de-DE": {
+          "name": "40 Bearbeitungen",
+          "description": "40 Fotobearbeitungen. Verfallen nie."
+        },
+        "es-ES": {
+          "name": "40 ediciones",
+          "description": "40 ediciones de fotos. No caducan."
+        },
+        "fr-FR": {
+          "name": "40 retouches",
+          "description": "40 retouches photo. N'expirent jamais."
+        },
+        "it": {
+          "name": "40 modifiche",
+          "description": "40 modifiche foto. Non scadono mai."
+        },
+        "ja": {
+          "name": "編集40回",
+          "description": "写真の編集40回分。期限なし。"
+        },
+        "ko": {
+          "name": "편집 40회",
+          "description": "사진 편집 40회. 기한 없음."
+        },
+        "pt-BR": {
+          "name": "40 edições",
+          "description": "40 edições de fotos. Nunca expiram."
+        },
+        "zh-Hans": {
+          "name": "40 次编辑",
+          "description": "40 次照片编辑，永不过期。"
+        },
+        "zh-Hant": {
+          "name": "40 次編輯",
+          "description": "40 次照片編輯，永不過期。"
+        }
+      },
+      "reviewScreenshotMd5": "1d9534693dad14a104890f9ff53bedc5"
+    },
+    {
+      "productId": "com.guitaripod.pixie.credits.business",
+      "type": "CONSUMABLE",
+      "referenceName": "Business Pack - 2500 Credits",
+      "price": {
+        "territory": "USA",
+        "amount": "49.99"
+      },
+      "localizations": {
+        "en-US": {
+          "name": "Business Pack - 3,250 Credits",
+          "description": "2,174 + 1,076 bonus credits — about 154 images."
+        },
+        "pl": {
+          "name": "Biznesowy - 3250 kredytów",
+          "description": "2174 kredytów + 1076 bonusu, ~154 obrazy."
+        }
+      },
+      "reviewScreenshotMd5": "1d9534693dad14a104890f9ff53bedc5"
+    },
+    {
+      "productId": "com.guitaripod.pixie.credits.enterprise",
+      "type": "CONSUMABLE",
+      "referenceName": "Enterprise Pack - 5000 Credits",
+      "price": {
+        "territory": "USA",
+        "amount": "99.99"
+      },
+      "localizations": {
+        "en-US": {
+          "name": "Enterprise Pack - 7,000 Credits",
+          "description": "4,167 + 2,833 bonus credits — about 333 images."
+        },
+        "pl": {
+          "name": "Korporacyjny - 7000 kredytów",
+          "description": "4167 kredytów + 2833 bonusu, ~333 obrazy."
+        }
+      },
+      "reviewScreenshotMd5": "1d9534693dad14a104890f9ff53bedc5"
+    },
+    {
+      "productId": "com.guitaripod.pixie.credits.popular",
+      "type": "CONSUMABLE",
+      "referenceName": "Popular Pack - 1250 Credits",
+      "price": {
+        "territory": "USA",
+        "amount": "24.99"
+      },
+      "localizations": {
+        "en-US": {
+          "name": "120 Edits",
+          "description": "120 photo edits. Never expire."
+        },
+        "pl": {
+          "name": "120 edycji",
+          "description": "120 edycji zdjęć. Nigdy nie wygasają."
+        },
+        "de-DE": {
+          "name": "120 Bearbeitungen",
+          "description": "120 Fotobearbeitungen. Verfallen nie."
+        },
+        "es-ES": {
+          "name": "120 ediciones",
+          "description": "120 ediciones de fotos. No caducan."
+        },
+        "fr-FR": {
+          "name": "120 retouches",
+          "description": "120 retouches photo. N'expirent jamais."
+        },
+        "it": {
+          "name": "120 modifiche",
+          "description": "120 modifiche foto. Non scadono mai."
+        },
+        "ja": {
+          "name": "編集120回",
+          "description": "写真の編集120回分。期限なし。"
+        },
+        "ko": {
+          "name": "편집 120회",
+          "description": "사진 편집 120회. 기한 없음."
+        },
+        "pt-BR": {
+          "name": "120 edições",
+          "description": "120 edições de fotos. Nunca expiram."
+        },
+        "zh-Hans": {
+          "name": "120 次编辑",
+          "description": "120 次照片编辑，永不过期。"
+        },
+        "zh-Hant": {
+          "name": "120 次編輯",
+          "description": "120 次照片編輯，永不過期。"
+        }
+      },
+      "reviewScreenshotMd5": "1d9534693dad14a104890f9ff53bedc5"
+    },
+    {
+      "productId": "com.guitaripod.pixie.credits.starter",
+      "type": "CONSUMABLE",
+      "referenceName": "Starter Pack - 150 Credits",
+      "price": {
+        "territory": "USA",
+        "amount": "2.99"
+      },
+      "localizations": {
+        "en-US": {
+          "name": "10 Edits",
+          "description": "10 photo edits. Never expire."
+        },
+        "pl": {
+          "name": "10 edycji",
+          "description": "10 edycji zdjęć. Nigdy nie wygasają."
+        },
+        "de-DE": {
+          "name": "10 Bearbeitungen",
+          "description": "10 Fotobearbeitungen. Verfallen nie."
+        },
+        "es-ES": {
+          "name": "10 ediciones",
+          "description": "10 ediciones de fotos. No caducan."
+        },
+        "fr-FR": {
+          "name": "10 retouches",
+          "description": "10 retouches photo. N'expirent jamais."
+        },
+        "it": {
+          "name": "10 modifiche",
+          "description": "10 modifiche foto. Non scadono mai."
+        },
+        "ja": {
+          "name": "編集10回",
+          "description": "写真の編集10回分。期限なし。"
+        },
+        "ko": {
+          "name": "편집 10회",
+          "description": "사진 편집 10회. 기한 없음."
+        },
+        "pt-BR": {
+          "name": "10 edições",
+          "description": "10 edições de fotos. Nunca expiram."
+        },
+        "zh-Hans": {
+          "name": "10 次编辑",
+          "description": "10 次照片编辑，永不过期。"
+        },
+        "zh-Hant": {
+          "name": "10 次編輯",
+          "description": "10 次照片編輯，永不過期。"
+        }
+      },
+      "reviewScreenshotMd5": "1d9534693dad14a104890f9ff53bedc5"
+    }
+  ]
+}
