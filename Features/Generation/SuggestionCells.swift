@@ -639,7 +639,7 @@ class SampleTileCell: CardCell {
     private let subtitleLabel = UILabel()
     private let textStack = UIStackView()
     private static let title = String(localized: "Try a sample photo")
-    private static let subtitle = String(localized: "Restores an old photo with one of your free images")
+    private static let subtitle = String(localized: "Restores an old photo in one tap")
     private static let thumbnailWidth: CGFloat = 54
     private static let padding: CGFloat = 12
 

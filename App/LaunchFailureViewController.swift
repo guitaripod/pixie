@@ -35,7 +35,7 @@ final class LaunchFailureViewController: UIViewController {
     private lazy var bodyLabel: UILabel = {
         let label = UILabel()
         label.setStyledText(
-            String(localized: "Pixie needs the internet once to set up your free images. Check your connection and try again."),
+            String(localized: "Pixie needs the internet once to set up your account. Check your connection and try again."),
             .callout,
             color: Theme.Color.onBackdropSecondary,
             alignment: .center

@@ -5983,6 +5983,70 @@
         }
       }
     },
+    "Pixie needs the internet once to set up your account. Check your connection and try again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie braucht einmal Internet, um dein Konto einzurichten. Prüfe deine Verbindung und versuche es erneut."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie necesita internet una vez para configurar tu cuenta. Revisa la conexión e inténtalo de nuevo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie a besoin d'Internet une fois pour configurer votre compte. Vérifiez votre connexion et réessayez."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie ha bisogno di Internet una volta per configurare il tuo account. Controlla la connessione e riprova."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アカウントの設定に一度だけインターネット接続が必要です。接続を確認してもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "계정을 설정하려면 한 번 인터넷 연결이 필요해요. 연결을 확인하고 다시 시도하세요."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie potrzebuje internetu raz, aby skonfigurować konto. Sprawdź połączenie i spróbuj ponownie."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Pixie precisa da internet uma vez para configurar sua conta. Verifique a conexão e tente de novo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie 需要联网一次来设置你的账户。请检查网络连接后重试。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie 需要連網一次來設定你的帳號。請檢查網路連線後再試一次。"
+          }
+        }
+      }
+    },
     "Pixie Week · %lld free today · %lld days left" : {
       "localizations" : {
         "de" : {
@@ -6683,6 +6747,70 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "結束前提醒我"
+          }
+        }
+      }
+    },
+    "Restores an old photo in one tap" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restauriert ein altes Foto mit einem Tipp"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaura una foto antigua con un toque"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaure une vieille photo en un geste"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaura una vecchia foto con un tocco"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "古い写真をワンタップで修復"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오래된 사진을 한 번에 복원"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przywraca stare zdjęcie jednym stuknięciem"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaura uma foto antiga com um toque"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一键修复老照片"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一鍵修復老照片"
           }
         }
       }
