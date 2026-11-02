@@ -1,5 +1,6 @@
-import UIKit
 import Combine
+import MidgarCommerce
+import UIKit
 
 struct StorePackDisplay {
     let id: String
@@ -42,6 +43,8 @@ final class CreditStoreViewController: UIViewController {
     private static let voiceOverDismissDelay: TimeInterval = 2.5
     private static let skeletonCardCount = 5
     private static let shortSheetHeight: CGFloat = 560
+
+    private var hasNotedShown = false
 
     init(shortfall: Int? = nil) {
         self.shortfall = shortfall
@@ -245,6 +248,18 @@ final class CreditStoreViewController: UIViewController {
 
     deinit {
         packsTimeoutTask?.cancel()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        noteShownOnce()
+    }
+
+    /// Reports the store once per presentation as a `limit` when a request ran short of credits, otherwise as a `feature`.
+    private func noteShownOnce() {
+        guard !hasNotedShown else { return }
+        hasNotedShown = true
+        MidgarPaywallMoments.noteShown(placement: shortfall == nil ? .feature : .limit)
     }
 
     override func viewDidLayoutSubviews() {

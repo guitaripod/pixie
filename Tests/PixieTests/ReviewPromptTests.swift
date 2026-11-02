@@ -66,7 +66,7 @@ struct ReviewPromptTests {
     @Test func aPolicyThatWasPromptedRecentlyHoldsBack() {
         let storage = Storage()
         storage.state = MidgarReviewState(firstLaunch: .distantPast, sessions: 50, lastPrompt: Date())
-        let policy = MidgarReviewPolicy(storage: storage, appVersion: "9.9.9")
+        let policy = MidgarReviewPolicy(storage: storage, appVersion: "9.9.9", center: NotificationCenter())
 
         #expect(policy.noteSuccess() == false)
         #expect(policy.evaluate() == .hold(.promptedRecently))
