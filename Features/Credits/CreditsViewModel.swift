@@ -20,7 +20,8 @@ class CreditsViewModel: ObservableObject {
     @Published private(set) var hasMoreTransactions = false
     @Published private(set) var isLoadingMoreTransactions = false
     
-    static let lowBalanceThreshold = 50
+    /// Edits below which the balance reads as low.
+    static let lowEditsThreshold = 3
 
     private let apiService: APIServiceProtocol
     private let balanceStore: CreditBalanceStore
@@ -50,7 +51,7 @@ class CreditsViewModel: ObservableObject {
         balanceStore.$balance
             .sink { [weak self] balance in
                 self?.balance = balance
-                if let balance { self?.lowCreditWarning = balance.balance < Self.lowBalanceThreshold }
+                if let balance { self?.lowCreditWarning = EditPrice.edits(of: balance) < Self.lowEditsThreshold }
             }
             .store(in: &cancellables)
         balanceStore.$isLoading
@@ -193,8 +194,9 @@ extension CreditTransaction {
         }
     }
 
+    /// The amount in edits: whole edits of the credits it moved.
     var magnitudeText: String {
-        NumberFormatter.localizedString(from: NSNumber(value: abs(amount)), number: .decimal)
+        NumberFormatter.localizedString(from: NSNumber(value: EditPrice.roundedEdits(ofCredits: amount)), number: .decimal)
     }
 
     var signedAmountText: String {
@@ -202,9 +204,8 @@ extension CreditTransaction {
     }
 
     var spokenAmount: String {
-        isDebit
-            ? String(localized: "\(magnitudeText) credits spent")
-            : String(localized: "\(magnitudeText) credits added")
+        let edits = EditPrice.label(edits: EditPrice.roundedEdits(ofCredits: amount))
+        return isDebit ? String(localized: "\(edits) spent") : String(localized: "\(edits) added")
     }
 
     var badgeSymbol: String {

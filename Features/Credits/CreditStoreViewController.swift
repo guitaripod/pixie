@@ -2,27 +2,58 @@ import Combine
 import MidgarCommerce
 import UIKit
 
+/// One choice on the store screen: PixiePocket Plus or a pack of edits.
 struct StorePackDisplay {
-    let id: String
-    let name: String
-    let baseCredits: Int
-    let bonusCredits: Int
-    let price: String
+    static let plusID = "plus"
 
-    var totalCredits: Int { baseCredits + bonusCredits }
-    var bonusPercent: Int { baseCredits > 0 ? Int((Double(bonusCredits) / Double(baseCredits) * 100).rounded()) : 0 }
-    var imageEstimate: Int { max(1, totalCredits / max(1, WelcomeCredits.standardImageCost)) }
+    let id: String
+    let title: String
+    let detail: String
+    let price: String
+    let edits: Int
+
+    var isPlus: Bool { id == Self.plusID }
+
+    /// A pack: its edits, what one edit costs in the customer's currency and that it never expires.
+    static func pack(id: String, edits: Int, price: String, perEdit: String?) -> StorePackDisplay {
+        let never = String(localized: "Never expires")
+        let detail = perEdit.map { String(localized: "\($0) per edit · \(never)") } ?? never
+        return StorePackDisplay(id: id, title: EditPrice.label(edits: edits), detail: detail, price: price, edits: edits)
+    }
+
+    /// Plus: weekly, its edits and its price; the button below says the price per week again.
+    static func plus(price: String) -> StorePackDisplay {
+        StorePackDisplay(
+            id: plusID,
+            title: String(localized: "Plus"),
+            detail: String(localized: "Weekly · \(PixiePacks.plusWeeklyEdits) edits · Standard or Max"),
+            price: price,
+            edits: PixiePacks.plusWeeklyEdits
+        )
+    }
+
+    /// What one edit of a pack costs, formatted like the store's own price, or nil without a numeric price.
+    static func perEditPrice(of product: StoreProduct, edits: Int) -> String? {
+        guard edits > 0, product.price > 0 else { return nil }
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = product.priceLocale ?? .current
+        if let code = product.currencyCode { formatter.currencyCode = code }
+        formatter.maximumFractionDigits = 2
+        return formatter.string(from: (product.price / Decimal(edits)) as NSDecimalNumber)
+    }
 }
 
 final class CreditStoreViewController: UIViewController {
-    static let defaultImageCreditCost = 21
 
     private let viewModel = CreditsViewModel()
     private let shortfall: Int?
     private let purchaseManager = CreditPurchaseManager.shared
     private var cancellables = Set<AnyCancellable>()
     private var packs: [StorePackDisplay] = []
-    private var selectedPackId = "popular"
+    private var selectedPackId = StorePackDisplay.plusID
+    private var plus: StorePackDisplay?
+    private var hasPlus = false
     private var isPurchasing = false
     private var packsState = PacksState.loading
     private var packsTimeoutTask: Task<Void, Never>?
@@ -54,6 +85,7 @@ final class CreditStoreViewController: UIViewController {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError() }
 
+    /// Opens the store; `shortfall` is how many edits the request in hand is short of.
     static func present(from presenter: UIViewController, shortfall: Int? = nil) {
         let store = CreditStoreViewController(shortfall: shortfall)
         let navigation = UINavigationController(rootViewController: store)
@@ -64,13 +96,6 @@ final class CreditStoreViewController: UIViewController {
             sheet.preferredCornerRadius = Theme.Radius.sheet
         }
         presenter.present(navigation, animated: true)
-    }
-
-    /// How many credits a request of `cost` is short of the balance, or nil when the balance covers it or is not known
-    /// yet (the server's 402 decides then).
-    static func shortfall(cost: Int, balance: Int?) -> Int? {
-        guard let balance, balance < cost else { return nil }
-        return cost - balance
     }
 
     private lazy var scrollView = ColumnScrollView(spacing: Theme.Space.md, topInset: Theme.Space.sm, bottomInset: Theme.Space.xl)
@@ -89,14 +114,14 @@ final class CreditStoreViewController: UIViewController {
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        label.setStyledText(String(localized: "Credits"), .title, alignment: .center)
+        label.setStyledText(String(localized: "Edits"), .title, alignment: .center)
         label.accessibilityTraits = .header
         return label
     }()
 
     private lazy var subtitleLabel: UILabel = {
         let label = UILabel()
-        label.setStyledText(String(localized: "Pay for what you create.\nNo subscription — ever."), .callout, alignment: .center)
+        label.setStyledText(String(localized: "Plus every week, or a pack\nthat never expires."), .callout, alignment: .center)
         return label
     }()
 
@@ -134,7 +159,7 @@ final class CreditStoreViewController: UIViewController {
     private lazy var failedState: StateView = {
         let state = StateView(
             symbol: "exclamationmark.icloud.fill",
-            title: String(localized: "Couldn't load credit packs"),
+            title: String(localized: "Couldn't load the store"),
             actionTitle: String(localized: "Retry"),
             colors: [UIColor(hex: 0xFF9F43), UIColor(hex: 0xFF6F61)]
         ) { [weak self] in
@@ -146,7 +171,7 @@ final class CreditStoreViewController: UIViewController {
 
     private lazy var perksLabel: UILabel = {
         let label = UILabel()
-        label.setStyledText(String(localized: "Credits never expire  ·  Every quality tier  ·  No account required"), .footnote, color: Theme.Color.inkTertiary, alignment: .center)
+        label.setStyledText(String(localized: "Packs never expire  ·  Standard and Max  ·  No account required"), .footnote, color: Theme.Color.inkTertiary, alignment: .center)
         return label
     }()
 
@@ -232,7 +257,7 @@ final class CreditStoreViewController: UIViewController {
                 self?.navigationController?.pushViewController(CreditsMainViewController(), animated: true)
             }
         )
-        navigationItem.leftBarButtonItem?.accessibilityLabel = String(localized: "Credits & Usage")
+        navigationItem.leftBarButtonItem?.accessibilityLabel = String(localized: "Edits & Usage")
         layoutUI()
         buildHeader()
         #if DEBUG
@@ -357,7 +382,7 @@ final class CreditStoreViewController: UIViewController {
         icon.hideFromAccessibility()
         let label = UILabel()
         label.apply(.subhead, color: Theme.Color.ink)
-        label.text = String(localized: "You need \(shortfall) more credits to finish this image.")
+        label.text = String(localized: "You need \(EditPrice.label(edits: shortfall)) more for this.")
         let stack = UIStackView(arrangedSubviews: [icon, label])
         stack.axis = .horizontal
         stack.spacing = Theme.Space.md
@@ -369,14 +394,14 @@ final class CreditStoreViewController: UIViewController {
         return card
     }
 
-    private func showBalance(_ balance: Int) {
+    private func showBalance(_ edits: Int) {
         balancePill.isHidden = false
         balancePill.configure(
-            amount: balance,
-            kind: "credits",
-            format: { "\(NumberFormatter.localizedString(from: NSNumber(value: $0), number: .decimal)) \(String(localized: "credits"))" },
-            isLow: balance < CreditsViewModel.lowBalanceThreshold,
-            accessibilityLabel: String(localized: "Current balance: \(balance) credits"),
+            amount: edits,
+            kind: "edits",
+            format: EditPrice.label(edits:),
+            isLow: edits < CreditsViewModel.lowEditsThreshold,
+            accessibilityLabel: String(localized: "Current balance: \(EditPrice.label(edits: edits))"),
             hint: nil
         )
     }
@@ -386,25 +411,35 @@ final class CreditStoreViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] balance in
                 guard let balance else { return }
-                self?.showBalance(balance.balance)
+                self?.showBalance(EditPrice.edits(of: balance))
+                self?.hasPlus = balance.edits?.premium != nil
             }
             .store(in: &cancellables)
 
         purchaseManager.getCreditPacksWithPricing()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] packsWithPricing in
-                guard !packsWithPricing.isEmpty else { return }
-                self?.packsTimeoutTask?.cancel()
-                self?.packs = packsWithPricing.map {
-                    StorePackDisplay(
+                guard let self, !packsWithPricing.isEmpty else { return }
+                self.packsTimeoutTask?.cancel()
+                let balance = CreditBalanceStore.shared.balance
+                self.packs = packsWithPricing.map {
+                    let edits = EditPrice.edits(inCredits: $0.creditPack.credits + $0.creditPack.bonusCredits, balance: balance)
+                    return .pack(
                         id: $0.creditPack.id,
-                        name: $0.creditPack.name,
-                        baseCredits: $0.creditPack.credits,
-                        bonusCredits: $0.creditPack.bonusCredits,
-                        price: $0.localizedPrice
+                        edits: edits,
+                        price: $0.localizedPrice,
+                        perEdit: StorePackDisplay.perEditPrice(of: $0.product, edits: edits)
                     )
                 }
-                self?.reloadPacks()
+                self.reloadPacks()
+            }
+            .store(in: &cancellables)
+
+        purchaseManager.$plusProduct
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] product in
+                self?.plus = product.map { StorePackDisplay.plus(price: $0.displayPrice) }
+                if self?.packsState == .loaded { self?.reloadPacks() }
             }
             .store(in: &cancellables)
     }
@@ -425,6 +460,9 @@ final class CreditStoreViewController: UIViewController {
             } else if purchaseManager.offers.isEmpty {
                 await purchaseManager.fetchOffers()
             }
+            if purchaseManager.plusProduct == nil {
+                await purchaseManager.fetchPlus()
+            }
         }
     }
 
@@ -434,7 +472,7 @@ final class CreditStoreViewController: UIViewController {
         packsState = .failed
         applyPacksState()
         HapticsManager.shared.notification(.error)
-        Announce.say(String(localized: "Couldn't load credit packs"))
+        Announce.say(String(localized: "Couldn't load the store"))
     }
 
     private func retryPacks() {
@@ -453,14 +491,20 @@ final class CreditStoreViewController: UIViewController {
         ctaNoteLabel.isHidden = isFailed || ctaNoteLabel.text == nil
     }
 
+    /// Plus first while the person does not hold it, then the packs.
+    private var choices: [StorePackDisplay] {
+        (hasPlus ? [] : [plus].compactMap { $0 }) + packs
+    }
+
     private func reloadPacks() {
         packsState = .loaded
         applyPacksState()
         packsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        if packs.first(where: { $0.id == selectedPackId }) == nil {
-            selectedPackId = packs.first?.id ?? selectedPackId
+        let choices = choices
+        if choices.first(where: { $0.id == selectedPackId }) == nil {
+            selectedPackId = choices.first?.id ?? selectedPackId
         }
-        for pack in packs {
+        for pack in choices {
             let card = PackCardView(pack: pack, badge: badge(for: pack.id))
             card.isSelectedPack = pack.id == selectedPackId
             card.onTap = { [weak self] in self?.select(packId: pack.id) }
@@ -471,8 +515,8 @@ final class CreditStoreViewController: UIViewController {
 
     private func badge(for packId: String) -> String? {
         switch packId {
-        case "popular": return String(localized: "MOST POPULAR")
-        case "enterprise": return String(localized: "BEST VALUE")
+        case StorePackDisplay.plusID: return String(localized: "BEST VALUE")
+        case "basic": return String(localized: "MOST POPULAR")
         default: return nil
         }
     }
@@ -491,27 +535,30 @@ final class CreditStoreViewController: UIViewController {
     }
 
     private func updateCTA() {
-        guard let pack = packs.first(where: { $0.id == selectedPackId }) else { return }
-        ctaButton.title = String(localized: "Get \(formatted(pack.totalCredits)) credits · \(pack.price)")
-        ctaNoteLabel.text = String(localized: "One-time purchase · ≈ \(pack.imageEstimate) images")
+        guard let pack = choices.first(where: { $0.id == selectedPackId }) else { return }
+        if pack.isPlus {
+            ctaButton.title = String(localized: "Subscribe · \(String(localized: "\(pack.price)/week"))")
+            ctaNoteLabel.text = String(localized: "\(pack.edits) edits every week. Renews weekly until you cancel in Settings.")
+        } else {
+            ctaButton.title = String(localized: "Get \(pack.title) · \(pack.price)")
+            ctaNoteLabel.text = String(localized: "One-time purchase · Never expires")
+        }
         ctaNoteLabel.isHidden = false
         ctaButton.isUserInteractionEnabled = true
         ctaButton.isEnabled = true
     }
 
-    private func formatted(_ value: Int) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
-    }
-
     private func purchaseSelectedPack() {
-        guard let pack = packs.first(where: { $0.id == selectedPackId }), !isPurchasing else { return }
+        guard let pack = choices.first(where: { $0.id == selectedPackId }), !isPurchasing else { return }
         HapticsManager.shared.impact(.medium)
         isPurchasing = true
         ctaButton.isLoading = true
         Announce.say(String(localized: "Processing purchase"))
 
+        if pack.isPlus {
+            subscribeToPlus()
+            return
+        }
         Task {
             do {
                 let outcome = try await purchaseManager.purchaseCreditPack(id: pack.id)
@@ -521,6 +568,43 @@ final class CreditStoreViewController: UIViewController {
                 endPurchase()
                 showPurchaseFailure(error)
             }
+        }
+    }
+
+    private func subscribeToPlus() {
+        guard let scene = view.window?.windowScene else {
+            endPurchase()
+            return
+        }
+        Task {
+            do {
+                let result = try await purchaseManager.purchasePlus(confirmIn: scene)
+                endPurchase()
+                showPlus(result)
+            } catch {
+                endPurchase()
+                showPurchaseFailure(error)
+            }
+        }
+    }
+
+    private func showPlus(_ result: MidgarPurchaseResult) {
+        switch result {
+        case .purchased:
+            HapticsManager.shared.notification(.success)
+            let note = String(localized: "Welcome to Plus: \(PixiePacks.plusWeeklyEdits) edits every week.")
+            Announce.say(note)
+            ctaButton.title = String(localized: "You have Plus")
+            ctaNoteLabel.text = note
+            ctaButton.isUserInteractionEnabled = false
+            dismissAfterPurchase()
+        case .pending:
+            updateCTA()
+            let note = String(localized: "Waiting for approval. Plus starts as soon as it is approved.")
+            ctaNoteLabel.text = note
+            Announce.say(note)
+        case .cancelled:
+            updateCTA()
         }
     }
 
@@ -536,15 +620,17 @@ final class CreditStoreViewController: UIViewController {
         switch outcome {
         case .credited(let credits, let newBalance):
             HapticsManager.shared.notification(.success)
-            Announce.say(String(localized: "\(formatted(credits)) credits added"))
-            ctaButton.title = String(localized: "Added \(formatted(credits)) credits")
-            ctaNoteLabel.text = String(localized: "New balance: \(formatted(newBalance))")
+            let added = EditPrice.label(edits: EditPrice.edits(inCredits: credits, balance: CreditBalanceStore.shared.balance))
+            let total = EditPrice.label(edits: EditPrice.edits(inCredits: newBalance, balance: CreditBalanceStore.shared.balance))
+            Announce.say(String(localized: "\(added) added"))
+            ctaButton.title = String(localized: "Added \(added)")
+            ctaNoteLabel.text = String(localized: "New balance: \(total)")
             ctaButton.isUserInteractionEnabled = false
             Task { await viewModel.loadBalance() }
             dismissAfterPurchase()
         case .creditPending:
             HapticsManager.shared.notification(.success)
-            let note = String(localized: "Your credits arrive shortly. No need to buy again.")
+            let note = String(localized: "Your edits arrive shortly. No need to buy again.")
             Announce.say(note)
             ctaButton.title = String(localized: "Purchase received")
             ctaNoteLabel.text = note
@@ -552,7 +638,7 @@ final class CreditStoreViewController: UIViewController {
             dismissAfterPurchase()
         case .awaitingApproval:
             updateCTA()
-            let note = String(localized: "Waiting for approval. Your credits arrive as soon as it is approved.")
+            let note = String(localized: "Waiting for approval. Your edits arrive as soon as it is approved.")
             ctaNoteLabel.text = note
             Announce.say(note)
         case .cancelled:
@@ -583,9 +669,10 @@ final class CreditStoreViewController: UIViewController {
 
     #if DEBUG
     private func applyDemoPacks() {
-        showBalance(DemoContent.balance)
-        packs = PixiePacks.all.map {
-            StorePackDisplay(id: $0.id, name: $0.name, baseCredits: $0.baseCredits, bonusCredits: $0.bonusCredits, price: $0.listPrice)
+        showBalance(DemoContent.balanceEdits)
+        plus = .plus(price: PixiePacks.plusListPrice)
+        packs = PixiePacks.offered.map {
+            .pack(id: $0.id, edits: $0.totalCredits / EditPrice.fallbackCreditsPerEdit, price: $0.listPrice, perEdit: nil)
         }
         reloadPacks()
     }
@@ -649,19 +736,19 @@ final class PackCardView: UIControl {
         inner.addSubview(tintFill)
         tintFill.pinEdges(to: inner)
 
-        let total = NumberFormatter.localizedString(from: NSNumber(value: pack.totalCredits), number: .decimal)
+        let titleLabel = UILabel()
+        titleLabel.apply(.numeral(22))
+        titleLabel.numberOfLines = 1
+        titleLabel.adjustsFontSizeToFitWidth = true
+        titleLabel.minimumScaleFactor = 0.6
+        titleLabel.text = pack.title
 
-        let imagesLabel = UILabel()
-        imagesLabel.apply(.numeral(22))
-        imagesLabel.text = String(localized: "≈ \(pack.imageEstimate) images")
+        let detailLabel = UILabel()
+        detailLabel.apply(.subhead)
+        detailLabel.numberOfLines = 0
+        detailLabel.text = pack.detail
 
-        let creditsLabel = UILabel()
-        creditsLabel.apply(.subhead)
-        creditsLabel.text = pack.bonusCredits > 0
-            ? String(localized: "\(total) credits · +\(pack.bonusPercent)% bonus")
-            : String(localized: "\(total) credits")
-
-        let textStack = UIStackView(arrangedSubviews: [imagesLabel, creditsLabel])
+        let textStack = UIStackView(arrangedSubviews: [titleLabel, detailLabel])
         textStack.axis = .vertical
         textStack.spacing = 2
 
@@ -693,7 +780,7 @@ final class PackCardView: UIControl {
         content.isUserInteractionEnabled = false
         content.translatesAutoresizingMaskIntoConstraints = false
         if let badge {
-            let capsule = BadgeCapsule(text: badge, colors: packId == "popular" ? Theme.Color.gradient : Self.bestValueColors)
+            let capsule = BadgeCapsule(text: badge, colors: packId == StorePackDisplay.plusID ? Theme.Color.gradient : Self.bestValueColors)
             let holder = UIStackView(arrangedSubviews: [capsule, UIView()])
             holder.axis = .horizontal
             content.addArrangedSubview(holder)
@@ -707,19 +794,15 @@ final class PackCardView: UIControl {
             radioView.heightAnchor.constraint(equalToConstant: 26),
         ])
 
-        describeForAccessibility(pack: pack, badge: badge, total: total)
+        describeForAccessibility(pack: pack, badge: badge)
         updateSelection()
     }
 
     private static let bestValueColors = [UIColor(hex: 0x0B7A52), UIColor(hex: 0x12A06B)]
 
-    /// Makes the whole card one VoiceOver button: name, total credits, bonus and price, with the badge and image estimate as its value.
-    private func describeForAccessibility(pack: StorePackDisplay, badge: String?, total: String) {
-        let label = pack.bonusCredits > 0
-            ? String(localized: "\(pack.name), \(total) credits, \(pack.bonusCredits) bonus, \(pack.price)")
-            : String(localized: "\(pack.name), \(total) credits, \(pack.price)")
-        let images = String(localized: "About \(pack.imageEstimate) images")
-        describe(label, value: [badge, images].compactMap { $0 }.joined(separator: ", "), traits: .button)
+    /// Makes the whole card one VoiceOver button: what it is and its price, with the badge and the detail as its value.
+    private func describeForAccessibility(pack: StorePackDisplay, badge: String?) {
+        describe("\(pack.title), \(pack.price)", value: [badge, pack.detail].compactMap { $0 }.joined(separator: ", "), traits: .button)
     }
 
     override func layoutSubviews() {

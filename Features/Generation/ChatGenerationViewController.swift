@@ -146,7 +146,7 @@ class ChatGenerationViewController: UIViewController {
         transitionToState(.chat, animated: false)
         viewModel.prompt = prompt
         currentOptions.prompt = prompt
-        currentOptions.model = ImageModel.gemini.value
+        currentOptions.model = ImageModel.standard.value
         viewModel.generateImages(with: currentOptions)
     }
     #endif
@@ -360,57 +360,66 @@ class ChatGenerationViewController: UIViewController {
         topBar.onGallery = { [weak self] in self?.galleryTapped() }
         topBar.onSettings = { [weak self] in self?.settingsTapped() }
         topBar.setShowsAdminBadge(AuthenticationManager.shared.currentUser?.isAdmin ?? false)
-        updateBalanceChip(creditsViewModel.balance?.balance)
+        updateBalanceChip(creditsViewModel.balance)
     }
 
     private func updateTopBarLeading(animated: Bool) {
         topBar.setLeadingStyle(currentState == .chat ? .newChat : .wordmark, animated: animated)
     }
 
-    private func updateBalanceChip(_ balance: Int?) {
+    /// The chip reads in edits: what Plus has left this week, the Pixie Week's free edits today, or the edits the
+    /// balance pays for, flagged when the chosen tier costs more than that.
+    private func updateBalanceChip(_ balance: CreditBalance?) {
         #if DEBUG
         if DemoMode.isActive {
-            topBar.setCredits(text: NumberFormatter.localizedString(from: NSNumber(value: DemoContent.balance), number: .decimal), isLow: false, value: nil)
+            topBar.setCredits(text: EditPrice.label(edits: DemoContent.balanceEdits), isLow: false, value: nil)
             return
         }
         #endif
-        inputBar.setAvailableBalance(balance)
+        inputBar.setBalance(balance)
         guard let balance else {
-            topBar.setCredits(amount: nil, kind: "credits", format: Self.formattedCredits, isLow: false, value: nil)
+            topBar.setCredits(amount: nil, kind: "edits", format: EditPrice.label(edits:), isLow: false, value: nil)
             return
         }
-        let imageCost = estimatedCreditCost()
-        let isLow = balance < imageCost
-        let freeImages = WelcomeCredits().isOnWelcomeGrant(balance: balance)
-            ? WelcomeCredits.freeImages(balance: balance, imageCost: imageCost) : nil
-        let spoken = freeImages.map { String(localized: "\($0) free images left") }
-            ?? String(localized: "\(balance) credits")
-        topBar.setCredits(
-            amount: freeImages ?? balance,
-            kind: freeImages == nil ? "credits" : "free",
-            format: freeImages == nil ? Self.formattedCredits : { String(localized: "\($0) free") },
-            isLow: isLow,
-            value: isLow ? "\(spoken), \(String(localized: "Not enough credits"))" : spoken
-        )
-    }
-
-    private static func formattedCredits(_ amount: Int) -> String {
-        NumberFormatter.localizedString(from: NSNumber(value: amount), number: .decimal)
+        let edits = EditPrice.edits(of: balance)
+        switch EditPrice.funding(tier: inputBar.selectedModel, balance: balance) {
+        case .plus(let remaining):
+            let text = String(localized: "Plus · \(remaining)")
+            topBar.setCredits(text: text, isLow: false, value: String(localized: "Plus, \(remaining) edits left this week"))
+        case .runway(let remaining):
+            topBar.setCredits(text: String(localized: "\(remaining) free"), isLow: false, value: String(localized: "\(remaining) free edits left today"))
+        case .balance(_, let affordable):
+            let spoken = EditPrice.label(edits: edits)
+            topBar.setCredits(
+                amount: edits,
+                kind: "edits",
+                format: EditPrice.label(edits:),
+                isLow: !affordable,
+                value: affordable ? spoken : "\(spoken), \(String(localized: "Not enough edits"))"
+            )
+        case nil:
+            topBar.setCredits(amount: edits, kind: "edits", format: EditPrice.label(edits:), isLow: false, value: nil)
+        }
     }
 
     private func refreshBalanceChip() {
-        updateBalanceChip(creditsViewModel.balance?.balance)
+        updateBalanceChip(creditsViewModel.balance)
     }
 
-    private func estimatedCreditCost() -> Int {
-        if let fixedCost = inputBar.selectedModel.fixedCost { return fixedCost }
-        switch inputBar.selectedQuality.value {
-        case "low": return 4
-        case "medium": return 16
-        case "high": return 62
-        default: return 50
+    /// Announces the Pixie Week once mako reports it running and its end once it is over, when nothing else is on
+    /// screen; a moment that cannot show now waits for the next balance. Plus makes the reminder moot.
+    private func presentPixieWeekIfDue(_ balance: CreditBalance?) {
+        #if DEBUG
+        if DemoMode.isActive { return }
+        #endif
+        if balance?.edits?.premium != nil {
+            PixieWeek.cancelReminder()
         }
+        guard presentedViewController == nil, view.window != nil,
+              let moment = PixieWeek.shared.moment(for: balance?.edits?.runway) else { return }
+        PixieWeek.shared.present(moment, from: self)
     }
+
     private func setupHandlers() {
         inputBar.onSend = { [weak self] prompt in
             self?.handleSendPrompt(prompt)
@@ -424,7 +433,7 @@ class ChatGenerationViewController: UIViewController {
         }
         inputBar.onGetCredits = { [weak self] in
             guard let self else { return }
-            _ = self.hasCredits(for: self.estimatedCreditCost())
+            _ = self.canPay(tier: self.inputBar.selectedModel)
         }
         inputBar.onLayoutChanged = { [weak self] in
             self?.updateSuggestionsInsets()
@@ -473,7 +482,8 @@ class ChatGenerationViewController: UIViewController {
         creditsViewModel.$balance
             .receive(on: DispatchQueue.main)
             .sink { [weak self] balance in
-                self?.updateBalanceChip(balance?.balance)
+                self?.updateBalanceChip(balance)
+                self?.presentPixieWeekIfDue(balance)
             }
             .store(in: &cancellables)
         #if DEBUG
@@ -620,7 +630,7 @@ class ChatGenerationViewController: UIViewController {
             handleEditImage()
             return
         }
-        guard hasCredits(for: estimatedCreditCost()) else { return }
+        guard canPay(tier: inputBar.selectedModel) else { return }
         if currentState == .suggestions {
             print("🖋️ ChatGenerationVC: Transitioning from suggestions to chat")
             suggestionsView.alpha = 0
@@ -631,29 +641,24 @@ class ChatGenerationViewController: UIViewController {
         currentOptions.prompt = prompt
         currentOptions.model = inputBar.selectedModel.value
 
-        if inputBar.selectedModel == .openai {
-            currentOptions.size = inputBar.selectedSize.value
-            currentOptions.quality = inputBar.selectedQuality.value
-            currentOptions.outputFormat = inputBar.selectedFormat
-            currentOptions.compression = inputBar.selectedFormat != "png" ? inputBar.compressionLevel : nil
-            currentOptions.background = inputBar.selectedBackground
-            currentOptions.moderation = inputBar.selectedModeration
-        } else {
-            currentOptions.size = "auto"
-            currentOptions.quality = "low"
-            currentOptions.outputFormat = nil
-            currentOptions.compression = nil
-            currentOptions.background = nil
-            currentOptions.moderation = nil
-        }
+        currentOptions.size = "auto"
+        currentOptions.quality = "auto"
+        currentOptions.outputFormat = nil
+        currentOptions.compression = nil
+        currentOptions.background = nil
+        currentOptions.moderation = nil
         print("🖋️ ChatGenerationVC: Calling viewModel.generateImages")
         viewModel.generateImages(with: currentOptions)
     }
-    /// Opens the store instead of sending a request the balance cannot cover; an unknown
-    /// balance lets the request through and the server's 402 decides.
-    private func hasCredits(for cost: Int) -> Bool {
-        guard let shortfall = CreditStoreViewController.shortfall(cost: cost, balance: creditsViewModel.balance?.balance) else { return true }
-        CreditStoreViewController.present(from: self, shortfall: shortfall)
+    /// Opens the store instead of sending a request nothing pays for: Plus and the Pixie Week cover what they can,
+    /// then the balance; an unknown balance lets the request through and the server's 402 decides.
+    private func canPay(tier: ImageModel, images: Int = 1) -> Bool {
+        let balance = creditsViewModel.balance
+        guard case .balance(let edits, affordable: false) = EditPrice.funding(tier: tier, images: images, balance: balance) else {
+            return true
+        }
+        let shortfall = edits - (balance.map(EditPrice.edits(of:)) ?? 0)
+        CreditStoreViewController.present(from: self, shortfall: max(1, shortfall))
         return false
     }
 
@@ -684,9 +689,8 @@ class ChatGenerationViewController: UIViewController {
         }) {
             return
         }
-        let model = inputBar.selectedModel.presetModel
-        let cost = (model.fixedCost ?? CreditStoreViewController.defaultImageCreditCost) * preset.imageCount
-        guard hasCredits(for: cost) else { return }
+        let model = inputBar.selectedModel
+        guard canPay(tier: model, images: preset.imageCount) else { return }
         var options = EditOptions()
         options.prompt = preset.prompt
         options.model = model.value
@@ -872,7 +876,7 @@ class ChatGenerationViewController: UIViewController {
     private func handleEditImage() {
         guard case let .edit(selectedImage) = toolbarMode else { return }
         let editOptions = inputBar.getEditOptions()
-        guard !editOptions.prompt.isEmpty, hasCredits(for: estimatedCreditCost()) else { return }
+        guard !editOptions.prompt.isEmpty, canPay(tier: inputBar.selectedModel) else { return }
         startEdit(of: selectedImage.image, options: editOptions, displayText: editOptions.prompt)
         inputBar.clear()
     }

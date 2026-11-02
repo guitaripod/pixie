@@ -130,7 +130,7 @@ private final class WhySignInViewController: UIViewController {
         let benefits = [
             ("cloud", String(localized: "Sync across all your devices")),
             ("photo.on.rectangle.angled", String(localized: "Back up your images")),
-            ("creditcard", String(localized: "Keep your credits if you switch phones")),
+            ("creditcard", String(localized: "Keep your edits if you switch phones")),
             ("lock.shield", String(localized: "Secure and private")),
         ]
         let list = UIStackView(arrangedSubviews: benefits.map(makeBenefitRow))
@@ -324,7 +324,7 @@ class AuthenticationViewController: UIViewController {
         titleLabel.accessibilityTraits = .header
 
         subtitleLabel.setStyledText(
-            String(localized: "Sign in to back up your images and credits and use them on every device. You can keep using Pixie without an account."),
+            String(localized: "Sign in to back up your images and edits and use them on every device. You can keep using Pixie without an account."),
             .callout,
             color: Theme.Color.onBackdropSecondary,
             alignment: .center

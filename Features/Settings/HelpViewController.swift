@@ -41,17 +41,17 @@ class HelpViewController: UIViewController {
                     Point(String(localized: "Pick a photo"), String(localized: "Choose one from your library, or try the sample photo first."), marker: "1"),
                     Point(String(localized: "Tap an edit"), String(localized: "A pro headshot, a restored old photo, a 3D figurine and more: one tap each."), marker: "2"),
                     Point(String(localized: "Refine by chat"), String(localized: "Ask for changes in plain words and each message edits your latest image."), marker: "3"),
-                    Point(String(localized: "3 free images"), String(localized: "They're included, and there's nothing to sign up for."), alignsWithMarkers: true),
+                    Point(String(localized: "A free week"), String(localized: "Your first edit starts your Pixie Week: \(PixieWeek.dailyEdits) free edits a day for \(PixieWeek.days) days, with nothing to sign up for."), alignsWithMarkers: true),
                 ]
             ),
             topicCard(
-                title: String(localized: "Credits"),
+                title: String(localized: "Edits"),
                 symbol: "creditcard.fill",
                 expanded: false,
                 points: [
-                    Point(String(localized: "What a credit is"), String(localized: "Credits pay for the images you make. The cost is shown before you generate.")),
-                    Point(String(localized: "Packs never expire"), String(localized: "Buy a pack once and use it whenever you like. There is no subscription.")),
-                    Point(String(localized: "See where they went"), String(localized: "Tap your balance to see every credit you've spent or received.")),
+                    Point(String(localized: "What an edit is"), String(localized: "Each image costs edits: Standard costs one, Max costs five. The cost is shown before you make it.")),
+                    Point(String(localized: "Plus or packs"), String(localized: "Plus gives you \(PixiePacks.plusWeeklyEdits) edits every week and renews until you cancel. A pack is bought once and never expires.")),
+                    Point(String(localized: "See where they went"), String(localized: "Tap your balance to see every edit you've spent or received.")),
                 ]
             ),
             topicCard(
@@ -88,9 +88,9 @@ class HelpViewController: UIViewController {
             (String(localized: "What if a request is declined?"),
              String(localized: "Nothing is charged. Try rewording your request, since safety filters sometimes block photos of people.")),
             (String(localized: "Do I need to sign in?"),
-             String(localized: "No. Pixie starts right away on this device. Sign in with Apple in Settings to back up your images and credits and use them on other devices.")),
+             String(localized: "No. Pixie starts right away on this device. Sign in with Apple in Settings to back up your images and edits and use them on other devices.")),
             (String(localized: "How do I delete my account?"),
-             String(localized: "Open Settings and tap Delete Account at the bottom. Your credits, including any you bought, and every image you've made are permanently deleted from our servers. This can't be undone.")),
+             String(localized: "Open Settings and tap Delete Account at the bottom. Your edits, including any you bought, and every image you've made are permanently deleted from our servers. Deleting the account does not cancel Plus: cancel it in the App Store first. This can't be undone.")),
             (String(localized: "How do I report issues?"),
              String(localized: "Message @guitaripod on X (x.com/guitaripod) and we'll help you out.")),
         ]

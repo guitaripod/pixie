@@ -1,12 +1,16 @@
 import Combine
 import Foundation
+import MidgarCommerce
 import MidgarCore
 import MidgarCredits
 import PixiepocketCore
+import UIKit
 
 nonisolated struct CreditPackWithPrice: Sendable {
     let creditPack: CreditPack
     let localizedPrice: String
+    /// StoreKit's product, for the numeric price and the storefront's currency.
+    let product: StoreProduct
 }
 
 /// How a purchase ended, in the cases the store screen shows differently. A purchase that failed is thrown instead.
@@ -21,35 +25,38 @@ enum CreditPurchaseOutcome: Equatable {
     case cancelled
 }
 
-/// Sells the credit packs through the Midgar wallet: mako's pack list for names, credits and bonus, StoreKit's products
-/// (through MidgarCredits) for the price in the customer's storefront, and `MidgarCredits.buy` for the purchase.
+/// Sells the edit packs through the Midgar wallet (mako's pack list for names and credits, StoreKit's products through
+/// MidgarCredits for the price in the customer's storefront, `MidgarCredits.buy` for the purchase) and PixiePocket
+/// Plus through the store, whose ledger entitlement mako turns into the weekly edits.
 @MainActor
 final class CreditPurchaseManager {
     static let shared = CreditPurchaseManager()
 
     private let credits: MidgarCredits?
+    private let store: MidgarStore?
     private let apiService: APIServiceProtocol
     private let balanceStore: CreditBalanceStore
-    private let welcomeCredits: WelcomeCredits
     private let notePurchaseFailure: @MainActor () -> Void
 
     @Published private(set) var offers: [MidgarCreditsOffer] = []
     @Published private(set) var creditPacks: [CreditPack] = []
+    /// PixiePocket Plus as StoreKit sells it to this customer, or nil before it loads or where it is not for sale.
+    @Published private(set) var plusProduct: StoreProduct?
 
     /// - Parameters:
     ///   - credits: The wallet, or nil where the app reaches no Midgar service (a test host): nothing is for sale then.
     ///   - notePurchaseFailure: Tells the review policy, which holds its prompt back for a week after a failed purchase.
     init(
         credits: MidgarCredits? = PixieMidgar.shared.credits,
+        store: MidgarStore? = PixieMidgar.shared.store,
         apiService: APIServiceProtocol = APIService.shared,
         balanceStore: CreditBalanceStore = .shared,
-        welcomeCredits: WelcomeCredits = WelcomeCredits(),
         notePurchaseFailure: @escaping @MainActor () -> Void = { ReviewPrompt.notePurchaseFailure() }
     ) {
         self.credits = credits
+        self.store = store
         self.apiService = apiService
         self.balanceStore = balanceStore
-        self.welcomeCredits = welcomeCredits
         self.notePurchaseFailure = notePurchaseFailure
         prefetch()
     }
@@ -61,6 +68,7 @@ final class CreditPurchaseManager {
         Task {
             await fetchCreditPacks()
             await fetchOffers()
+            await fetchPlus()
         }
     }
 
@@ -84,6 +92,45 @@ final class CreditPurchaseManager {
         }
     }
 
+    /// Reads Plus from StoreKit. A storefront where it is not for sale leaves it nil, and the store shows packs only.
+    func fetchPlus() async {
+        guard let store else { return }
+        do {
+            plusProduct = try await store.products().first { $0.id == PixiePacks.plusProductID }
+        } catch {
+            MidgarLog.notice("Plus unavailable: \(error.localizedDescription)", category: .credits)
+        }
+    }
+
+    /// Whether this Midgar ID holds Plus, from the ledger's entitlements.
+    func hasPlus() async -> Bool {
+        await store?.isEntitled(to: PixiePacks.plusEntitlement) ?? false
+    }
+
+    /// Subscribes to Plus with the purchase sheet over `scene`; a cancelled sheet is an outcome, any failure is noted
+    /// for the review policy and thrown. The balance is read again, so the weekly edits show once mako sees them.
+    func purchasePlus(confirmIn scene: UIScene) async throws -> MidgarPurchaseResult {
+        do {
+            guard let store else { throw MidgarCreditsError.notConfigured(.purchasesDisabled) }
+            let result: MidgarPurchaseResult
+            if #available(iOS 17.0, *) {
+                result = try await store.purchase(PixiePacks.plusProductID, confirmIn: scene)
+            } else {
+                result = try await store.purchase(PixiePacks.plusProductID)
+            }
+            if result == .purchased {
+                await balanceStore.refresh()
+            }
+            return result
+        } catch is CancellationError {
+            return .cancelled
+        } catch {
+            notePurchaseFailure()
+            MidgarLog.error("Plus purchase failed: \(error.localizedDescription)", category: .credits)
+            throw error
+        }
+    }
+
     /// Buys one pack and credits it. A cancelled purchase is an outcome, not an error; any failure is noted for the
     /// review policy and thrown for the screen to show.
     func purchaseCreditPack(id packID: String) async throws -> CreditPurchaseOutcome {
@@ -104,7 +151,6 @@ final class CreditPurchaseManager {
     private func outcome(of result: MidgarCreditsPurchaseResult) -> CreditPurchaseOutcome {
         switch result {
         case .credited(_, let creditsAdded, let balance):
-            welcomeCredits.markCreditsAdded()
             balanceStore.apply(newBalance: balance)
             Task { await balanceStore.refresh() }
             return .credited(credits: creditsAdded, newBalance: balance)
@@ -117,7 +163,7 @@ final class CreditPurchaseManager {
         }
     }
 
-    /// mako's packs that StoreKit sells, cheapest first, each with the price StoreKit shows this customer.
+    /// The packs the store offers that StoreKit sells, cheapest first, each with the price StoreKit shows this customer.
     func getCreditPacksWithPricing() -> AnyPublisher<[CreditPackWithPrice], Never> {
         Publishers.CombineLatest($creditPacks, $offers)
             .map(Self.priced)
@@ -126,10 +172,12 @@ final class CreditPurchaseManager {
 
     /// The join, nonisolated because Combine runs it on whichever thread the publisher emits on.
     private nonisolated static func priced(_ backendPacks: [CreditPack], _ offers: [MidgarCreditsOffer]) -> [CreditPackWithPrice] {
-        let priceByPackID = Dictionary(offers.map { ($0.pack.id, $0.product.displayPrice) }, uniquingKeysWith: { first, _ in first })
+        let productByPackID = Dictionary(offers.map { ($0.pack.id, $0.product) }, uniquingKeysWith: { first, _ in first })
+        let offered = Set(PixiePacks.offered.map(\.id))
         return backendPacks
+            .filter { offered.contains($0.id) }
             .compactMap { pack in
-                priceByPackID[pack.id].map { CreditPackWithPrice(creditPack: pack, localizedPrice: $0) }
+                productByPackID[pack.id].map { CreditPackWithPrice(creditPack: pack, localizedPrice: $0.displayPrice, product: $0) }
             }
             .sorted { $0.creditPack.priceUsdCents < $1.creditPack.priceUsdCents }
     }

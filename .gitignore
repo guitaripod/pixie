@@ -89,3 +89,4 @@ iOS/**/iOSInjectionProject/
 marketing/raw/
 marketing/appstore/
 marketing/appstore-ipad/
+Core/**/.build/

@@ -28,7 +28,6 @@ nonisolated enum DemoMode: String {
     case launchfailure
     case splash
     case generating
-    case cost
     case notice
 
     static var current: DemoMode? {
@@ -66,7 +65,8 @@ struct DemoGalleryItem {
 
 enum DemoContent {
     static let mockURLPrefix = "pixie-demo://art/"
-    static let balance = 1_372
+    static let balance = 1_365
+    static let balanceEdits = balance / EditPrice.fallbackCreditsPerEdit
 
     private static func presetTitle(_ id: String) -> String {
         EditPreset.preset(id: id)?.title ?? id
@@ -362,10 +362,6 @@ enum DemoRootBuilder {
             )
             let declined = ChatMessage(role: .assistant, content: String(localized: "The model declined to make this image."))
             return split(DemoLaunch(scenario: .conversation([request, declined])))
-        case .cost:
-            return split(DemoLaunch(section: .credits) { _, navigation in
-                navigation.pushViewController(CostEstimatorViewController(viewModel: CreditsViewModel()), animated: false)
-            })
         case .refine:
             return split(DemoLaunch(scenario: .conversation(DemoChatBuilder.refineConversation())))
         case .store:

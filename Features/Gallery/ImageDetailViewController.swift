@@ -421,14 +421,14 @@ final class ImageDetailViewController: UIViewController {
         facts = []
         if let metadata = image.metadata {
             if let model = metadata.model {
-                facts.append((String(localized: "Model"), ImageModel(rawValue: model)?.displayName ?? model))
+                facts.append((String(localized: "Model"), ImageModel.displayName(forRecorded: model)))
             }
             facts.append((String(localized: "Size"), "\(metadata.width) × \(metadata.height)"))
             if let quality = metadata.quality {
                 facts.append((String(localized: "Quality"), quality.capitalized))
             }
             facts.append((String(localized: "Format"), metadata.format.uppercased()))
-            facts.append((String(localized: "Credits"), "\(metadata.creditsUsed)"))
+            facts.append((String(localized: "Edits"), "\(EditPrice.roundedEdits(ofCredits: metadata.creditsUsed))"))
         }
         facts.append((String(localized: "Created"), formatDate(image.createdAt)))
     }

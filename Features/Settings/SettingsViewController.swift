@@ -5,7 +5,7 @@ import MidgarUI
 import UIKit
 
 class SettingsViewController: UIViewController {
-    private static let selectableModels: [ImageModel] = [.gemini, .geminiPro, .openai]
+    private static let selectableModels: [ImageModel] = [.standard, .max]
     private static let cacheSizeTimeout: UInt64 = 10_000_000_000
     private static let supportURL = URL(string: "https://x.com/guitaripod")
 
@@ -22,23 +22,11 @@ class SettingsViewController: UIViewController {
     private var isTestingConnection = false
     private var isDeletingAccount = false
     private var deletionOverlay: AccountDeletionProgressView?
-    private var isAdvancedExpanded = false
     private var builtSignature = ""
-    private var lastCompressionHaptic = -1
 
     private var appearanceStack: UIStackView?
     private var appearanceTiles: [AppTheme: SettingsAppearanceTile] = [:]
     private var modelCards: [ImageModel: SettingsOptionCard] = [:]
-    private var qualityGroup: SettingsChipGroup?
-    private var sizeGroup: SettingsChipGroup?
-    private var formatGroup: SettingsChipGroup?
-    private var backgroundGroup: SettingsChipGroup?
-    private var moderationGroup: SettingsChipGroup?
-    private var compressionSlider: PercentSlider?
-    private var compressionValueLabel: UILabel?
-    private var compressionNote: UILabel?
-    private var advancedRow: SettingsRowView?
-    private var advancedBody: UIView?
     private var consentSwitch: UISwitch?
     private var consentRow: SettingsRowView?
     private var cacheRow: SettingsRowView?
@@ -142,7 +130,6 @@ class SettingsViewController: UIViewController {
         column.stack.addArrangedSubview(makeAccountSection())
         column.stack.addArrangedSubview(makeAppearanceSection())
         column.stack.addArrangedSubview(makeDefaultsSection())
-        column.stack.addArrangedSubview(makeAdvancedSection())
         column.stack.addArrangedSubview(makePrivacySection())
         column.stack.addArrangedSubview(makeSupportSection())
         if isAdmin {
@@ -161,13 +148,6 @@ class SettingsViewController: UIViewController {
         label.text = text
         label.accessibilityTraits = .header
         return label
-    }
-
-    private func labelledGroup(_ title: String, _ group: SettingsChipGroup) -> UIStackView {
-        let stack = UIStackView(arrangedSubviews: [subheading(title), group])
-        stack.axis = .vertical
-        stack.spacing = Theme.Space.sm
-        return stack
     }
 
     private func inset(_ stack: UIStackView, in card: SurfaceView, padding: CGFloat = Theme.Space.lg) {
@@ -191,7 +171,7 @@ class SettingsViewController: UIViewController {
         let symbol: String
         if isAnonymous {
             title = String(localized: "Not signed in")
-            detail = String(localized: "Your images and credits live in an anonymous account")
+            detail = String(localized: "Your images and edits live in an anonymous account")
             symbol = "person.crop.circle.badge.questionmark"
         } else if let provider {
             title = String(localized: "Signed in with \(provider.displayName)")
@@ -288,97 +268,12 @@ class SettingsViewController: UIViewController {
         cardStack.accessibilityContainerType = .semanticGroup
         cardStack.accessibilityLabel = String(localized: "Model")
 
-        let quality = SettingsChipGroup(options: Self.qualityOptions, selected: nil, label: String(localized: "Quality"))
-        quality.onSelect = { [weak self] id in self?.configurationManager.defaultQuality = id }
-        qualityGroup = quality
-        let size = SettingsChipGroup(options: Self.sizeOptions, selected: nil, label: String(localized: "Size"))
-        size.onSelect = { [weak self] id in self?.configurationManager.defaultSize = id }
-        sizeGroup = size
-
-        let optionsStack = UIStackView(arrangedSubviews: [labelledGroup(String(localized: "Quality"), quality), labelledGroup(String(localized: "Size"), size)])
-        optionsStack.axis = .vertical
-        optionsStack.spacing = Theme.Space.lg
-        let optionsCard = SurfaceView(style: .card)
-        inset(optionsStack, in: optionsCard)
-
-        let hint = SettingsLayout.footnote(String(localized: "Quality, size and the advanced options apply to GPT Image. Higher quality costs more credits."))
+        let hint = SettingsLayout.footnote(String(localized: "Standard costs one edit, Max costs five. You can switch for any single edit in the composer."))
 
         return SettingsLayout.section(
             title: String(localized: "Defaults"),
-            content: [subheading(String(localized: "Model")), cardStack, optionsCard, hint]
+            content: [subheading(String(localized: "Model")), cardStack, hint]
         )
-    }
-
-    private func makeAdvancedSection() -> UIView {
-        let header = SettingsRowView(title: String(localized: "Advanced"), symbol: "slider.horizontal.3", showsChevron: true)
-        header.onTap = { [weak self] in self?.toggleAdvanced() }
-        header.setExpanded(isAdvancedExpanded)
-        advancedRow = header
-
-        let format = SettingsChipGroup(options: Self.formatOptions, selected: nil, label: String(localized: "Format"))
-        format.onSelect = { [weak self] id in self?.configurationManager.defaultOutputFormat = id }
-        formatGroup = format
-        let background = SettingsChipGroup(options: Self.backgroundOptions, selected: nil, label: String(localized: "Background"))
-        background.onSelect = { [weak self] id in self?.configurationManager.defaultBackground = id }
-        backgroundGroup = background
-        let moderation = SettingsChipGroup(options: Self.moderationOptions, selected: nil, label: String(localized: "Moderation"))
-        moderation.onSelect = { [weak self] id in self?.configurationManager.defaultModeration = id }
-        moderationGroup = moderation
-
-        let compressionTitle = UILabel()
-        compressionTitle.apply(.subhead, color: Theme.Color.ink)
-        compressionTitle.text = String(localized: "Compression Level")
-        compressionTitle.hideFromAccessibility()
-        let valueLabel = UILabel()
-        valueLabel.apply(.numeral(17))
-        valueLabel.textColor = Theme.Color.inkSecondary
-        valueLabel.numberOfLines = 1
-        valueLabel.setContentHuggingPriority(.required, for: .horizontal)
-        valueLabel.hideFromAccessibility()
-        compressionValueLabel = valueLabel
-        let compressionHeader = UIStackView(arrangedSubviews: [compressionTitle, valueLabel])
-        compressionHeader.axis = .horizontal
-        compressionHeader.alignment = .firstBaseline
-        compressionHeader.spacing = Theme.Space.sm
-
-        let slider = PercentSlider()
-        slider.minimumValue = 0
-        slider.maximumValue = 100
-        slider.accessibilityLabel = String(localized: "Compression Level")
-        slider.addTarget(self, action: #selector(compressionChanged(_:)), for: .valueChanged)
-        slider.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
-        compressionSlider = slider
-
-        let note = SettingsLayout.footnote("")
-        compressionNote = note
-
-        let compression = UIStackView(arrangedSubviews: [compressionHeader, slider, note])
-        compression.axis = .vertical
-        compression.spacing = Theme.Space.sm
-
-        let groups = UIStackView(arrangedSubviews: [
-            labelledGroup(String(localized: "Format"), format),
-            compression,
-            labelledGroup(String(localized: "Background"), background),
-            labelledGroup(String(localized: "Moderation"), moderation),
-        ])
-        groups.axis = .vertical
-        groups.spacing = Theme.Space.xl
-        groups.isLayoutMarginsRelativeArrangement = true
-        groups.layoutMargins = UIEdgeInsets(top: Theme.Space.lg, left: Theme.Space.lg, bottom: Theme.Space.lg, right: Theme.Space.lg)
-
-        let body = UIStackView(arrangedSubviews: [RowDivider(inset: 0), groups])
-        body.axis = .vertical
-        body.isHidden = !isAdvancedExpanded
-        advancedBody = body
-
-        let stack = UIStackView(arrangedSubviews: [header, body])
-        stack.axis = .vertical
-        let card = SurfaceView(style: .card)
-        card.contentView.addSubview(stack)
-        stack.pinEdges(to: card.contentView)
-        refreshAdvancedAccessibility()
-        return card
     }
 
     private func makePrivacySection() -> UIView {
@@ -459,101 +354,15 @@ class SettingsViewController: UIViewController {
         return SettingsLayout.section(title: String(localized: "Danger zone"), content: [card])
     }
 
-    private static var qualityOptions: [SettingsChipGroup.Option] {
-        [
-            .init(id: "low", title: String(localized: "Low"), symbol: nil),
-            .init(id: "medium", title: String(localized: "Medium"), symbol: nil),
-            .init(id: "high", title: String(localized: "High"), symbol: nil),
-            .init(id: "auto", title: String(localized: "Auto"), symbol: nil),
-        ]
-    }
-
-    private static var sizeOptions: [SettingsChipGroup.Option] {
-        [
-            .init(id: "1024x1024", title: String(localized: "Square"), symbol: "square"),
-            .init(id: "1792x1024", title: String(localized: "Landscape"), symbol: "rectangle"),
-            .init(id: "1024x1792", title: String(localized: "Portrait"), symbol: "rectangle.portrait"),
-            .init(id: "auto", title: String(localized: "Auto"), symbol: "wand.and.stars"),
-        ]
-    }
-
-    private static var formatOptions: [SettingsChipGroup.Option] {
-        [
-            .init(id: "png", title: "PNG", symbol: nil),
-            .init(id: "jpeg", title: "JPEG", symbol: nil),
-            .init(id: "webp", title: "WebP", symbol: nil),
-        ]
-    }
-
-    private static var backgroundOptions: [SettingsChipGroup.Option] {
-        [
-            .init(id: "auto", title: String(localized: "Auto"), symbol: nil),
-            .init(id: "transparent", title: String(localized: "Transparent"), symbol: nil),
-            .init(id: "opaque", title: String(localized: "Opaque"), symbol: nil),
-            .init(id: "none", title: String(localized: "None"), symbol: nil),
-        ]
-    }
-
-    private static var moderationOptions: [SettingsChipGroup.Option] {
-        [
-            .init(id: "default", title: String(localized: "Default"), symbol: nil),
-            .init(id: "auto", title: String(localized: "Auto"), symbol: nil),
-            .init(id: "low", title: String(localized: "Low"), symbol: nil),
-        ]
-    }
-
-    private func normalized(_ raw: String, allowed: [String], fallback: String) -> String {
-        allowed.contains(raw) ? raw : fallback
-    }
-
-    private var normalizedSize: String {
-        switch configurationManager.defaultSize {
-        case "1024x1024", "square": return "1024x1024"
-        case "1792x1024", "landscape": return "1792x1024"
-        case "1024x1792", "portrait": return "1024x1792"
-        default: return "auto"
-        }
-    }
-
-    private var normalizedFormat: String {
-        let raw = configurationManager.defaultOutputFormat
-        return normalized(raw == "jpg" ? "jpeg" : raw, allowed: ["png", "jpeg", "webp"], fallback: "webp")
-    }
-
     /// Brings every control in line with the stored configuration, leaving a slider alone while a finger is on it.
     private func refreshFromConfiguration() {
         for (theme, tile) in appearanceTiles {
             tile.isSelected = theme == configurationManager.theme
         }
-        let model = ImageModel(rawValue: configurationManager.defaultModel).flatMap { Self.selectableModels.contains($0) ? $0 : nil } ?? .gemini
+        let model = ImageModel(storedValue: configurationManager.defaultModel)
         for (candidate, card) in modelCards {
             card.isSelected = candidate == model
         }
-        qualityGroup?.select(normalized(configurationManager.defaultQuality, allowed: ["low", "medium", "high", "auto"], fallback: "low"))
-        sizeGroup?.select(normalizedSize)
-        formatGroup?.select(normalizedFormat)
-        backgroundGroup?.select(normalized(configurationManager.defaultBackground, allowed: ["auto", "transparent", "opaque", "none"], fallback: "auto"))
-        moderationGroup?.select(normalized(configurationManager.defaultModeration, allowed: ["default", "auto", "low"], fallback: "auto"))
-        refreshCompression()
-    }
-
-    private func refreshCompression() {
-        let level = configurationManager.defaultCompression
-        let isAvailable = configurationManager.defaultOutputFormat != "png"
-        if let slider = compressionSlider {
-            if !slider.isTracking { slider.value = Float(level) }
-            slider.isEnabled = isAvailable
-            slider.alpha = isAvailable ? 1 : 0.5
-        }
-        compressionValueLabel?.text = String(localized: "\(level)%")
-        compressionValueLabel?.alpha = isAvailable ? 1 : 0.5
-        compressionNote?.text = advancedFooterText
-    }
-
-    private var advancedFooterText: String {
-        configurationManager.defaultOutputFormat == "png"
-            ? String(localized: "Compression isn't available for PNG")
-            : String(localized: "Compression applies to JPEG and WebP")
     }
 
     private func refreshConsent() {
@@ -568,33 +377,6 @@ class SettingsViewController: UIViewController {
 
     private func select(model: ImageModel) {
         configurationManager.defaultModel = model.value
-    }
-
-    @objc private func compressionChanged(_ sender: UISlider) {
-        let value = Int(sender.value)
-        if value % 5 == 0, value != lastCompressionHaptic {
-            haptics.impact(.sliderTick)
-            lastCompressionHaptic = value
-        }
-        configurationManager.defaultCompression = value
-        compressionValueLabel?.text = String(localized: "\(value)%")
-    }
-
-    private func toggleAdvanced() {
-        isAdvancedExpanded.toggle()
-        haptics.impact(.click)
-        Motion.spring(0.35, damping: 0.85) {
-            self.advancedBody?.isHidden = !self.isAdvancedExpanded
-            self.advancedRow?.setExpanded(self.isAdvancedExpanded)
-            self.view.layoutIfNeeded()
-        }
-        refreshAdvancedAccessibility()
-        Announce.say(isAdvancedExpanded ? String(localized: "Expanded") : String(localized: "Collapsed"))
-    }
-
-    private func refreshAdvancedAccessibility() {
-        advancedRow?.accessibilityValue = isAdvancedExpanded ? String(localized: "Expanded") : String(localized: "Collapsed")
-        advancedRow?.accessibilityTraits = .button
     }
 
     /// Reads the cache size and gives up after the timeout so the row never stays on "Calculating..." forever.
@@ -664,7 +446,7 @@ class SettingsViewController: UIViewController {
 
         let alert = UIAlertController(
             title: String(localized: "Delete your account?"),
-            message: String(localized: "Your credits, including any you bought, and every image you've made will be permanently deleted from our servers. This can't be undone."),
+            message: String(localized: "Your edits, including any you bought, and every image you've made will be permanently deleted from our servers. Deleting the account does not cancel Plus: cancel it in the App Store first. This can't be undone."),
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))

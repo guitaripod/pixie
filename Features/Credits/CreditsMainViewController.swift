@@ -60,7 +60,7 @@ class CreditsMainViewController: UIViewController {
     }
 
     private func setupUI() {
-        title = String(localized: "Credits & Usage")
+        title = String(localized: "Edits & Usage")
         view.backgroundColor = Theme.Color.canvas
         navigationItem.largeTitleDisplayMode = .never
 
@@ -81,21 +81,8 @@ class CreditsMainViewController: UIViewController {
 
         setupRecentTransactions()
 
-        let estimator = ListRowView(
-            title: String(localized: "Cost Estimator"),
-            subtitle: String(localized: "Calculate costs before generating images"),
-            symbol: "function",
-            colors: [UIColor(hex: 0x2F80ED), UIColor(hex: 0x6C47FF)],
-            showsChevron: true
-        )
-        estimator.onTap = { [weak self] in self?.navigateToEstimator() }
-        estimator.accessibilityLabel = String(localized: "Cost Estimator")
-        estimator.accessibilityHint = String(localized: "Calculate costs before generating images")
-        let toolsCard = RowCard.make([estimator])
-
         scrollView.column.addArrangedSubview(top)
         scrollView.column.addArrangedSubview(recentStack)
-        scrollView.column.addArrangedSubview(toolsCard)
     }
 
     private func setupErrorBanner() {
@@ -215,7 +202,7 @@ class CreditsMainViewController: UIViewController {
         let isLoadingFirstBalance = viewModel.isLoadingBalance && balance == nil
 
         hero.setLoading(isLoadingFirstBalance)
-        hero.setAmount(balance?.balance, animated: isViewLoaded && view.window != nil)
+        hero.setAmount(balance.map(EditPrice.edits(of:)), animated: isViewLoaded && view.window != nil)
         updateStatusLines(for: balance)
         updateFreshness()
         updateErrorBanner()
@@ -230,27 +217,35 @@ class CreditsMainViewController: UIViewController {
             return
         }
 
-        let imageCost = WelcomeCredits.standardImageCost
-        let images = WelcomeCredits.freeImages(balance: balance.balance, imageCost: imageCost)
-        hero.imagesText = images > 0 ? String(localized: "≈ \(images) images") : nil
+        hero.imagesText = Self.planText(for: balance.edits)
+        hero.freeText = nil
 
-        let freeImages = freeImagesLeft(for: balance.balance)
-        hero.freeText = freeImages.map { String(localized: "\($0) free images left") }
-
-        hero.lowIsEmpty = balance.balance == 0
-        hero.lowText = lowBalanceText(for: balance.balance)
+        let edits = EditPrice.edits(of: balance)
+        let isCovered = balance.edits?.premium != nil || balance.edits?.runway?.isOpen == true
+        hero.lowIsEmpty = edits == 0 && !isCovered
+        hero.lowText = isCovered ? nil : lowBalanceText(for: edits)
     }
 
-    /// Whole images still covered by the welcome grant, or nil once the person bought credits or has none left.
-    private func freeImagesLeft(for balance: Int) -> Int? {
-        guard WelcomeCredits().isOnWelcomeGrant(balance: balance) else { return nil }
-        let images = WelcomeCredits.freeImages(balance: balance, imageCost: WelcomeCredits.standardImageCost)
-        return images > 0 ? images : nil
+    /// What pays for edits besides the balance: Plus this week, or the Pixie Week before, during and after it.
+    static func planText(for summary: EditsSummary?, now: Date = Date()) -> String? {
+        if let premium = summary?.premium {
+            return String(localized: "Plus · \(premium.remaining) of \(premium.limit) edits left this week")
+        }
+        guard let runway = summary?.runway else { return nil }
+        switch runway.state {
+        case .available:
+            return String(localized: "Your first edit starts your Pixie Week: \(runway.dailyLimit) free edits a day for \(runway.days) days")
+        case .active:
+            let days = runway.daysLeft(at: now) ?? runway.days
+            return String(localized: "Pixie Week · \(runway.todayRemaining) free today · \(days) days left")
+        case .ended:
+            return nil
+        }
     }
 
-    private func lowBalanceText(for balance: Int) -> String? {
-        if balance == 0 { return String(localized: "Out of credits") }
-        if balance < CreditsViewModel.lowBalanceThreshold { return String(localized: "Low balance") }
+    private func lowBalanceText(for edits: Int) -> String? {
+        if edits == 0 { return String(localized: "Out of edits") }
+        if edits < CreditsViewModel.lowEditsThreshold { return String(localized: "Low balance") }
         return nil
     }
 
@@ -296,20 +291,14 @@ class CreditsMainViewController: UIViewController {
             return
         }
         let value = [
-            spokenImages(for: balance.balance),
-            hero.freeText,
+            hero.imagesText,
             hero.lowText,
             hero.freshnessText
         ].compactMap { $0 }.joined(separator: ", ")
         hero.describeSummary(
-            String(localized: "Balance: \(Self.formatted(balance.balance)) credits"),
+            String(localized: "Balance: \(EditPrice.label(edits: EditPrice.edits(of: balance)))"),
             value: value.isEmpty ? nil : value
         )
-    }
-
-    private func spokenImages(for balance: Int) -> String? {
-        let images = WelcomeCredits.freeImages(balance: balance, imageCost: WelcomeCredits.standardImageCost)
-        return images > 0 ? String(localized: "About \(images) images") : nil
     }
 
     private static func formatted(_ value: Int) -> String {
@@ -363,11 +352,6 @@ class CreditsMainViewController: UIViewController {
         CreditStoreViewController.present(from: self)
     }
 
-    private func navigateToEstimator() {
-        let estimatorVC = CostEstimatorViewController(viewModel: viewModel)
-        navigationController?.pushViewController(estimatorVC, animated: true)
-    }
-
     private func navigateToHistory() {
         let historyVC = TransactionHistoryViewController(viewModel: viewModel)
         navigationController?.pushViewController(historyVC, animated: true)
@@ -375,7 +359,7 @@ class CreditsMainViewController: UIViewController {
 }
 
 private final class BalanceHeroView: UIView {
-    let buyButton = PixieButton(style: .onBackdrop, size: .large, title: String(localized: "Buy Credits"), symbol: "sparkles")
+    let buyButton = PixieButton(style: .onBackdrop, size: .large, title: String(localized: "Get edits"), symbol: "sparkles")
 
     private let clip = UIView()
     private let gradient = GradientView()
@@ -531,7 +515,7 @@ private final class BalanceHeroView: UIView {
         amountLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
 
         creditsLabel.apply(.title2, color: UIColor(white: 1, alpha: 0.80))
-        creditsLabel.text = String(localized: "credits")
+        creditsLabel.text = String(localized: "edits")
         creditsLabel.numberOfLines = 1
         creditsLabel.setContentHuggingPriority(.required, for: .horizontal)
 

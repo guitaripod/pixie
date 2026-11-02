@@ -26,7 +26,7 @@ enum GenerationError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .insufficientCredits(let required, let available):
-            return String(localized: "Insufficient credits: You have \(available) credits but need \(required) credits for this generation.")
+            return String(localized: "Not enough edits for this. Get more in the store.")
         case .unauthorized:
             return String(localized: "Session expired. Please sign in again.")
         case .rateLimitExceeded:

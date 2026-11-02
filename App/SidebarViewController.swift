@@ -11,7 +11,7 @@ enum SidebarSection: Int, CaseIterable {
         switch self {
         case .chat: return String(localized: "Generate")
         case .gallery: return String(localized: "Gallery")
-        case .credits: return String(localized: "Credits")
+        case .credits: return String(localized: "Edits")
         case .settings: return String(localized: "Settings")
         case .admin: return String(localized: "Admin")
         }

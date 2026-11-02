@@ -488,15 +488,13 @@ private final class DisclosureRow: UIControl {
 extension ImageModel {
     fileprivate var composerBlurb: String {
         switch self {
-        case .gemini: return String(localized: "Fast and affordable")
-        case .geminiPro: return String(localized: "Sharper detail and text")
-        case .openai: return String(localized: "Fine control")
+        case .standard: return String(localized: "Fast and great for most edits")
+        case .max: return String(localized: "Most detailed")
         }
     }
 
     fileprivate var composerCostText: String {
-        if let fixedCost { return String(localized: "\(fixedCost) credits") }
-        return String(localized: "\(5)-\(94) credits")
+        EditPrice.label(edits: EditPrice.edits(for: self, balance: CreditBalanceStore.shared.balance))
     }
 }
 
@@ -520,7 +518,7 @@ final class ComposerOptionsPanel: UIView {
         case other
     }
 
-    static let models: [ImageModel] = [.gemini, .geminiPro, .openai]
+    static let models: [ImageModel] = [.standard, .max]
 
     var onChange: ((Change) -> Void)?
     var onCollapse: (() -> Void)?

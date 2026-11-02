@@ -30,7 +30,7 @@ enum NetworkError: LocalizedError {
         case .unauthorized:
             return String(localized: "Authentication failed: Your API key may be invalid")
         case .insufficientCredits:
-            return String(localized: "Insufficient credits")
+            return String(localized: "Not enough edits")
         case .forbidden:
             return String(localized: "Access forbidden")
         case .tooManyRequests:

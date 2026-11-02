@@ -109,8 +109,8 @@ final class OnboardingViewController: UIViewController {
         OnboardingPage(
             beforeImage: "onboarding_before_3",
             afterImage: "onboarding_after_3",
-            title: String(localized: "\(WelcomeCredits.startingFreeImages) free images\nto start"),
-            body: String(localized: "Create right now, no sign-up. After that, pay only for what you make with credit packs that never expire. No subscription, ever."),
+            title: String(localized: "A free week\nto start"),
+            body: String(localized: "Your first edit starts your Pixie Week: \(PixieWeek.dailyEdits) free edits a day for \(PixieWeek.days) days, no sign-up. Then keep going with Plus or a pack that never expires."),
             showsConsent: !CloudAIConsent.isGranted
         ),
     ]

@@ -18,8 +18,8 @@
       "internalID" : "B1C1E002",
       "localizations" : [
         {
-          "description" : "150 credits for creating images.",
-          "displayName" : "Starter",
+          "description" : "10 photo edits. Never expire.",
+          "displayName" : "10 Edits",
           "locale" : "en_US"
         }
       ],
@@ -33,8 +33,8 @@
       "internalID" : "B1C1E003",
       "localizations" : [
         {
-          "description" : "550 credits for creating images.",
-          "displayName" : "Basic",
+          "description" : "40 photo edits. Never expire.",
+          "displayName" : "40 Edits",
           "locale" : "en_US"
         }
       ],
@@ -48,8 +48,8 @@
       "internalID" : "B1C1E004",
       "localizations" : [
         {
-          "description" : "1500 credits for creating images.",
-          "displayName" : "Popular",
+          "description" : "120 photo edits. Never expire.",
+          "displayName" : "120 Edits",
           "locale" : "en_US"
         }
       ],
@@ -94,7 +94,36 @@
     "_storefront" : "USA",
     "_storeKitErrors" : []
   },
-  "subscriptionGroups" : [],
+  "subscriptionGroups" : [
+    {
+      "id" : "B1C1E010",
+      "localizations" : [],
+      "name" : "PixiePocket Plus",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "6.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "B1C1E011",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "60 edits every week, Standard or Max.",
+              "displayName" : "PixiePocket Plus",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.guitaripod.pixie.plus.weekly",
+          "recurringSubscriptionPeriod" : "P1W",
+          "referenceName" : "Plus Weekly",
+          "subscriptionGroupID" : "B1C1E010",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
   "version" : {
     "major" : 4,
     "minor" : 0

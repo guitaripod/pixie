@@ -166,12 +166,12 @@ final class ChatTopBar: UIView {
     }
 
     func setCredits(text: String, isLow: Bool, value: String?) {
-        creditPill.configure(text: text, isLow: isLow, accessibilityLabel: String(localized: "Credits"), hint: String(localized: "Opens the credit store"))
+        creditPill.configure(text: text, isLow: isLow, accessibilityLabel: String(localized: "Edits"), hint: String(localized: "Opens the store"))
         creditPill.accessibilityValue = value
     }
 
     func setCredits(amount: Int?, kind: String, format: @escaping (Int) -> String, isLow: Bool, value: String?) {
-        creditPill.configure(amount: amount, kind: kind, format: format, isLow: isLow, accessibilityLabel: String(localized: "Credits"), hint: String(localized: "Opens the credit store"))
+        creditPill.configure(amount: amount, kind: kind, format: format, isLow: isLow, accessibilityLabel: String(localized: "Edits"), hint: String(localized: "Opens the store"))
         creditPill.accessibilityValue = value
     }
 

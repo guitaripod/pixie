@@ -1,3 +1,4 @@
+import PixiepocketCore
 import UIKit
 
 class ChatInputBar: UIView {
@@ -18,8 +19,7 @@ class ChatInputBar: UIView {
 
     private var isEditMode = false
     private var selectedImage: UIImage?
-    private var costRange: ClosedRange<Int> = 4...4
-    private var availableBalance: Int?
+    private var balance: CreditBalance?
     private var pendingCostAnnouncement: DispatchWorkItem?
     private var costAnnouncementBaseline: String?
     private var lastGuideFrame = CGRect.zero
@@ -34,7 +34,7 @@ class ChatInputBar: UIView {
     private let sendButton = ComposerSendButton()
     private let footnoteRow = UIStackView()
     private let costLabel = UILabel()
-    private let getCreditsButton = FootnoteLinkButton(title: String(localized: "Get credits"))
+    private let getCreditsButton = FootnoteLinkButton(title: String(localized: "Get edits"))
     private let indicatorStackView = UIStackView()
     private var textHeightConstraint: NSLayoutConstraint!
 
@@ -61,7 +61,7 @@ class ChatInputBar: UIView {
     var selectedModel: ImageModel {
         let models = ComposerOptionsPanel.models
         let index = panel.modelIndex
-        guard index >= 0 && index < models.count else { return .gemini }
+        guard index >= 0 && index < models.count else { return .standard }
         return models[index]
     }
 
@@ -112,10 +112,10 @@ class ChatInputBar: UIView {
         setExpanded(true, animated: false)
     }
 
-    /// Credits the person can spend, so the cost line can say in words when the estimate is
-    /// more than they have.
-    func setAvailableBalance(_ balance: Int?) {
-        availableBalance = balance
+    /// The balance and what pays for the next edit, so the cost line can say in words when an edit is free or more
+    /// than the person has.
+    func setBalance(_ balance: CreditBalance?) {
+        self.balance = balance
         refreshCostLabel()
     }
 
@@ -309,7 +309,7 @@ class ChatInputBar: UIView {
 
         static func defaults() -> Choices {
             let config = ConfigurationManager.shared
-            let model = ImageModel(rawValue: config.defaultModel) ?? .gemini
+            let model = ImageModel(storedValue: config.defaultModel)
             return Choices(
                 model: ComposerOptionsPanel.models.firstIndex(of: model) ?? 0,
                 size: ["auto": 0, "1024x1024": 1, "1792x1024": 2, "1024x1792": 3][config.defaultSize] ?? 0,
@@ -324,13 +324,7 @@ class ChatInputBar: UIView {
 
     private var hasNonDefaultOptions: Bool {
         let defaults = Choices.defaults()
-        if panel.modelIndex != defaults.model { return true }
-        guard selectedModel == .openai else { return false }
-        if panel.sizeIndex != defaults.size || panel.qualityIndex != defaults.quality { return true }
-        if panel.formatIndex != defaults.format || panel.backgroundIndex != defaults.background { return true }
-        if panel.moderationIndex != defaults.moderation { return true }
-        if panel.formatIndex != 0 && Int(panel.compression) != defaults.compression { return true }
-        return isEditMode && panel.fidelityIndex != 0
+        return panel.modelIndex != defaults.model
     }
 
     private func buildLayout() {
@@ -470,7 +464,7 @@ class ChatInputBar: UIView {
     }
 
     private func updateUIForModel(animated: Bool) {
-        panel.setOpenAIVisible(selectedModel == .openai, animated: animated)
+        panel.setOpenAIVisible(false, animated: animated)
     }
 
     @objc private func focusPrompt() {
@@ -610,78 +604,41 @@ class ChatInputBar: UIView {
 
     @objc private func updateCredits() {
         defer { onCostInputsChanged?() }
-        costRange = estimatedCostRange()
-        panel.setQualityCosts([ImageQuality.auto, .low, .medium, .high].map {
-            Self.costRange(model: .openai, quality: $0, size: selectedSize)
-        })
         refreshCostLabel()
         refreshOptionsIndicator()
     }
 
-    private func estimatedCostRange() -> ClosedRange<Int> {
-        Self.costRange(model: selectedModel, quality: selectedQuality, size: selectedSize)
-    }
-
-    private static func costRange(model: ImageModel, quality: ImageQuality, size: ImageSize) -> ClosedRange<Int> {
-        if let fixedCost = model.fixedCost {
-            return fixedCost...fixedCost
-        }
-        let size = size.value
-        switch quality.value {
-        case "low":
-            switch size {
-            case "1024x1024": return 4...4
-            case "1536x1024", "1024x1536": return 6...6
-            default: return 4...6
-            }
-        case "medium":
-            switch size {
-            case "1024x1024": return 16...16
-            case "1536x1024", "1024x1536": return 24...24
-            default: return 16...24
-            }
-        case "high":
-            switch size {
-            case "1024x1024": return 62...62
-            case "1536x1024", "1024x1536": return 94...94
-            default: return 62...94
-            }
-        case "auto":
-            return 50...75
-        default:
-            return 4...6
-        }
-    }
-
-    private var costSummary: String {
-        if costRange.lowerBound == costRange.upperBound {
-            return String(localized: "\(costRange.lowerBound) credits")
-        }
-        return String(localized: "\(costRange.lowerBound)-\(costRange.upperBound) credits")
+    /// How the next edit on the chosen tier is paid, or nil while the balance is unknown.
+    private var funding: EditFunding? {
+        EditPrice.funding(tier: selectedModel, balance: balance)
     }
 
     private var exceedsBalance: Bool {
-        guard let availableBalance else { return false }
-        return availableBalance < costRange.lowerBound
+        if case .balance(_, affordable: false) = funding { return true }
+        return false
     }
 
-    private var freeImagesLeft: Int? {
-        guard let availableBalance, WelcomeCredits().isOnWelcomeGrant(balance: availableBalance) else { return nil }
-        return WelcomeCredits.freeImages(balance: availableBalance, imageCost: costRange.lowerBound)
-    }
-
-    /// Shows the estimate and the free images left; when the estimate is more than the balance
-    /// covers it adds the words "Not enough credits" with a warning symbol and the link to the
-    /// store, so the state never rests on colour alone.
+    /// The cost line: what an edit costs, or that it is free under Plus or in the Pixie Week; when the balance cannot
+    /// pay it adds the words "Not enough edits" with a warning symbol and the link to the store, so the state never
+    /// rests on colour alone.
     private func refreshCostLabel() {
-        let summary = costSummary
+        let summary: String
+        switch funding {
+        case .plus(let remaining):
+            summary = String(localized: "Plus · \(remaining) left this week")
+        case .runway(let remaining):
+            summary = String(localized: "Free today · \(remaining) left")
+        case .balance(let edits, _):
+            summary = EditPrice.label(edits: edits)
+        case nil:
+            summary = EditPrice.label(edits: EditPrice.edits(for: selectedModel, balance: nil))
+        }
         let font = Theme.TextStyle.footnote.font
         let secondary = Theme.Color.inkSecondary
-        let text = NSMutableAttributedString(string: String(localized: "≈ \(summary)"), attributes: [.font: font, .foregroundColor: secondary])
+        let text = NSMutableAttributedString(string: summary, attributes: [.font: font, .foregroundColor: secondary])
         var announcement = summary
-        var spoken = summary
         if exceedsBalance {
-            let warning = String(localized: "Not enough credits")
+            let warning = String(localized: "Not enough edits")
             let danger = Theme.Color.danger.resolvedColor(with: traitCollection)
             let attachment = NSTextAttachment()
             attachment.image = UIImage(systemName: "exclamationmark.circle.fill", withConfiguration: UIImage.SymbolConfiguration(font: font))?
@@ -690,14 +647,9 @@ class ChatInputBar: UIView {
             text.append(NSAttributedString(attachment: attachment))
             text.append(NSAttributedString(string: " \(warning)", attributes: [.font: font, .foregroundColor: danger]))
             announcement = "\(summary), \(warning)"
-            spoken = announcement
-        } else if let free = freeImagesLeft {
-            let left = String(localized: "\(free) free left")
-            text.append(NSAttributedString(string: "  ·  \(left)", attributes: [.font: font, .foregroundColor: secondary]))
-            spoken = "\(summary), \(left)"
         }
         costLabel.attributedText = text
-        costLabel.accessibilityLabel = spoken
+        costLabel.accessibilityLabel = announcement
         costAnnouncement = announcement
         getCreditsButton.isHidden = !exceedsBalance
     }
@@ -723,7 +675,7 @@ class ChatInputBar: UIView {
         promptTextView.accessibilityHint = placeholderLabel.text
         optionsButton.accessibilityLabel = String(localized: "Prompt and options")
         costLabel.isAccessibilityElement = true
-        getCreditsButton.accessibilityLabel = String(localized: "Get credits")
+        getCreditsButton.accessibilityLabel = String(localized: "Get edits")
         refreshExpansionAccessibility()
     }
 

@@ -4,28 +4,32 @@ import Testing
 @testable import Pixie
 
 struct PixieMidgarTests {
-    @Test func theStoreBuysThePacksThroughStoreKitAndGrantsNothingFromThem() {
+    @Test func theStoreBuysThePacksAndPlusAndOnlyPlusGrantsAnEntitlement() {
         let configuration = PixiePacks.storeConfiguration()
         #expect(configuration.mode == .purchases)
         #expect(configuration.appID == "pixiepocket")
-        #expect(configuration.productIDs == PixiePacks.productIDs)
-        #expect(configuration.entitlementsByProduct.isEmpty)
+        #expect(configuration.productIDs == PixiePacks.productIDs + ["com.guitaripod.pixie.plus.weekly"])
+        #expect(configuration.entitlementsByProduct == ["com.guitaripod.pixie.plus.weekly": "plus"])
         #expect(configuration.crossAppEntitlements.isEmpty)
     }
 
     @Test func thePackTableMatchesMakosCatalog() {
         #expect(PixiePacks.all.map(\.id) == ["starter", "basic", "popular", "business", "enterprise"])
-        #expect(PixiePacks.all.map(\.baseCredits) == [150, 475, 1136, 2174, 4167])
-        #expect(PixiePacks.all.map(\.bonusCredits) == [0, 75, 364, 1076, 2833])
-        #expect(PixiePacks.all.map(\.totalCredits) == [150, 550, 1500, 3250, 7000])
+        #expect(PixiePacks.all.map(\.totalCredits) == [210, 840, 2520, 3250, 7000])
         #expect(PixiePacks.all.allSatisfy { $0.productID == "com.guitaripod.pixie.credits." + $0.id })
         #expect(PixiePacks.all.map(\.listPrice) == ["$2.99", "$9.99", "$24.99", "$49.99", "$99.99"])
+    }
+
+    @Test func theStoreOffersThreePacksOfWholeEdits() {
+        #expect(PixiePacks.offered.map(\.id) == ["starter", "basic", "popular"])
+        #expect(PixiePacks.offered.map { $0.totalCredits / EditPrice.fallbackCreditsPerEdit } == [10, 40, 120])
+        #expect(PixiePacks.offered.allSatisfy { $0.totalCredits % EditPrice.fallbackCreditsPerEdit == 0 })
     }
 
     @Test func theWalletSellsEveryPackForWhatMakoGrantsBonusIncluded() {
         let configuration = PixiePacks.creditsConfiguration()
         #expect(configuration.packs.map(\.id) == PixiePacks.all.map(\.id))
-        #expect(configuration.packs.map(\.credits) == [150, 550, 1500, 3250, 7000])
+        #expect(configuration.packs.map(\.credits) == [210, 840, 2520, 3250, 7000])
         #expect(configuration.productIDs == PixiePacks.productIDs)
     }
 

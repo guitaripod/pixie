@@ -295,9 +295,8 @@ enum GenerationDurations {
 
     private static func fallback(_ model: ImageModel) -> TimeInterval {
         switch model {
-        case .gemini: return 12
-        case .geminiPro: return 25
-        case .openai: return 45
+        case .standard: return 18
+        case .max: return 30
         }
     }
 

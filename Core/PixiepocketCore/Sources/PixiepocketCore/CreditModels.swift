@@ -3,10 +3,13 @@ import Foundation
 public struct CreditBalance: Codable, Sendable {
     public let balance: Int
     public let currency: String
+    /// What an edit costs and what pays for it, from a server that sells edits; nil from one that does not.
+    public let edits: EditsSummary?
 
-    public init(balance: Int, currency: String) {
+    public init(balance: Int, currency: String, edits: EditsSummary? = nil) {
         self.balance = balance
         self.currency = currency
+        self.edits = edits
     }
 }
 

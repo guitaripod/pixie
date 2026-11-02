@@ -30,7 +30,6 @@ struct CreditsPurchaseStoreKitTests {
         let manager: CreditPurchaseManager
         let session: SKTestSession
         let directory: URL
-        let welcome: WelcomeCredits
         let failures: FailureCounter
 
         func stop() async {
@@ -78,19 +77,18 @@ struct CreditsPurchaseStoreKitTests {
             purchasing: override ?? SceneAnchoredPurchasing(store: store),
             legacyAPIKey: { Self.legacyKey }
         )
-        let balanceStore = CreditBalanceStore(credits: credits)
-        let welcome = WelcomeCredits(defaults: UserDefaults(suiteName: "CreditsPurchaseStoreKitTests-\(UUID().uuidString)")!)
+        let balanceStore = CreditBalanceStore(credits: credits, store: nil, apiService: StubPacksAPI())
         let failures = FailureCounter()
         let manager = CreditPurchaseManager(
             credits: credits,
+            store: store,
             apiService: StubPacksAPI(),
             balanceStore: balanceStore,
-            welcomeCredits: welcome,
             notePurchaseFailure: { failures.note() }
         )
         return Harness(
             store: store, credits: credits, balanceStore: balanceStore, manager: manager,
-            session: session, directory: directory, welcome: welcome, failures: failures
+            session: session, directory: directory, failures: failures
         )
     }
 
@@ -114,30 +112,30 @@ struct CreditsPurchaseStoreKitTests {
 
         #expect(offers.map(\.pack.id) == ["starter", "basic", "popular", "business", "enterprise"])
         #expect(offers.map(\.product.displayPrice) == ["$2.99", "$9.99", "$24.99", "$49.99", "$99.99"])
-        #expect(offers.map(\.product.displayName) == ["Starter", "Basic", "Popular", "Business", "Enterprise"])
+        #expect(offers.map(\.product.displayName) == ["10 Edits", "40 Edits", "120 Edits", "Business", "Enterprise"])
         await harness.stop()
     }
 
-    @Test func theStoreListsEveryMakoPackWithItsStoreKitPrice() async throws {
+    @Test func theStoreListsTheOfferedPacksWithTheirStoreKitPrice() async throws {
         let harness = try makeHarness()
         await harness.manager.fetchCreditPacks()
         await harness.manager.fetchOffers()
 
         let listed = try #require(await firstValue(of: harness.manager.getCreditPacksWithPricing()))
 
-        #expect(listed.map(\.creditPack.id) == ["starter", "basic", "popular", "business", "enterprise"])
-        #expect(listed.map(\.localizedPrice) == ["$2.99", "$9.99", "$24.99", "$49.99", "$99.99"])
+        #expect(listed.map(\.creditPack.id) == ["starter", "basic", "popular"])
+        #expect(listed.map(\.localizedPrice) == ["$2.99", "$9.99", "$24.99"])
         await harness.stop()
     }
 
     @Test func aPackStoreKitDoesNotReturnIsHidden() async throws {
-        let harness = try makeHarness(purchasing: PartialCatalogPurchasing(hiding: "business"))
+        let harness = try makeHarness(purchasing: PartialCatalogPurchasing(hiding: "basic"))
         await harness.manager.fetchCreditPacks()
         await harness.manager.fetchOffers()
 
         let listed = try #require(await firstValue(of: harness.manager.getCreditPacksWithPricing()))
 
-        #expect(listed.map(\.creditPack.id) == ["starter", "basic", "popular", "enterprise"])
+        #expect(listed.map(\.creditPack.id) == ["starter", "popular"])
         await harness.stop()
     }
 
@@ -169,7 +167,6 @@ struct CreditsPurchaseStoreKitTests {
         #expect(request.header("Authorization") == "Bearer " + Self.legacyKey)
         #expect(request.header("X-Midgar-Token") == StubIdentity.accessToken)
         #expect(harness.balanceStore.balance?.balance == 215)
-        #expect(harness.welcome.isOnWelcomeGrant(balance: 65) == false)
         #expect(await harness.credits.unconfirmedPurchases == 0)
         #expect(harness.failures.count == 0)
         await harness.stop()
@@ -183,7 +180,7 @@ struct CreditsPurchaseStoreKitTests {
 
         let outcome = try await harness.manager.purchaseCreditPack(id: "starter")
 
-        #expect(outcome == .creditPending(credits: 150))
+        #expect(outcome == .creditPending(credits: PixiePacks.starter.totalCredits))
         #expect(await harness.credits.unconfirmedPurchases == 1)
         #expect(harness.balanceStore.balance?.balance == 65)
         let validations = GatewayStub.requests(method: "POST", pathSuffix: "/v1/credits/purchase/revenuecat/validate")
@@ -273,7 +270,7 @@ struct CreditsPurchaseStoreKitTests {
             purchasing: ScriptedPurchasing(outcome: .cancelled),
             legacyAPIKey: { Self.legacyKey }
         )
-        let balanceStore = CreditBalanceStore(credits: relaunched)
+        let balanceStore = CreditBalanceStore(credits: relaunched, store: nil, apiService: StubPacksAPI())
         #expect(await relaunched.unconfirmedPurchases == 1)
 
         await balanceStore.refresh()
@@ -298,17 +295,12 @@ struct CreditsPurchaseStoreKitTests {
         await harness.stop()
     }
 
-    @Test func insufficientCreditsOpensTheStoreWithTheShortfall() throws {
-        #expect(CreditStoreViewController.shortfall(cost: 21, balance: 9) == 12)
-        #expect(CreditStoreViewController.shortfall(cost: 50, balance: 49) == 1)
-        #expect(CreditStoreViewController.shortfall(cost: 21, balance: 21) == nil)
-        #expect(CreditStoreViewController.shortfall(cost: 21, balance: 400) == nil)
-        #expect(CreditStoreViewController.shortfall(cost: 21, balance: nil) == nil)
-
+    @Test func notEnoughEditsOpensTheStoreWithTheShortfall() throws {
         let store = CreditStoreViewController(shortfall: 12)
         store.loadViewIfNeeded()
-        let banner = labels(in: store.view).map { $0.text ?? "" }.first { $0.contains("12") && $0.contains("credits") }
-        #expect(banner == String(localized: "You need \(12) more credits to finish this image."))
+        let expected = String(localized: "You need \(EditPrice.label(edits: 12)) more for this.")
+        let banner = labels(in: store.view).map { $0.text ?? "" }.first { $0 == expected }
+        #expect(banner == expected)
     }
 
     @Test func deletingTheAccountSendsTheLegacyKeyAloneThroughTheWallet() async throws {

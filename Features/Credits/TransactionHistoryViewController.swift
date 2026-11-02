@@ -493,7 +493,7 @@ private final class HistoryStateContainer: UIView {
             view = StateView(
                 symbol: "clock.arrow.circlepath",
                 title: String(localized: "No activity yet"),
-                message: String(localized: "Credits you spend, buy or receive will show up here.")
+                message: String(localized: "Edits you spend, buy or receive will show up here.")
             )
         case .failed:
             view = StateView(

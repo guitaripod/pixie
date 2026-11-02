@@ -169,7 +169,7 @@ final class GalleryImageCell: UICollectionViewCell {
             parts.append(String(localized: "created \(relative)"))
         }
         if let credits = metadata.metadata?.creditsUsed {
-            parts.append(String(localized: "\(credits) credits"))
+            parts.append(EditPrice.label(edits: EditPrice.roundedEdits(ofCredits: credits)))
         }
         return parts.joined(separator: ", ")
     }
