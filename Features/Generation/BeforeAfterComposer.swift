@@ -2,7 +2,8 @@ import UIKit
 
 /// Renders an original photo and its edit as one shareable image: side by side for
 /// portrait shots, stacked for landscape ones, each labelled, with a small app credit.
-enum BeforeAfterComposer {
+/// Nonisolated so the chat can render it off the main thread.
+nonisolated enum BeforeAfterComposer {
     private static let panelLongEdge: CGFloat = 1400
     private static let gap: CGFloat = 12
     private static let footerHeight: CGFloat = 96

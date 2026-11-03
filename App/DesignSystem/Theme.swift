@@ -10,7 +10,9 @@ extension UIColor {
         )
     }
 
-    static func adaptive(light: UIColor, dark: UIColor) -> UIColor {
+    /// Nonisolated so its provider can be resolved off the main thread, which the share sheet
+    /// does when it encodes the window's tint from a background queue.
+    nonisolated static func adaptive(light: UIColor, dark: UIColor) -> UIColor {
         UIColor { $0.userInterfaceStyle == .dark ? dark : light }
     }
 

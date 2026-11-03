@@ -187,24 +187,34 @@ class UserMessageCell: ChatColumnCell {
         guard let metadata, !(metadata.model?.starts(with: "gemini") ?? false) else { return [] }
         var rows: [(label: String, value: String)] = []
         if let quality = metadata.quality {
-            rows.append((String(localized: "Quality"), quality.uppercased()))
+            rows.append((String(localized: "Quality"), ImageQuality.allCases.first { $0.value == quality }?.displayName ?? quality))
         }
         if let size = metadata.sizeDisplay {
             rows.append((String(localized: "Size"), size))
         }
         if let background = metadata.background {
-            rows.append((String(localized: "Background"), background))
+            rows.append((String(localized: "Background"), Self.backgroundName(background)))
         }
         if let format = metadata.format {
-            rows.append((String(localized: "Format"), format))
+            rows.append((String(localized: "Format"), OutputFormat.allCases.first { $0.value == format }?.displayName ?? format.uppercased()))
             if let compression = metadata.compression {
                 rows.append((String(localized: "Compress"), String(localized: "\(compression)%")))
             }
         }
         if let moderation = metadata.moderation {
-            rows.append((String(localized: "Moderation"), moderation))
+            rows.append((String(localized: "Moderation"), ModerationLevel.allCases.first { $0.value == moderation }?.displayName ?? moderation))
         }
         return rows
+    }
+
+    /// The name the options panel shows for the background a request carried.
+    private static func backgroundName(_ value: String) -> String {
+        switch value {
+        case "auto": return String(localized: "Auto")
+        case "transparent": return String(localized: "Transparent")
+        case "opaque": return String(localized: "Opaque")
+        default: return value.capitalized
+        }
     }
 }
 

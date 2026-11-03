@@ -42,6 +42,7 @@ class ChatGenerationViewController: UIViewController {
     private var notificationObserver: NSObjectProtocol?
     private var presetLinkObserver: NSObjectProtocol?
     var pendingPreset: EditPreset?
+    var comparisonTask: Task<Void, Never>?
     var leadingConstraint: NSLayoutConstraint!
     var trailingConstraint: NSLayoutConstraint!
     #if DEBUG

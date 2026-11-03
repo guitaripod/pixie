@@ -410,51 +410,30 @@ extension AssistantMessageCell: UIContextMenuInteractionDelegate {
     func contextMenuInteraction(_ interaction: UIContextMenuInteraction, configurationForMenuAtLocation location: CGPoint) -> UIContextMenuConfiguration? {
         guard let imageView = interaction.view as? UIImageView,
               let image = imageView.image else { return nil }
-        return UIContextMenuConfiguration(identifier: nil, previewProvider: {
-            let previewController = UIViewController()
-            let imageView = UIImageView(image: image)
-            imageView.contentMode = .scaleAspectFit
-            imageView.translatesAutoresizingMaskIntoConstraints = false
-            previewController.view.addSubview(imageView)
-            NSLayoutConstraint.activate([
-                imageView.topAnchor.constraint(equalTo: previewController.view.topAnchor),
-                imageView.leadingAnchor.constraint(equalTo: previewController.view.leadingAnchor),
-                imageView.trailingAnchor.constraint(equalTo: previewController.view.trailingAnchor),
-                imageView.bottomAnchor.constraint(equalTo: previewController.view.bottomAnchor)
-            ])
-            previewController.preferredContentSize = image.size
-            return previewController
-        }) { _ in
-            let save = UIAction(title: String(localized: "Save to Photos"), image: UIImage(systemName: "square.and.arrow.down")) { _ in
-                PhotoSavingService.shared.saveToLibrary([image]) { result in
-                    switch result {
-                    case .success:
-                        HapticManager.shared.impact(.success)
-                        Announce.say(String(localized: "Saved to Photos"))
-                    case .failure(let error):
-                        HapticManager.shared.impact(.error)
-                        Announce.say(error.localizedDescription)
-                    }
-                }
+        let canCompare = canCompare
+        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
+            let index = imageView.tag
+            let edit = UIAction(title: String(localized: "Edit Image"), image: UIImage(systemName: "wand.and.stars")) { _ in
+                guard let self else { return }
+                self.delegate?.assistantMessageCell(self, didSelectImageForEdit: index)
             }
-            let share = UIAction(title: String(localized: "Share"), image: UIImage(systemName: "square.and.arrow.up")) { [weak self] _ in
-                guard let self = self,
-                      let viewController = self.window?.rootViewController else { return }
-                ImageSharingService.shared.shareImage(
-                    image,
-                    from: viewController,
-                    sourceView: imageView
-                )
+            let save = UIAction(title: String(localized: "Save to Photos"), image: UIImage(systemName: "square.and.arrow.down")) { _ in
+                guard let self else { return }
+                self.delegate?.assistantMessageCell(self, didRequest: .save, imageIndex: index, from: imageView)
+            }
+            let share = UIAction(title: String(localized: "Share"), image: UIImage(systemName: "square.and.arrow.up")) { _ in
+                guard let self else { return }
+                self.delegate?.assistantMessageCell(self, didRequest: .share, imageIndex: index, from: imageView)
+            }
+            let compare = UIAction(title: String(localized: "Before & after"), image: UIImage(systemName: "rectangle.split.2x1")) { _ in
+                guard let self else { return }
+                self.delegate?.assistantMessageCell(self, didRequest: .beforeAfter, imageIndex: index, from: imageView)
             }
             let copy = UIAction(title: String(localized: "Copy"), image: UIImage(systemName: "doc.on.doc")) { _ in
                 UIPasteboard.general.image = image
                 HapticManager.shared.impact(.success)
             }
-            let edit = UIAction(title: String(localized: "Edit Image"), image: UIImage(systemName: "wand.and.stars")) { [weak self] _ in
-                guard let self = self else { return }
-                self.delegate?.assistantMessageCell(self, didSelectImageForEdit: imageView.tag)
-            }
-            return UIMenu(title: "", children: [edit, save, share, copy])
+            return UIMenu(title: "", children: canCompare ? [edit, save, share, compare, copy] : [edit, save, share, copy])
         }
     }
 

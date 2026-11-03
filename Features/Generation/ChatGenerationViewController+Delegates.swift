@@ -88,8 +88,28 @@ extension ChatGenerationViewController: ChatTableViewDelegate {
             }
         case .beforeAfter:
             guard let source = message.sourceImage else { return }
-            let composite = BeforeAfterComposer.compose(before: source, after: targets.first ?? first)
-            ImageSharingService.shared.shareImage(composite, from: self, sourceView: sourceView)
+            shareComparison(before: source, after: targets.first ?? first, of: message, from: sourceView)
+        }
+    }
+
+    /// Renders the before and after image off the main thread, so the full-resolution photo
+    /// never stalls the tap, then shares it. A second tap while it renders is ignored.
+    private func shareComparison(before: UIImage, after: UIImage, of message: ChatMessage, from sourceView: UIView) {
+        guard comparisonTask == nil else { return }
+        comparisonTask = Task { [weak self] in
+            let composite = await Task.detached(priority: .userInitiated) {
+                BeforeAfterComposer.compose(before: before, after: after)
+            }.value
+            guard let self else { return }
+            comparisonTask = nil
+            ImageSharingService.shared.shareImage(
+                composite,
+                title: String(localized: "Before & after"),
+                from: self,
+                sourceView: sourceView.window == nil ? nil : sourceView
+            ) { [weak self] completed, _ in
+                if completed { self?.chatView.showActionSucceeded(.beforeAfter, for: message) }
+            }
         }
     }
     private func showBatchSaveSuccess(count: Int) {

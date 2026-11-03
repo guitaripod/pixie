@@ -1,5 +1,6 @@
 import UIKit
 import Photos
+import LinkPresentation
 
 class ImageSharingService {
     
@@ -9,12 +10,13 @@ class ImageSharingService {
     
     func shareImage(
         _ image: UIImage,
+        title: String = String(localized: "Generated with Pixie"),
         prompt: String? = nil,
         from viewController: UIViewController,
         sourceView: UIView? = nil,
         completion: ((Bool, UIActivity.ActivityType?) -> Void)? = nil
     ) {
-        var items: [Any] = [image]
+        var items: [Any] = [ShareableImage(image, title: title)]
         
         if let prompt = prompt {
             items.append(String(localized: "Generated with Pixie: \(prompt)"))
@@ -34,7 +36,8 @@ class ImageSharingService {
         sourceView: UIView? = nil,
         completion: ((Bool, UIActivity.ActivityType?) -> Void)? = nil
     ) {
-        let items: [Any] = images + [String(localized: "Generated with Pixie")]
+        let title = String(localized: "Generated with Pixie")
+        let items: [Any] = images.map { ShareableImage($0, title: title) } + [title]
         
         presentActivityViewController(
             with: items,
@@ -206,4 +209,33 @@ class ImageSharingService {
 
 private final class DismissalTimer {
     var task: Task<Void, Never>?
+}
+
+/// An image handed to the share sheet with a title and its own thumbnail for the sheet's
+/// header, which otherwise shows a blank placeholder. Nonisolated because the sheet asks for
+/// the item and its metadata from its own queues.
+private nonisolated final class ShareableImage: NSObject, UIActivityItemSource {
+    private let image: UIImage
+    private let title: String
+
+    init(_ image: UIImage, title: String) {
+        self.image = image
+        self.title = title
+    }
+
+    func activityViewControllerPlaceholderItem(_ activityViewController: UIActivityViewController) -> Any {
+        image
+    }
+
+    func activityViewController(_ activityViewController: UIActivityViewController, itemForActivityType activityType: UIActivity.ActivityType?) -> Any? {
+        image
+    }
+
+    func activityViewControllerLinkMetadata(_ activityViewController: UIActivityViewController) -> LPLinkMetadata? {
+        let metadata = LPLinkMetadata()
+        metadata.title = title
+        metadata.iconProvider = NSItemProvider(object: image)
+        metadata.imageProvider = NSItemProvider(object: image)
+        return metadata
+    }
 }
