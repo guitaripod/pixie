@@ -54,6 +54,7 @@ final class CreditStoreViewController: UIViewController {
     private var selectedPackId = StorePackDisplay.plusID
     private var plus: StorePackDisplay?
     private var hasPlus = false
+    private var isConfirmingPurchase = false
     private var isPurchasing = false
     private var packsState = PacksState.loading
     private var packsTimeoutTask: Task<Void, Never>?
@@ -410,9 +411,9 @@ final class CreditStoreViewController: UIViewController {
         viewModel.$balance
             .receive(on: DispatchQueue.main)
             .sink { [weak self] balance in
-                guard let balance else { return }
-                self?.showBalance(EditPrice.edits(of: balance))
-                self?.hasPlus = balance.edits?.premium != nil
+                guard let self, let balance else { return }
+                self.showBalance(EditPrice.edits(of: balance))
+                self.applyPlusHeld(balance.edits?.premium != nil)
             }
             .store(in: &cancellables)
 
@@ -489,6 +490,14 @@ final class CreditStoreViewController: UIViewController {
         perksLabel.isHidden = isFailed
         ctaButton.isHidden = isFailed
         ctaNoteLabel.isHidden = isFailed || ctaNoteLabel.text == nil
+    }
+
+    /// Rebuilds the cards when the balance says Plus started or ended after they were laid out, so a Plus card is never
+    /// on screen while `choices` leaves it out, where tapping it would neither change the button nor buy anything.
+    private func applyPlusHeld(_ held: Bool) {
+        guard held != hasPlus else { return }
+        hasPlus = held
+        if packsState == .loaded && !isConfirmingPurchase { reloadPacks() }
     }
 
     /// Plus first while the person does not hold it, then the packs.
@@ -597,6 +606,7 @@ final class CreditStoreViewController: UIViewController {
             ctaButton.title = String(localized: "You have Plus")
             ctaNoteLabel.text = note
             ctaButton.isUserInteractionEnabled = false
+            isConfirmingPurchase = true
             dismissAfterPurchase()
         case .pending:
             updateCTA()
@@ -626,6 +636,7 @@ final class CreditStoreViewController: UIViewController {
             ctaButton.title = String(localized: "Added \(added)")
             ctaNoteLabel.text = String(localized: "New balance: \(total)")
             ctaButton.isUserInteractionEnabled = false
+            isConfirmingPurchase = true
             Task { await viewModel.loadBalance() }
             dismissAfterPurchase()
         case .creditPending:
@@ -635,6 +646,7 @@ final class CreditStoreViewController: UIViewController {
             ctaButton.title = String(localized: "Purchase received")
             ctaNoteLabel.text = note
             ctaButton.isUserInteractionEnabled = false
+            isConfirmingPurchase = true
             dismissAfterPurchase()
         case .awaitingApproval:
             updateCTA()
