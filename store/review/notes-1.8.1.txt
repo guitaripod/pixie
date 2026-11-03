@@ -1,0 +1,21 @@
+What changed in 1.8.1: a fix release. Tapping Share or Compare on a result no longer closes the app, the share sheet shows a preview of the image being shared, pressing and holding a result also offers "Before & after", the options under each request read as words, and the store follows PixiePocket Plus starting or ending so its button always matches the selected option. Prices and the purchase path are unchanged from 1.8.0.
+
+To see the fix: under "Popular edits", tap "Pro headshot" and choose any photo. When the result arrives, tap "Compare" under it: the share sheet opens with a side-by-side before and after. "Share" opens it with the result alone.
+
+No account or sign-in is required: the app starts anonymously.
+
+Prices (US): PixiePocket Plus is a weekly auto-renewing subscription at $6.99 a week with 60 edits a week and no free trial. Consumable packs: 10 edits $2.99, 40 edits $9.99, 120 edits $24.99. An image costs 1 edit on Standard and 5 on Max.
+
+Pixie Week: the first successful edit on an account starts it. For 7 days, 5 Standard edits a day are free, decided by our server. A device new to PixiePocket starts its week on its first edit, so it will be in day 1. A device that reviewed 1.8.0 on November 3, 2026 keeps the week it started then, which ends 7 days after that first edit.
+
+How to test:
+1. Launch the app and finish the three onboarding pages; the last one explains the Pixie Week and asks for consent to send prompts and photos to Google Gemini and OpenAI (Guideline 5.1.2(i)).
+2. Under "Popular edits", tap any edit (for example "Pro headshot") and choose any photo in the system photo picker (no photo-library permission is requested). The edited image arrives in about 15-40 seconds. During the Pixie Week the line under the prompt bar reads "Free today · N left". After the first edit an alert announces the week; "Remind me before it ends" asks for notification permission and schedules one reminder two days before the end.
+3. Under the result, "Save", "Share" and "Compare" save it to Photos, share it, and share a before and after.
+4. Tap the edits balance (sparkles, top right) to open the store: PixiePocket Plus is preselected at the top, the three packs are below it. The renewal terms (weekly, cancel in Settings), the Privacy Policy and the Terms of Use are on the same screen.
+5. The sliders button in the prompt bar opens the options: Standard or Max. Max costs 5 edits.
+6. The in-app event deep link pixie://preset/holiday opens the Holiday card edit and its photo picker.
+
+Images are private to each user; there is no public gallery. Every request passes provider content moderation, and a declined or failed request never costs an edit.
+
+Sign in with Apple is optional and only syncs images and edits across devices; any Apple ID works.
