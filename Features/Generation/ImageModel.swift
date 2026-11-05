@@ -42,6 +42,7 @@ nonisolated enum ImageModel: String, CaseIterable {
         case "gemini-nano-banana-2.1": return "Nano Banana 2.1"
         case "gemini-2.5-flash", "gemini-2.5-flash-image", "gemini-3.1-flash-image": return "Nano Banana 2"
         case "gemini-3-pro-image", "nano-banana-pro": return "Nano Banana Pro"
+        case "gpt-image-2.6-sunburst", "gpt-image-2.6-flare": return "GPT Image 2.6"
         case "gpt-image-2.5-sunburst", "gpt-image-2.5-flare": return "GPT Image 2.5"
         case "gpt-image-1", "gpt-image-2": return "GPT Image"
         default: return model

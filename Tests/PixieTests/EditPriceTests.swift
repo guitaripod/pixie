@@ -44,6 +44,7 @@ struct EditPriceTests {
         #expect(ImageModel(storedValue: "gemini-2.5-flash") == .standard)
         #expect(ImageModel(storedValue: "max") == .max)
         #expect(ImageModel.displayName(forRecorded: "gpt-image-2.5-sunburst") == "GPT Image 2.5")
+        #expect(ImageModel.displayName(forRecorded: "gpt-image-2.6-sunburst") == "GPT Image 2.6")
         #expect(ImageModel.displayName(forRecorded: "gemini-nano-banana-2.1") == "Nano Banana 2.1")
     }
 
