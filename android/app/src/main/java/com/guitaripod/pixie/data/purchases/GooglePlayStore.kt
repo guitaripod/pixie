@@ -15,11 +15,8 @@ import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -29,11 +26,9 @@ import kotlin.coroutines.resume
 
 /** [PlayStore] over Google Play Billing Library: one-time products, pending purchases on, reconnecting by itself. */
 class GooglePlayStore(context: Context) : PlayStore, PurchasesUpdatedListener {
-    private val reported = MutableSharedFlow<List<StorePurchase>>(extraBufferCapacity = 8)
+    private val reports = PurchaseReports()
     private val details = ConcurrentHashMap<String, ProductDetails>()
     private val connecting = Mutex()
-    private val sheetLock = Any()
-    private var sheet: CompletableDeferred<FlowOutcome>? = null
 
     private val client: BillingClient = BillingClient.newBuilder(context.applicationContext)
         .setListener(this)
@@ -41,7 +36,7 @@ class GooglePlayStore(context: Context) : PlayStore, PurchasesUpdatedListener {
         .enableAutoServiceReconnection()
         .build()
 
-    override val updates: Flow<List<StorePurchase>> = reported.asSharedFlow()
+    override val updates: Flow<List<StorePurchase>> = reports.updates
 
     /** A launcher that shows Play's purchase sheet over [activity]. */
     fun launcher(activity: Activity): PurchaseLauncher = PurchaseLauncher { productId, accountId ->
@@ -108,14 +103,9 @@ class GooglePlayStore(context: Context) : PlayStore, PurchasesUpdatedListener {
         }
     }
 
-    /** Routes Play's report to the sheet that is waiting for it, or to [updates] when no sheet is open. */
+    /** Routes Play's report to the sheet that is waiting for it, or to [updates] when no live sheet is. */
     override fun onPurchasesUpdated(result: BillingResult, purchases: MutableList<Purchase>?) {
-        val outcome = flowOutcomeOf(result, purchases)
-        val waiting = synchronized(sheetLock) { sheet.also { sheet = null } }
-        when {
-            waiting != null -> waiting.complete(outcome)
-            outcome is FlowOutcome.Purchased -> reported.tryEmit(outcome.purchases)
-        }
+        reports.report(flowOutcomeOf(result, purchases))
     }
 
     /** Shows the sheet for a product and waits for Play's report of it. */
@@ -126,21 +116,18 @@ class GooglePlayStore(context: Context) : PlayStore, PurchasesUpdatedListener {
         offerOf(product)?.offerToken?.let(productParams::setOfferToken)
         val flowParams = BillingFlowParams.newBuilder().setProductDetailsParamsList(listOf(productParams.build()))
         accountId.takeIf { it.length <= MAX_ACCOUNT_ID_LENGTH }?.let(flowParams::setObfuscatedAccountId)
-        val waiting = CompletableDeferred<FlowOutcome>()
-        synchronized(sheetLock) {
-            sheet?.complete(FlowOutcome.Failed(SUPERSEDED_MESSAGE))
-            sheet = waiting
+        val waiting = reports.open()
+        val launched = try {
+            withContext(Dispatchers.Main) { client.launchBillingFlow(activity, flowParams.build()) }
+        } catch (failure: Throwable) {
+            reports.close(waiting)
+            throw failure
         }
-        val launched = withContext(Dispatchers.Main) { client.launchBillingFlow(activity, flowParams.build()) }
         if (launched.responseCode != BillingResponseCode.OK) {
-            synchronized(sheetLock) {
-                if (sheet === waiting) {
-                    sheet = null
-                }
-            }
+            reports.close(waiting)
             return flowOutcomeOf(launched, null)
         }
-        return waiting.await()
+        return reports.await(waiting)
     }
 
     /** The purchase option a pack is sold with: the product's default one-time offer. */
@@ -187,6 +174,5 @@ class GooglePlayStore(context: Context) : PlayStore, PurchasesUpdatedListener {
         const val MAX_ACCOUNT_ID_LENGTH = 64
         const val UNREACHABLE_MESSAGE = "Could not reach Google Play. Check your connection and try again."
         const val UNAVAILABLE_PACK_MESSAGE = "This pack is not available on Google Play right now."
-        const val SUPERSEDED_MESSAGE = "Another purchase was started."
     }
 }
