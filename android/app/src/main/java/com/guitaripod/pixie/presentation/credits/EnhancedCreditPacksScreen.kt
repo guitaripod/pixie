@@ -46,6 +46,7 @@ fun EnhancedCreditPacksScreen(
         creditsViewModel.loadBalance()
         creditsViewModel.loadCreditPacks()
         purchaseViewModel.refreshOfferings()
+        purchaseViewModel.reconcile()
     }
     
     Scaffold(

@@ -50,6 +50,11 @@ class CreditPurchaseManager(
             }.sortedBy { it.creditPack.priceUsdCents }
         }
 
+    /** Settles the pack purchases Play still holds, once billing has started; a credit shows on [outcomes]. */
+    fun reconcile() {
+        billing.refresh()
+    }
+
     /** Loads mako's packs and then Play's prices for them. */
     fun refreshOfferings() {
         scope.launch {

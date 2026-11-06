@@ -91,6 +91,11 @@ class PurchaseViewModel(
     fun refreshOfferings() {
         purchaseManager.refreshOfferings()
     }
+
+    /** Credits any pack purchase still waiting, such as one whose retries ran out while the app was in use. */
+    fun reconcile() {
+        purchaseManager.reconcile()
+    }
 }
 
 /** The screen state after a purchase came to [outcome]. */

@@ -155,6 +155,38 @@ class PlayBillingManagerTest {
     }
 
     @Test
+    fun aPurchaseWhoseRetriesRanOutIsCreditedWhenTheCreditsScreenOpens() = runTest {
+        val validator = FakeValidator().apply { otherwise = Validation.Pending("credit_pending") }
+        val billing = manager(validator)
+        billing.start()
+        runCurrent()
+        val announced = mutableListOf<PurchaseOutcome>()
+        backgroundScope.launch { billing.outcomes.collect { announced += it } }
+        billing.purchase("starter", FakeSheet(FlowOutcome.Purchased(listOf(paid("t1"))), store))
+        advanceTimeBy(60_000L)
+        runCurrent()
+        assertEquals(3, validator.requests.size)
+        assertTrue(store.consumed.isEmpty())
+
+        validator.otherwise = credited()
+        billing.refresh()
+        runCurrent()
+
+        assertEquals(listOf("t1"), store.consumed)
+        assertEquals(listOf<PurchaseOutcome>(PurchaseOutcome.Credited(STARTER, "purchase-1", 150, 250)), announced.filterIsInstance<PurchaseOutcome.Credited>())
+    }
+
+    @Test
+    fun refreshingBeforeStartAsksNothing() = runTest {
+        store.owned = mutableListOf(paid("t1"))
+        val validator = FakeValidator(credited())
+        manager(validator).refresh()
+        runCurrent()
+        assertEquals(0, store.purchaseQueries)
+        assertTrue(validator.requests.isEmpty())
+    }
+
+    @Test
     fun aRefusedPurchaseIsNeitherConsumedNorAskedAboutAgain() = runTest {
         val validator = FakeValidator(Validation.Refused("This purchase was refunded, so it is not credited."))
         val billing = manager(validator)

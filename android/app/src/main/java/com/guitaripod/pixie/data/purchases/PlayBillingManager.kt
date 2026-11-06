@@ -33,9 +33,10 @@ sealed interface PurchaseOutcome {
 /**
  * Sells credit packs through Google Play and has mako credit them. A purchase is consumed only after mako answered
  * that it is credited (now or before); while mako cannot credit it yet, the purchase stays unconsumed and is offered
- * to mako again: after [retryDelaysMillis], whenever Play reports purchases, and on the next [reconcile] (app start
- * and the credit packs screen). Google refunds a purchase that is never consumed or acknowledged after three days,
- * so a purchase mako never credits costs the buyer nothing.
+ * to mako again: after each of [retryDelaysMillis], whenever Play reports purchases, at [start] (launch with a
+ * signed-in user, or the sign-in) and at every [refresh] (each time the credit packs screen opens). Google refunds a
+ * purchase that is never consumed or acknowledged after three days, so a purchase mako never credits costs the buyer
+ * nothing.
  */
 class PlayBillingManager(
     private val store: PlayStore,
@@ -64,6 +65,16 @@ class PlayBillingManager(
         }
         scope.launch { store.updates.collect { purchases -> settle(purchases, announce = true) } }
         scope.launch { reconcile() }
+    }
+
+    /**
+     * Reconciles in the background, announcing what it credits on [outcomes], so a purchase whose retries ran out is
+     * settled as soon as the user looks at their credits. Before [start] there is no signed-in user, and it does nothing.
+     */
+    fun refresh() {
+        if (started.get()) {
+            scope.launch { reconcile() }
+        }
     }
 
     /** Connects to Play, asking again after each of [connectDelaysMillis] while the failure is one a retry can fix. */
