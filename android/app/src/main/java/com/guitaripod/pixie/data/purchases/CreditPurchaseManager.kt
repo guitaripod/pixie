@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * The credit packs screen's view of buying credits: mako's pack list priced by Google Play, purchases through
@@ -25,16 +24,16 @@ class CreditPurchaseManager(
 ) {
     private val backendPacks = MutableStateFlow<List<CreditPack>>(emptyList())
     private val storeProducts = MutableStateFlow<Map<String, StoreProduct>>(emptyMap())
-    private val started = AtomicBoolean(false)
 
     /** Credits that landed outside a purchase the user is watching, such as a pending one finished on a retry. */
     val outcomes: SharedFlow<PurchaseOutcome> = billing.outcomes
 
-    /** Starts the billing manager once a user is signed in, which credits whatever an earlier run left unconsumed. */
+    /**
+     * Starts the billing manager, which credits whatever an earlier run left unconsumed. Called at launch for a signed-in
+     * user and after every sign-in; only the first call does anything.
+     */
     fun start() {
-        if (started.compareAndSet(false, true)) {
-            billing.start()
-        }
+        billing.start()
     }
 
     /** Every pack mako sells that Google Play also lists for this user, cheapest first, with Play's localized price. */

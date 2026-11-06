@@ -120,7 +120,9 @@ class AppContainer(private val context: Context) {
         OAuthWebFlowManager(context, pixieApiService, configManager, networkCallAdapter)
     }
         val authRepository: AuthRepository by lazy {
-        AuthRepositoryImpl(gitHubOAuthManager, googleSignInManager, oAuthWebFlowManager, preferencesRepository)
+        AuthRepositoryImpl(gitHubOAuthManager, googleSignInManager, oAuthWebFlowManager, preferencesRepository) {
+            creditPurchaseManager.start()
+        }
     }
         val imageRepository: ImageRepository by lazy {
         ImageRepository(pixieApiService, context)

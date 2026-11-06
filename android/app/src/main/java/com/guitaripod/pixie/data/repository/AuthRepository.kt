@@ -11,6 +11,7 @@ import com.guitaripod.pixie.data.model.AuthResult
 import com.guitaripod.pixie.data.model.Config
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onEach
 
 interface AuthRepository {
     fun authenticateGithub(): Flow<AuthResult>
@@ -26,14 +27,23 @@ interface AuthRepository {
     fun saveCredentials(config: Config)
 }
 
+/** Runs [action] for every successful sign-in the flow reports, and passes each result on unchanged. */
+fun Flow<AuthResult>.onSignedIn(action: () -> Unit): Flow<AuthResult> = onEach { result ->
+    if (result is AuthResult.Success) {
+        action()
+    }
+}
+
+/** Signs in through every provider. [onSignedIn] runs after each successful sign-in, whichever path it took. */
 class AuthRepositoryImpl(
     private val gitHubOAuthManager: GitHubOAuthManager,
     private val googleSignInManager: GoogleSignInManager,
     private val oAuthWebFlowManager: OAuthWebFlowManager,
-    private val preferencesRepository: PreferencesRepository
+    private val preferencesRepository: PreferencesRepository,
+    private val onSignedIn: () -> Unit = {}
 ) : AuthRepository {
     
-    override fun authenticateGithub(): Flow<AuthResult> = gitHubOAuthManager.authenticate()
+    override fun authenticateGithub(): Flow<AuthResult> = gitHubOAuthManager.authenticate().onSignedIn(onSignedIn)
     
     override fun authenticateGoogle(activity: Activity, launcher: ActivityResultLauncher<Intent>): Flow<AuthResult> = flow {
         emit(AuthResult.Pending)
@@ -41,13 +51,17 @@ class AuthRepositoryImpl(
     }
     
     override fun handleGoogleSignInResult(data: Intent?): Flow<AuthResult> = 
-        googleSignInManager.handleSignInResult(data)
+        googleSignInManager.handleSignInResult(data).onSignedIn(onSignedIn)
     
     override fun authenticateApple(activity: Activity): Flow<AuthResult> = 
-        oAuthWebFlowManager.authenticateApple()
+        oAuthWebFlowManager.authenticateApple().onSignedIn(onSignedIn)
     
     override suspend fun handleOAuthCallback(uri: Uri): AuthResult = 
-        gitHubOAuthManager.handleOAuthCallback(uri)
+        gitHubOAuthManager.handleOAuthCallback(uri).also { result ->
+            if (result is AuthResult.Success) {
+                onSignedIn()
+            }
+        }
     
     override suspend fun logout() {
         preferencesRepository.clearConfig()
@@ -61,6 +75,9 @@ class AuthRepositoryImpl(
     
     override fun saveCredentials(config: Config) {
         preferencesRepository.saveConfig(config)
+        if (config.isAuthenticated()) {
+            onSignedIn()
+        }
     }
     
     override fun authenticateManually(apiKey: String, userId: String, provider: String): Flow<AuthResult> = flow {

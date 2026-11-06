@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.atomic.AtomicBoolean
 
 /** What one purchase came to. */
 sealed interface PurchaseOutcome {
@@ -46,14 +47,21 @@ class PlayBillingManager(
 ) {
     private val settling = Mutex()
     private val settled = mutableSetOf<String>()
+    private val started = AtomicBoolean(false)
     private val announced = MutableSharedFlow<PurchaseOutcome>(extraBufferCapacity = 16)
     private var retryJob: Job? = null
 
     /** Outcomes of purchases settled outside [purchase]: on start, from Play's updates and by the retries. */
     val outcomes: SharedFlow<PurchaseOutcome> = announced.asSharedFlow()
 
-    /** Starts handling purchases Play reports outside a purchase sheet and credits what earlier runs left. Call once. */
+    /**
+     * Starts handling purchases Play reports outside a purchase sheet (the store keeps them until then) and credits
+     * what earlier runs left. Call it once a user is signed in; later calls do nothing.
+     */
     fun start() {
+        if (!started.compareAndSet(false, true)) {
+            return
+        }
         scope.launch { store.updates.collect { purchases -> settle(purchases, announce = true) } }
         scope.launch { reconcile() }
     }

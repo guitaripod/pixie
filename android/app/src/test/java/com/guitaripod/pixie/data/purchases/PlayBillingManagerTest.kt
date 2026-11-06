@@ -30,8 +30,10 @@ private class FakeStore : PlayStore {
     var owned: MutableList<StorePurchase>? = mutableListOf()
     val consumed = mutableListOf<String>()
     var consumeWorks = true
+    var purchaseQueries = 0
 
     override val updates = reports
+    val subscribers: Int get() = reports.subscriptionCount.value
 
     override suspend fun connect(): Connection {
         connects++
@@ -41,7 +43,10 @@ private class FakeStore : PlayStore {
     override suspend fun products(productIds: List<String>): List<StoreProduct>? =
         listed?.filter { it.productId in productIds }
 
-    override suspend fun purchases(): List<StorePurchase>? = owned?.toList()
+    override suspend fun purchases(): List<StorePurchase>? {
+        purchaseQueries++
+        return owned?.toList()
+    }
 
     override suspend fun consume(purchaseToken: String): Boolean {
         if (!consumeWorks) {
@@ -213,6 +218,21 @@ class PlayBillingManagerTest {
         assertEquals(listOf("left-1", "left-2"), store.consumed)
         assertEquals(listOf("starter", "popular"), validator.requests.map { it.packId })
         assertEquals(2, announced.size)
+    }
+
+    @Test
+    fun startingAgainDoesNothing() = runTest {
+        store.owned = mutableListOf(paid("left"))
+        val validator = FakeValidator(credited())
+        val billing = manager(validator)
+        billing.start()
+        billing.start()
+        runCurrent()
+        store.reports.emit(listOf(paid("new")))
+        runCurrent()
+        assertEquals(listOf("left", "new"), validator.requests.map { it.purchaseToken })
+        assertEquals("one reconcile", 1, store.purchaseQueries)
+        assertEquals("one collector", 1, store.subscribers)
     }
 
     @Test
