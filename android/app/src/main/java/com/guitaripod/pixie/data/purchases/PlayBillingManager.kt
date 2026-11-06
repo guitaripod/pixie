@@ -47,7 +47,7 @@ class PlayBillingManager(
     private val retryDelaysMillis: List<Long> = RETRY_DELAYS_MILLIS
 ) {
     private val settling = Mutex()
-    private val settled = mutableSetOf<String>()
+    private val settled = mutableMapOf<String, PurchaseOutcome>()
     private val started = AtomicBoolean(false)
     private val announced = MutableSharedFlow<PurchaseOutcome>(extraBufferCapacity = 16)
     private var retryJob: Job? = null
@@ -109,6 +109,7 @@ class PlayBillingManager(
         val productId = productIdOf(packId)
         return when (val flow = launcher.launch(productId, account)) {
             is FlowOutcome.Purchased -> outcomeFor(productId, settle(flow.purchases, announce = false))
+                ?: settledElsewhere(productId, flow.purchases)
                 ?: PurchaseOutcome.Failed(NO_PURCHASE_MESSAGE)
             FlowOutcome.Cancelled -> PurchaseOutcome.Cancelled
             FlowOutcome.AlreadyOwned -> outcomeFor(productId, reconcile(announce = false))
@@ -165,26 +166,42 @@ class PlayBillingManager(
             playOrderId = purchase.orderId
         )
         return when (val validation = validator.validate(request)) {
-            is Validation.Credited -> Settled(
-                PurchaseOutcome.Credited(productId, validation.purchaseId, validation.creditsAdded, validation.newBalance),
-                finished = consume(purchase)
-            )
-            Validation.AlreadyProcessed -> Settled(PurchaseOutcome.AlreadyCredited(productId), finished = consume(purchase))
+            is Validation.Credited -> {
+                val credited = PurchaseOutcome.Credited(productId, validation.purchaseId, validation.creditsAdded, validation.newBalance)
+                Settled(credited, finished = consume(purchase, credited))
+            }
+            Validation.AlreadyProcessed -> {
+                val already = PurchaseOutcome.AlreadyCredited(productId)
+                Settled(already, finished = consume(purchase, already))
+            }
             is Validation.Pending -> Settled(PurchaseOutcome.Pending(productId, validation.reason), finished = false)
             is Validation.Refused -> {
-                settled += purchase.purchaseToken
-                Settled(PurchaseOutcome.Refused(productId, validation.message), finished = true)
+                val refused = PurchaseOutcome.Refused(productId, validation.message)
+                settled[purchase.purchaseToken] = refused
+                Settled(refused, finished = true)
             }
         }
     }
 
-    /** Consumes a credited purchase. One Play would not consume is left for a retry, which mako answers `already_processed`. */
-    private suspend fun consume(purchase: StorePurchase): Boolean {
+    /**
+     * Consumes a credited purchase and remembers what it came to. One Play would not consume is left for a retry, which
+     * mako answers `already_processed`.
+     */
+    private suspend fun consume(purchase: StorePurchase, outcome: PurchaseOutcome): Boolean {
         val consumed = store.consume(purchase.purchaseToken)
         if (consumed) {
-            settled += purchase.purchaseToken
+            settled[purchase.purchaseToken] = outcome
         }
         return consumed
+    }
+
+    /**
+     * What the sheet's purchases came to when another path (a refresh, Play's updates, a retry) settled them while the
+     * sheet was closing: the same success or refusal, never a failure of a purchase that was credited.
+     */
+    private suspend fun settledElsewhere(productId: String, purchases: List<StorePurchase>): PurchaseOutcome? {
+        val outcomes = settling.withLock { purchases.mapNotNull { settled[it.purchaseToken] } }
+        return outcomeFor(productId, outcomes)
     }
 
     /** Reconciles after each of [retryDelaysMillis] until nothing is left unsettled. One retry runs at a time. */

@@ -268,6 +268,39 @@ class PlayBillingManagerTest {
     }
 
     @Test
+    fun aPurchaseARefreshSettledFirstIsStillASuccess() = runTest {
+        val validator = FakeValidator(credited())
+        val billing = manager(validator)
+        billing.start()
+        runCurrent()
+        val bought = paid("t1")
+        val sheet = PurchaseLauncher { _, _ ->
+            store.owned?.add(bought)
+            billing.reconcile()
+            FlowOutcome.Purchased(listOf(bought))
+        }
+
+        val outcome = billing.purchase("starter", sheet)
+
+        assertEquals(PurchaseOutcome.Credited(STARTER, "purchase-1", 150, 250), outcome)
+        assertEquals(1, validator.requests.size)
+        assertEquals(listOf("t1"), store.consumed)
+    }
+
+    @Test
+    fun aPurchaseMakoAlreadyProcessedThroughAnotherPathIsASuccess() = runTest {
+        val validator = FakeValidator(Validation.AlreadyProcessed)
+        val billing = manager(validator)
+        val bought = paid("t1")
+        val sheet = PurchaseLauncher { _, _ ->
+            store.owned?.add(bought)
+            billing.reconcile()
+            FlowOutcome.Purchased(listOf(bought))
+        }
+        assertEquals(PurchaseOutcome.AlreadyCredited(STARTER), billing.purchase("starter", sheet))
+    }
+
+    @Test
     fun aPurchaseReportedTwiceIsCreditedOnce() = runTest {
         val validator = FakeValidator(credited())
         val billing = manager(validator)
