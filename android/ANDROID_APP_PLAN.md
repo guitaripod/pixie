@@ -173,8 +173,8 @@ mako verifies every purchase with the Google Play Developer API.
   `POST /v1/credits/purchase/validate` (`pack_id`, `purchase_token`, `product_id`, `platform: "android"`,
   `play_order_id`), consumes only after mako answers credited or `already_processed`, keeps a purchase mako answers
   `credit_pending`, `not_configured`, 401 or 5xx for and offers it again after 5 s, 30 s, 2 and 10 minutes, on Play's
-  purchase updates and at every app start (`queryPurchasesAsync`); a refused purchase is left unconsumed, so Google
-  refunds it after three days
+  purchase updates (buffered until billing starts), at launch or sign-in and each time the credit packs screen opens
+  (`queryPurchasesAsync`); a refused purchase is left unconsumed, so Google refunds it after three days
 - [x] Restore = reconcile: credits every unconsumed pack purchase of the Google account
 - [x] Unit tests for the state machine with a fake store and validator (`PlayBillingManagerTest`,
   `PurchaseValidationTest`)
