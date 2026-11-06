@@ -69,11 +69,11 @@ struct WireModelTests {
     }
 
     @Test func aPurchaseRequestEncodesItsPaymentFieldsInSnakeCase() throws {
-        let request = PurchaseRequest(packId: "pack_s", paymentProvider: "revenuecat", paymentId: "tx1", paymentCurrency: "USD")
+        let request = PurchaseRequest(packId: "pack_s", paymentProvider: "app_store", paymentId: "tx1", paymentCurrency: "USD")
         let object = try #require(try JSONSerialization.jsonObject(with: JSONEncoder().encode(request)) as? [String: Any])
 
         #expect(object["pack_id"] as? String == "pack_s")
-        #expect(object["payment_provider"] as? String == "revenuecat")
+        #expect(object["payment_provider"] as? String == "app_store")
         #expect(object["payment_id"] as? String == "tx1")
         #expect(object["payment_currency"] as? String == "USD")
     }
