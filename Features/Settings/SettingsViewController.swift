@@ -7,7 +7,6 @@ import UIKit
 class SettingsViewController: UIViewController {
     private static let selectableModels: [ImageModel] = [.standard, .max]
     private static let cacheSizeTimeout: UInt64 = 10_000_000_000
-    private static let supportURL = URL(string: "https://x.com/guitaripod")
 
     private let column = SettingsColumnView()
     private let authenticationManager = AuthenticationManager.shared
@@ -310,7 +309,7 @@ class SettingsViewController: UIViewController {
         let help = ListRowView(title: String(localized: "Help"), subtitle: String(localized: "Learn how to use Pixie"), symbol: "questionmark.circle.fill", showsChevron: true)
         help.onTap = { [weak self] in self?.presentHelpDocumentation() }
 
-        let contact = ListRowView(title: String(localized: "Contact"), subtitle: String(localized: "@guitaripod on X"), symbol: "bubble.left.fill", showsChevron: true)
+        let contact = ListRowView(title: String(localized: "Contact"), subtitle: MidgarSupport.address, symbol: "envelope.fill", showsChevron: true)
         contact.onTap = { [weak self] in self?.openSupport() }
 
         let about = ListRowView(title: String(localized: "About"), value: MidgarVersionInfo().display, symbol: "info.circle.fill", showsChevron: true)
@@ -574,9 +573,15 @@ class SettingsViewController: UIViewController {
         navigationController?.pushViewController(AboutSettings.makeViewController(), animated: true)
     }
 
+    /// Starts an email to support, or copies the address where no mail app can take it.
     private func openSupport() {
-        guard let url = Self.supportURL else { return }
-        UIApplication.shared.open(url)
+        guard let url = URL(string: "mailto:\(MidgarSupport.address)?subject=PixiePocket") else { return }
+        UIApplication.shared.open(url) { opened in
+            guard !opened else { return }
+            UIPasteboard.general.string = MidgarSupport.address
+            HapticManager.shared.notification(.success)
+            Announce.say(String(localized: "Copied!"))
+        }
     }
 
     @objc private func clearCacheTapped() {

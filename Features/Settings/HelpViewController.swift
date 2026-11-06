@@ -1,8 +1,7 @@
+import MidgarCore
 import UIKit
 
 class HelpViewController: UIViewController {
-    private static let supportURL = URL(string: "https://x.com/guitaripod")
-
     private let column = SettingsColumnView(spacing: Theme.Space.xxl)
     private let haptics = HapticManager.shared
 
@@ -92,7 +91,7 @@ class HelpViewController: UIViewController {
             (String(localized: "How do I delete my account?"),
              String(localized: "Open Settings and tap Delete Account at the bottom. Your edits, including any you bought, and every image you've made are permanently deleted from our servers. Deleting the account does not cancel Plus: cancel it in the App Store first. This can't be undone.")),
             (String(localized: "How do I report issues?"),
-             String(localized: "Message @guitaripod on X (x.com/guitaripod) and we'll help you out.")),
+             String(localized: "Email \(MidgarSupport.address) and we'll help you out.")),
         ]
         var views: [UIView] = []
         for (index, entry) in faqs.enumerated() {
@@ -108,7 +107,7 @@ class HelpViewController: UIViewController {
     }
 
     private func contactCard() -> UIView {
-        let contact = ListRowView(title: String(localized: "Contact"), subtitle: String(localized: "@guitaripod on X"), symbol: "bubble.left.fill", showsChevron: true)
+        let contact = ListRowView(title: String(localized: "Contact"), subtitle: MidgarSupport.address, symbol: "envelope.fill", showsChevron: true)
         contact.onTap = { [weak self] in self?.openSupport() }
         return SettingsLayout.card(rows: [contact])
     }
@@ -176,9 +175,15 @@ class HelpViewController: UIViewController {
         return row
     }
 
+    /// Starts an email to support, or copies the address where no mail app can take it.
     private func openSupport() {
-        guard let url = Self.supportURL else { return }
-        UIApplication.shared.open(url)
+        guard let url = URL(string: "mailto:\(MidgarSupport.address)?subject=PixiePocket") else { return }
+        UIApplication.shared.open(url) { opened in
+            guard !opened else { return }
+            UIPasteboard.general.string = MidgarSupport.address
+            HapticManager.shared.notification(.success)
+            Announce.say(String(localized: "Copied!"))
+        }
     }
 }
 

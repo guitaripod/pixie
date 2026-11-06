@@ -703,70 +703,6 @@
         }
       }
     },
-    "@guitaripod on X" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "@guitaripod auf X"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "@guitaripod en X"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "@guitaripod sur X"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "@guitaripod su X"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "@guitaripod（X上）"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "@guitaripod on X"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "@guitaripod na X"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "@guitaripod no X"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "@guitaripod on X"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "@guitaripod on X"
-          }
-        }
-      }
-    },
     "**My Images:**\n• View your generated images\n• View image details and prompts\n• Copy prompts for inspiration\n• Download or share images\n• Edit from gallery\n• Manage your creations\n• Track image metadata" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4699,6 +4635,70 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你使用、購買或獲得的編輯次數會顯示在這裡。"
+          }
+        }
+      }
+    },
+    "Email %@ and we'll help you out." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schreib uns an %@, und wir helfen dir."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escríbenos a %@ y te ayudaremos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écrivez-nous à %@ et nous vous aiderons."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scrivici a %@ e ti aiuteremo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ までメールをお送りください。お手伝いします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@(으)로 이메일을 보내 주시면 도와드리겠습니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Napisz do nas na %@, a pomożemy."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escreva para %@ e vamos te ajudar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发送邮件至 %@，我们会帮您解决。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "寄送郵件至 %@，我們會幫您解決。"
           }
         }
       }
@@ -31762,70 +31762,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "中（約 12-15 點數）"
-          }
-        }
-      }
-    },
-    "Message @guitaripod on X (x.com/guitaripod) and we'll help you out." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schreibe @guitaripod auf X (x.com/guitaripod) eine Nachricht und wir helfen dir."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Envía un mensaje a @guitaripod en X (x.com/guitaripod) y te ayudaremos."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Envoyez un message à @guitaripod sur X (x.com/guitaripod) et nous vous aiderons."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Invia un messaggio a @guitaripod su X (x.com/guitaripod) e ti aiuteremo."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "X（x.com/guitaripod）で@guitaripodにメッセージを送ると、お手伝いできます。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "X(@guitaripod)에 메시지를 보내주면 도와드리겠습니다 (x.com/guitaripod)."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wiadomość do @guitaripod na X (x.com/guitaripod) a my ci pomożemy."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mensagem @guitaripod no X (x.com/guitaripod) e te ajudaremos."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在 X (@guitaripod) 上给我们留言 (x.com/guitaripod)，我们会帮您解决。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在 X (@guitaripod) 上給我們留言 (x.com/guitaripod)，我們會幫您解決。"
           }
         }
       }
