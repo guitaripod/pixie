@@ -55,13 +55,13 @@ class CreditPurchaseManager(
         billing.refresh()
     }
 
-    /** Loads mako's packs and then Play's prices for them. */
+    /** Loads mako's packs and then Play's prices for them; a load that fails keeps what was loaded before. */
     fun refreshOfferings() {
         scope.launch {
             val packs = fetchBackendPacks() ?: backendPacks.value
             backendPacks.value = packs
             if (packs.isNotEmpty()) {
-                storeProducts.value = billing.products(packs.map { it.id })
+                storeProducts.value = pricesAfter(storeProducts.value, billing.products(packs.map { it.id }))
             }
         }
     }
@@ -98,6 +98,13 @@ class CreditPurchaseManager(
         const val TAG = "CreditPurchaseManager"
     }
 }
+
+/**
+ * The Play prices to show after a load: the new ones, or the ones already shown when the load came back empty, which is
+ * how a failed or unreachable Play answers, so a passing network error never empties a screen that was priced.
+ */
+fun pricesAfter(shown: Map<String, StoreProduct>, loaded: Map<String, StoreProduct>): Map<String, StoreProduct> =
+    loaded.ifEmpty { shown }
 
 data class CreditPurchaseResult(
     val purchaseId: String,
