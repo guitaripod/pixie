@@ -191,7 +191,8 @@ mako verifies every purchase with the Google Play Developer API.
 - [ ] Test the complete purchase flow with a license tester, including a slow test card (pending) and a refusal
 - [ ] Test credits after reinstall (an unconsumed purchase is credited at the next start)
 - [ ] Verify credits sync correctly with CLI using same account
-- [ ] Play refunds: mako does not take credits back yet; needs Real-time developer notifications
+- [x] Play refunds: mako's `*/30` cron reads Google's voided purchases and takes the credits back once
+- [ ] Test a refund from Play Console on a license tester's purchase: the credits leave within about 30 minutes
 - [ ] Test purchases on different Android versions (API 24+)
 
 ### Phase 7: Admin Features ✅
