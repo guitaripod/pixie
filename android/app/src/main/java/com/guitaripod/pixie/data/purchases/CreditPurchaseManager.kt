@@ -23,7 +23,7 @@ class CreditPurchaseManager(
     private val scope: CoroutineScope
 ) {
     private val backendPacks = MutableStateFlow<List<CreditPack>>(emptyList())
-    private val storeProducts = MutableStateFlow<Map<String, StoreProduct>>(emptyMap())
+    private val priceBook = PriceBook()
 
     /** Credits that landed outside a purchase the user is watching, such as a pending one finished on a retry. */
     val outcomes: SharedFlow<PurchaseOutcome> = billing.outcomes
@@ -38,7 +38,7 @@ class CreditPurchaseManager(
 
     /** Every pack mako sells that Google Play also lists for this user, cheapest first, with Play's localized price. */
     fun getCreditPacksWithPricing(): Flow<List<CreditPackWithPrice>> =
-        combine(backendPacks, storeProducts) { packs, products ->
+        combine(backendPacks, priceBook.prices) { packs, products ->
             packs.mapNotNull { pack ->
                 products[pack.id]?.let { product ->
                     CreditPackWithPrice(
@@ -55,13 +55,16 @@ class CreditPurchaseManager(
         billing.refresh()
     }
 
-    /** Loads mako's packs and then Play's prices for them; a load that fails keeps what was loaded before. */
+    /**
+     * Loads mako's packs and then Play's prices for them; a load that fails keeps what was loaded before, and
+     * overlapping loads apply in the order they started (`PriceBook`).
+     */
     fun refreshOfferings() {
         scope.launch {
             val packs = fetchBackendPacks() ?: backendPacks.value
             backendPacks.value = packs
             if (packs.isNotEmpty()) {
-                storeProducts.value = pricesAfter(storeProducts.value, billing.products(packs.map { it.id }))
+                priceBook.load { billing.products(packs.map { it.id }) }
             }
         }
     }
