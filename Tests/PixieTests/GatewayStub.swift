@@ -84,7 +84,7 @@ nonisolated final class GatewayStub: URLProtocol {
         state.withLock { $0.balance = balance }
     }
 
-    /// The answers to `POST .../credits/purchase/revenuecat/validate`, in order. The last one repeats for every later call.
+    /// The answers to `POST .../credits/purchase/validate`, in order. The last one repeats for every later call.
     static func setValidate(_ answers: [Answer]) {
         state.withLock { $0.validate = answers }
     }
@@ -135,7 +135,7 @@ nonisolated final class GatewayStub: URLProtocol {
             switch (request.method, request.path) {
             case ("GET", let path) where path.hasSuffix("/v1/credits/balance"):
                 return Answer(status: 200, body: #"{"balance":\#(state.balance),"currency":"credits"}"#)
-            case ("POST", let path) where path.hasSuffix("/v1/credits/purchase/revenuecat/validate"):
+            case ("POST", let path) where path.hasSuffix("/v1/credits/purchase/validate"):
                 guard let first = state.validate.first else {
                     return Answer.error(status: 500, code: "unscripted", message: "no validate answer scripted")
                 }

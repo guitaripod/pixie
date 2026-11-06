@@ -151,7 +151,7 @@ struct CreditsPurchaseStoreKitTests {
 
         #expect(outcome == .credited(credits: 150, newBalance: 215))
         let recorded = try #require(harness.session.allTransactions().first { $0.productIdentifier == Self.starterProductID })
-        let posted = GatewayStub.requests(method: "POST", pathSuffix: "/v1/credits/purchase/revenuecat/validate")
+        let posted = GatewayStub.requests(method: "POST", pathSuffix: "/v1/credits/purchase/validate")
         let request = try #require(posted.first)
         #expect(posted.count == 1)
         let body = try request.json()
@@ -183,7 +183,7 @@ struct CreditsPurchaseStoreKitTests {
         #expect(outcome == .creditPending(credits: PixiePacks.starter.totalCredits))
         #expect(await harness.credits.unconfirmedPurchases == 1)
         #expect(harness.balanceStore.balance?.balance == 65)
-        let validations = GatewayStub.requests(method: "POST", pathSuffix: "/v1/credits/purchase/revenuecat/validate")
+        let validations = GatewayStub.requests(method: "POST", pathSuffix: "/v1/credits/purchase/validate")
         let transactionIDs = try Set(validations.map { try $0.json()["purchase_token"] })
         #expect(validations.count == 4)
         #expect(transactionIDs.count == 1)
@@ -196,7 +196,7 @@ struct CreditsPurchaseStoreKitTests {
 
         #expect(harness.balanceStore.balance?.balance == 215)
         #expect(await harness.credits.unconfirmedPurchases == 0)
-        let retried = GatewayStub.requests(method: "POST", pathSuffix: "/v1/credits/purchase/revenuecat/validate")
+        let retried = GatewayStub.requests(method: "POST", pathSuffix: "/v1/credits/purchase/validate")
         #expect(retried.count == 5)
         #expect(try Set(retried.map { try $0.json()["purchase_token"] }) == transactionIDs)
         await harness.stop()
@@ -208,7 +208,7 @@ struct CreditsPurchaseStoreKitTests {
         let outcome = try await harness.manager.purchaseCreditPack(id: "starter")
 
         #expect(outcome == .awaitingApproval)
-        #expect(GatewayStub.requests(method: "POST", pathSuffix: "/v1/credits/purchase/revenuecat/validate").isEmpty)
+        #expect(GatewayStub.requests(method: "POST", pathSuffix: "/v1/credits/purchase/validate").isEmpty)
         #expect(harness.failures.count == 0)
         await harness.stop()
     }
@@ -219,7 +219,7 @@ struct CreditsPurchaseStoreKitTests {
         let outcome = try await harness.manager.purchaseCreditPack(id: "starter")
 
         #expect(outcome == .cancelled)
-        #expect(GatewayStub.requests(method: "POST", pathSuffix: "/v1/credits/purchase/revenuecat/validate").isEmpty)
+        #expect(GatewayStub.requests(method: "POST", pathSuffix: "/v1/credits/purchase/validate").isEmpty)
         #expect(await harness.credits.unconfirmedPurchases == 0)
         #expect(harness.failures.count == 0)
         await harness.stop()
@@ -235,7 +235,7 @@ struct CreditsPurchaseStoreKitTests {
 
         #expect(error?.errorDescription?.isEmpty == false)
         #expect(harness.failures.count == 1)
-        #expect(GatewayStub.requests(method: "POST", pathSuffix: "/v1/credits/purchase/revenuecat/validate").isEmpty)
+        #expect(GatewayStub.requests(method: "POST", pathSuffix: "/v1/credits/purchase/validate").isEmpty)
         #expect(await harness.credits.unconfirmedPurchases == 0)
         #expect(harness.session.allTransactions().isEmpty)
         await harness.stop()
@@ -249,7 +249,7 @@ struct CreditsPurchaseStoreKitTests {
         }
 
         #expect(harness.failures.count == 1)
-        #expect(GatewayStub.requests(method: "POST", pathSuffix: "/v1/credits/purchase/revenuecat/validate").isEmpty)
+        #expect(GatewayStub.requests(method: "POST", pathSuffix: "/v1/credits/purchase/validate").isEmpty)
         #expect(harness.session.allTransactions().isEmpty)
         await harness.stop()
     }
