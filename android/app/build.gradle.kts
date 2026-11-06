@@ -123,9 +123,10 @@ dependencies {
     implementation(libs.google.play.services.auth)
     implementation(libs.kotlinx.coroutines.play.services)
     
-    implementation(libs.revenuecat)
+    implementation(libs.play.billing)
     
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

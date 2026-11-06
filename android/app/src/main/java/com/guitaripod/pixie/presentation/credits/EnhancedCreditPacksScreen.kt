@@ -24,7 +24,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.LaunchedEffect
 import com.guitaripod.pixie.data.api.model.CreditBalance
 import com.guitaripod.pixie.data.purchases.CreditPackWithPrice
-import com.guitaripod.pixie.data.purchases.PurchaseState
 import com.guitaripod.pixie.utils.rememberHapticFeedback
 import com.guitaripod.pixie.utils.hapticClickable
 
@@ -43,7 +42,6 @@ fun EnhancedCreditPacksScreen(
     
     var showRestoreDialog by remember { mutableStateOf(false) }
     
-    // Refresh data when screen is displayed
     LaunchedEffect(Unit) {
         creditsViewModel.loadBalance()
         creditsViewModel.loadCreditPacks()
@@ -102,7 +100,7 @@ fun EnhancedCreditPacksScreen(
                             textAlign = TextAlign.Center
                         )
                         Text(
-                            text = "To enable purchases, the app needs to be published to Google Play Console (at least Internal Testing track) and products need to be configured in RevenueCat",
+                            text = "Google Play did not list the packs. Check your connection and that Google Play is set up on this device, then retry.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -111,7 +109,8 @@ fun EnhancedCreditPacksScreen(
                         Button(
                             onClick = { 
                                 retryHaptic.click()
-                                creditsViewModel.loadCreditPacks() 
+                                creditsViewModel.loadCreditPacks()
+                                purchaseViewModel.refreshOfferings()
                             }
                         ) {
                             Text("Retry")
@@ -130,14 +129,14 @@ fun EnhancedCreditPacksScreen(
                         }
                         
                         items(creditPacksWithPricing) { packWithPrice ->
-                            RevenueCatCreditPackCard(
+                            CreditPackCard(
                                 creditPackWithPrice = packWithPrice,
                                 onPackSelected = {
                                     activity?.let { act ->
                                         purchaseViewModel.purchaseCreditPack(act, packWithPrice)
                                     }
                                 },
-                                isLoading = purchaseUiState.purchaseState is PurchaseState.Loading
+                                isLoading = purchaseUiState.isLoading
                             )
                         }
                         
@@ -148,7 +147,7 @@ fun EnhancedCreditPacksScreen(
                 }
             }
             
-            if (purchaseUiState.isLoading || purchaseUiState.purchaseState is PurchaseState.Loading) {
+            if (purchaseUiState.isLoading) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -165,16 +164,20 @@ fun EnhancedCreditPacksScreen(
         }
     }
     
-    purchaseUiState.errorMessage?.let { error ->
+    purchaseUiState.message?.let { message ->
         AlertDialog(
-            onDismissRequest = { purchaseViewModel.clearError() },
-            title = { Text("Purchase Error") },
-            text = { Text(error) },
+            onDismissRequest = {
+                purchaseViewModel.clearMessage()
+                creditsViewModel.loadBalance()
+            },
+            title = { Text(message.title) },
+            text = { Text(message.text) },
             confirmButton = {
-                val errorHaptic = rememberHapticFeedback()
-                TextButton(onClick = { 
-                    errorHaptic.click()
-                    purchaseViewModel.clearError() 
+                val messageHaptic = rememberHapticFeedback()
+                TextButton(onClick = {
+                    messageHaptic.click()
+                    purchaseViewModel.clearMessage()
+                    creditsViewModel.loadBalance()
                 }) {
                     Text("OK")
                 }
@@ -241,7 +244,7 @@ fun EnhancedCurrentBalanceCard(
 }
 
 @Composable
-fun RevenueCatCreditPackCard(
+fun CreditPackCard(
     creditPackWithPrice: CreditPackWithPrice,
     onPackSelected: () -> Unit,
     isLoading: Boolean,
@@ -254,7 +257,7 @@ fun RevenueCatCreditPackCard(
     Card(
         onClick = {
             if (isPopular) {
-                haptic.confirm() // Special haptic for popular pack
+                haptic.confirm()
             } else {
                 haptic.click()
             }
@@ -457,7 +460,7 @@ fun RestorePurchasesDialog(
         },
         title = { Text("Restore Purchases") },
         text = { 
-            Text("This will restore any previous credit purchases made with this Google account.")
+            Text("This adds the credits of any pack bought with this Google account that has not been credited yet.")
         },
         confirmButton = {
             val restoreHaptic = rememberHapticFeedback()

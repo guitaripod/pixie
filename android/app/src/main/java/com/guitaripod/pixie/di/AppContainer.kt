@@ -24,8 +24,10 @@ import com.guitaripod.pixie.data.repository.GalleryRepository
 import com.guitaripod.pixie.data.repository.CreditsRepository
 import com.guitaripod.pixie.data.repository.AdminRepository
 import com.guitaripod.pixie.data.repository.AdminRepositoryImpl
-import com.guitaripod.pixie.data.purchases.RevenueCatManager
 import com.guitaripod.pixie.data.purchases.CreditPurchaseManager
+import com.guitaripod.pixie.data.purchases.GooglePlayStore
+import com.guitaripod.pixie.data.purchases.MakoPurchaseValidator
+import com.guitaripod.pixie.data.purchases.PlayBillingManager
 import com.guitaripod.pixie.utils.ImageSaver
 import com.guitaripod.pixie.utils.CacheManager
 import com.guitaripod.pixie.utils.NotificationHelper
@@ -33,7 +35,9 @@ import com.guitaripod.pixie.utils.HapticFeedbackManager
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -46,6 +50,9 @@ class AppContainer(private val context: Context) {
         val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
     val mainDispatcher: CoroutineDispatcher = Dispatchers.Main
     val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
+
+    /** Work that outlives any screen, such as finishing a purchase's credit. */
+    val applicationScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
         private val moshi: Moshi by lazy {
         Moshi.Builder()
             .add(KotlinJsonAdapterFactory())
@@ -113,7 +120,7 @@ class AppContainer(private val context: Context) {
         OAuthWebFlowManager(context, pixieApiService, configManager, networkCallAdapter)
     }
         val authRepository: AuthRepository by lazy {
-        AuthRepositoryImpl(gitHubOAuthManager, googleSignInManager, oAuthWebFlowManager, preferencesRepository, revenueCatManager)
+        AuthRepositoryImpl(gitHubOAuthManager, googleSignInManager, oAuthWebFlowManager, preferencesRepository)
     }
         val imageRepository: ImageRepository by lazy {
         ImageRepository(pixieApiService, context)
@@ -135,12 +142,21 @@ class AppContainer(private val context: Context) {
         ImageSaver(context)
     }
     
-    val revenueCatManager: RevenueCatManager by lazy {
-        RevenueCatManager(context.applicationContext as android.app.Application)
+    val googlePlayStore: GooglePlayStore by lazy {
+        GooglePlayStore(context)
     }
-    
+
+    val playBillingManager: PlayBillingManager by lazy {
+        PlayBillingManager(
+            store = googlePlayStore,
+            validator = MakoPurchaseValidator(pixieApiService, moshi),
+            scope = applicationScope,
+            accountId = { configManager.loadConfig().userId }
+        )
+    }
+
     val creditPurchaseManager: CreditPurchaseManager by lazy {
-        CreditPurchaseManager(revenueCatManager, pixieApiService, creditsRepository)
+        CreditPurchaseManager(pixieApiService, googlePlayStore, playBillingManager, applicationScope)
     }
     
     val cacheManager: CacheManager by lazy {

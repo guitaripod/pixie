@@ -27,7 +27,7 @@ navigationCompose = "2.8.5"
 coil = "2.7.0"
 
 # In-App Purchases
-revenuecat = "8.5.0"
+billing = "9.1.0"
 
 # Security & Storage
 datastore = "1.1.1"
@@ -93,12 +93,13 @@ androidx-browser = { group = "androidx.browser", name = "browser", version = "1.
 google-play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version = "21.0.0" }
 kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
 
-# RevenueCat
-revenuecat = { group = "com.revenuecat.purchases", name = "purchases", version.ref = "revenuecat" }
+# Google Play Billing
+play-billing = { group = "com.android.billingclient", name = "billing", version.ref = "billing" }
 
 # Coroutines
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 
 # Lifecycle
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleRuntime" }

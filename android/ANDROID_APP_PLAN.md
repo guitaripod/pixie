@@ -162,24 +162,36 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - [x] Create cost estimator tool
 
 #### 6.3 Credit Purchase (Partially Complete)
-- [x] Integrate RevenueCat SDK for in-app purchases
-- [x] Configure RevenueCat offerings and products
-- [x] Create pack selection UI with benefits
-- [x] Implement RevenueCat purchase flow with confirmations
-- [x] Add purchase restoration via RevenueCat
-- [x] Implement receipt validation through RevenueCat REST API
-- [x] Add subscription status monitoring (RevenueCat handles this)
-- [x] Create unified cross-platform validation endpoint for iOS/Android
-- [x] Implement proper server-side RevenueCat validation with fallback
+RevenueCat was removed on 2026-11-06 (D31, P6.44). The app sells packs with Google Play Billing Library 9.1.0 and
+mako verifies every purchase with the Google Play Developer API.
 
-**Remaining tasks (pending Play Console verification):**
+- [x] Pack selection UI with Play's localized prices (`EnhancedCreditPacksScreen`)
+- [x] `GooglePlayStore` (`data/purchases/`): one `BillingClient` with pending one-time purchases and automatic
+  service reconnection; queries the `com.guitaripod.pixie.credits.<pack>` products, shows the purchase sheet with
+  the mako user id as the obfuscated account id, consumes
+- [x] `PlayBillingManager`: connects with retries (1, 2, 4 s), sends each paid purchase to mako's
+  `POST /v1/credits/purchase/validate` (`pack_id`, `purchase_token`, `product_id`, `platform: "android"`,
+  `play_order_id`), consumes only after mako answers credited or `already_processed`, keeps a purchase mako answers
+  `credit_pending`, `not_configured`, 401 or 5xx for and offers it again after 5 s, 30 s, 2 and 10 minutes, on Play's
+  purchase updates and at every app start (`queryPurchasesAsync`); a refused purchase is left unconsumed, so Google
+  refunds it after three days
+- [x] Restore = reconcile: credits every unconsumed pack purchase of the Google account
+- [x] Unit tests for the state machine with a fake store and validator (`PlayBillingManagerTest`,
+  `PurchaseValidationTest`)
+
+**Remaining tasks:**
+- [ ] Founder: Google Cloud service account with the Google Play Android Developer API enabled, invited in Play
+  Console (Users and permissions) with "View financial data" and "Manage orders and subscriptions", key stored with
+  `npx wrangler secret put GOOGLE_PLAY_SERVICE_ACCOUNT < key.json` on arch (until then mako answers `not_configured`)
+- [ ] Deploy mako with migration 040 (`apps.play_package_name`) before any build that buys reaches testers
+- [ ] Check that the five one-time products `com.guitaripod.pixie.credits.<pack>` exist and are active in Play
+  Console. The RevenueCat build also matched `<pack>` and `com.guitaripod.pixie.<pack>`; mako only credits the
+  `credits.` ids (`store_product_prefix`), and a Play product id cannot be renamed, so create them if the old ones differ
 - [ ] Upload signed AAB to Google Play Console internal testing track
-- [ ] Verify products are fetchable from Play Store
-- [ ] Test complete purchase flow end-to-end with real payment
-- [ ] Test purchase restoration across app reinstalls
+- [ ] Test the complete purchase flow with a license tester, including a slow test card (pending) and a refusal
+- [ ] Test credits after reinstall (an unconsumed purchase is credited at the next start)
 - [ ] Verify credits sync correctly with CLI using same account
-- [ ] Test error handling for declined payments
-- [ ] Verify RevenueCat webhooks are working correctly
+- [ ] Play refunds: mako does not take credits back yet; needs Real-time developer notifications
 - [ ] Test purchases on different Android versions (API 24+)
 
 ### Phase 7: Admin Features ✅
@@ -240,7 +252,7 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 #### 9.3 Launch
 - [ ] Create signed release build
 - [x] Set up Play Console project
-- [x] Configure RevenueCat products in Play Console
+- [ ] Credit pack products `com.guitaripod.pixie.credits.<pack>` active in Play Console (see 6.3)
 - [ ] Submit for Play Store review
 
 ## Technical Specifications
@@ -259,7 +271,7 @@ Native Kotlin Android app that replicates all functionality of the Pixie CLI wit
 - **Security**: BiometricPrompt + Encrypted DataStore
 - **Authentication**: Google Sign-In SDK
 - **Analytics**: Firebase Analytics (optional)
-- **Payments**: RevenueCat SDK
+- **Payments**: Google Play Billing Library 9.1.0, verified server-side by mako
 
 ### API Integration
 - Base URL: `https://openai-image-proxy.guitaripod.workers.dev`

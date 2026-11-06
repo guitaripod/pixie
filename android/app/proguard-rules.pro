@@ -50,10 +50,6 @@
     @com.squareup.moshi.ToJson <methods>;
 }
 
-# RevenueCat
--keep class com.revenuecat.purchases.** { *; }
--keep interface com.revenuecat.purchases.** { *; }
-
 # Google Sign-In
 -keep class com.google.android.gms.** { *; }
 -dontwarn com.google.android.gms.**

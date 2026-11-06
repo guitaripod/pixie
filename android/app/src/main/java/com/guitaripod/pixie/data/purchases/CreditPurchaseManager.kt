@@ -3,220 +3,95 @@ package com.guitaripod.pixie.data.purchases
 import android.app.Activity
 import android.util.Log
 import com.guitaripod.pixie.data.api.PixieApiService
-import com.guitaripod.pixie.data.api.model.*
-import com.guitaripod.pixie.data.repository.CreditsRepository
-import com.revenuecat.purchases.Package
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.GlobalScope
+import com.guitaripod.pixie.data.api.model.CreditPack
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import javax.inject.Singleton
-import java.util.Date
+import java.util.concurrent.atomic.AtomicBoolean
 
-@Singleton
-class CreditPurchaseManager @Inject constructor(
-    private val revenueCatManager: RevenueCatManager,
+/**
+ * The credit packs screen's view of buying credits: mako's pack list priced by Google Play, purchases through
+ * [PlayBillingManager], and restoring as reconciling the purchases Play still holds.
+ */
+class CreditPurchaseManager(
     private val apiService: PixieApiService,
-    private val creditsRepository: CreditsRepository
+    private val store: GooglePlayStore,
+    private val billing: PlayBillingManager,
+    private val scope: CoroutineScope
 ) {
-    companion object {
-        private const val TAG = "CreditPurchaseManager"
-        
-        private val PACKAGE_TO_PACK_ID = mapOf(
-            "starter" to "starter",
-            "basic" to "basic",
-            "popular" to "popular",
-            "business" to "business",
-            "enterprise" to "enterprise"
-        )
-    }
-    
-    val purchaseState = revenueCatManager.purchaseState
-    val offerings = revenueCatManager.offerings
-    
-    suspend fun purchaseCreditPack(
-        activity: Activity,
-        packageToPurchase: Package
-    ): Result<CreditPurchaseResult> {
-        revenueCatManager.purchaseCreditPack(activity, packageToPurchase)
-        
-        return purchaseState.filterNotNull()
-            .filter { it !is PurchaseState.Loading }
-            .take(1)
-            .map { state ->
-                when (state) {
-                    is PurchaseState.Success -> {
-                        val packId = PACKAGE_TO_PACK_ID[state.packageId] ?: state.packageId
-                        validateAndRecordPurchase(
-                            packId = packId,
-                            purchaseToken = state.purchaseToken,
-                            productId = state.productId
-                        )
-                    }
-                    is PurchaseState.Error -> {
-                        Result.failure(Exception(state.message))
-                    }
-                    is PurchaseState.Cancelled -> {
-                        Result.failure(PurchaseCancelledException())
-                    }
-                    else -> {
-                        Result.failure(Exception("Unexpected purchase state"))
-                    }
-                }
-            }
-            .first()
-    }
-    
-    private suspend fun validateAndRecordPurchase(
-        packId: String,
-        purchaseToken: String,
-        productId: String
-    ): Result<CreditPurchaseResult> {
-        return try {
-            val request = RevenueCatPurchaseValidationRequest(
-                packId = packId,
-                purchaseToken = purchaseToken,
-                productId = productId,
-                platform = "android"
-            )
-            
-            val response = apiService.validateRevenueCatPurchase(request)
-            
-            if (response.isSuccessful) {
-                response.body()?.let { validationResponse ->
-                    if (validationResponse.success) {
-                        
-                        Result.success(
-                            CreditPurchaseResult(
-                                purchaseId = validationResponse.purchaseId,
-                                credits = validationResponse.creditsAdded,
-                                newBalance = validationResponse.newBalance,
-                                amountUsd = ""
-                            )
-                        )
-                    } else {
-                        Result.failure(Exception("Purchase validation failed"))
-                    }
-                } ?: Result.failure(Exception("Empty response from server"))
-            } else {
-                val errorBody = response.errorBody()?.string()
-                Log.e(TAG, "Purchase validation failed: $errorBody")
-                Result.failure(Exception("Purchase validation failed: ${response.code()}"))
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error recording purchase", e)
-            Result.failure(e)
+    private val backendPacks = MutableStateFlow<List<CreditPack>>(emptyList())
+    private val storeProducts = MutableStateFlow<Map<String, StoreProduct>>(emptyMap())
+    private val started = AtomicBoolean(false)
+
+    /** Credits that landed outside a purchase the user is watching, such as a pending one finished on a retry. */
+    val outcomes: SharedFlow<PurchaseOutcome> = billing.outcomes
+
+    /** Starts the billing manager once a user is signed in, which credits whatever an earlier run left unconsumed. */
+    fun start() {
+        if (started.compareAndSet(false, true)) {
+            billing.start()
         }
     }
-    
-    suspend fun restorePurchases(): Result<List<RestoredPurchase>> {
-        return try {
-            val restoredPurchases = mutableListOf<RestoredPurchase>()
-            
-            revenueCatManager.restorePurchases { customerInfo ->
-                customerInfo?.let { info ->
-                    info.entitlements.all.forEach { (_, entitlement) ->
-                        if (entitlement.isActive) {
-                            val productId = entitlement.productIdentifier
-                            restoredPurchases.add(
-                                RestoredPurchase(
-                                    productId = productId,
-                                    purchaseDate = entitlement.latestPurchaseDate.toString(),
-                                    expirationDate = entitlement.expirationDate?.toString()
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-            
-            if (restoredPurchases.isNotEmpty()) {
-            }
-            
-            Result.success(restoredPurchases)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error restoring purchases", e)
-            Result.failure(e)
-        }
-    }
-    
-    // Backend credit packs - single source of truth
-    private val _backendCreditPacks = MutableStateFlow<List<CreditPack>>(emptyList())
-    
-    init {
-        // Fetch credit packs from backend on initialization
-        fetchBackendCreditPacks()
-    }
-    
-    private fun fetchBackendCreditPacks() {
-        kotlinx.coroutines.GlobalScope.launch {
-            try {
-                val response = apiService.getCreditPacks()
-                if (response.isSuccessful) {
-                    response.body()?.let { packsResponse ->
-                        _backendCreditPacks.value = packsResponse.packs
-                    }
-                } else {
-                    Log.e(TAG, "Failed to fetch credit packs: ${response.code()}")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error fetching backend credit packs", e)
-            }
-        }
-    }
-    
-    fun getCreditPacksWithPricing(): Flow<List<CreditPackWithPrice>> {
-        return combine(
-            _backendCreditPacks,
-            offerings
-        ) { backendPacks, revenueCatOfferings ->
-            if (backendPacks.isEmpty()) {
-                return@combine emptyList<CreditPackWithPrice>()
-            }
-            
-            if (revenueCatOfferings == null) {
-                // RevenueCat not available yet (app needs to be from Play Store)
-                return@combine emptyList<CreditPackWithPrice>()
-            }
-            
-            val defaultOffering = revenueCatOfferings.current ?: revenueCatOfferings.all.values.firstOrNull()
-            val packages = defaultOffering?.availablePackages ?: emptyList()
-            
-            backendPacks.mapNotNull { pack ->
-                val rcPackage = packages.firstOrNull { 
-                    it.identifier == pack.id || 
-                    it.product.id == pack.id ||
-                    it.product.id == "com.guitaripod.pixie.${pack.id}"
-                }
-                
-                rcPackage?.let {
+
+    /** Every pack mako sells that Google Play also lists for this user, cheapest first, with Play's localized price. */
+    fun getCreditPacksWithPricing(): Flow<List<CreditPackWithPrice>> =
+        combine(backendPacks, storeProducts) { packs, products ->
+            packs.mapNotNull { pack ->
+                products[pack.id]?.let { product ->
                     CreditPackWithPrice(
-                        creditPack = CreditPack(
-                            id = pack.id,
-                            name = pack.name,
-                            credits = pack.credits,
-                            bonusCredits = pack.bonusCredits,
-                            priceUsdCents = pack.priceUsdCents,
-                            description = pack.description,
-                            popular = pack.id == "popular"
-                        ),
-                        rcPackage = it,
-                        localizedPrice = it.product.price.formatted
+                        creditPack = pack.copy(popular = pack.id == "popular"),
+                        productId = product.productId,
+                        localizedPrice = product.formattedPrice
                     )
                 }
             }.sortedBy { it.creditPack.priceUsdCents }
         }
-    }
-    
-    fun resetPurchaseState() {
-        revenueCatManager.resetPurchaseState()
-    }
-    
+
+    /** Loads mako's packs and then Play's prices for them. */
     fun refreshOfferings() {
-        fetchBackendCreditPacks()
-        revenueCatManager.fetchOfferings()
+        scope.launch {
+            val packs = fetchBackendPacks() ?: backendPacks.value
+            backendPacks.value = packs
+            if (packs.isNotEmpty()) {
+                storeProducts.value = billing.products(packs.map { it.id })
+            }
+        }
+    }
+
+    suspend fun purchaseCreditPack(activity: Activity, pack: CreditPackWithPrice): PurchaseOutcome =
+        billing.purchase(pack.creditPack.id, store.launcher(activity))
+
+    /** Credits every pack purchase Play still holds unconsumed for this Google account; the outcomes are only returned. */
+    suspend fun restorePurchases(): List<PurchaseOutcome> {
+        val connection = billing.connect()
+        if (connection is Connection.Unavailable) {
+            return listOf(PurchaseOutcome.Failed(connection.message))
+        }
+        return billing.reconcile(announce = false)
+    }
+
+    private suspend fun fetchBackendPacks(): List<CreditPack>? =
+        try {
+            val response = apiService.getCreditPacks()
+            if (response.isSuccessful) {
+                response.body()?.packs
+            } else {
+                Log.e(TAG, "Failed to fetch credit packs: ${response.code()}")
+                null
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (failure: Exception) {
+            Log.e(TAG, "Error fetching credit packs", failure)
+            null
+        }
+
+    private companion object {
+        const val TAG = "CreditPurchaseManager"
     }
 }
 
@@ -227,19 +102,11 @@ data class CreditPurchaseResult(
     val amountUsd: String
 )
 
-data class RestoredPurchase(
-    val productId: String,
-    val purchaseDate: String,
-    val expirationDate: String?
-)
-
 data class CreditPackWithPrice(
     val creditPack: CreditPack,
-    val rcPackage: Package,
+    val productId: String,
     val localizedPrice: String
 )
-
-class PurchaseCancelledException : Exception("Purchase cancelled by user")
 
 data class CreditPurchaseRequest(
     val packId: String,
@@ -254,20 +121,4 @@ data class CreditPurchaseResponse(
     val newBalance: Int,
     val amountUsd: String,
     val status: String
-)
-
-@JsonClass(generateAdapter = true)
-data class RevenueCatPurchaseValidationRequest(
-    @Json(name = "pack_id") val packId: String,
-    @Json(name = "purchase_token") val purchaseToken: String,
-    @Json(name = "product_id") val productId: String,
-    @Json(name = "platform") val platform: String
-)
-
-@JsonClass(generateAdapter = true)
-data class RevenueCatPurchaseValidationResponse(
-    @Json(name = "success") val success: Boolean,
-    @Json(name = "purchase_id") val purchaseId: String,
-    @Json(name = "credits_added") val creditsAdded: Int,
-    @Json(name = "new_balance") val newBalance: Int
 )

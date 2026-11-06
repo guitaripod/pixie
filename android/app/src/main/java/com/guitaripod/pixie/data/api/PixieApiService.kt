@@ -120,10 +120,10 @@ interface PixieApiService {
         @Body request: com.guitaripod.pixie.data.purchases.CreditPurchaseRequest
     ): Response<com.guitaripod.pixie.data.purchases.CreditPurchaseResponse>
     
-    @POST("/v1/credits/purchase/revenuecat/validate")
-    suspend fun validateRevenueCatPurchase(
-        @Body request: com.guitaripod.pixie.data.purchases.RevenueCatPurchaseValidationRequest
-    ): Response<com.guitaripod.pixie.data.purchases.RevenueCatPurchaseValidationResponse>
+    @POST("/v1/credits/purchase/validate")
+    suspend fun validatePurchase(
+        @Body request: com.guitaripod.pixie.data.purchases.PurchaseValidationRequest
+    ): Response<com.guitaripod.pixie.data.purchases.PurchaseValidationResponse>
     
     @GET("/v1/me/usage")
     suspend fun getUsage(

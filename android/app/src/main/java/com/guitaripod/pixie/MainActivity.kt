@@ -28,8 +28,8 @@ class MainActivity : ComponentActivity() {
         val appContainer = (application as PixieApplication).appContainer
         
         val config = appContainer.preferencesRepository.loadConfig()
-        config.userId?.let { userId ->
-            appContainer.revenueCatManager.setUserId(userId)
+        if (config.userId != null) {
+            appContainer.creditPurchaseManager.start()
         }
         
         setContent {
