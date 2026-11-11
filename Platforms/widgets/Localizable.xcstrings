@@ -3,6 +3,12 @@
   "strings" : {
     "Couldn't create image" : {
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kunne ikke generere billede"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15,10 +21,22 @@
             "value" : "No se pudo crear la imagen"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kuvaa ei voitu luoda"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Impossible de créer l'image"
+          }
+        },
+        "is" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tókst ekki að búa til mynd"
           }
         },
         "it" : {
@@ -39,6 +57,12 @@
             "value" : "이미지를 생성할 수 없습니다"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kunne ikke lage bilde"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49,6 +73,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não foi possível criar a imagem"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kunde inte skapa bild"
           }
         },
         "zh-Hans" : {
@@ -67,6 +97,12 @@
     },
     "Creating image" : {
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genererer billede"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -79,10 +115,22 @@
             "value" : "Creando imagen"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Luodaan kuvaa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Création d'image"
+          }
+        },
+        "is" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Býr til mynd"
           }
         },
         "it" : {
@@ -103,6 +151,12 @@
             "value" : "이미지 생성 중"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lager bilde"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -113,6 +167,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Criando imagem"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skapar bild"
           }
         },
         "zh-Hans" : {
@@ -131,6 +191,12 @@
     },
     "Editing Image" : {
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redigerer billede"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -143,10 +209,22 @@
             "value" : "Editando imagen"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kuvaa muokataan"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modification de l'image"
+          }
+        },
+        "is" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breytir mynd"
           }
         },
         "it" : {
@@ -167,6 +245,12 @@
             "value" : "이미지 편집 중"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redigerer bilde"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -177,6 +261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Editando imagem"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redigerar bild"
           }
         },
         "zh-Hans" : {
@@ -195,6 +285,12 @@
     },
     "Elapsed time" : {
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forløbet tid"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -207,10 +303,22 @@
             "value" : "Tiempo transcurrido"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kulunut aika"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Temps écoulé"
+          }
+        },
+        "is" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liðinn tími"
           }
         },
         "it" : {
@@ -231,6 +339,12 @@
             "value" : "경과 시간"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forløpt tid"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -241,6 +355,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tempo decorrido"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Förfluten tid"
           }
         },
         "zh-Hans" : {
@@ -259,6 +379,12 @@
     },
     "Generating Image" : {
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genererer billede"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -271,10 +397,22 @@
             "value" : "Generando imagen"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kuvaa generoidaan"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Génération de l'image"
+          }
+        },
+        "is" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Myndar mynd"
           }
         },
         "it" : {
@@ -295,6 +433,12 @@
             "value" : "이미지 생성 중"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genererer bilde"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -305,6 +449,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gerando imagem"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genererar bild"
           }
         },
         "zh-Hans" : {
@@ -323,6 +473,12 @@
     },
     "Generation failed" : {
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generering mislykkedes"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -335,10 +491,22 @@
             "value" : "Fallo en la generación"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Luonti epäonnistui"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Échec de la génération"
+          }
+        },
+        "is" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sköpun mistókst"
           }
         },
         "it" : {
@@ -359,6 +527,12 @@
             "value" : "생성 실패"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generering mislyktes"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -369,6 +543,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Falha na geração"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generering misslyckades"
           }
         },
         "zh-Hans" : {
@@ -387,6 +567,12 @@
     },
     "Image ready" : {
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Billede klar"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,10 +585,22 @@
             "value" : "Imagen lista"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kuva on valmis"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Image prête"
+          }
+        },
+        "is" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mynd tilbúin"
           }
         },
         "it" : {
@@ -423,6 +621,12 @@
             "value" : "이미지 준비 완료"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bilde klart"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -433,6 +637,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Imagem pronta"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bilden är klar"
           }
         },
         "zh-Hans" : {
@@ -451,6 +661,12 @@
     },
     "Open Pixie to finish" : {
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åbn Pixie for at afslutte"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -463,10 +679,22 @@
             "value" : "Abre Pixie para terminar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa Pixie viimeistelläksesi"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrez Pixie pour terminer"
+          }
+        },
+        "is" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opnaðu Pixie til að ljúka"
           }
         },
         "it" : {
@@ -487,6 +715,12 @@
             "value" : "Pixie를 열어 완료하기"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åpne Pixie for å fullføre"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -497,6 +731,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abra o Pixie para concluir"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna Pixie för att slutföra"
           }
         },
         "zh-Hans" : {
@@ -515,6 +755,12 @@
     },
     "Ready to view!" : {
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klar til at se!"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -527,10 +773,22 @@
             "value" : "¡Lista para ver!"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valmis katsottavaksi!"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Prête à voir !"
+          }
+        },
+        "is" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tilbúið til skoðunar!"
           }
         },
         "it" : {
@@ -551,6 +809,12 @@
             "value" : "확인할 준비 완료!"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klar til visning!"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -561,6 +825,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pronta para ver!"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redo att visas!"
           }
         },
         "zh-Hans" : {
@@ -579,6 +849,12 @@
     },
     "Tap to view" : {
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryk for at vise"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,10 +867,22 @@
             "value" : "Toca para ver"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Napauta katsoaksesi"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touchez pour voir"
+          }
+        },
+        "is" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ýttu til að skoða"
           }
         },
         "it" : {
@@ -615,6 +903,12 @@
             "value" : "탭하여 보기"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trykk for å se"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -625,6 +919,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Toque para ver"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryck för att visa"
           }
         },
         "zh-Hans" : {

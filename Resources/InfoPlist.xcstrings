@@ -3,6 +3,12 @@
   "strings" : {
     "NSPhotoLibraryAddUsageDescription" : {
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie har brug for adgang til at gemme genererede billeder i dit fotobibliotek"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21,10 +27,22 @@
             "value" : "Pixie necesita acceso para guardar las imágenes generadas en tu fototeca."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie tarvitsee pääsyn tallentaa luodut kuvat kuvakirjastoosi"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pixie a besoin d’un accès pour enregistrer les images générées dans votre photothèque."
+          }
+        },
+        "is" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie þarf aðgang til að vista búnar myndir í myndasafnið þitt"
           }
         },
         "it" : {
@@ -45,6 +63,12 @@
             "value" : "생성한 이미지를 사진 라이브러리에 저장하려면 Pixie에 접근 권한이 필요합니다."
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie trenger tilgang til å lagre genererte bilder i bildebiblioteket ditt"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55,6 +79,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "O Pixie precisa de acesso para salvar as imagens geradas na sua fototeca."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie behöver åtkomst för att spara genererade bilder i ditt bildbibliotek"
           }
         },
         "zh-Hans" : {
@@ -73,6 +103,12 @@
     },
     "NSPhotoLibraryUsageDescription" : {
       "localizations" : {
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie har brug for adgang til dit fotobibliotek for at redigere eksisterende billeder og gemme genererede billeder"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
@@ -91,10 +127,22 @@
             "value" : "Pixie necesita acceso a tu fototeca para editar imágenes existentes y guardar las imágenes generadas."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie tarvitsee pääsyn kuvakirjastoosi, jotta voit muokata olemassa olevia kuvia ja tallentaa luodut kuvat"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pixie a besoin d’accéder à votre photothèque pour modifier des images existantes et enregistrer les images générées."
+          }
+        },
+        "is" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie þarf aðgang að myndasafninu þínu til að breyta myndum sem þegar eru til og vista búnar myndir"
           }
         },
         "it" : {
@@ -115,6 +163,12 @@
             "value" : "기존 이미지를 편집하고 생성한 이미지를 저장하려면 Pixie에 사진 라이브러리 접근 권한이 필요합니다."
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie trenger tilgang til bildebiblioteket ditt for å redigere eksisterende bilder og lagre genererte bilder"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -125,6 +179,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "O Pixie precisa de acesso à sua fototeca para editar imagens existentes e salvar as imagens geradas."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixie behöver åtkomst till ditt bildbibliotek för att redigera befintliga bilder och spara genererade bilder"
           }
         },
         "zh-Hans" : {

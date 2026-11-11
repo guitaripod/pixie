@@ -4,13 +4,19 @@
     {
       "referenceName": "PixiePocket Plus",
       "localizations": {
-        "en-US": {
+        "da": {
           "name": "PixiePocket Plus"
         },
         "de-DE": {
           "name": "PixiePocket Plus"
         },
+        "en-US": {
+          "name": "PixiePocket Plus"
+        },
         "es-ES": {
+          "name": "PixiePocket Plus"
+        },
+        "fi": {
           "name": "PixiePocket Plus"
         },
         "fr-FR": {
@@ -25,10 +31,16 @@
         "ko": {
           "name": "PixiePocket Plus"
         },
+        "no": {
+          "name": "PixiePocket Plus"
+        },
         "pl": {
           "name": "PixiePocket Plus"
         },
         "pt-BR": {
+          "name": "PixiePocket Plus"
+        },
+        "sv": {
           "name": "PixiePocket Plus"
         },
         "zh-Hans": {
@@ -51,17 +63,25 @@
           },
           "introductoryOffers": [],
           "localizations": {
-            "en-US": {
-              "name": "Plus Weekly",
-              "description": "60 edits every week, Standard or Max."
+            "da": {
+              "name": "Plus hver uge",
+              "description": "60 redigeringer hver uge, Standard eller Max."
             },
             "de-DE": {
               "name": "Plus wöchentlich",
               "description": "60 Bearbeitungen pro Woche, Standard oder Max."
             },
+            "en-US": {
+              "name": "Plus Weekly",
+              "description": "60 edits every week, Standard or Max."
+            },
             "es-ES": {
               "name": "Plus semanal",
               "description": "60 ediciones cada semana, Standard o Max."
+            },
+            "fi": {
+              "name": "Plus joka viikko",
+              "description": "60 muokkausta joka viikko, Standard tai Max."
             },
             "fr-FR": {
               "name": "Plus hebdomadaire",
@@ -79,6 +99,10 @@
               "name": "Plus 주간",
               "description": "매주 60회 편집, Standard 또는 Max."
             },
+            "no": {
+              "name": "Plus hver uke",
+              "description": "60 redigeringer hver uke, Standard eller Max."
+            },
             "pl": {
               "name": "Plus tygodniowo",
               "description": "60 edycji co tydzień, Standard lub Max."
@@ -86,6 +110,10 @@
             "pt-BR": {
               "name": "Plus semanal",
               "description": "60 edições por semana, Standard ou Max."
+            },
+            "sv": {
+              "name": "Plus varje vecka",
+              "description": "60 redigeringar varje vecka, Standard eller Max."
             },
             "zh-Hans": {
               "name": "Plus 周订阅",
@@ -112,21 +140,25 @@
         "amount": "9.99"
       },
       "localizations": {
-        "en-US": {
-          "name": "40 Edits",
-          "description": "40 photo edits. Never expire."
-        },
-        "pl": {
-          "name": "40 edycji",
-          "description": "40 edycji zdjęć. Nigdy nie wygasają."
+        "da": {
+          "name": "40 redigeringer",
+          "description": "40 fotoredigeringer. Udløber aldrig."
         },
         "de-DE": {
           "name": "40 Bearbeitungen",
           "description": "40 Fotobearbeitungen. Verfallen nie."
         },
+        "en-US": {
+          "name": "40 Edits",
+          "description": "40 photo edits. Never expire."
+        },
         "es-ES": {
           "name": "40 ediciones",
           "description": "40 ediciones de fotos. No caducan."
+        },
+        "fi": {
+          "name": "40 muokkausta",
+          "description": "40 valokuvamuokkausta. Ei vanhene koskaan."
         },
         "fr-FR": {
           "name": "40 retouches",
@@ -144,9 +176,21 @@
           "name": "편집 40회",
           "description": "사진 편집 40회. 기한 없음."
         },
+        "no": {
+          "name": "40 redigeringer",
+          "description": "40 fotoredigeringer. Utløper aldri."
+        },
+        "pl": {
+          "name": "40 edycji",
+          "description": "40 edycji zdjęć. Nigdy nie wygasają."
+        },
         "pt-BR": {
           "name": "40 edições",
           "description": "40 edições de fotos. Nunca expiram."
+        },
+        "sv": {
+          "name": "40 redigeringar",
+          "description": "40 fotoredigeringar. Upphör aldrig."
         },
         "zh-Hans": {
           "name": "40 次编辑",
@@ -168,13 +212,29 @@
         "amount": "49.99"
       },
       "localizations": {
+        "da": {
+          "name": "Erhvervspakke - 3250 kreditter",
+          "description": "2174 + 1076 bonuskreditter, ca. 154 billeder."
+        },
         "en-US": {
           "name": "Business Pack - 3,250 Credits",
           "description": "2,174 + 1,076 bonus credits — about 154 images."
         },
+        "fi": {
+          "name": "Business-paketti - 3250 krediittiä",
+          "description": "2174 + 1076 bonuskrediittiä, noin 154 kuvaa."
+        },
+        "no": {
+          "name": "Bedriftspakke - 3250 kreditter",
+          "description": "2174 + 1076 bonuskreditter, ca. 154 bilder."
+        },
         "pl": {
           "name": "Biznesowy - 3250 kredytów",
           "description": "2174 kredytów + 1076 bonusu, ~154 obrazy."
+        },
+        "sv": {
+          "name": "Affärspaket - 3250 krediter",
+          "description": "2174 + 1076 bonuskrediter, ungefär 154 bilder."
         }
       },
       "reviewScreenshotMd5": "1d9534693dad14a104890f9ff53bedc5"
@@ -188,13 +248,29 @@
         "amount": "99.99"
       },
       "localizations": {
+        "da": {
+          "name": "Virksomhedspakke - 7000 kreditter",
+          "description": "4167 + 2833 bonuskreditter, ca. 333 billeder."
+        },
         "en-US": {
           "name": "Enterprise Pack - 7,000 Credits",
           "description": "4,167 + 2,833 bonus credits — about 333 images."
         },
+        "fi": {
+          "name": "Yrityspaketti - 7000 krediittiä",
+          "description": "4167 + 2833 bonuskrediittiä, noin 333 kuvaa."
+        },
+        "no": {
+          "name": "Firmapakke - 7000 kreditter",
+          "description": "4167 + 2833 bonuskreditter, ca. 333 bilder."
+        },
         "pl": {
           "name": "Korporacyjny - 7000 kredytów",
           "description": "4167 kredytów + 2833 bonusu, ~333 obrazy."
+        },
+        "sv": {
+          "name": "Företagspaket - 7000 krediter",
+          "description": "4167 + 2833 bonuskrediter, ungefär 333 bilder."
         }
       },
       "reviewScreenshotMd5": "1d9534693dad14a104890f9ff53bedc5"
@@ -208,21 +284,25 @@
         "amount": "24.99"
       },
       "localizations": {
-        "en-US": {
-          "name": "120 Edits",
-          "description": "120 photo edits. Never expire."
-        },
-        "pl": {
-          "name": "120 edycji",
-          "description": "120 edycji zdjęć. Nigdy nie wygasają."
+        "da": {
+          "name": "120 redigeringer",
+          "description": "120 fotoredigeringer. Udløber aldrig."
         },
         "de-DE": {
           "name": "120 Bearbeitungen",
           "description": "120 Fotobearbeitungen. Verfallen nie."
         },
+        "en-US": {
+          "name": "120 Edits",
+          "description": "120 photo edits. Never expire."
+        },
         "es-ES": {
           "name": "120 ediciones",
           "description": "120 ediciones de fotos. No caducan."
+        },
+        "fi": {
+          "name": "120 muokkausta",
+          "description": "120 valokuvamuokkausta. Ei vanhene koskaan."
         },
         "fr-FR": {
           "name": "120 retouches",
@@ -240,9 +320,21 @@
           "name": "편집 120회",
           "description": "사진 편집 120회. 기한 없음."
         },
+        "no": {
+          "name": "120 redigeringer",
+          "description": "120 fotoredigeringer. Utløper aldri."
+        },
+        "pl": {
+          "name": "120 edycji",
+          "description": "120 edycji zdjęć. Nigdy nie wygasają."
+        },
         "pt-BR": {
           "name": "120 edições",
           "description": "120 edições de fotos. Nunca expiram."
+        },
+        "sv": {
+          "name": "120 redigeringar",
+          "description": "120 fotoredigeringar. Upphör aldrig."
         },
         "zh-Hans": {
           "name": "120 次编辑",
@@ -264,21 +356,25 @@
         "amount": "2.99"
       },
       "localizations": {
-        "en-US": {
-          "name": "10 Edits",
-          "description": "10 photo edits. Never expire."
-        },
-        "pl": {
-          "name": "10 edycji",
-          "description": "10 edycji zdjęć. Nigdy nie wygasają."
+        "da": {
+          "name": "10 redigeringer",
+          "description": "10 fotoredigeringer. Udløber aldrig."
         },
         "de-DE": {
           "name": "10 Bearbeitungen",
           "description": "10 Fotobearbeitungen. Verfallen nie."
         },
+        "en-US": {
+          "name": "10 Edits",
+          "description": "10 photo edits. Never expire."
+        },
         "es-ES": {
           "name": "10 ediciones",
           "description": "10 ediciones de fotos. No caducan."
+        },
+        "fi": {
+          "name": "10 muokkausta",
+          "description": "10 valokuvamuokkausta. Ei vanhene koskaan."
         },
         "fr-FR": {
           "name": "10 retouches",
@@ -296,9 +392,21 @@
           "name": "편집 10회",
           "description": "사진 편집 10회. 기한 없음."
         },
+        "no": {
+          "name": "10 redigeringer",
+          "description": "10 fotoredigeringer. Utløper aldri."
+        },
+        "pl": {
+          "name": "10 edycji",
+          "description": "10 edycji zdjęć. Nigdy nie wygasają."
+        },
         "pt-BR": {
           "name": "10 edições",
           "description": "10 edições de fotos. Nunca expiram."
+        },
+        "sv": {
+          "name": "10 redigeringar",
+          "description": "10 fotoredigeringar. Upphör aldrig."
         },
         "zh-Hans": {
           "name": "10 次编辑",
