@@ -1,0 +1,81 @@
+{
+  "name": "PixiePocket AI-billedgenerator",
+  "subtitle": "Fotoredigering med AI",
+  "keywords": "billede,foto,restaurer,farvelæg,figur,3d,retusch,portræt,headshot,anime,kæledyr,julekort,kostume",
+  "promotionalText": "Nyt: gratis Pixie Week med 5 redigeringer om dagen, Plus med 60 redigeringer hver uge og en julekortredigering. Standard kører på Nano Banana 2.1, Max på GPT Image 2.6.",
+  "description": "Forvandl ethvert foto til noget fantastisk med ét tryk: et professionelt headshot, et restaureret gammelt foto, en 3D-figur, et anime-portræt eller et kongeligt portræt af dit kæledyr. Standard kører på Googles Nano Banana 2.1, og Max kører på OpenAIs GPT Image 2.5.\n\nDin første redigering starter din Pixie Week: 5 gratis redigeringer om dagen i 7 dage. Ingen tilmelding, intet betalingskort og intet at opsige.\n\nREDIGERINGER MED ÉT TRYK\n• Pro headshot: et studieportræt til LinkedIn og cv'er, der stadig ligner dig\n• Headshot-pakke: fire studieheadshots på én gang\n• Restaurer gammelt foto: ridser fjernes, farver kommer på\n• 3D-figur: dig som en samlerfigur, med æske og det hele\n• Naturlig retusch: bedre hud og lys, uden filterlook\n• Hvid baggrund: rene udklip til annoncer og profiler\n• Anime-stil, magasinforside, nyt outfit, ny frisure og rejsefoto\n• Kongeligt kæledyrsportræt: dit kæledyr som renæssanceadel\n• Julekort: et hyggeligt, festligt portræt til dine kort\n• Halloween-kostume: et gyseligt kostume og makeup\n\nFINPUDS DET MED CHAT\nBed om ændringer med almindelige ord, og hver besked redigerer dit seneste billede: »gør blazeren marineblå«, »sæt hende i et lyst kontor«. Eller beskriv et helt nyt billede fra bunden.\n\nDEL FØR OG EFTER\nGem resultaterne i Fotos, eller del et før-og-efter-billede side om side med ét tryk.\n\nTO KVALITETSNIVEAUER\n• Standard: hurtig og god til de fleste redigeringer, én redigering pr. billede\n• Max: vores mest detaljerede model til de billeder, der betyder mest, fem redigeringer pr. billede\nHvis den ene model er travl eller afviser en anmodning, overtager en anden. En anmodning, der mislykkes, koster dig aldrig en redigering.\n\nREDIGERINGER PÅ DIN MÅDE\n• PixiePocket Plus: 60 redigeringer hver uge, Standard eller Max. Et ugentligt abonnement, der fornyes automatisk, indtil du opsiger det i Indstillinger. Der opkræves intet, før du vælger det.\n• Pakker med 10, 40 eller 120 redigeringer: køb én gang, brug dem når som helst. De udløber aldrig.\n\nPRIVAT SOM STANDARD\nDine billeder er kun dine: der er intet offentligt feed. Dine prompts og fotos sendes til Google Gemini og OpenAI for at skabe dine billeder. Du godkender dette, før din første generering, og du kan til enhver tid trække dit samtykke tilbage i Indstillinger.\n\nStart anonymt, og log derefter ind med Apple, Google eller GitHub for at holde dine billeder synkroniseret på iPhone og iPad.\n\nTIL ALLE\nFungerer med VoiceOver, større tekststørrelser og Reducer bevægelse. Slet din konto og alt i den når som helst i Indstillinger.\n\nBrugsvilkår: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/\nPrivatlivspolitik: https://midgarcorp.cc/legal/pixiepocket/privacy\n\nGoogle, Gemini og Nano Banana er varemærker tilhørende Google LLC. GPT Image er et varemærke tilhørende OpenAI. Denne app er ikke godkendt af eller tilknyttet Google eller OpenAI.",
+  "whatsNew": "Nu på svensk, dansk, norsk, finsk og islandsk.",
+  "screenshots": [
+    {
+      "file": "01_headshot",
+      "panel": "beforeafter",
+      "before": "demo_selfie",
+      "after": "demo_headshot",
+      "tag": "Pro headshot",
+      "headline": "Gør enhver selfie til et pro-portræt",
+      "subhead": "Ét tryk, pro-resultat"
+    },
+    {
+      "file": "02_presets",
+      "screen": "home",
+      "headline": "Redigeringer med ét tryk til ethvert foto",
+      "subhead": "Portrætter, restaurering, figurer og meget mere"
+    },
+    {
+      "file": "03_restore",
+      "panel": "beforeafter",
+      "before": "demo_oldphoto",
+      "after": "demo_restored",
+      "tag": "Restore old photo",
+      "headline": "Bring gamle fotos tilbage til livet",
+      "subhead": "Ridser væk, farver på"
+    },
+    {
+      "file": "04_figurine",
+      "panel": "beforeafter",
+      "before": "demo_man",
+      "after": "demo_figurine",
+      "tag": "3D figurine",
+      "headline": "Bliv til en 3D-figur",
+      "subhead": "Det virale look med ét tryk"
+    },
+    {
+      "file": "05_refine",
+      "screen": "refine",
+      "headline": "Forfin den derefter via chat",
+      "subhead": "Hver besked redigerer dit seneste billede"
+    },
+    {
+      "file": "06_pack",
+      "screen": "pack",
+      "headline": "Fire studieportrætter på én gang",
+      "subhead": "Vælg din favorit til LinkedIn"
+    },
+    {
+      "file": "07_pet",
+      "panel": "beforeafter",
+      "before": "demo_dog",
+      "after": "demo_royal_dog",
+      "tag": "Royal pet portrait",
+      "headline": "Kongelige portrætter af dit kæledyr",
+      "subhead": "Eller alt andet, du kan beskrive"
+    },
+    {
+      "file": "08_gallery",
+      "screen": "gallery",
+      "headline": "Din første uge er gratis",
+      "subhead": "5 gratis redigeringer om dagen, ingen tilmelding"
+    },
+    {
+      "file": "09_sample",
+      "screen": "start",
+      "headline": "Se det virke med ét tryk",
+      "subhead": "Start med et eksempelfoto, ingen tilmelding"
+    }
+  ],
+  "supportUrl": "https://midgarcorp.cc/pixiepocket/support/",
+  "labels": {
+    "before": "Før",
+    "after": "Efter"
+  }
+}
