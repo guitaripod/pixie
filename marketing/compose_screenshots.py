@@ -32,7 +32,8 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 DEMO_ART = os.path.join(ROOT, "..", "Resources", "DemoAssets.xcassets", "DemoArt")
 STRING_CATALOG = os.path.join(ROOT, "..", "Resources", "Localizable.xcstrings")
 APP_LANGUAGE = {"de-DE": "de", "es-ES": "es", "es-MX": "es", "fr-FR": "fr", "it": "it", "ja": "ja", "ko": "ko",
-                "pl": "pl", "pt-BR": "pt-BR", "zh-Hans": "zh-Hans", "zh-Hant": "zh-Hant"}
+                "pl": "pl", "pt-BR": "pt-BR", "zh-Hans": "zh-Hans", "zh-Hant": "zh-Hant", "sv": "sv", "da": "da",
+                "no": "nb", "fi": "fi"}
 CARD_BORDER = 10
 BADGE_FILL = (18, 14, 34, 215)
 TAG_FILL = (255, 255, 255, 255)
@@ -321,14 +322,26 @@ def paste_card(canvas, card, xy, angle=0.0):
     return card
 
 
-def draw_pill(canvas, text, font, center, fill, color, pad_x, pad_y, sparkle=False):
+def pill_size(text, font, pad_x, pad_y, sparkle=False):
+    """The width and height a pill of `text` takes, sparkle included."""
+    left, top, right, bottom = font.getbbox(text)
+    text_height = bottom - top
+    icon = round(text_height * 1.05) if sparkle else 0
+    gap = round(icon * 0.45) if sparkle else 0
+    return right - left + icon + gap + 2 * pad_x, text_height + 2 * pad_y
+
+
+def draw_pill(canvas, text, font, center, fill, color, pad_x, pad_y, sparkle=False, span=None):
+    """Draws the pill centred on `center`, moved sideways to stay inside `span` (left, right) when given."""
     draw = ImageDraw.Draw(canvas)
     left, top, right, bottom = font.getbbox(text)
     text_height = bottom - top
     icon = round(text_height * 1.05) if sparkle else 0
     gap = round(icon * 0.45) if sparkle else 0
-    width, height = right - left + icon + gap + 2 * pad_x, text_height + 2 * pad_y
+    width, height = pill_size(text, font, pad_x, pad_y, sparkle)
     x0, y0 = round(center[0] - width / 2), round(center[1] - height / 2)
+    if span is not None:
+        x0 = max(span[0], min(x0, span[1] - width))
     draw.rounded_rectangle((x0, y0, x0 + width, y0 + height), height // 2, fill=fill)
     if sparkle:
         draw_sparkle(draw, (x0 + pad_x + icon / 2, y0 + height / 2), icon / 2, color)
@@ -374,13 +387,26 @@ def compose_before_after(entry, locale, fonts, top, labels):
     draw_pill(canvas, labels["before"], badge_font,
               (inset_x + placed_inset.width / 2, inset_y + round(width * 0.075)),
               BADGE_FILL, (255, 255, 255), pad_x, pad_y)
-    tag_font = headline_face(round(width * 0.042))
     inset_right = inset_x + placed_inset.width
+    tag = app_string(entry["tag"], locale)
+    span = (inset_right + round(width * 0.015), width - round(width * 0.03))
+    tag_font = fitted_tag_font(headline_face, tag, span[1] - span[0], width)
     tag_center_x = (inset_right + width) / 2
-    draw_pill(canvas, app_string(entry["tag"], locale), tag_font,
+    draw_pill(canvas, tag, tag_font,
               (tag_center_x, after_bottom + round(height * 0.052)),
-              TAG_FILL, TAG_TEXT, round(width * 0.04), round(width * 0.02), sparkle=True)
+              TAG_FILL, TAG_TEXT, round(width * 0.04), round(width * 0.02), sparkle=True, span=span)
     return canvas.crop((0, 0) + SIZE).convert("RGB")
+
+
+def fitted_tag_font(face, tag, room, width):
+    """The tag's headline face at its usual size, stepped down until the pill fits in `room`, so a long
+    translation such as Danish "Kongeligt kæledyrsportræt" stays inside the panel."""
+    size = round(width * 0.042)
+    font = face(size)
+    while size > round(width * 0.028) and pill_size(tag, font, round(width * 0.04), round(width * 0.02), True)[0] > room:
+        size -= 2
+        font = face(size)
+    return font
 
 
 def draw_captions(canvas, entry, locale, fonts):
