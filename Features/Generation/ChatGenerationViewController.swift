@@ -525,6 +525,8 @@ class ChatGenerationViewController: UIViewController {
             .sink { [weak self] balance in
                 self?.updateBalanceChip(balance)
                 self?.presentPixieWeekIfDue(balance)
+                self?.photoIdeas.accessChanged()
+                self?.refreshPhotoPickerLine()
             }
             .store(in: &cancellables)
         #if DEBUG

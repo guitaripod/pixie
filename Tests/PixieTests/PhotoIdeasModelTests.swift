@@ -91,6 +91,35 @@ struct PhotoIdeasModelTests {
         #expect(await model.looksWithoutAsking() == false)
     }
 
+    @Test func theRowFollowsPlusBoughtWhileAPhotoIsPickedAndLeavesAServersRefusalAlone() async {
+        let stub = StubIdeas()
+        let access = Agreement(false)
+        let model = PhotoIdeasModel(provider: stub, language: "English", isIncluded: { access.given }, hasAgreed: { true }, agree: {})
+        model.photoChanged(photo())
+        await settle(model, leaving: .hidden)
+        #expect(model.state == .withPlus)
+        model.accessChanged()
+        try? await Task.sleep(for: .milliseconds(80))
+        #expect(model.state == .withPlus)
+        #expect(stub.asked == 0)
+        access.given = true
+        model.accessChanged()
+        await settle(model, leaving: .withPlus)
+        await settle(model, leaving: .loading)
+        #expect(model.state == .ideas(ideas))
+        #expect(stub.asked == 1)
+
+        stub.answer = .failure(.notIncluded)
+        model.photoChanged(photo())
+        await settle(model, leaving: .hidden)
+        await settle(model, leaving: .loading)
+        #expect(model.state == .withPlus)
+        model.accessChanged()
+        try? await Task.sleep(for: .milliseconds(80))
+        #expect(model.state == .withPlus)
+        #expect(stub.asked == 2)
+    }
+
     @Test func aPhotoIsAskedAboutOnceAndItsIdeasComeBackWhenItIsPickedAgain() async {
         let stub = StubIdeas()
         let model = model(stub, included: true, agreement: Agreement(true))

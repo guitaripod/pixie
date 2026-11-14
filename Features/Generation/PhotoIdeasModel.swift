@@ -108,6 +108,7 @@ final class PhotoIdeasModel {
     private var photo: UIImage?
     private var answered: [(photo: UIImage, ideas: [String])] = []
     private var generation = 0
+    private var refusedByServer = false
 
     /// How many photos keep their ideas, so going back to a photo picked a moment ago asks nothing.
     private static let rememberedPhotos = 4
@@ -124,9 +125,17 @@ final class PhotoIdeasModel {
         }
         #endif
         return PhotoIdeasModel(provider: MakoPhotoIdeas(api: APIService.shared), isIncluded: {
-            if let edits = CreditBalanceStore.shared.balance?.edits { return edits.includesPhotoIdeas }
-            return await CreditPurchaseManager.shared.hasPlus()
+            await balanceIncludesIdeas()
         })
+    }
+
+    /// The balance's word on Plus and the Pixie Week, read from the server first when the app has no balance yet so
+    /// a photo picked right after launch is not shown the Plus chip in a Pixie Week; a server too old to say falls
+    /// back to the ledger's Plus.
+    private static func balanceIncludesIdeas() async -> Bool {
+        if CreditBalanceStore.shared.balance == nil { await CreditBalanceStore.shared.refresh() }
+        if let edits = CreditBalanceStore.shared.balance?.edits { return edits.includesPhotoIdeas }
+        return await CreditPurchaseManager.shared.hasPlus()
     }
 
     init(
@@ -161,9 +170,22 @@ final class PhotoIdeasModel {
         guard newPhoto !== photo else { return }
         photo = newPhoto
         generation += 1
+        refusedByServer = false
         guard let newPhoto else { return set(.hidden) }
         if let known = answered.first(where: { $0.photo === newPhoto }) { return set(.ideas(known.ideas)) }
         set(.hidden)
+        decide()
+    }
+
+    /// Decides again what the row offers for the picked photo once what the person has may have changed: Plus just
+    /// bought from the chip, a balance that just arrived. A row the server itself refused stays as it is.
+    func accessChanged() {
+        guard photo != nil, state == .withPlus, !refusedByServer else { return }
+        decide()
+    }
+
+    /// Shows the Plus chip, the offer or the ideas for the picked photo, by what the person has and has agreed to.
+    private func decide() {
         let current = generation
         Task { [weak self] in
             guard let self else { return }
@@ -199,6 +221,7 @@ final class PhotoIdeasModel {
                 remember(ideas, for: photo)
                 set(.ideas(ideas))
             case .failure(.notIncluded):
+                refusedByServer = true
                 set(.withPlus)
             case .failure(.resting):
                 set(.hidden)
