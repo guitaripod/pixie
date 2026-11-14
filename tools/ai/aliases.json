@@ -1,0 +1,24 @@
+{
+  "app_id": "pixie",
+  "model": "claude-haiku-5-5",
+  "aliases": [
+    {
+      "alias": "photo.ideas.v1",
+      "version": 1,
+      "max_tokens": 400,
+      "flat_credits": 1,
+      "weekly_free": 0,
+      "premium_bypass": true,
+      "daily_limit": 40,
+      "max_images": 1,
+      "response_schema": {
+        "type": "object",
+        "properties": {
+          "ideas": {"type": "array", "items": {"type": "string"}}
+        },
+        "required": ["ideas"],
+        "additionalProperties": false
+      }
+    }
+  ]
+}
