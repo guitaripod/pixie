@@ -16,6 +16,7 @@ class ChatGenerationViewController: UIViewController {
     let chatView = ChatTableView()
     let inputBar = ChatInputBar()
     private let selectedSuggestionsManager = SelectedSuggestionsManager()
+    private let photoIdeas = PhotoIdeasModel.standard()
     private var toolbarMode: ToolbarMode = .generate
     private let chatId = UUID().uuidString
     lazy var viewModel = GenerationViewModel(chatId: self.chatId)
@@ -421,10 +422,40 @@ class ChatGenerationViewController: UIViewController {
         PixieWeek.shared.present(moment, from: self)
     }
 
+    /// Joins the ideas row to its model: the picked photo goes in, the row follows the model's state, a tapped
+    /// idea becomes the prompt in the composer, and the picker's line says so when a picked photo is looked at
+    /// without a further tap, which is what Plus does.
+    private func setupPhotoIdeas() {
+        photoIdeas.onChange = { [weak self] in
+            guard let self else { return }
+            self.suggestionsView.setPhotoIdeas(self.photoIdeas.state)
+        }
+        suggestionsView.onPhotoChanged = { [weak self] photo in
+            self?.photoIdeas.photoChanged(photo)
+        }
+        suggestionsView.onPhotoIdeasAsked = { [weak self] in
+            self?.photoIdeas.ask()
+        }
+        suggestionsView.onIdeaSelected = { [weak self] idea in
+            guard let self else { return }
+            self.inputBar.setText(idea)
+            _ = self.inputBar.becomeFirstResponder()
+        }
+        suggestionsView.onCreditsWanted = { [weak self] in
+            guard let self else { return }
+            CreditStoreViewController.present(from: self, shortfall: 1)
+        }
+        Task { [weak self] in
+            guard let looksAtOnce = await self?.photoIdeas.looksWithoutAsking() else { return }
+            self?.suggestionsView.suggestsFromPickedPhoto = looksAtOnce
+        }
+    }
+
     private func setupHandlers() {
         inputBar.onSend = { [weak self] prompt in
             self?.handleSendPrompt(prompt)
         }
+        setupPhotoIdeas()
         inputBar.onAddPhoto = { [weak self] in
             self?.pendingPreset = nil
             self?.presentPhotoPicker()

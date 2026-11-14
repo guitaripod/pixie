@@ -49,6 +49,21 @@ class FullScreenSuggestionsView: UIView {
     var onPresetSelected: ((EditPreset) -> Void)?
     var onSampleTapped: (() -> Void)?
     var onPhotoRemoved: (() -> Void)?
+    /// Called with the photo of the edit whenever it changes, and with nil when there is none.
+    var onPhotoChanged: ((UIImage?) -> Void)?
+    var onIdeaSelected: ((String) -> Void)?
+    var onPhotoIdeasAsked: (() -> Void)?
+    var onCreditsWanted: (() -> Void)?
+    /// Whether a picked photo is looked at for ideas without a further tap, which the picker's line then says.
+    var suggestsFromPickedPhoto = false {
+        didSet {
+            guard suggestsFromPickedPhoto != oldValue, selectedPhoto == nil, dataSource != nil else { return }
+            var snapshot = dataSource.snapshot()
+            snapshot.reloadSections([.editImage])
+            dataSource.apply(snapshot, animatingDifferences: false)
+        }
+    }
+    private var photoIdeas: PhotoIdeasState = .hidden
     private static let addImageItem = "add_image"
 
     /// Today, or a DEBUG capture's `PX_DATE`.
@@ -289,7 +304,7 @@ class FullScreenSuggestionsView: UIView {
     }
 
     private static func maxContentWidth(of section: SuggestionsSection) -> CGFloat {
-        section == .editImage ? Theme.Width.form : Theme.Width.grid
+        section == .editImage || section == .photoIdeas ? Theme.Width.form : Theme.Width.grid
     }
 
     private func createLayout() -> UICollectionViewLayout {
@@ -312,6 +327,8 @@ class FullScreenSuggestionsView: UIView {
                 return self.createStylePresetsSection(environment: environment)
             case .promptModifiers:
                 return self.createPromptModifiersSection(environment: environment)
+            case .photoIdeas:
+                return self.createPhotoIdeasSection(environment: environment)
             }
         }
         let config = UICollectionViewCompositionalLayoutConfiguration()
@@ -482,6 +499,52 @@ class FullScreenSuggestionsView: UIView {
         section.boundarySupplementaryItems = [sectionHeader()]
         return section
     }
+    private func createPhotoIdeasSection(environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
+        let metrics = Metrics(environment, maxWidth: Self.maxContentWidth(of: .photoIdeas))
+        let widths = photoIdeaItems.map { ChipSizing.width(title: PhotoIdeasCopy.title(of: $0), symbol: nil) }
+        let section = NSCollectionLayoutSection(group: singleRowChipsGroup(widths: widths))
+        section.orthogonalScrollingBehavior = .continuous
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: metrics.sideInset, bottom: 0, trailing: metrics.sideInset)
+        section.boundarySupplementaryItems = [sectionHeader()]
+        return section
+    }
+
+    /// Chips side by side on one row that scrolls sideways, so the row costs the screen one line however many
+    /// chips it holds and the edits below it stay in view.
+    private func singleRowChipsGroup(widths: [CGFloat]) -> NSCollectionLayoutGroup {
+        let spacing = Theme.Space.sm
+        var frames: [CGRect] = []
+        var x: CGFloat = 0
+        for width in widths {
+            frames.append(CGRect(x: x, y: 0, width: width, height: Self.chipRowHeight))
+            x += width + spacing
+        }
+        let size = NSCollectionLayoutSize(widthDimension: .absolute(max(1, x - spacing)), heightDimension: .absolute(Self.chipRowHeight))
+        return NSCollectionLayoutGroup.custom(layoutSize: size) { _ in
+            frames.map { NSCollectionLayoutGroupCustomItem(frame: $0) }
+        }
+    }
+
+    /// The chips of the ideas row for the state it is in, or none while it is hidden.
+    private var photoIdeaItems: [PhotoIdeaItem] {
+        guard selectedPhoto != nil else { return [] }
+        switch photoIdeas {
+        case .hidden: return []
+        case .offer: return [.offer]
+        case .loading: return [.loading]
+        case .ideas(let ideas): return ideas.map(PhotoIdeaItem.idea)
+        case .failed: return [.tryAgain]
+        case .needsCredits: return [.getCredits]
+        }
+    }
+
+    /// Shows the ideas row in `state` under the picked photo.
+    func setPhotoIdeas(_ state: PhotoIdeasState) {
+        guard state != photoIdeas else { return }
+        photoIdeas = state
+        applySnapshot()
+    }
+
     private func createPromptModifiersSection(environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
         let metrics = Metrics(environment)
         let categoryWidths = modifierCategories.map { ChipSizing.width(title: $0, symbol: nil) }
@@ -572,6 +635,13 @@ class FullScreenSuggestionsView: UIView {
                 let isSelected = self.selectedSuggestionsManager?.isSelected(style.name, type: .stylePreset) ?? false
                 cell.configure(with: style, isSelected: isSelected)
                 return cell
+            case .photoIdeas:
+                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ModifierChipCell.reuseIdentifier, for: indexPath) as! ModifierChipCell
+                if let idea = item.photoIdea {
+                    cell.configure(with: PhotoIdeasCopy.title(of: idea), category: PhotoIdeasCopy.header)
+                    cell.accessibilityIdentifier = "photoIdea"
+                }
+                return cell
             case .promptModifiers:
                 if indexPath.item < self.modifierCategories.count {
                     let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CategoryChipCell.reuseIdentifier, for: indexPath) as! CategoryChipCell
@@ -618,8 +688,11 @@ class FullScreenSuggestionsView: UIView {
                     if self.selectedPhoto != nil {
                         header.configure(title: String(localized: "Your photo"), subtitle: nil, prominence: self.isCompactHeight ? .section : .hero)
                     } else {
-                        header.configure(title: String(localized: "Start with a photo"), subtitle: String(localized: "Pick one, then tap an edit"), prominence: self.isCompactHeight ? .section : .hero)
+                        let subtitle = self.suggestsFromPickedPhoto ? PhotoIdeasCopy.pickerLine : String(localized: "Pick one, then tap an edit")
+                        header.configure(title: String(localized: "Start with a photo"), subtitle: subtitle, prominence: self.isCompactHeight ? .section : .hero)
                     }
+                case .photoIdeas:
+                    header.configure(title: PhotoIdeasCopy.header, subtitle: PhotoIdeasCopy.subtitle(for: self.photoIdeas), prominence: .label)
                 case .recents:
                     header.configure(title: String(localized: "Recent"), subtitle: nil, prominence: .label)
                 case .presets:
@@ -668,6 +741,12 @@ class FullScreenSuggestionsView: UIView {
         }
         editSectionItems = editItems
         snapshot.appendItems(editItems, toSection: .editImage)
+        let ideaItems = photoIdeaItems
+        if !ideaItems.isEmpty {
+            snapshot.appendSections([.photoIdeas])
+            snapshot.appendItems(ideaItems.map(SuggestionItem.init), toSection: .photoIdeas)
+            snapshot.reloadSections([.photoIdeas])
+        }
         if !recentImages.isEmpty && !isCompactHeight {
             snapshot.appendSections([.recents])
             snapshot.appendItems(recentImages.prefix(10).map(SuggestionItem.init), toSection: .recents)
@@ -801,6 +880,13 @@ extension FullScreenSuggestionsView: UICollectionViewDelegate {
                 applySnapshot()
                 onSelectionChanged?()
             }
+        case .photoIdeas:
+            switch dataSource.itemIdentifier(for: indexPath)?.photoIdea {
+            case .idea(let idea): onIdeaSelected?(idea)
+            case .offer, .tryAgain: onPhotoIdeasAsked?()
+            case .getCredits: onCreditsWanted?()
+            case .loading, nil: break
+            }
         case .promptModifiers:
             if indexPath.item < modifierCategories.count {
                 selectedModifierCategory = indexPath.item
@@ -860,6 +946,7 @@ extension FullScreenSuggestionsView: UICollectionViewDelegate {
     func setEditMode(_ editMode: Bool, photo: UIImage? = nil) {
         isEditMode = editMode
         selectedPhoto = editMode ? photo : nil
+        onPhotoChanged?(selectedPhoto)
         applySnapshot()
         var snapshot = dataSource.snapshot()
         snapshot.reloadSections([.editImage, .quickActions])
@@ -896,6 +983,7 @@ nonisolated enum SuggestionsSection: Int, CaseIterable {
     case creativePrompts
     case stylePresets
     case promptModifiers
+    case photoIdeas
 }
 
 

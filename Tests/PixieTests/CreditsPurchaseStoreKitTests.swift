@@ -462,6 +462,7 @@ private struct StubPacksAPI: APIServiceProtocol {
     func authenticateApple(_ request: OAuthCallbackRequest) async throws -> AuthResponse { throw Unused() }
     func authenticateAppleToken(_ request: AppleTokenRequest) async throws -> AuthResponse { throw Unused() }
     func deleteImage(id: String) async throws { throw Unused() }
+    func photoIdeas(_ request: PhotoIdeasRequest) async throws -> PhotoIdeasReply { throw Unused() }
 
     struct Unused: Error {}
 }

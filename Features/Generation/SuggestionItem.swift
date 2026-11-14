@@ -16,4 +16,15 @@ nonisolated struct SuggestionItem: Hashable, @unchecked Sendable {
     var image: UIImage? { base as? UIImage }
 
     var preset: EditPreset? { base as? EditPreset }
+
+    var photoIdea: PhotoIdeaItem? { base as? PhotoIdeaItem }
+}
+
+/// One chip of the ideas row under a picked photo.
+nonisolated enum PhotoIdeaItem: Hashable, Sendable {
+    case idea(String)
+    case offer
+    case loading
+    case tryAgain
+    case getCredits
 }

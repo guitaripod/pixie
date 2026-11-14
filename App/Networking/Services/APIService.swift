@@ -21,6 +21,7 @@ protocol APIServiceProtocol {
     func authenticateApple(_ request: OAuthCallbackRequest) async throws -> AuthResponse
     func authenticateAppleToken(_ request: AppleTokenRequest) async throws -> AuthResponse
     func deleteImage(id: String) async throws
+    func photoIdeas(_ request: PhotoIdeasRequest) async throws -> PhotoIdeasReply
 }
 
 class APIService: APIServiceProtocol {
@@ -113,6 +114,11 @@ class APIService: APIServiceProtocol {
 
     func deleteImage(id: String) async throws {
         try await networkService.delete("/v1/images/\(id)")
+    }
+
+    /// Asks mako's `photo.ideas.v1` alias for edits that fit the small copy of a photo the request carries.
+    func photoIdeas(_ request: PhotoIdeasRequest) async throws -> PhotoIdeasReply {
+        try await networkService.post("/v1/run/chat.completion", body: request, type: PhotoIdeasReply.self)
     }
     
     func checkDeviceAuthStatus(deviceCode: String) async throws -> DeviceAuthStatus {
