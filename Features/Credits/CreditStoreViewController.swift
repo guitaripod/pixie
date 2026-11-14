@@ -547,7 +547,7 @@ final class CreditStoreViewController: UIViewController {
         guard let pack = choices.first(where: { $0.id == selectedPackId }) else { return }
         if pack.isPlus {
             ctaButton.title = String(localized: "Subscribe · \(String(localized: "\(pack.price)/week"))")
-            ctaNoteLabel.text = String(localized: "\(pack.edits) edits every week. Renews weekly until you cancel in Settings.")
+            ctaNoteLabel.text = String(localized: "\(pack.edits) edits every week and ideas for the photos you pick. Renews weekly until you cancel in Settings.")
         } else {
             ctaButton.title = String(localized: "Get \(pack.title) · \(pack.price)")
             ctaNoteLabel.text = String(localized: "One-time purchase · Never expires")

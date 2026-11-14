@@ -845,96 +845,96 @@
         }
       }
     },
-    "%lld edits every week. Renews weekly until you cancel in Settings." : {
+    "%lld edits every week and ideas for the photos you pick. Renews weekly until you cancel in Settings." : {
       "localizations" : {
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld redigeringer hver uge. Fornyes, indtil du annullerer i Indstillinger."
+            "value" : "%lld redigeringer hver uge og idéer til de fotos, du vælger. Fornyes, indtil du annullerer i Indstillinger."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld Bearbeitungen pro Woche. Verlängert sich wöchentlich, bis du in den Einstellungen kündigst."
+            "value" : "%lld Bearbeitungen pro Woche und Ideen für die Fotos, die du auswählst. Verlängert sich wöchentlich, bis du in den Einstellungen kündigst."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld ediciones cada semana. Se renueva semanalmente hasta que canceles en Ajustes."
+            "value" : "%lld ediciones cada semana e ideas para las fotos que elijas. Se renueva semanalmente hasta que canceles en Ajustes."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld muokkausta joka viikko. Uusiutuu, kunnes peruutat Asetuksissa."
+            "value" : "%lld muokkausta joka viikko ja ideoita valitsemillesi kuville. Uusiutuu, kunnes peruutat Asetuksissa."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld retouches chaque semaine. Renouvelé chaque semaine jusqu'à résiliation dans Réglages."
+            "value" : "%lld retouches chaque semaine et des idées pour les photos que vous choisissez. Renouvelé chaque semaine jusqu'à résiliation dans Réglages."
           }
         },
         "is" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld breytingar á viku. Endurnýjast vikulega þar til þú segir upp í Stillingum."
+            "value" : "%lld breytingar á viku og hugmyndir fyrir myndirnar sem þú velur. Endurnýjast vikulega þar til þú segir upp í Stillingum."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld modifiche ogni settimana. Si rinnova ogni settimana finché non annulli in Impostazioni."
+            "value" : "%lld modifiche ogni settimana e idee per le foto che scegli. Si rinnova ogni settimana finché non annulli in Impostazioni."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "毎週%lld回の編集。設定で解約するまで毎週更新されます。"
+            "value" : "毎週%lld回の編集と、選んだ写真へのアイデア。設定で解約するまで毎週更新されます。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "매주 %lld회 편집. 설정에서 해지할 때까지 매주 갱신됩니다."
+            "value" : "매주 %lld회 편집과 선택한 사진을 위한 아이디어. 설정에서 해지할 때까지 매주 갱신됩니다."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld redigeringer hver uke. Fornyes ukentlig til du sier opp i Innstillinger."
+            "value" : "%lld redigeringer hver uke og ideer til fotoene du velger. Fornyes ukentlig til du sier opp i Innstillinger."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld edycji co tydzień. Odnawia się co tydzień, dopóki nie anulujesz w Ustawieniach."
+            "value" : "%lld edycji co tydzień i pomysły na wybrane zdjęcia. Odnawia się co tydzień, dopóki nie anulujesz w Ustawieniach."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld edições por semana. Renova semanalmente até você cancelar nos Ajustes."
+            "value" : "%lld edições por semana e ideias para as fotos que você escolher. Renova semanalmente até você cancelar nos Ajustes."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld redigeringar varje vecka. Förnyas automatiskt tills du avbryter i Inställningar."
+            "value" : "%lld redigeringar varje vecka och idéer för fotona du väljer. Förnyas automatiskt tills du avbryter i Inställningar."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "每周 %lld 次编辑。每周自动续订，直至你在“设置”中取消。"
+            "value" : "每周 %lld 次编辑，以及为所选照片提供的灵感。每周自动续订，直至你在“设置”中取消。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "每週 %lld 次編輯。每週自動續訂，直到你在「設定」中取消。"
+            "value" : "每週 %lld 次編輯，以及為所選照片提供的靈感。每週自動續訂，直到你在「設定」中取消。"
           }
         }
       }
