@@ -143,6 +143,16 @@ struct EditModelTests {
         #expect(summary(runway: runway(.active, today: 3)).funding(forTier: "standard", images: 4) == .balance(edits: 4, affordable: true))
     }
 
+    @Test func photoIdeasComeWithPlusAndThePixieWeekAndNotWithABalanceAlone() {
+        let plus = Allowance(limit: 60, remaining: 0, resetsAt: "2026-11-09T00:00:00Z")
+        #expect(summary(premium: plus).includesPhotoIdeas)
+        #expect(summary(premium: plus, runway: runway(.ended, today: 0)).includesPhotoIdeas)
+        #expect(summary(runway: runway(.available, today: 5)).includesPhotoIdeas)
+        #expect(summary(runway: runway(.active, today: 0)).includesPhotoIdeas)
+        #expect(!summary(runway: runway(.ended, today: 0), balanceEdits: 120).includesPhotoIdeas)
+        #expect(!summary(balanceEdits: 120).includesPhotoIdeas)
+    }
+
     @Test func theWeekCountsWholeDaysLeftAndHasNoneBeforeItStarts() throws {
         let balance = try JSONDecoder().decode(CreditBalance.self, from: Data(Self.summaryJSON.utf8))
         let runway = try #require(balance.edits?.runway)

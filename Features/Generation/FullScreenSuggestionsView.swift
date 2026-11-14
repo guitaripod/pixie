@@ -52,8 +52,9 @@ class FullScreenSuggestionsView: UIView {
     /// Called with the photo of the edit whenever it changes, and with nil when there is none.
     var onPhotoChanged: ((UIImage?) -> Void)?
     var onIdeaSelected: ((String) -> Void)?
+    var onPhotoIdeasAgreed: (() -> Void)?
     var onPhotoIdeasAsked: (() -> Void)?
-    var onCreditsWanted: (() -> Void)?
+    var onPlusWanted: (() -> Void)?
     /// Whether a picked photo is looked at for ideas without a further tap, which the picker's line then says.
     var suggestsFromPickedPhoto = false {
         didSet {
@@ -533,8 +534,8 @@ class FullScreenSuggestionsView: UIView {
         case .offer: return [.offer]
         case .loading: return [.loading]
         case .ideas(let ideas): return ideas.map(PhotoIdeaItem.idea)
+        case .withPlus: return [.plus]
         case .failed: return [.tryAgain]
-        case .needsCredits: return [.getCredits]
         }
     }
 
@@ -883,8 +884,9 @@ extension FullScreenSuggestionsView: UICollectionViewDelegate {
         case .photoIdeas:
             switch dataSource.itemIdentifier(for: indexPath)?.photoIdea {
             case .idea(let idea): onIdeaSelected?(idea)
-            case .offer, .tryAgain: onPhotoIdeasAsked?()
-            case .getCredits: onCreditsWanted?()
+            case .offer: onPhotoIdeasAgreed?()
+            case .tryAgain: onPhotoIdeasAsked?()
+            case .plus: onPlusWanted?()
             case .loading, nil: break
             }
         case .promptModifiers:

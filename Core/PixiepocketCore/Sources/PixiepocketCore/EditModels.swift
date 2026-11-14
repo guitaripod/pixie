@@ -39,6 +39,12 @@ public struct EditsSummary: Codable, Sendable, Equatable {
         }
         return .balance(edits: cost, affordable: balanceEdits >= cost)
     }
+
+    /// Whether ideas for a picked photo are part of what the person has: with Plus, and before and during the Pixie
+    /// Week, which shows what Plus is like. A balance of bought edits alone does not include them.
+    public var includesPhotoIdeas: Bool {
+        premium != nil || runway?.isOpen == true
+    }
 }
 
 /// The tier names mako prices.

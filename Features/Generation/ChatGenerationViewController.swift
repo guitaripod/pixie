@@ -423,8 +423,8 @@ class ChatGenerationViewController: UIViewController {
     }
 
     /// Joins the ideas row to its model: the picked photo goes in, the row follows the model's state, a tapped
-    /// idea becomes the prompt in the composer, and the picker's line says so when a picked photo is looked at
-    /// without a further tap, which is what Plus does.
+    /// idea becomes the prompt in the composer, and the picker's line says a picked photo is looked at once that
+    /// happens without a further tap.
     private func setupPhotoIdeas() {
         photoIdeas.onChange = { [weak self] in
             guard let self else { return }
@@ -432,6 +432,11 @@ class ChatGenerationViewController: UIViewController {
         }
         suggestionsView.onPhotoChanged = { [weak self] photo in
             self?.photoIdeas.photoChanged(photo)
+            self?.refreshPhotoPickerLine()
+        }
+        suggestionsView.onPhotoIdeasAgreed = { [weak self] in
+            self?.photoIdeas.agreeAndAsk()
+            self?.refreshPhotoPickerLine()
         }
         suggestionsView.onPhotoIdeasAsked = { [weak self] in
             self?.photoIdeas.ask()
@@ -441,10 +446,14 @@ class ChatGenerationViewController: UIViewController {
             self.inputBar.setText(idea)
             _ = self.inputBar.becomeFirstResponder()
         }
-        suggestionsView.onCreditsWanted = { [weak self] in
+        suggestionsView.onPlusWanted = { [weak self] in
             guard let self else { return }
-            CreditStoreViewController.present(from: self, shortfall: 1)
+            CreditStoreViewController.present(from: self)
         }
+        refreshPhotoPickerLine()
+    }
+
+    private func refreshPhotoPickerLine() {
         Task { [weak self] in
             guard let looksAtOnce = await self?.photoIdeas.looksWithoutAsking() else { return }
             self?.suggestionsView.suggestsFromPickedPhoto = looksAtOnce

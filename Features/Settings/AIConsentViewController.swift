@@ -15,8 +15,10 @@ enum CloudAIConsent {
         String(localized: "Pixie sends your prompts and any photos you attach to Google Gemini and OpenAI to create your images. Automated moderation checks every request. Your results are saved to your private gallery on Pixie's servers until you delete them or your account. You can withdraw consent anytime in Settings.")
     }
 
+    /// Withdraws the consent to cloud AI as a whole, the agreement to photo ideas with it.
     static func withdraw() {
         UserDefaults.standard.set(false, forKey: key)
+        PhotoIdeasConsent.withdraw()
     }
 }
 

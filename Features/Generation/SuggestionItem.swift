@@ -24,7 +24,7 @@ nonisolated struct SuggestionItem: Hashable, @unchecked Sendable {
 nonisolated enum PhotoIdeaItem: Hashable, Sendable {
     case idea(String)
     case offer
+    case plus
     case loading
     case tryAgain
-    case getCredits
 }

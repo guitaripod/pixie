@@ -28,6 +28,7 @@ class SettingsViewController: UIViewController {
     private var modelCards: [ImageModel: SettingsOptionCard] = [:]
     private var consentSwitch: UISwitch?
     private var consentRow: SettingsRowView?
+    private var ideasSwitch: UISwitch?
     private var cacheRow: SettingsRowView?
     private var connectionRow: SettingsRowView?
     private var deleteRow: SettingsRowView?
@@ -288,6 +289,16 @@ class SettingsViewController: UIViewController {
         consent.onTap = { [weak self] in self?.presentCloudAIConsentOptions() }
         consentRow = consent
 
+        let ideasSwitch = UISwitch()
+        ideasSwitch.accessibilityLabel = PhotoIdeasCopy.settingsTitle
+        ideasSwitch.accessibilityHint = PhotoIdeasCopy.sharing
+        ideasSwitch.addAction(UIAction { [weak self] _ in self?.photoIdeasSwitched() }, for: .valueChanged)
+        self.ideasSwitch = ideasSwitch
+
+        let ideas = SettingsRowView(title: PhotoIdeasCopy.settingsTitle, subtitle: PhotoIdeasCopy.sharing, symbol: "sparkles")
+        ideas.setAccessory(ideasSwitch)
+        ideas.isAccessibilityElement = false
+
         let cache = SettingsRowView(title: String(localized: "Image Cache"), symbol: "internaldrive.fill", value: cacheSize)
         cacheRow = cache
 
@@ -301,7 +312,7 @@ class SettingsViewController: UIViewController {
         connectionRow = connection
         applyConnectionStatus()
 
-        let card = SettingsLayout.card(rows: [consent, cache, clear, connection])
+        let card = SettingsLayout.card(rows: [consent, ideas, cache, clear, connection])
         return SettingsLayout.section(title: String(localized: "Privacy & data"), content: [card, SettingsLayout.footnote(CloudAIConsent.disclosure)])
     }
 
@@ -366,6 +377,17 @@ class SettingsViewController: UIViewController {
 
     private func refreshConsent() {
         consentSwitch?.setOn(CloudAIConsent.isGranted, animated: false)
+        ideasSwitch?.setOn(PhotoIdeasConsent.isGranted, animated: false)
+    }
+
+    /// The Photo Ideas switch is the agreement the ideas row asks for: on lets a small copy of a picked photo go to
+    /// Anthropic's Claude, off stops it.
+    private func photoIdeasSwitched() {
+        if ideasSwitch?.isOn == true {
+            PhotoIdeasConsent.grant()
+        } else {
+            PhotoIdeasConsent.withdraw()
+        }
     }
 
     private func select(theme: AppTheme) {

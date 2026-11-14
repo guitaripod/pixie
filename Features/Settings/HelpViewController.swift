@@ -60,6 +60,7 @@ class HelpViewController: UIViewController {
                 points: [
                     Point(String(localized: "Private by default"), String(localized: "Your images are only visible to you. There is no public feed.")),
                     Point(String(localized: "Cloud AI"), String(localized: "With your consent, photos and prompts are sent to Google Gemini and OpenAI to make your images.")),
+                    Point(PhotoIdeasCopy.settingsTitle, PhotoIdeasCopy.sharing),
                     Point(String(localized: "You're in control"), String(localized: "Delete your account and everything in it from Settings.")),
                 ]
             ),

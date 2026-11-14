@@ -3,22 +3,44 @@ import UIKit
 
 /// What the row of ideas under a picked photo shows.
 enum PhotoIdeasState: Equatable {
-    /// No photo is picked, or ideas are not on offer.
+    /// No photo is picked, or there is nothing to offer for it.
     case hidden
-    /// A tap asks for three ideas for one credit.
+    /// Ideas are part of what this person has, and they have not yet agreed to a copy of the photo being sent: a
+    /// tap agrees and asks.
     case offer
+    /// Ideas are not part of what this person has: a tap shows Plus.
+    case withPlus
     case loading
     case ideas([String])
     /// Asking failed; a tap asks again.
     case failed
-    /// The person has no credit to spend on ideas.
-    case needsCredits
 }
 
 /// Why a photo got no ideas.
 enum PhotoIdeasFailure: Error, Equatable {
-    case needsCredits
+    /// mako answered that ideas are not part of what this person has.
+    case notIncluded
+    /// Today's allowance of ideas is used.
+    case resting
     case unavailable
+}
+
+/// Whether the person agreed that a small copy of a picked photo goes to Anthropic's Claude for ideas. It is its own
+/// agreement because `CloudAIConsent` names the image providers only; withdrawing that one withdraws this one too.
+enum PhotoIdeasConsent {
+    private static let key = "photoIdeasConsentGranted"
+
+    static var isGranted: Bool {
+        UserDefaults.standard.bool(forKey: key)
+    }
+
+    static func grant() {
+        UserDefaults.standard.set(true, forKey: key)
+    }
+
+    static func withdraw() {
+        UserDefaults.standard.set(false, forKey: key)
+    }
 }
 
 /// Where ideas for a photo come from: mako in the app, a fixed answer in a demo capture and in tests.
@@ -38,7 +60,9 @@ struct MakoPhotoIdeas: PhotoIdeasProviding {
             let ideas = PhotoIdeas.settle(reply: reply.content)
             return ideas.isEmpty ? .failure(.unavailable) : .success(ideas)
         } catch NetworkError.insufficientCredits {
-            return .failure(.needsCredits)
+            return .failure(.notIncluded)
+        } catch NetworkError.tooManyRequests {
+            return .failure(.resting)
         } catch {
             return .failure(.unavailable)
         }
@@ -64,10 +88,11 @@ struct MakoPhotoIdeas: PhotoIdeasProviding {
     }
 }
 
-/// Holds the ideas for the photo of the current edit. With Plus the ideas are asked for as soon as a photo is
-/// picked, because they cost that person nothing; everyone else is offered them for a credit and nothing is sent
-/// until they tap. A photo is asked about once: its ideas are kept while it stays picked and come back if it is
-/// picked again.
+/// Holds the ideas for the photo of the current edit. Ideas are part of Plus and of the Pixie Week, and cost that
+/// person nothing: once they have agreed to a small copy of the photo being sent, ideas are asked for as soon as a
+/// photo is picked, and until then the row offers them and nothing is sent. Everyone else is shown that ideas come
+/// with Plus. A photo is asked about once: its ideas are kept while it stays picked and come back if it is picked
+/// again.
 @MainActor
 final class PhotoIdeasModel {
 
@@ -76,28 +101,46 @@ final class PhotoIdeasModel {
     var onChange: (() -> Void)?
 
     private let provider: any PhotoIdeasProviding
-    private let hasPlus: @MainActor () async -> Bool
+    private let isIncluded: @MainActor () async -> Bool
+    private let hasAgreed: @MainActor () -> Bool
+    private let agree: @MainActor () -> Void
     private let language: String
     private var photo: UIImage?
-    private var answered: [ObjectIdentifier: [String]] = [:]
+    private var answered: [(photo: UIImage, ideas: [String])] = []
     private var generation = 0
 
-    /// The model the app uses: mako and the ledger's Plus, or in a DEBUG demo capture a fixed answer and Plus
-    /// unless `PX_IDEAS=offer` asks for the offer.
+    /// How many photos keep their ideas, so going back to a photo picked a moment ago asks nothing.
+    private static let rememberedPhotos = 4
+
+    /// The model the app uses: mako, the balance's word on Plus and the Pixie Week, and the stored agreement. In a
+    /// DEBUG demo capture the answer is fixed and `PX_IDEAS` picks the row: `offer` before the agreement, `plus` for
+    /// someone without ideas, anything else the ideas themselves.
     static func standard() -> PhotoIdeasModel {
         #if DEBUG
         if DemoMode.isActive {
-            let offers = ProcessInfo.processInfo.environment["PX_IDEAS"] == "offer"
-            return PhotoIdeasModel(provider: DemoPhotoIdeas(), hasPlus: { !offers })
+            let row = ProcessInfo.processInfo.environment["PX_IDEAS"]
+            if row == "offer" { PhotoIdeasConsent.withdraw() } else { PhotoIdeasConsent.grant() }
+            return PhotoIdeasModel(provider: DemoPhotoIdeas(), isIncluded: { row != "plus" })
         }
         #endif
-        return PhotoIdeasModel(provider: MakoPhotoIdeas(api: APIService.shared), hasPlus: { await CreditPurchaseManager.shared.hasPlus() })
+        return PhotoIdeasModel(provider: MakoPhotoIdeas(api: APIService.shared), isIncluded: {
+            if let edits = CreditBalanceStore.shared.balance?.edits { return edits.includesPhotoIdeas }
+            return await CreditPurchaseManager.shared.hasPlus()
+        })
     }
 
-    init(provider: any PhotoIdeasProviding, language: String = PhotoIdeasModel.languageName, hasPlus: @escaping @MainActor () async -> Bool) {
+    init(
+        provider: any PhotoIdeasProviding,
+        language: String = PhotoIdeasModel.languageName,
+        isIncluded: @escaping @MainActor () async -> Bool,
+        hasAgreed: @escaping @MainActor () -> Bool = { PhotoIdeasConsent.isGranted },
+        agree: @escaping @MainActor () -> Void = { PhotoIdeasConsent.grant() }
+    ) {
         self.provider = provider
         self.language = language
-        self.hasPlus = hasPlus
+        self.isIncluded = isIncluded
+        self.hasAgreed = hasAgreed
+        self.agree = agree
     }
 
     /// The English name of the language the app is shown in, which the ideas are written in.
@@ -106,9 +149,11 @@ final class PhotoIdeasModel {
         return Locale(identifier: "en_US").localizedString(forIdentifier: code) ?? "English"
     }
 
-    /// Whether a picked photo is looked at without a further tap: true with Plus, where ideas cost nothing.
+    /// Whether a picked photo is looked at without a further tap: ideas are part of what the person has and they
+    /// have agreed.
     func looksWithoutAsking() async -> Bool {
-        await hasPlus()
+        guard hasAgreed() else { return false }
+        return await isIncluded()
     }
 
     /// Tells the model which photo the edit is about, or that there is none.
@@ -117,18 +162,32 @@ final class PhotoIdeasModel {
         photo = newPhoto
         generation += 1
         guard let newPhoto else { return set(.hidden) }
-        if let ideas = answered[ObjectIdentifier(newPhoto)] { return set(.ideas(ideas)) }
-        set(.offer)
+        if let known = answered.first(where: { $0.photo === newPhoto }) { return set(.ideas(known.ideas)) }
+        set(.hidden)
         let current = generation
         Task { [weak self] in
-            guard let self, await hasPlus(), current == generation else { return }
-            ask()
+            guard let self else { return }
+            let included = await isIncluded()
+            guard current == generation else { return }
+            if !included {
+                set(.withPlus)
+            } else if hasAgreed() {
+                ask()
+            } else {
+                set(.offer)
+            }
         }
     }
 
-    /// Asks for ideas for the photo, as a tap on the offer or on a failed row does.
+    /// Records that the person agreed to a small copy of the photo being sent and asks: a tap on the offer.
+    func agreeAndAsk() {
+        agree()
+        ask()
+    }
+
+    /// Asks for ideas for the photo, as an agreed pick or a tap on a failed row does.
     func ask() {
-        guard let photo, state != .loading else { return }
+        guard let photo, state != .loading, hasAgreed() else { return }
         generation += 1
         let current = generation
         set(.loading)
@@ -137,14 +196,22 @@ final class PhotoIdeasModel {
             guard let self, current == generation else { return }
             switch result {
             case .success(let ideas):
-                answered[ObjectIdentifier(photo)] = ideas
+                remember(ideas, for: photo)
                 set(.ideas(ideas))
-            case .failure(.needsCredits):
-                set(.needsCredits)
+            case .failure(.notIncluded):
+                set(.withPlus)
+            case .failure(.resting):
+                set(.hidden)
             case .failure(.unavailable):
                 set(.failed)
             }
         }
+    }
+
+    private func remember(_ ideas: [String], for photo: UIImage) {
+        answered.removeAll { $0.photo === photo }
+        answered.append((photo, ideas))
+        if answered.count > Self.rememberedPhotos { answered.removeFirst(answered.count - Self.rememberedPhotos) }
     }
 
     private func set(_ new: PhotoIdeasState) {
