@@ -503,40 +503,16 @@ class FullScreenSuggestionsView: UIView {
     private func createPhotoIdeasSection(environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
         let metrics = Metrics(environment, maxWidth: Self.maxContentWidth(of: .photoIdeas))
         let widths = photoIdeaItems.map { ChipSizing.width(title: PhotoIdeasCopy.title(of: $0), symbol: nil) }
-        let section = NSCollectionLayoutSection(group: singleRowChipsGroup(widths: widths))
+        let section = NSCollectionLayoutSection(group: PhotoIdeasRow.group(widths: widths, height: Self.chipRowHeight))
         section.orthogonalScrollingBehavior = .continuous
         section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: metrics.sideInset, bottom: 0, trailing: metrics.sideInset)
         section.boundarySupplementaryItems = [sectionHeader()]
         return section
     }
 
-    /// Chips side by side on one row that scrolls sideways, so the row costs the screen one line however many
-    /// chips it holds and the edits below it stay in view.
-    private func singleRowChipsGroup(widths: [CGFloat]) -> NSCollectionLayoutGroup {
-        let spacing = Theme.Space.sm
-        var frames: [CGRect] = []
-        var x: CGFloat = 0
-        for width in widths {
-            frames.append(CGRect(x: x, y: 0, width: width, height: Self.chipRowHeight))
-            x += width + spacing
-        }
-        let size = NSCollectionLayoutSize(widthDimension: .absolute(max(1, x - spacing)), heightDimension: .absolute(Self.chipRowHeight))
-        return NSCollectionLayoutGroup.custom(layoutSize: size) { _ in
-            frames.map { NSCollectionLayoutGroupCustomItem(frame: $0) }
-        }
-    }
-
     /// The chips of the ideas row for the state it is in, or none while it is hidden.
     private var photoIdeaItems: [PhotoIdeaItem] {
-        guard selectedPhoto != nil else { return [] }
-        switch photoIdeas {
-        case .hidden: return []
-        case .offer: return [.offer]
-        case .loading: return [.loading]
-        case .ideas(let ideas): return ideas.map(PhotoIdeaItem.idea)
-        case .withPlus: return [.plus]
-        case .failed: return [.tryAgain]
-        }
+        PhotoIdeasRow.items(for: photoIdeas, hasPhoto: selectedPhoto != nil)
     }
 
     /// Shows the ideas row in `state` under the picked photo.
