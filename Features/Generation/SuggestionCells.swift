@@ -2,7 +2,7 @@ import UIKit
 
 extension UIColor {
     /// The same hue, darkened just enough that white text on it reaches `minimumContrast`.
-    func darkenedForWhiteText(minimumContrast: CGFloat = 4.5) -> UIColor {
+    nonisolated func darkenedForWhiteText(minimumContrast: CGFloat = 4.5) -> UIColor {
         var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
         guard getRed(&red, green: &green, blue: &blue, alpha: &alpha) else { return self }
         for _ in 0..<24 {
@@ -15,7 +15,7 @@ extension UIColor {
         return UIColor(red: red, green: green, blue: blue, alpha: alpha)
     }
 
-    private static func relativeLuminance(red: CGFloat, green: CGFloat, blue: CGFloat) -> CGFloat {
+    nonisolated private static func relativeLuminance(red: CGFloat, green: CGFloat, blue: CGFloat) -> CGFloat {
         func linear(_ component: CGFloat) -> CGFloat {
             component <= 0.03928 ? component / 12.92 : pow((component + 0.055) / 1.055, 2.4)
         }

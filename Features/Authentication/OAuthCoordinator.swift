@@ -60,27 +60,32 @@ class OAuthCoordinator: NSObject {
         authSession = ASWebAuthenticationSession(
             url: authURL,
             callbackURLScheme: "pixie"
-        ) { [weak self] callbackURL, error in
-            guard let self = self else { return }
-            if let error = error {
-                if (error as NSError).code == ASWebAuthenticationSessionError.canceledLogin.rawValue {
-                    self.delegate?.oauthCoordinator(self, didCompleteWith: .cancelled)
-                } else {
-                    self.delegate?.oauthCoordinator(self, didCompleteWith: .error(error.localizedDescription))
-                }
-                return
-            }
-            guard let callbackURL = callbackURL else {
-                self.delegate?.oauthCoordinator(self, didCompleteWith: .error(String(localized: "No callback URL received")))
-                return
-            }
-            Task {
-                await self.handleOAuthCallback(url: callbackURL)
+        ) { @Sendable [weak self] callbackURL, error in
+            Task { @MainActor in
+                await self?.finishWebAuthentication(callbackURL: callbackURL, error: error)
             }
         }
         authSession?.presentationContextProvider = self
         authSession?.prefersEphemeralWebBrowserSession = true
         authSession?.start()
+    }
+
+    /// The end of a web sign-in, on the main actor. The session's completion handler is not documented to run on the
+    /// main queue, so it only hops here and does nothing else.
+    private func finishWebAuthentication(callbackURL: URL?, error: Error?) async {
+        if let error {
+            if (error as NSError).code == ASWebAuthenticationSessionError.canceledLogin.rawValue {
+                delegate?.oauthCoordinator(self, didCompleteWith: .cancelled)
+            } else {
+                delegate?.oauthCoordinator(self, didCompleteWith: .error(error.localizedDescription))
+            }
+            return
+        }
+        guard let callbackURL else {
+            delegate?.oauthCoordinator(self, didCompleteWith: .error(String(localized: "No callback URL received")))
+            return
+        }
+        await handleOAuthCallback(url: callbackURL)
     }
     private func authenticateWithGoogle() {
         guard let viewController = presentingViewController else {

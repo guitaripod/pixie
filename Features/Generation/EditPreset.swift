@@ -192,8 +192,9 @@ extension EditPreset {
         }
     }
 
-    /// The preset colour as a two-stop gradient whose darker end still holds a white glyph.
-    var gradientColors: [UIColor] {
+    /// The preset colour as a two-stop gradient whose darker end still holds a white glyph. Nonisolated so its
+    /// providers resolve off the main thread, as the share sheet resolves colours.
+    nonisolated var gradientColors: [UIColor] {
         let base = tint
         let end = UIColor { traits in
             base.resolvedColor(with: traits).darkenedForWhiteText(minimumContrast: 3)
@@ -214,7 +215,7 @@ extension EditPreset {
 }
 
 private extension UIColor {
-    func lightened() -> UIColor {
+    nonisolated func lightened() -> UIColor {
         var hue: CGFloat = 0, saturation: CGFloat = 0, brightness: CGFloat = 0, alpha: CGFloat = 0
         guard getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha) else { return self }
         return UIColor(hue: hue, saturation: max(0, saturation - 0.08), brightness: min(1, brightness + 0.16), alpha: alpha)

@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import UIKit
 
 @testable import Pixie
 
@@ -36,5 +37,19 @@ struct EditPresetSeasonTests {
             #expect(preset?.isPopular == false)
         }
         #expect(EditPreset.preset(id: "headshot")?.isSeasonal == false)
+    }
+
+    @Test func everyPresetGradientResolvesOffTheMainThreadAsTheShareSheetResolvesColours() async {
+        let gradients = EditPreset.all(on: day(12, 1)).map(\.gradientColors)
+        let resolved = await Task.detached {
+            gradients.flatMap { colors in
+                colors.flatMap { color in
+                    [color.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light)),
+                     color.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))]
+                }
+            }
+        }.value
+
+        #expect(resolved.count == gradients.count * 4)
     }
 }
