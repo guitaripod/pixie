@@ -58,21 +58,18 @@ extension ChatGenerationViewController {
     }
     
     @objc private func saveCurrentImage() {
-        if let lastMessage = viewModel.messages.last,
-           !lastMessage.isUser,
-           let images = lastMessage.images,
-           let firstImage = images.first {
-            UIImageWriteToSavedPhotosAlbum(firstImage, self, #selector(image(_:didFinishSavingWithError:contextInfo:)), nil)
-        }
-    }
-    
-    @objc private func image(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
-        if error != nil {
-            haptics.notification(.error)
-            Announce.say(String(localized: "Save Failed"))
-        } else {
-            haptics.notification(.success)
-            Announce.say(String(localized: "Saved to Photos"))
+        guard let lastMessage = viewModel.messages.last,
+              !lastMessage.isUser,
+              let firstImage = lastMessage.images?.first else { return }
+        PhotoSavingService.shared.saveToLibrary([firstImage]) { [weak self] result in
+            switch result {
+            case .success:
+                self?.haptics.notification(.success)
+                Announce.say(String(localized: "Saved to Photos"))
+            case .failure:
+                self?.haptics.notification(.error)
+                Announce.say(String(localized: "Save Failed"))
+            }
         }
     }
     

@@ -52,12 +52,7 @@ class PhotoSavingService {
     /// so the images are never lost to an album problem.
     private func writeAssets(_ images: [UIImage], into album: PHAssetCollection?) async -> Result<Void, PhotoSavingError> {
         do {
-            try await PHPhotoLibrary.shared().performChanges {
-                let placeholders = images.compactMap { PHAssetChangeRequest.creationRequestForAsset(from: $0).placeholderForCreatedAsset }
-                if let album, let albumRequest = PHAssetCollectionChangeRequest(for: album) {
-                    albumRequest.addAssets(placeholders as NSArray)
-                }
-            }
+            try await Self.commitAssets(images, into: album)
             return .success(())
         } catch {
             guard album != nil else {
@@ -100,16 +95,32 @@ class PhotoSavingService {
     }
     
     private func createAlbum() async -> Result<PHAssetCollection, PhotoSavingError> {
-        let name = albumName
         do {
-            try await PHPhotoLibrary.shared().performChanges {
-                _ = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: name)
-            }
+            try await Self.commitAlbum(named: albumName)
         } catch {
             return .failure(.albumCreationFailed)
         }
         guard let album = fetchAlbum() else { return .failure(.albumCreationFailed) }
         pixieAlbum = album
         return .success(album)
+    }
+
+    /// Creates the assets, and adds them to `album` when one is given. Nonisolated because Photos runs the change
+    /// block on a queue of its own: a block written in a main actor method would be main actor isolated, and Swift 6
+    /// stops the app the moment Photos calls it.
+    nonisolated private static func commitAssets(_ images: [UIImage], into album: PHAssetCollection?) async throws {
+        try await PHPhotoLibrary.shared().performChanges {
+            let placeholders = images.compactMap { PHAssetChangeRequest.creationRequestForAsset(from: $0).placeholderForCreatedAsset }
+            if let album, let albumRequest = PHAssetCollectionChangeRequest(for: album) {
+                albumRequest.addAssets(placeholders as NSArray)
+            }
+        }
+    }
+
+    /// Creates the album called `name`, nonisolated for the same reason as `commitAssets`.
+    nonisolated private static func commitAlbum(named name: String) async throws {
+        try await PHPhotoLibrary.shared().performChanges {
+            _ = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: name)
+        }
     }
 }
