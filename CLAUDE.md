@@ -60,7 +60,7 @@ cd android && ./gradlew compileDebugSources
 
 - Raw captures: `marketing/shoot.sh` (DEBUG `PX_DEMO` screens on the iPhone 17 Pro Max and iPad Pro 13" simulators; iPad with `PX_RAW_SUBDIR=ipad`). Composition: `marketing/compose_screenshots.py [--ipad]`.
 - Frame every device type with the `frames` CLI (the `frames-cli` skill), never a hand-drawn bezel: `compose_screenshots.py` calls `frames --json -o <dir> -c Black <raw.png>` and only adds the gradient, captions and shadow. Run `frames doctor` first.
-- Copy lives in `marketing/listing/<locale>.json` (the single source); store push with `listing_to_metadata.py` + `asc metadata push`, screenshots with `asc screenshots upload --device-type IPHONE_67|IPAD_PRO_3GEN_129 --replace --confirm`. Screenshots are locked once a version is submitted.
+- Store copy lives in `store/metadata/ios/` and goes out with `midgar listing pixiepocket` and `midgar whatsnew` (the canonical source since D13); `marketing/listing/<locale>.json` holds only the screenshot captions `compose_screenshots.py` reads. Screenshots upload with `asc screenshots upload --device-type IPHONE_67|IPAD_PRO_3GEN_129 --replace --confirm`. Screenshots are locked once a version is submitted.
 
 # No Code comments
 - DO NOT ADD CODE COMMENTS. THEY ARE BLOAT!!
