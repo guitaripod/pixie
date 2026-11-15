@@ -71,4 +71,11 @@ struct EditPriceTests {
         #expect(PixieWeek.reminderDate(endsAt: end, now: now) == end.addingTimeInterval(-2 * 86_400))
         #expect(PixieWeek.reminderDate(endsAt: end, now: end.addingTimeInterval(-86_400)) == nil)
     }
+
+    @Test func aRecordAmountReadsAsWholeEditsWhateverItsSign() {
+        #expect(EditPrice.roundedEdits(ofCredits: 0) == 0)
+        #expect(EditPrice.roundedEdits(ofCredits: 41) == 2)
+        #expect(EditPrice.roundedEdits(ofCredits: -21) == 1)
+        #expect(EditPrice.roundedEdits(ofCredits: Int.min) > 0)
+    }
 }

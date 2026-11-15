@@ -40,7 +40,7 @@ nonisolated enum EditPrice {
     /// amount: records from before edits priced Nano Banana Pro at 41 credits, which reads as two edits.
     static func roundedEdits(ofCredits credits: Int) -> Int {
         guard credits != 0 else { return 0 }
-        return max(1, Int((Double(abs(credits)) / Double(fallbackCreditsPerEdit)).rounded()))
+        return max(1, Int((Double(credits.magnitude) / Double(fallbackCreditsPerEdit)).rounded()))
     }
 
     /// "1 edit", "5 edits", in the person's language.
