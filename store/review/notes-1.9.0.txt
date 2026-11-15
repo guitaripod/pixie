@@ -1,0 +1,23 @@
+What changed in 1.9.0: ideas for your photo. Once a photo is picked, a row under it offers three edits that fit that photo, and tapping one puts it in the prompt bar. Ideas are included in the Pixie Week and in PixiePocket Plus. Nothing is sent before the person agrees: the row first says that a small copy of the photo goes to Anthropic's Claude, which writes the ideas, and that Pixie's servers keep no copy; tapping "Suggest 3 Edits" is the agreement. Settings > Photo Ideas turns ideas off, and withdrawing the AI consent in Settings withdraws it too. Without the Pixie Week or Plus the row shows a "See Plus" chip that opens the store.
+
+This build also fixes the crash I reproduced while following these notes: tapping "Save" under a result closed the app. Saving to Photos now works with add-only and with full photo access, and Command-S on an iPad keyboard saves through the same path.
+
+No account or sign-in is required: the app starts anonymously.
+
+Prices (US), unchanged from 1.8.0: PixiePocket Plus is a weekly auto-renewing subscription at $6.99 a week with 60 edits a week and no free trial. Consumable packs: 10 edits $2.99, 40 edits $9.99, 120 edits $24.99. An image costs 1 edit on Standard and 5 on Max. Photo ideas cost nothing.
+
+Pixie Week: the first successful edit on an account starts it. For 7 days, 5 Standard edits a day are free, decided by our server. A device new to PixiePocket starts its week on its first edit, so it will be in day 1. A device that made an edit while reviewing an earlier version keeps the week it started then: one that reviewed 1.8.2 around November 13, 2026 is in it until 7 days after that edit, and one that reviewed 1.8.0 or 1.8.1 in early November has finished it, so its edits come from Plus or a pack and the ideas row shows "See Plus".
+
+How to test:
+1. Launch the app and finish the three onboarding pages; the last one explains the Pixie Week and asks for consent to send prompts and photos to Google Gemini and OpenAI (Guideline 5.1.2(i)).
+2. Tap "Try a sample photo" (or "Choose a photo" and pick any photo in the system photo picker; no photo-library permission is requested to pick one). Under the photo, "Ideas for this photo" shows "Suggest 3 Edits" with the sharing line above it. Tap it to agree; three ideas arrive in a few seconds. Tap one to put it in the prompt bar, then tap the arrow to make the edit.
+3. Or, under "Popular edits", tap any edit (for example "Pro headshot") and choose a photo. The edited image arrives in about 15-40 seconds. During the Pixie Week the line under the prompt bar reads "Free today · N left". After the first edit an alert announces the week; "Remind me before it ends" asks for notification permission and schedules one reminder two days before the end.
+4. Under the result, "Save" saves it to Photos (the first save asks for permission to add photos), "Share" shares it and "Compare" shares a before and after.
+5. Tap "Edits" at the top right to open the store: PixiePocket Plus is preselected at the top, the three packs are below it. The renewal terms (weekly, cancel in Settings), the Privacy Policy and the Terms of Use are on the same screen.
+6. Settings > Photo Ideas switches ideas off and on.
+7. The sliders button in the prompt bar opens the options: Standard or Max. Max costs 5 edits.
+8. The in-app event deep link pixie://preset/holiday opens the Holiday card edit and its photo picker.
+
+Images are private to each user; there is no public gallery. Every request passes provider content moderation, and a declined or failed request never costs an edit.
+
+Sign in with Apple is optional and only syncs images and edits across devices; any Apple ID works.
