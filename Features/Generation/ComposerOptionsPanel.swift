@@ -764,24 +764,47 @@ final class ComposerOptionsPanel: UIView {
         refitHeight()
     }
 
+    /// Measures the panel at `width` before it is shown, so it opens at its content's height in the pass
+    /// that reveals it rather than waiting for a later pass to measure it. Returns whether the height changed.
+    @discardableResult
+    func fit(toWidth width: CGFloat) -> Bool {
+        guard let wanted = wantedHeight(forWidth: width), abs(fittedHeight.constant - wanted) > 0.5 else { return false }
+        fittedHeight.constant = wanted
+        return true
+    }
+
+    /// Whether the panel on screen stands shorter than its content and the screen allow, which no
+    /// settled layout should leave it.
+    var isShortOfItsContent: Bool {
+        guard !isHidden, let wanted = wantedHeight(forWidth: bounds.width) else { return false }
+        return bounds.height < min(wanted, maxHeightConstraint.constant) - 1
+    }
+
     /// The panel is exactly as tall as its content, or as tall as the screen allows with the rest
     /// scrolling. Measuring the content once its cards have a width and have told their labels how
     /// wide they are keeps the height from depending on which layout pass ran first.
     private func refitHeight() {
-        let width = bounds.width - Theme.Space.lg * 2
-        guard width > 0 else { return }
-        let fitting = content.systemLayoutSizeFitting(
-            CGSize(width: width, height: UIView.layoutFittingCompressedSize.height),
-            withHorizontalFittingPriority: .required,
-            verticalFittingPriority: .fittingSizeLevel
-        ).height
-        let wanted = ceil(Self.grabberHeight + Self.contentTopInset + fitting + Self.contentBottomInset)
+        guard let wanted = wantedHeight(forWidth: bounds.width) else { return }
         if abs(fittedHeight.constant - wanted) > 0.5 {
             fittedHeight.constant = wanted
             superview?.setNeedsLayout()
         } else if !isHidden, abs(bounds.height - min(wanted, maxHeightConstraint.constant)) > 1 {
             superview?.setNeedsLayout()
         }
+    }
+
+    /// The grabber, the insets and the content measured at `panelWidth`, or nil while there is no width to
+    /// measure at or the measurement is not a usable height.
+    private func wantedHeight(forWidth panelWidth: CGFloat) -> CGFloat? {
+        let width = panelWidth - Theme.Space.lg * 2
+        guard width > 0 else { return nil }
+        let fitting = content.systemLayoutSizeFitting(
+            CGSize(width: width, height: UIView.layoutFittingCompressedSize.height),
+            withHorizontalFittingPriority: .required,
+            verticalFittingPriority: .fittingSizeLevel
+        ).height
+        guard fitting.isFinite, fitting > 0 else { return nil }
+        return ceil(Self.grabberHeight + Self.contentTopInset + fitting + Self.contentBottomInset)
     }
 
     /// A panel that shows or hides groups can finish its animation without any layout pass seeing the

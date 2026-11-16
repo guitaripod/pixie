@@ -1,3 +1,4 @@
+import MidgarCore
 import PixiepocketCore
 import UIKit
 
@@ -516,6 +517,7 @@ class ChatInputBar: UIView {
 
         let hiddenTransform = CGAffineTransform(translationX: 0, y: 18)
         if expanded, changed {
+            panel.fit(toWidth: column.bounds.width)
             panel.alpha = 0
             panel.transform = hiddenTransform
             panel.isHidden = false
@@ -529,14 +531,25 @@ class ChatInputBar: UIView {
         if animated {
             Motion.spring(0.4, damping: 0.82, options: [.beginFromCurrentState], animations: apply) { _ in
                 if !self.isExpanded { self.panel.transform = .identity }
+                self.settleOpenPanel()
             }
         } else {
             if expanded { panel.isHidden = false }
             apply()
             if !expanded { panel.transform = .identity }
+            settleOpenPanel()
         }
         if changed && movesFocus { moveAccessibilityFocus(afterExpanding: expanded) }
         if changed { onExpandedChanged?(expanded) }
+    }
+
+    /// Checks the open panel once it has finished opening and lays the bar out again at once when it stands shorter
+    /// than its content: a first run on an iPhone once left it at its grabber's height with no options in it.
+    private func settleOpenPanel() {
+        guard isExpanded, panel.isShortOfItsContent else { return }
+        MidgarLog.notice("Options panel settled short of its content at \(panel.bounds.height) pt; refitting", category: .ui)
+        panel.fit(toWidth: column.bounds.width)
+        layoutFromTopOfHierarchy()
     }
 
     private func textDidChange() {
