@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import MidgarCore
 import PixiepocketCore
 import UIKit
 
@@ -21,10 +22,19 @@ enum GenerationError: LocalizedError {
     case invalidImage
     case fileTooLarge
     case modelDeclined
+    case unavailableInRegion
     case unknown(String)
-    
+
+    /// True for the refusal of Midgar's servers for the country the device connects from, which blames no one.
+    var isUnavailableInRegion: Bool {
+        if case .unavailableInRegion = self { return true }
+        return false
+    }
+
     var errorDescription: String? {
         switch self {
+        case .unavailableInRegion:
+            return MidgarModelRegion.unavailableMessage
         case .insufficientCredits(let required, let available):
             return String(localized: "Not enough edits for this. Get more in the store.")
         case .unauthorized:
@@ -347,6 +357,8 @@ class GenerationService {
                 return .networkError
             case .modelDeclined:
                 return .modelDeclined
+            case .unavailableInRegion:
+                return .unavailableInRegion
             case .invalidResponse:
                 return .unknown(String(localized: "Invalid response from server"))
             default:

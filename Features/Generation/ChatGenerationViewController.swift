@@ -12,9 +12,11 @@ class ChatGenerationViewController: UIViewController {
         case chat
     }
     private var currentState: ViewState = .suggestions
-    private let suggestionsView = FullScreenSuggestionsView()
+    let suggestionsView = FullScreenSuggestionsView()
     let chatView = ChatTableView()
     let inputBar = ChatInputBar()
+    let regionNotice = UILabel()
+    var modelRegionObserver: ModelFeatureObservation?
     private let selectedSuggestionsManager = SelectedSuggestionsManager()
     private let photoIdeas = PhotoIdeasModel.standard()
     private var toolbarMode: ToolbarMode = .generate
@@ -28,7 +30,7 @@ class ChatGenerationViewController: UIViewController {
     private let offlineBanner = OfflineBanner()
     private let keyboardTracker = KeyboardOverlapView()
     private let creditsViewModel = CreditsViewModel()
-    private let topBar = ChatTopBar()
+    let topBar = ChatTopBar()
     private let topFade = EdgeFadeView(edge: .top)
     private let topBand: UIView = {
         let band = UIView()
@@ -65,6 +67,7 @@ class ChatGenerationViewController: UIViewController {
         setupNotificationObserver()
         setupKeyboardCommands()
         setupDragAndDrop()
+        setupModelRegion()
         transitionToState(.suggestions, animated: false)
     }
 
@@ -117,7 +120,7 @@ class ChatGenerationViewController: UIViewController {
     /// for a fresh photo rather than spending credits on whatever image was last held.
     private func consumePresetLink() {
         guard viewIfLoaded?.window != nil, presentedViewController == nil, !viewModel.isGenerating,
-              let preset = PresetLink.take() else { return }
+              let preset = PresetLink.take(), ModelFeatures.isAvailable else { return }
         if case .edit = toolbarMode {
             switchToGenerateMode()
         }
@@ -127,7 +130,7 @@ class ChatGenerationViewController: UIViewController {
     }
 
     private func presentOnboardingIfNeeded() {
-        guard !onboardingShown, !Onboarding.isCompleted, presentedViewController == nil else { return }
+        guard !onboardingShown, !Onboarding.isCompleted, ModelFeatures.isAvailable, presentedViewController == nil else { return }
         onboardingShown = true
         let onboarding = OnboardingViewController()
         onboarding.modalPresentationStyle = .fullScreen
@@ -418,7 +421,7 @@ class ChatGenerationViewController: UIViewController {
             PixieWeek.cancelReminder()
         }
         guard presentedViewController == nil, view.window != nil,
-              let moment = PixieWeek.shared.moment(for: balance?.edits?.runway) else { return }
+              let moment = PixieWeek.shared.moment(for: balance?.edits?.runway, modelsAvailable: ModelFeatures.isAvailable) else { return }
         PixieWeek.shared.present(moment, from: self)
     }
 
@@ -696,6 +699,7 @@ class ChatGenerationViewController: UIViewController {
     /// Opens the store instead of sending a request nothing pays for: Plus and the Pixie Week cover what they can,
     /// then the balance; an unknown balance lets the request through and the server's 402 decides.
     private func canPay(tier: ImageModel, images: Int = 1) -> Bool {
+        guard ModelFeatures.isAvailable else { return false }
         let balance = creditsViewModel.balance
         guard case .balance(let edits, affordable: false) = EditPrice.funding(tier: tier, images: images, balance: balance) else {
             return true
@@ -801,7 +805,7 @@ class ChatGenerationViewController: UIViewController {
     }
     private func showError(_ error: GenerationError) {
         Announce.say(error.localizedDescription)
-        // Dismiss any existing alert first
+        guard !error.isUnavailableInRegion else { return }
         if presentedViewController is UIAlertController {
             dismiss(animated: false) { [weak self] in
                 self?.presentErrorAlert(error)
@@ -924,7 +928,7 @@ class ChatGenerationViewController: UIViewController {
         inputBar.clear()
     }
     @objc private func imageSelectedForEdit(_ notification: Notification) {
-        guard let imageMetadata = notification.userInfo?["image"] as? ImageMetadata else { return }
+        guard ModelFeatures.isAvailable, let imageMetadata = notification.userInfo?["image"] as? ImageMetadata else { return }
         
         if let url = URL(string: imageMetadata.url) {
             ImageDownloadClient.shared.data(from: url) { [weak self] data in

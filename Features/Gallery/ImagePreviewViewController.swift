@@ -8,6 +8,7 @@ class ImagePreviewViewController: UIViewController {
         self?.editButtonTapped()
     }
     private var image: UIImage
+    private var modelRegionObserver: ModelFeatureObservation?
     var onEditConfirmed: (() -> Void)?
     init(image: UIImage) {
         self.image = image
@@ -47,6 +48,16 @@ class ImagePreviewViewController: UIViewController {
         editButton.accessibilityLabel = String(localized: "Edit this image")
         editButton.setupPointerInteraction()
         view.addSubview(editButton)
+        setEditHidden(!ModelFeatures.isAvailable)
+        modelRegionObserver = ModelFeatureObservation { [weak self] in
+            self?.setEditHidden(!ModelFeatures.isAvailable)
+        }
+    }
+
+    /// Editing is one of the model features: where they do not work the preview is only for looking.
+    private func setEditHidden(_ hidden: Bool) {
+        scrimView.isHidden = hidden
+        editButton.isHidden = hidden
     }
     private func setupConstraints() {
         var constraints = [

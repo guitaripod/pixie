@@ -181,7 +181,7 @@ final class GalleryImageCell: UICollectionViewCell {
             (String(localized: "Delete"), .delete),
             (String(localized: "Copy Prompt"), .copyPrompt),
             (String(localized: "Edit"), .useForEdit)
-        ]
+        ].filter { ModelFeatures.isAvailable || $0.1 != .useForEdit }
         return entries.map { name, action in
             UIAccessibilityCustomAction(name: name) { [weak self] _ in
                 self?.onAction?(action)

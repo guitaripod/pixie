@@ -132,7 +132,7 @@ private final class WhySignInViewController: UIViewController {
             ("photo.on.rectangle.angled", String(localized: "Back up your images")),
             ("creditcard", String(localized: "Keep your edits if you switch phones")),
             ("lock.shield", String(localized: "Secure and private")),
-        ]
+        ].filter { ModelFeatures.isAvailable || $0.0 != "creditcard" }
         let list = UIStackView(arrangedSubviews: benefits.map(makeBenefitRow))
         list.axis = .vertical
         list.spacing = Theme.Space.lg

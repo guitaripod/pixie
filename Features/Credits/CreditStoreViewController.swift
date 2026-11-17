@@ -1,5 +1,6 @@
 import Combine
 import MidgarCommerce
+import MidgarCore
 import UIKit
 
 /// One choice on the store screen: PixiePocket Plus or a pack of edits.
@@ -77,6 +78,7 @@ final class CreditStoreViewController: UIViewController {
     private static let shortSheetHeight: CGFloat = 560
 
     private var hasNotedShown = false
+    private var modelRegionObserver: ModelFeatureObservation?
 
     init(shortfall: Int? = nil) {
         self.shortfall = shortfall
@@ -88,6 +90,10 @@ final class CreditStoreViewController: UIViewController {
 
     /// Opens the store; `shortfall` is how many edits the request in hand is short of.
     static func present(from presenter: UIViewController, shortfall: Int? = nil) {
+        guard ModelFeatures.isAvailable else {
+            presentUnavailable(from: presenter)
+            return
+        }
         let store = CreditStoreViewController(shortfall: shortfall)
         let navigation = UINavigationController(rootViewController: store)
         navigation.modalPresentationStyle = .pageSheet
@@ -97,6 +103,13 @@ final class CreditStoreViewController: UIViewController {
             sheet.preferredCornerRadius = Theme.Radius.sheet
         }
         presenter.present(navigation, animated: true)
+    }
+
+    /// Where model features do not work the packs and Plus are not offered at all; the neutral line stands in for them.
+    private static func presentUnavailable(from presenter: UIViewController) {
+        let alert = UIAlertController(title: nil, message: MidgarModelRegion.unavailableMessage, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default))
+        presenter.present(alert, animated: true)
     }
 
     private lazy var scrollView = ColumnScrollView(spacing: Theme.Space.md, topInset: Theme.Space.sm, bottomInset: Theme.Space.xl)
@@ -261,6 +274,10 @@ final class CreditStoreViewController: UIViewController {
         navigationItem.leftBarButtonItem?.accessibilityLabel = String(localized: "Edits & Usage")
         layoutUI()
         buildHeader()
+        modelRegionObserver = ModelFeatureObservation { [weak self] in
+            guard !ModelFeatures.isAvailable else { return }
+            self?.dismiss(animated: true)
+        }
         #if DEBUG
         if DemoMode.isActive {
             applyDemoPacks()

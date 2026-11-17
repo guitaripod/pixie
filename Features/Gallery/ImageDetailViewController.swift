@@ -32,6 +32,7 @@ final class ImageDetailViewController: UIViewController {
     private let closeGlass = GlassMaterial.cardView(cornerRadius: 22, interactive: true)
     private var moreTile: ActionTile!
     private var actionTiles: [ActionTile] = []
+    private var modelRegionObserver: ModelFeatureObservation?
     private var facts: [(title: String, value: String)] = []
     private var loadFailureView: StateView!
     private var loadedImage: UIImage?
@@ -340,6 +341,10 @@ final class ImageDetailViewController: UIViewController {
         moreTile.showsMenuAsPrimaryAction = true
 
         actionTiles = [editTile, copyTile, saveTile, shareTile]
+        editTile.isHidden = !ModelFeatures.isAvailable
+        modelRegionObserver = ModelFeatureObservation { [weak editTile] in
+            editTile?.isHidden = !ModelFeatures.isAvailable
+        }
         tilesStackView.axis = .horizontal
         tilesStackView.distribution = .fillEqually
         tilesStackView.spacing = Theme.Space.sm

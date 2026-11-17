@@ -88,6 +88,7 @@ private final class OnboardingPageIndicator: UIView {
 
 final class OnboardingViewController: UIViewController {
     var onFinished: (() -> Void)?
+    private var modelRegionObserver: ModelFeatureObservation?
     private var isWaiting = false
     private var isShortLayout = false
     private var bottomStack: UIStackView!
@@ -168,6 +169,10 @@ final class OnboardingViewController: UIViewController {
         view.overrideUserInterfaceStyle = .dark
         isModalInPresentation = true
         applyMargins()
+        modelRegionObserver = ModelFeatureObservation { [weak self] in
+            guard !ModelFeatures.isAvailable else { return }
+            self?.onFinished?()
+        }
 
         let backdrop = InkBackdropView()
         backdrop.translatesAutoresizingMaskIntoConstraints = false

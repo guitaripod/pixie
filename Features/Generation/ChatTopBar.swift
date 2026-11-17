@@ -165,6 +165,10 @@ final class ChatTopBar: UIView {
         })
     }
 
+    func setCreditsHidden(_ hidden: Bool) {
+        creditPill.isHidden = hidden
+    }
+
     func setCredits(text: String, isLow: Bool, value: String?) {
         creditPill.configure(text: text, isLow: isLow, accessibilityLabel: String(localized: "Edits"), hint: String(localized: "Opens the store"))
         creditPill.accessibilityValue = value

@@ -52,17 +52,26 @@ struct EditPriceTests {
         let defaults = UserDefaults(suiteName: "EditPriceTests-\(UUID().uuidString)")!
         let week = PixieWeek(defaults: defaults)
 
-        #expect(week.moment(for: runway(.available, today: 5)) == nil)
-        #expect(week.moment(for: runway(.ended, today: 0)) == nil)
-        guard case .started(5, 7, _) = week.moment(for: runway(.active, today: 4, endsAt: "2026-11-09T10:00:00Z")) else {
+        #expect(week.moment(for: runway(.available, today: 5), modelsAvailable: true) == nil)
+        #expect(week.moment(for: runway(.ended, today: 0), modelsAvailable: true) == nil)
+        guard case .started(5, 7, _) = week.moment(for: runway(.active, today: 4, endsAt: "2026-11-09T10:00:00Z"), modelsAvailable: true) else {
             Issue.record("the running week is announced")
             return
         }
         defaults.set(true, forKey: "pixieWeek.announced")
-        #expect(week.moment(for: runway(.active, today: 3)) == nil)
-        #expect(week.moment(for: runway(.ended, today: 0)) == .ended)
+        #expect(week.moment(for: runway(.active, today: 3), modelsAvailable: true) == nil)
+        #expect(week.moment(for: runway(.ended, today: 0), modelsAvailable: true) == .ended)
         defaults.set(true, forKey: "pixieWeek.endNoted")
-        #expect(week.moment(for: runway(.ended, today: 0)) == nil)
+        #expect(week.moment(for: runway(.ended, today: 0), modelsAvailable: true) == nil)
+    }
+
+    @Test func noPixieWeekMomentIsOwedWhereModelFeaturesDoNotWork() {
+        let defaults = UserDefaults(suiteName: "EditPriceTests-\(UUID().uuidString)")!
+        let week = PixieWeek(defaults: defaults)
+
+        #expect(week.moment(for: runway(.active, today: 4, endsAt: "2026-11-09T10:00:00Z"), modelsAvailable: false) == nil)
+        defaults.set(true, forKey: "pixieWeek.announced")
+        #expect(week.moment(for: runway(.ended, today: 0), modelsAvailable: false) == nil)
     }
 
     @Test func theReminderFiresTwoDaysBeforeTheEndAndNeverInThePast() throws {

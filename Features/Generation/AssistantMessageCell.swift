@@ -352,11 +352,13 @@ class AssistantMessageCell: ChatColumnCell {
             },
             makeCustomAction(String(localized: "Share")) { cell in
                 cell.delegate?.assistantMessageCell(cell, didRequest: .share, imageIndex: index, from: imageView)
-            },
-            makeCustomAction(String(localized: "Edit Image")) { cell in
-                cell.delegate?.assistantMessageCell(cell, didSelectImageForEdit: index)
             }
         ]
+        if ModelFeatures.isAvailable {
+            actions.append(makeCustomAction(String(localized: "Edit Image")) { cell in
+                cell.delegate?.assistantMessageCell(cell, didSelectImageForEdit: index)
+            })
+        }
         if canCompare {
             actions.append(makeCustomAction(String(localized: "Before & after")) { cell in
                 cell.delegate?.assistantMessageCell(cell, didRequest: .beforeAfter, imageIndex: index, from: imageView)
@@ -433,7 +435,10 @@ extension AssistantMessageCell: UIContextMenuInteractionDelegate {
                 UIPasteboard.general.image = image
                 HapticManager.shared.impact(.success)
             }
-            return UIMenu(title: "", children: canCompare ? [edit, save, share, compare, copy] : [edit, save, share, copy])
+            var children = [save, share, copy]
+            if canCompare { children.insert(compare, at: 1) }
+            if ModelFeatures.isAvailable { children.insert(edit, at: 0) }
+            return UIMenu(title: "", children: children)
         }
     }
 

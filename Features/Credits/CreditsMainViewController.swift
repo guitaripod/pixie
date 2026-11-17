@@ -24,6 +24,7 @@ class CreditsMainViewController: UIViewController {
     private var freshnessTimer: Timer?
     private var isShowingBalanceError = false
     private var hasAnnouncedLowBalance = false
+    private var modelRegionObserver: ModelFeatureObservation?
 
     init(viewModel: CreditsViewModel? = nil) {
         self.viewModel = viewModel ?? CreditsViewModel()
@@ -175,6 +176,10 @@ class CreditsMainViewController: UIViewController {
                 self?.renderBalance()
             }
             .store(in: &cancellables)
+
+        modelRegionObserver = ModelFeatureObservation { [weak self] in
+            self?.renderBalance()
+        }
     }
 
     private func startFreshnessTimer() {
@@ -202,6 +207,7 @@ class CreditsMainViewController: UIViewController {
         let isLoadingFirstBalance = viewModel.isLoadingBalance && balance == nil
 
         hero.setLoading(isLoadingFirstBalance)
+        hero.buyButton.isHidden = !ModelFeatures.isAvailable
         hero.setAmount(balance.map(EditPrice.edits(of:)), animated: isViewLoaded && view.window != nil)
         updateStatusLines(for: balance)
         updateFreshness()
@@ -217,17 +223,20 @@ class CreditsMainViewController: UIViewController {
             return
         }
 
-        hero.imagesText = Self.planText(for: balance.edits)
+        let modelsAvailable = ModelFeatures.isAvailable
+        hero.imagesText = Self.planText(for: balance.edits, modelsAvailable: modelsAvailable)
         hero.freeText = nil
 
         let edits = EditPrice.edits(of: balance)
         let isCovered = balance.edits?.premium != nil || balance.edits?.runway?.isOpen == true
         hero.lowIsEmpty = edits == 0 && !isCovered
-        hero.lowText = isCovered ? nil : lowBalanceText(for: edits)
+        hero.lowText = isCovered || !modelsAvailable ? nil : lowBalanceText(for: edits)
     }
 
-    /// What pays for edits besides the balance: Plus this week, or the Pixie Week before, during and after it.
-    static func planText(for summary: EditsSummary?, now: Date = Date()) -> String? {
+    /// What pays for edits besides the balance: Plus this week, or the Pixie Week before, during and after it. Neither
+    /// is described where model features do not work.
+    static func planText(for summary: EditsSummary?, now: Date = Date(), modelsAvailable: Bool) -> String? {
+        guard modelsAvailable else { return nil }
         if let premium = summary?.premium {
             return String(localized: "Plus · \(premium.remaining) of \(premium.limit) edits left this week")
         }
@@ -319,7 +328,7 @@ class CreditsMainViewController: UIViewController {
     }
 
     private func updateLowCreditWarning(_ showWarning: Bool) {
-        guard showWarning else {
+        guard showWarning, ModelFeatures.isAvailable else {
             hasAnnouncedLowBalance = false
             return
         }

@@ -29,6 +29,9 @@ class SettingsViewController: UIViewController {
     private var consentSwitch: UISwitch?
     private var consentRow: SettingsRowView?
     private var ideasSwitch: UISwitch?
+    private var photoIdeasRow: UIView?
+    private var defaultsSection: UIView?
+    private var modelRegionObserver: ModelFeatureObservation?
     private var cacheRow: SettingsRowView?
     private var connectionRow: SettingsRowView?
     private var deleteRow: SettingsRowView?
@@ -129,7 +132,9 @@ class SettingsViewController: UIViewController {
         column.stack.addArrangedSubview(makeMidgarEntry())
         column.stack.addArrangedSubview(makeAccountSection())
         column.stack.addArrangedSubview(makeAppearanceSection())
-        column.stack.addArrangedSubview(makeDefaultsSection())
+        let defaults = makeDefaultsSection()
+        defaultsSection = defaults
+        column.stack.addArrangedSubview(defaults)
         column.stack.addArrangedSubview(makePrivacySection())
         column.stack.addArrangedSubview(makeSupportSection())
         if isAdmin {
@@ -137,6 +142,10 @@ class SettingsViewController: UIViewController {
         }
         column.stack.addArrangedSubview(makeDangerSection())
 
+        modelRegionObserver = ModelFeatureObservation { [weak self] in
+            self?.applyModelRegion()
+        }
+        applyModelRegion()
         refreshFromConfiguration()
         refreshConsent()
         updateAdaptiveAxes()
@@ -298,6 +307,7 @@ class SettingsViewController: UIViewController {
         let ideas = SettingsRowView(title: PhotoIdeasCopy.settingsTitle, subtitle: PhotoIdeasCopy.sharing, symbol: "sparkles")
         ideas.setAccessory(ideasSwitch)
         ideas.isAccessibilityElement = false
+        photoIdeasRow = ideas
 
         let cache = SettingsRowView(title: String(localized: "Image Cache"), symbol: "internaldrive.fill", value: cacheSize)
         cacheRow = cache
@@ -373,6 +383,13 @@ class SettingsViewController: UIViewController {
         for (candidate, card) in modelCards {
             card.isSelected = candidate == model
         }
+    }
+
+    /// The model defaults and the photo ideas switch go where model features do not work; the cloud AI consent stays,
+    /// as the disclosure of what is shared.
+    private func applyModelRegion() {
+        defaultsSection?.isHidden = !ModelFeatures.isAvailable
+        photoIdeasRow?.isHidden = !ModelFeatures.isAvailable
     }
 
     private func refreshConsent() {

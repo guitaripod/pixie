@@ -106,6 +106,7 @@ nonisolated final class PixieMidgar: Sendable {
             return
         }
         MidgarSignals.configure(configuration: MidgarHTTPConfiguration(appID: Self.appID))
+        ModelFeatures.startTracking()
         let identity = identity
         let store = store
         Task {

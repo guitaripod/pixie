@@ -23,6 +23,8 @@ enum PhotoIdeasFailure: Error, Equatable {
     /// Today's allowance of ideas is used.
     case resting
     case unavailable
+    /// Midgar's servers refuse model features for the country the device connects from.
+    case unavailableInRegion
 }
 
 /// Whether the person agreed that a small copy of a picked photo goes to Anthropic's Claude for ideas. It is its own
@@ -59,6 +61,8 @@ struct MakoPhotoIdeas: PhotoIdeasProviding {
             let reply = try await api.photoIdeas(PhotoIdeasRequest(jpeg: jpeg, language: language, idempotencyKey: UUID().uuidString))
             let ideas = PhotoIdeas.settle(reply: reply.content)
             return ideas.isEmpty ? .failure(.unavailable) : .success(ideas)
+        } catch NetworkError.unavailableInRegion {
+            return .failure(.unavailableInRegion)
         } catch NetworkError.insufficientCredits {
             return .failure(.notIncluded)
         } catch NetworkError.tooManyRequests {
@@ -104,6 +108,7 @@ final class PhotoIdeasModel {
     private let isIncluded: @MainActor () async -> Bool
     private let hasAgreed: @MainActor () -> Bool
     private let agree: @MainActor () -> Void
+    private let modelsAvailable: @MainActor () -> Bool
     private let language: String
     private var photo: UIImage?
     private var answered: [(photo: UIImage, ideas: [String])] = []
@@ -138,18 +143,35 @@ final class PhotoIdeasModel {
         return await CreditPurchaseManager.shared.hasPlus()
     }
 
+    /// What a picked photo's row offers once the answers are in: nothing where model features do not work, the Plus
+    /// chip for someone without ideas, the offer before agreement, and a request once agreed.
+    enum Decision: Equatable {
+        case hidden
+        case withPlus
+        case offer
+        case ask
+    }
+
+    static func decision(modelsAvailable: Bool, included: Bool, agreed: Bool) -> Decision {
+        guard modelsAvailable else { return .hidden }
+        guard included else { return .withPlus }
+        return agreed ? .ask : .offer
+    }
+
     init(
         provider: any PhotoIdeasProviding,
         language: String = PhotoIdeasModel.languageName,
         isIncluded: @escaping @MainActor () async -> Bool,
         hasAgreed: @escaping @MainActor () -> Bool = { PhotoIdeasConsent.isGranted },
-        agree: @escaping @MainActor () -> Void = { PhotoIdeasConsent.grant() }
+        agree: @escaping @MainActor () -> Void = { PhotoIdeasConsent.grant() },
+        modelsAvailable: @escaping @MainActor () -> Bool = { ModelFeatures.isAvailable }
     ) {
         self.provider = provider
         self.language = language
         self.isIncluded = isIncluded
         self.hasAgreed = hasAgreed
         self.agree = agree
+        self.modelsAvailable = modelsAvailable
     }
 
     /// The English name of the language the app is shown in, which the ideas are written in.
@@ -161,7 +183,7 @@ final class PhotoIdeasModel {
     /// Whether a picked photo is looked at without a further tap: ideas are part of what the person has and they
     /// have agreed.
     func looksWithoutAsking() async -> Bool {
-        guard hasAgreed() else { return false }
+        guard modelsAvailable(), hasAgreed() else { return false }
         return await isIncluded()
     }
 
@@ -171,7 +193,7 @@ final class PhotoIdeasModel {
         photo = newPhoto
         generation += 1
         refusedByServer = false
-        guard let newPhoto else { return set(.hidden) }
+        guard let newPhoto, modelsAvailable() else { return set(.hidden) }
         if let known = answered.first(where: { $0.photo === newPhoto }) { return set(.ideas(known.ideas)) }
         set(.hidden)
         decide()
@@ -191,12 +213,11 @@ final class PhotoIdeasModel {
             guard let self else { return }
             let included = await isIncluded()
             guard current == generation else { return }
-            if !included {
-                set(.withPlus)
-            } else if hasAgreed() {
-                ask()
-            } else {
-                set(.offer)
+            switch Self.decision(modelsAvailable: modelsAvailable(), included: included, agreed: hasAgreed()) {
+            case .hidden: set(.hidden)
+            case .withPlus: set(.withPlus)
+            case .offer: set(.offer)
+            case .ask: ask()
             }
         }
     }
@@ -209,7 +230,7 @@ final class PhotoIdeasModel {
 
     /// Asks for ideas for the photo, as an agreed pick or a tap on a failed row does.
     func ask() {
-        guard let photo, state != .loading, hasAgreed() else { return }
+        guard let photo, state != .loading, hasAgreed(), modelsAvailable() else { return }
         generation += 1
         let current = generation
         set(.loading)
@@ -227,6 +248,8 @@ final class PhotoIdeasModel {
                 set(.hidden)
             case .failure(.unavailable):
                 set(.failed)
+            case .failure(.unavailableInRegion):
+                set(.hidden)
             }
         }
     }

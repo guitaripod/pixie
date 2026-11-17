@@ -62,6 +62,7 @@ extension ChatGenerationViewController: ChatTableViewDelegate {
     func chatTableView(_ chatTableView: ChatTableView, didLongPressImageAt index: Int, in message: ChatMessage) {
     }
     func chatTableView(_ chatTableView: ChatTableView, didSelectImageForEdit index: Int, in message: ChatMessage) {
+        guard ModelFeatures.isAvailable else { return }
         haptics.impact(.click)
         guard let images = message.images,
               index < images.count else { return }
@@ -137,7 +138,7 @@ extension ChatGenerationViewController: ChatTableViewDelegate {
 
 extension ChatGenerationViewController: UIDropInteractionDelegate {
     func dropInteraction(_ interaction: UIDropInteraction, canHandle session: UIDropSession) -> Bool {
-        return session.hasItemsConforming(toTypeIdentifiers: [UTType.image.identifier])
+        return ModelFeatures.isAvailable && session.hasItemsConforming(toTypeIdentifiers: [UTType.image.identifier])
     }
     
     func dropInteraction(_ interaction: UIDropInteraction, sessionDidUpdate session: UIDropSession) -> UIDropProposal {

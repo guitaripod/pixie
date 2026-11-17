@@ -1,4 +1,5 @@
 import Foundation
+import MidgarCore
 import PixiepocketCore
 
 enum NetworkError: LocalizedError {
@@ -15,8 +16,11 @@ enum NetworkError: LocalizedError {
     case invalidResponse
     case modelDeclined
     case notFound
+    case unavailableInRegion
     var errorDescription: String? {
         switch self {
+        case .unavailableInRegion:
+            return MidgarModelRegion.unavailableMessage
         case .invalidURL:
             return String(localized: "Invalid URL")
         case .noData:
@@ -154,6 +158,9 @@ class NetworkService: NetworkServiceProtocol {
         let (data, response) = try await session.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.noData
+        }
+        if MidgarModelRegion.shared.note(statusCode: httpResponse.statusCode) {
+            throw NetworkError.unavailableInRegion
         }
         if httpResponse.statusCode == 401 {
             throw NetworkError.unauthorized

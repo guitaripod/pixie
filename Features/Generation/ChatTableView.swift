@@ -297,7 +297,8 @@ class ChatTableView: UIView {
         pendingRevealID = latest.id
     }
 
-    private func updateEmptyState(isEmpty: Bool, animated: Bool) {
+    private func updateEmptyState(isEmpty empty: Bool, animated: Bool) {
+        let isEmpty = empty && ModelFeatures.isAvailable
         emptyStateView.isUserInteractionEnabled = isEmpty
         if isEmpty {
             emptyStateView.isHidden = false

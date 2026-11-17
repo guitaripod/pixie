@@ -4,6 +4,8 @@ import UIKit
 class HelpViewController: UIViewController {
     private let column = SettingsColumnView(spacing: Theme.Space.xxl)
     private let haptics = HapticManager.shared
+    private weak var topicStack: UIStackView?
+    private var modelRegionObserver: ModelFeatureObservation?
 
     private struct Point {
         let heading: String?
@@ -28,6 +30,11 @@ class HelpViewController: UIViewController {
 
         column.install(in: view, top: Theme.Space.lg)
         buildContent()
+    }
+
+    /// The Get Started and Edits topics teach model features, so they are left out where those do not work.
+    private func applyModelRegion() {
+        topicStack?.arrangedSubviews.prefix(2).forEach { $0.isHidden = !ModelFeatures.isAvailable }
     }
 
     private func buildContent() {
@@ -67,6 +74,11 @@ class HelpViewController: UIViewController {
         ])
         topics.axis = .vertical
         topics.spacing = Theme.Space.md
+        topicStack = topics
+        applyModelRegion()
+        modelRegionObserver = ModelFeatureObservation { [weak self] in
+            self?.applyModelRegion()
+        }
         column.stack.addArrangedSubview(topics)
 
         column.stack.addArrangedSubview(SettingsLayout.section(title: String(localized: "FAQ"), content: [faqCard()]))

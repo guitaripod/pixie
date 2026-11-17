@@ -33,9 +33,9 @@ final class PixieWeek {
     }
 
     /// The moment the app owes the person for this runway, or nil: the start once it is running, the end once it is
-    /// over and only for someone who was told it started.
-    func moment(for runway: Runway?) -> Moment? {
-        guard let runway else { return nil }
+    /// over and only for someone who was told it started. Nothing is owed where model features do not work.
+    func moment(for runway: Runway?, modelsAvailable: Bool) -> Moment? {
+        guard modelsAvailable, let runway else { return nil }
         switch runway.state {
         case .active where !defaults.bool(forKey: Self.announcedKey):
             return .started(daily: runway.dailyLimit, days: runway.days, endsAt: runway.endDate)

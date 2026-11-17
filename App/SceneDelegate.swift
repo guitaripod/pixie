@@ -81,7 +81,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let account = Task { await bootstrapAnonymousUser() }
 
-        if !Onboarding.isCompleted {
+        if !Onboarding.isCompleted, ModelFeatures.isAvailable {
             showFirstRunOnboarding(whileCreating: account)
             return
         }

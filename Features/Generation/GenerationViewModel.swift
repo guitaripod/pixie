@@ -309,7 +309,7 @@ class GenerationViewModel: ObservableObject {
             
             let errorMessage = ChatMessage(
                 role: .assistant,
-                content: String(localized: "Generation failed: \(error.localizedDescription)")
+                content: error.isUnavailableInRegion ? error.localizedDescription : String(localized: "Generation failed: \(error.localizedDescription)")
             )
             messages.append(errorMessage)
             

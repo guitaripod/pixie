@@ -673,7 +673,10 @@ extension GalleryPageViewController: UICollectionViewDelegate {
             self.delegate?.galleryPageDidPerformAction(self, action: .delete, on: image)
         }
 
-        return UIMenu(title: "", children: [viewDetails, useForEdit, copyPrompt, save, share, UIMenu(options: .displayInline, children: [delete])])
+        var children: [UIMenuElement] = [viewDetails]
+        if ModelFeatures.isAvailable { children.append(useForEdit) }
+        children += [copyPrompt, save, share, UIMenu(options: .displayInline, children: [delete])]
+        return UIMenu(title: "", children: children)
     }
 
 }
