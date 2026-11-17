@@ -52,7 +52,7 @@ class MainSplitViewController: UISplitViewController {
     /// detail column the page right of it, so no column straddles the fold. Otherwise the
     /// columns keep their usual widths.
     private func alignColumnsToFold() {
-        guard !isCollapsed else { return }
+        guard !isCollapsed, let detailNavigationController else { return }
         let fold = FoldGeometry.activeFold(in: view)
         let verticalFold = fold?.orientation == .vertical ? fold : nil
         let primaryWidth = verticalFold?.frame.minX ?? Self.regularPrimaryColumnWidth
