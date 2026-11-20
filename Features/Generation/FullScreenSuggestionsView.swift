@@ -502,7 +502,7 @@ class FullScreenSuggestionsView: UIView {
     }
     private func createPhotoIdeasSection(environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
         let metrics = Metrics(environment, maxWidth: Self.maxContentWidth(of: .photoIdeas))
-        let widths = photoIdeaItems.map { ChipSizing.width(title: PhotoIdeasCopy.title(of: $0), symbol: nil) }
+        let widths = photoIdeaItems.map { ChipSizing.width(title: PhotoIdeasCopy.title(of: $0), symbol: PhotoIdeasCopy.symbol(of: $0)) }
         let section = NSCollectionLayoutSection(group: PhotoIdeasRow.group(widths: widths, height: Self.chipRowHeight))
         section.orthogonalScrollingBehavior = .continuous
         section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: metrics.sideInset, bottom: 0, trailing: metrics.sideInset)
@@ -615,7 +615,7 @@ class FullScreenSuggestionsView: UIView {
             case .photoIdeas:
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ModifierChipCell.reuseIdentifier, for: indexPath) as! ModifierChipCell
                 if let idea = item.photoIdea {
-                    cell.configure(with: PhotoIdeasCopy.title(of: idea), category: PhotoIdeasCopy.header)
+                    cell.configure(with: PhotoIdeasCopy.title(of: idea), symbol: PhotoIdeasCopy.symbol(of: idea), category: PhotoIdeasCopy.header)
                     cell.accessibilityIdentifier = "photoIdea"
                 }
                 return cell
@@ -860,9 +860,9 @@ extension FullScreenSuggestionsView: UICollectionViewDelegate {
         case .photoIdeas:
             switch dataSource.itemIdentifier(for: indexPath)?.photoIdea {
             case .idea(let idea): onIdeaSelected?(idea)
-            case .offer: onPhotoIdeasAgreed?()
+            case .offer, .tasteOffer: onPhotoIdeasAgreed?()
             case .tryAgain: onPhotoIdeasAsked?()
-            case .plus: onPlusWanted?()
+            case .plus, .more: onPlusWanted?()
             case .loading, nil: break
             }
         case .promptModifiers:

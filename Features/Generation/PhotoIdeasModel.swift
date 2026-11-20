@@ -8,10 +8,15 @@ enum PhotoIdeasState: Equatable {
     /// Ideas are part of what this person has, and they have not yet agreed to a copy of the photo being sent: a
     /// tap agrees and asks.
     case offer
-    /// Ideas are not part of what this person has: a tap shows Plus.
+    /// Ideas are not part of what this person has, and they have not yet agreed to a copy of the photo being sent:
+    /// a tap agrees and asks for a taste.
+    case tasteOffer
+    /// mako answered that ideas are not part of what this person has: a tap shows Plus.
     case withPlus
     case loading
     case ideas([String])
+    /// A taste for someone without Plus: the first idea, theirs to use, beside the way to the others.
+    case taste(idea: String)
     /// Asking failed; a tap asks again.
     case failed
 }
@@ -94,9 +99,10 @@ struct MakoPhotoIdeas: PhotoIdeasProviding {
 
 /// Holds the ideas for the photo of the current edit. Ideas are part of Plus and of the Pixie Week, and cost that
 /// person nothing: once they have agreed to a small copy of the photo being sent, ideas are asked for as soon as a
-/// photo is picked, and until then the row offers them and nothing is sent. Everyone else is shown that ideas come
-/// with Plus. A photo is asked about once: its ideas are kept while it stays picked and come back if it is picked
-/// again.
+/// photo is picked, and until then the row offers them and nothing is sent. Everyone else gets a taste on the same
+/// terms: the model suggests the same three edits, the row shows the first for them to use and keeps the others
+/// for Plus, which shows them at once without asking again. A photo is asked about once: its ideas are kept while
+/// it stays picked and come back if it is picked again.
 @MainActor
 final class PhotoIdeasModel {
 
@@ -111,7 +117,7 @@ final class PhotoIdeasModel {
     private let modelsAvailable: @MainActor () -> Bool
     private let language: String
     private var photo: UIImage?
-    private var answered: [(photo: UIImage, ideas: [String])] = []
+    private var answered: [(photo: UIImage, ideas: [String], asTaste: Bool)] = []
     private var generation = 0
     private var refusedByServer = false
 
@@ -119,8 +125,8 @@ final class PhotoIdeasModel {
     private static let rememberedPhotos = 4
 
     /// The model the app uses: mako, the balance's word on Plus and the Pixie Week, and the stored agreement. In a
-    /// DEBUG demo capture the answer is fixed and `PX_IDEAS` picks the row: `offer` before the agreement, `plus` for
-    /// someone without ideas, anything else the ideas themselves.
+    /// DEBUG demo capture the answer is fixed and `PX_IDEAS` picks the row: `offer` before the agreement, `plus` the
+    /// taste of someone without ideas, anything else the ideas themselves.
     static func standard() -> PhotoIdeasModel {
         #if DEBUG
         if DemoMode.isActive {
@@ -143,19 +149,26 @@ final class PhotoIdeasModel {
         return await CreditPurchaseManager.shared.hasPlus()
     }
 
-    /// What a picked photo's row offers once the answers are in: nothing where model features do not work, the Plus
-    /// chip for someone without ideas, the offer before agreement, and a request once agreed.
+    /// What a picked photo's row offers once the answers are in: nothing where model features do not work, the offer
+    /// before agreement, of ideas or for someone without them of a taste, and a request once agreed.
     enum Decision: Equatable {
         case hidden
-        case withPlus
+        case tasteOffer
         case offer
         case ask
     }
 
     static func decision(modelsAvailable: Bool, included: Bool, agreed: Bool) -> Decision {
         guard modelsAvailable else { return .hidden }
-        guard included else { return .withPlus }
-        return agreed ? .ask : .offer
+        guard agreed else { return included ? .offer : .tasteOffer }
+        return .ask
+    }
+
+    /// What the row shows for ideas that came back: all of them for someone who has ideas, the first one for
+    /// someone given a taste. One idea alone leaves nothing to keep back, so it is simply shown.
+    static func shown(_ ideas: [String], asTaste: Bool) -> PhotoIdeasState {
+        guard asTaste, ideas.count > 1, let first = ideas.first else { return .ideas(ideas) }
+        return .taste(idea: first)
     }
 
     init(
@@ -180,11 +193,10 @@ final class PhotoIdeasModel {
         return Locale(identifier: "en_US").localizedString(forIdentifier: code) ?? "English"
     }
 
-    /// Whether a picked photo is looked at without a further tap: ideas are part of what the person has and they
-    /// have agreed.
+    /// Whether a picked photo is looked at without a further tap: the person has agreed, whether what comes back is
+    /// every idea or a taste.
     func looksWithoutAsking() async -> Bool {
-        guard modelsAvailable(), hasAgreed() else { return false }
-        return await isIncluded()
+        modelsAvailable() && hasAgreed()
     }
 
     /// Tells the model which photo the edit is about, or that there is none.
@@ -194,19 +206,28 @@ final class PhotoIdeasModel {
         generation += 1
         refusedByServer = false
         guard let newPhoto, modelsAvailable() else { return set(.hidden) }
-        if let known = answered.first(where: { $0.photo === newPhoto }) { return set(.ideas(known.ideas)) }
+        if let known = answered.first(where: { $0.photo === newPhoto }) {
+            set(Self.shown(known.ideas, asTaste: known.asTaste))
+            if known.asTaste { openTasteIfIncluded() }
+            return
+        }
         set(.hidden)
         decide()
     }
 
     /// Decides again what the row offers for the picked photo once what the person has may have changed: Plus just
-    /// bought from the chip, a balance that just arrived. A row the server itself refused stays as it is.
+    /// bought from the chip, a balance that just arrived. A taste on screen opens into every idea, and an offer of a
+    /// taste becomes the offer of ideas. A row the server itself refused stays as it is.
     func accessChanged() {
-        guard photo != nil, state == .withPlus, !refusedByServer else { return }
-        decide()
+        guard photo != nil, !refusedByServer else { return }
+        switch state {
+        case .taste: openTasteIfIncluded()
+        case .tasteOffer: decide()
+        case .hidden, .offer, .withPlus, .loading, .ideas, .failed: break
+        }
     }
 
-    /// Shows the Plus chip, the offer or the ideas for the picked photo, by what the person has and has agreed to.
+    /// Shows the offer or asks for the picked photo, by what the person has and has agreed to.
     private func decide() {
         let current = generation
         Task { [weak self] in
@@ -215,10 +236,23 @@ final class PhotoIdeasModel {
             guard current == generation else { return }
             switch Self.decision(modelsAvailable: modelsAvailable(), included: included, agreed: hasAgreed()) {
             case .hidden: set(.hidden)
-            case .withPlus: set(.withPlus)
+            case .tasteOffer: set(.tasteOffer)
             case .offer: set(.offer)
             case .ask: ask()
             }
+        }
+    }
+
+    /// Shows every idea of the picked photo's taste once ideas are part of what the person has. The ideas were kept
+    /// when the taste was given, so nothing is asked again.
+    private func openTasteIfIncluded() {
+        let current = generation
+        Task { [weak self] in
+            guard let self, await isIncluded(), current == generation, let photo,
+                  let place = answered.firstIndex(where: { $0.photo === photo && $0.asTaste })
+            else { return }
+            answered[place].asTaste = false
+            set(.ideas(answered[place].ideas))
         }
     }
 
@@ -239,8 +273,10 @@ final class PhotoIdeasModel {
             guard let self, current == generation else { return }
             switch result {
             case .success(let ideas):
-                remember(ideas, for: photo)
-                set(.ideas(ideas))
+                let asTaste = !(await isIncluded())
+                guard current == generation else { return }
+                remember(ideas, for: photo, asTaste: asTaste)
+                set(Self.shown(ideas, asTaste: asTaste))
             case .failure(.notIncluded):
                 refusedByServer = true
                 set(.withPlus)
@@ -254,9 +290,9 @@ final class PhotoIdeasModel {
         }
     }
 
-    private func remember(_ ideas: [String], for photo: UIImage) {
+    private func remember(_ ideas: [String], for photo: UIImage, asTaste: Bool) {
         answered.removeAll { $0.photo === photo }
-        answered.append((photo, ideas))
+        answered.append((photo, ideas, asTaste))
         if answered.count > Self.rememberedPhotos { answered.removeFirst(answered.count - Self.rememberedPhotos) }
     }
 

@@ -884,9 +884,9 @@ class ModifierChipCell: UICollectionViewCell {
         chip?.removeFromSuperview()
         chip = nil
     }
-    func configure(with text: String, isSelected: Bool = false, category: String) {
+    func configure(with text: String, isSelected: Bool = false, symbol: String? = nil, category: String) {
         chip?.removeFromSuperview()
-        let chip = ChipView(title: text, isSelected: isSelected)
+        let chip = ChipView(title: text, symbol: symbol, isSelected: isSelected)
         chip.isUserInteractionEnabled = false
         chip.isAccessibilityElement = false
         contentView.addSubview(chip)

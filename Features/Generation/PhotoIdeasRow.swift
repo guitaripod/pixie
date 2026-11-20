@@ -10,8 +10,10 @@ enum PhotoIdeasRow {
         switch state {
         case .hidden: return []
         case .offer: return [.offer]
+        case .tasteOffer: return [.tasteOffer]
         case .loading: return [.loading]
         case .ideas(let ideas): return ideas.map(PhotoIdeaItem.idea)
+        case .taste(let idea): return [.idea(idea), .more]
         case .withPlus: return [.plus]
         case .failed: return [.tryAgain]
         }

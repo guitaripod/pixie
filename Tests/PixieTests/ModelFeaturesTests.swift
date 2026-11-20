@@ -29,7 +29,8 @@ struct ModelFeaturesTests {
     @Test func theRegionDecidesBeforeAnythingElseAboutPhotoIdeas() {
         #expect(PhotoIdeasModel.decision(modelsAvailable: false, included: true, agreed: true) == .hidden)
         #expect(PhotoIdeasModel.decision(modelsAvailable: false, included: false, agreed: false) == .hidden)
-        #expect(PhotoIdeasModel.decision(modelsAvailable: true, included: false, agreed: true) == .withPlus)
+        #expect(PhotoIdeasModel.decision(modelsAvailable: true, included: false, agreed: false) == .tasteOffer)
+        #expect(PhotoIdeasModel.decision(modelsAvailable: true, included: false, agreed: true) == .ask)
         #expect(PhotoIdeasModel.decision(modelsAvailable: true, included: true, agreed: false) == .offer)
         #expect(PhotoIdeasModel.decision(modelsAvailable: true, included: true, agreed: true) == .ask)
     }

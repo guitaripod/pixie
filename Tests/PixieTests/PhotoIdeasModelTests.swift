@@ -80,15 +80,79 @@ struct PhotoIdeasModelTests {
         #expect(await model.looksWithoutAsking())
     }
 
-    @Test func withoutPlusOrThePixieWeekTheRowShowsPlusAndSendsNothing() async {
+    @Test func withoutPlusOrThePixieWeekNothingIsSentBeforeThePersonAgreesToATaste() async {
         let stub = StubIdeas()
+        let agreement = Agreement(false)
+        let model = model(stub, included: false, agreement: agreement)
+        model.photoChanged(photo())
+        await settle(model, leaving: .hidden)
+        try? await Task.sleep(for: .milliseconds(80))
+        #expect(model.state == .tasteOffer)
+        #expect(stub.asked == 0)
+        #expect(await model.looksWithoutAsking() == false)
+        model.agreeAndAsk()
+        #expect(agreement.given)
+        await settle(model, leaving: .loading)
+        #expect(model.state == .taste(idea: "Make it autumn"))
+        #expect(stub.asked == 1)
+        #expect(await model.looksWithoutAsking())
+    }
+
+    @Test func aTasteShowsTheFirstIdeaAndComesBackAsATasteWhenThePhotoIsPickedAgain() async {
+        let stub = StubIdeas()
+        let model = model(stub, included: false, agreement: Agreement(true))
+        let first = photo()
+        model.photoChanged(first)
+        await settle(model, leaving: .hidden)
+        await settle(model, leaving: .loading)
+        #expect(model.state == .taste(idea: "Make it autumn"))
+        model.photoChanged(nil)
+        model.photoChanged(first)
+        #expect(model.state == .taste(idea: "Make it autumn"))
+        try? await Task.sleep(for: .milliseconds(80))
+        #expect(model.state == .taste(idea: "Make it autumn"))
+        #expect(stub.asked == 1)
+    }
+
+    @Test func oneIdeaAloneLeavesNothingToKeepBack() async {
+        let stub = StubIdeas()
+        stub.answer = .success(["Make it winter"])
         let model = model(stub, included: false, agreement: Agreement(true))
         model.photoChanged(photo())
         await settle(model, leaving: .hidden)
-        #expect(model.state == .withPlus)
-        try? await Task.sleep(for: .milliseconds(80))
+        await settle(model, leaving: .loading)
+        #expect(model.state == .ideas(["Make it winter"]))
+    }
+
+    @Test func anOfferOfATasteBecomesTheOfferOfIdeasOncePlusIsThere() async {
+        let stub = StubIdeas()
+        let access = Agreement(false)
+        let model = PhotoIdeasModel(provider: stub, language: "English", isIncluded: { access.given }, hasAgreed: { false }, agree: {})
+        model.photoChanged(photo())
+        await settle(model, leaving: .hidden)
+        #expect(model.state == .tasteOffer)
+        access.given = true
+        model.accessChanged()
+        await settle(model, leaving: .tasteOffer)
+        #expect(model.state == .offer)
         #expect(stub.asked == 0)
-        #expect(await model.looksWithoutAsking() == false)
+    }
+
+    @Test func aTasteLeftForAnotherPhotoOpensWhenItIsPickedAgainWithPlus() async {
+        let stub = StubIdeas()
+        let access = Agreement(false)
+        let model = PhotoIdeasModel(provider: stub, language: "English", isIncluded: { access.given }, hasAgreed: { true }, agree: {})
+        let first = photo()
+        model.photoChanged(first)
+        await settle(model, leaving: .hidden)
+        await settle(model, leaving: .loading)
+        #expect(model.state == .taste(idea: "Make it autumn"))
+        model.photoChanged(nil)
+        access.given = true
+        model.photoChanged(first)
+        await settle(model, leaving: .taste(idea: "Make it autumn"))
+        #expect(model.state == .ideas(ideas))
+        #expect(stub.asked == 1)
     }
 
     @Test func theRowFollowsPlusBoughtWhileAPhotoIsPickedAndLeavesAServersRefusalAlone() async {
@@ -97,15 +161,15 @@ struct PhotoIdeasModelTests {
         let model = PhotoIdeasModel(provider: stub, language: "English", isIncluded: { access.given }, hasAgreed: { true }, agree: {})
         model.photoChanged(photo())
         await settle(model, leaving: .hidden)
-        #expect(model.state == .withPlus)
+        await settle(model, leaving: .loading)
+        #expect(model.state == .taste(idea: "Make it autumn"))
         model.accessChanged()
         try? await Task.sleep(for: .milliseconds(80))
-        #expect(model.state == .withPlus)
-        #expect(stub.asked == 0)
+        #expect(model.state == .taste(idea: "Make it autumn"))
+        #expect(stub.asked == 1)
         access.given = true
         model.accessChanged()
-        await settle(model, leaving: .withPlus)
-        await settle(model, leaving: .loading)
+        await settle(model, leaving: .taste(idea: "Make it autumn"))
         #expect(model.state == .ideas(ideas))
         #expect(stub.asked == 1)
 
@@ -211,8 +275,16 @@ struct PhotoIdeasModelTests {
     @Test func everyStateOfTheRowHasItsWords() {
         #expect(PhotoIdeasCopy.title(of: .idea("Make it autumn")) == "Make it autumn")
         #expect(PhotoIdeasCopy.title(of: .offer) == "Suggest 3 Edits")
+        #expect(PhotoIdeasCopy.title(of: .tasteOffer) == "Suggest an Edit")
         #expect(PhotoIdeasCopy.title(of: .plus) == "See Plus")
+        #expect(PhotoIdeasCopy.title(of: .more) == "More with Plus")
+        #expect(PhotoIdeasCopy.symbol(of: .more) == "lock.fill")
+        #expect(PhotoIdeasCopy.symbol(of: .idea("Make it autumn")) == nil)
         #expect(PhotoIdeasCopy.subtitle(for: .offer) == PhotoIdeasCopy.sharing)
+        #expect(PhotoIdeasCopy.subtitle(for: .tasteOffer) == PhotoIdeasCopy.sharing)
+        #expect(PhotoIdeasCopy.subtitle(for: .taste(idea: "x")) == "Pixie looked at your photo. Tap the idea to use it, or see every idea with Plus")
+        #expect(PhotoIdeasRow.items(for: .taste(idea: "Make it autumn"), hasPhoto: true) == [.idea("Make it autumn"), .more])
+        #expect(PhotoIdeasRow.items(for: .tasteOffer, hasPhoto: true) == [.tasteOffer])
         #expect(PhotoIdeasCopy.sharing.contains("Anthropic"))
         #expect(PhotoIdeasCopy.subtitle(for: .withPlus) == "With Plus, Pixie looks at your photo and suggests three edits")
         #expect(PhotoIdeasCopy.subtitle(for: .ideas(["x"])) == "Pixie looked at your photo. Tap one to use it")
