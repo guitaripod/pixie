@@ -1,6 +1,7 @@
 import UIKit
 import UserNotifications
 import MidgarCore
+import MidgarUI
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -11,6 +12,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     ) -> Bool {
         PixieMidgar.configureLogging()
         MidgarLog.info("App launched", category: .launch)
+        #if DEBUG
+        MidgarFrameWatch.shared.startIfRequested()
+        #endif
 
         UNUserNotificationCenter.current().delegate = self
         
