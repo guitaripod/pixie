@@ -86,13 +86,47 @@ class CardCell: UICollectionViewCell {
 }
 
 
-enum ChipSizing {
-    /// How wide a `ChipView` with this title and symbol lays out at the current text size.
-    static func width(title: String, symbol: String?) -> CGFloat {
-        let chip = ChipView(title: title, symbol: symbol)
-        return ceil(chip.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).width)
+/// Sizes that are learned by building a view and laying it out, kept for as long as the text size and weight the
+/// person has set stay the same. The suggestions list asks for every chip's width and its cards' heights each time
+/// its layout is worked out, which is on every change to it: building a view for each answer took 70 ms of that on
+/// an iPhone XS.
+struct MeasuredSizes<Subject: Hashable> {
+    private struct Key: Hashable {
+        let subject: Subject
+        let textSize: UIContentSizeCategory
+        let isBold: Bool
     }
 
+    private static var capacity: Int { 512 }
+
+    private var known: [Key: CGFloat] = [:]
+
+    /// The size kept for `subject`, or the one `measure` finds now.
+    mutating func size(of subject: Subject, measure: () -> CGFloat) -> CGFloat {
+        let key = Key(subject: subject, textSize: UIApplication.shared.preferredContentSizeCategory, isBold: UIAccessibility.isBoldTextEnabled)
+        if let size = known[key] { return size }
+        let size = measure()
+        if known.count >= Self.capacity { known.removeAll(keepingCapacity: true) }
+        known[key] = size
+        return size
+    }
+}
+
+enum ChipSizing {
+    private struct Chip: Hashable {
+        let title: String
+        let symbol: String?
+    }
+
+    private static var widths = MeasuredSizes<Chip>()
+
+    /// How wide a `ChipView` with this title and symbol lays out at the current text size.
+    static func width(title: String, symbol: String?) -> CGFloat {
+        widths.size(of: Chip(title: title, symbol: symbol)) {
+            let chip = ChipView(title: title, symbol: symbol)
+            return ceil(chip.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).width)
+        }
+    }
 }
 
 
@@ -461,17 +495,26 @@ final class SelectedPhotoCell: UICollectionViewCell {
         }
     }
 
+    private struct Row: Hashable {
+        let width: CGFloat
+        let compact: Bool
+    }
+
+    private static var heights = MeasuredSizes<Row>()
+
     /// The row's height at the current text size for a row `width` points wide, measured from a real cell.
     static func height(forWidth width: CGFloat, compact: Bool = false) -> CGFloat {
-        let probe = SelectedPhotoCell(frame: CGRect(x: 0, y: 0, width: width, height: 400))
-        probe.isCompact = compact
-        probe.applyArrangement(forWidth: width)
-        let size = probe.contentView.systemLayoutSizeFitting(
-            CGSize(width: width, height: UIView.layoutFittingCompressedSize.height),
-            withHorizontalFittingPriority: .required,
-            verticalFittingPriority: .fittingSizeLevel
-        )
-        return ceil(size.height)
+        heights.size(of: Row(width: width, compact: compact)) {
+            let probe = SelectedPhotoCell(frame: CGRect(x: 0, y: 0, width: width, height: 400))
+            probe.isCompact = compact
+            probe.applyArrangement(forWidth: width)
+            let size = probe.contentView.systemLayoutSizeFitting(
+                CGSize(width: width, height: UIView.layoutFittingCompressedSize.height),
+                withHorizontalFittingPriority: .required,
+                verticalFittingPriority: .fittingSizeLevel
+            )
+            return ceil(size.height)
+        }
     }
     @objc private func cardTapped() {
         HapticsManager.shared.selection()
@@ -704,16 +747,20 @@ class SampleTileCell: CardCell {
         describe("\(Self.title). \(Self.subtitle).", traits: .button)
     }
 
+    private static var heights = MeasuredSizes<CGFloat>()
+
     /// The card's height at the current text size for a card `width` points wide, measured from a real cell.
     static func height(forWidth width: CGFloat) -> CGFloat {
-        let probe = SampleTileCell(frame: CGRect(x: 0, y: 0, width: width, height: 400))
-        probe.updateLabelWidths(forCellWidth: width)
-        let size = probe.contentView.systemLayoutSizeFitting(
-            CGSize(width: width, height: UIView.layoutFittingCompressedSize.height),
-            withHorizontalFittingPriority: .required,
-            verticalFittingPriority: .fittingSizeLevel
-        )
-        return ceil(size.height)
+        heights.size(of: width) {
+            let probe = SampleTileCell(frame: CGRect(x: 0, y: 0, width: width, height: 400))
+            probe.updateLabelWidths(forCellWidth: width)
+            let size = probe.contentView.systemLayoutSizeFitting(
+                CGSize(width: width, height: UIView.layoutFittingCompressedSize.height),
+                withHorizontalFittingPriority: .required,
+                verticalFittingPriority: .fittingSizeLevel
+            )
+            return ceil(size.height)
+        }
     }
 
     private func updateLabelWidths(forCellWidth width: CGFloat) {
