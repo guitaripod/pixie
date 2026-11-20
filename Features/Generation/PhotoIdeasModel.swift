@@ -126,13 +126,18 @@ final class PhotoIdeasModel {
 
     /// The model the app uses: mako, the balance's word on Plus and the Pixie Week, and the stored agreement. In a
     /// DEBUG demo capture the answer is fixed and `PX_IDEAS` picks the row: `offer` before the agreement, `plus` the
-    /// taste of someone without ideas, anything else the ideas themselves.
+    /// taste of someone without ideas, anything else the ideas themselves. The capture's agreement lasts for the
+    /// launch only (`DemoIdeasAgreement`), so one run on a phone in real use leaves that person's own answer alone.
     static func standard() -> PhotoIdeasModel {
         #if DEBUG
         if DemoMode.isActive {
             let row = ProcessInfo.processInfo.environment["PX_IDEAS"]
-            if row == "offer" { PhotoIdeasConsent.withdraw() } else { PhotoIdeasConsent.grant() }
-            return PhotoIdeasModel(provider: DemoPhotoIdeas(), isIncluded: { row != "plus" })
+            let agreement = DemoIdeasAgreement(isGranted: row != "offer")
+            return PhotoIdeasModel(
+                provider: DemoPhotoIdeas(),
+                isIncluded: { row != "plus" },
+                hasAgreed: { agreement.isGranted },
+                agree: { agreement.isGranted = true })
         }
         #endif
         return PhotoIdeasModel(provider: MakoPhotoIdeas(api: APIService.shared), isIncluded: {
@@ -304,10 +309,26 @@ final class PhotoIdeasModel {
 }
 
 #if DEBUG
+/// Whether a demo capture has agreed to a photo being looked at, kept in memory instead of with the stored agreement.
+@MainActor
+final class DemoIdeasAgreement {
+    var isGranted: Bool
+
+    init(isGranted: Bool) {
+        self.isGranted = isGranted
+    }
+}
+
 /// The ideas of a demo capture, written for the demo selfie, so a capture never reaches the network.
 struct DemoPhotoIdeas: PhotoIdeasProviding {
+    /// How long the capture's answer takes: 600 ms, or `PX_IDEAS_DELAY_MS` when a run on a device wants the row to
+    /// arrive only after a profiler has attached.
+    private static var delay: Duration {
+        .milliseconds(ProcessInfo.processInfo.environment["PX_IDEAS_DELAY_MS"].flatMap(Int.init) ?? 600)
+    }
+
     func ideas(for photo: UIImage, language: String) async -> Result<[String], PhotoIdeasFailure> {
-        try? await Task.sleep(for: .milliseconds(600))
+        try? await Task.sleep(for: Self.delay)
         return .success([
             String(localized: "Move her to a rooftop at sunset"),
             String(localized: "Make it a watercolour portrait"),
