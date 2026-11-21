@@ -1,5 +1,6 @@
 import PixiepocketCore
 import UIKit
+import MidgarCore
 
 private enum FirstResponderProbe {
     static weak var responder: UIResponder?
@@ -84,6 +85,11 @@ final class ImageDetailViewController: UIViewController {
 
         preferredContentSize = CGSize(width: 800, height: 900)
         setupKeyboardCommands()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        MidgarSignals.noteScreen("image_detail", feature: true)
     }
 
     private var usesLargeText: Bool {

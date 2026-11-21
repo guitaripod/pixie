@@ -1,6 +1,7 @@
 import PixiepocketCore
 import UIKit
 import Combine
+import MidgarCore
 
 class CreditsMainViewController: UIViewController {
     private let viewModel: CreditsViewModel
@@ -45,6 +46,7 @@ class CreditsMainViewController: UIViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        MidgarSignals.noteScreen("credits")
         viewModel.refresh()
         startFreshnessTimer()
     }

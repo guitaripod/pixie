@@ -1,22 +1,23 @@
 import MidgarUI
 import UIKit
 
-/// The About screen behind the Support section of Settings: MidgarUI's plain rows for the legal links and the
-/// version, drawn with Pixie's colors.
+/// The About screen behind the Support section of Settings: MidgarUI's plain rows for usage counts, the legal links
+/// and the version, drawn with Pixie's colors.
 enum AboutSettings {
     static let privacyPolicyURL = URL(string: "https://midgarcorp.cc/legal/pixiepocket/privacy/")!
     static let termsOfUseURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
 
     @MainActor
     static func makeViewController() -> UIViewController {
-        MidgarSettingsViewController(
-            title: String(localized: "About"),
-            sections: [
-                MidgarSettingsSection(id: "legal", rows: [.privacyPolicy(url: privacyPolicyURL), .termsOfUse(url: termsOfUseURL)]),
-                MidgarSettingsSection(id: "version", rows: [.version()]),
-            ],
-            theme: .pixie
-        )
+        let about = MidgarSettingsViewController(title: String(localized: "About"), sections: [], theme: .pixie)
+        let usageCounts = MidgarSettingsRow.usageCountsDetail { [weak about] in
+            about?.navigationController?.pushViewController(MidgarUsageCountsViewController(theme: .pixie), animated: true)
+        }
+        about.sections = [
+            MidgarSettingsSection(id: "legal", rows: [usageCounts, .privacyPolicy(url: privacyPolicyURL), .termsOfUse(url: termsOfUseURL)]),
+            MidgarSettingsSection(id: "version", rows: [.version()]),
+        ]
+        return about
     }
 }
 

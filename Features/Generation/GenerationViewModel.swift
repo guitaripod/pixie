@@ -285,6 +285,7 @@ class GenerationViewModel: ObservableObject {
         switch result {
         case .success(let images):
             print("🎨 GenerationViewModel: Success with \(images.count) images")
+            MidgarSignals.noteValue()
             let assistantMessage = ChatMessage(
                 role: .assistant,
                 content: String(localized: "Here are your generated images:"),

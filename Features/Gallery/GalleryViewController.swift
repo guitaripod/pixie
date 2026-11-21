@@ -1,5 +1,6 @@
 import PixiepocketCore
 import UIKit
+import MidgarCore
 
 enum ImageAction {
     case useForEdit
@@ -53,6 +54,11 @@ final class GalleryViewController: UIViewController {
             name: UIApplication.didEnterBackgroundNotification,
             object: nil
         )
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        MidgarSignals.noteScreen("gallery", feature: true)
     }
 
     deinit {

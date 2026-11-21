@@ -99,6 +99,7 @@ class ChatGenerationViewController: UIViewController {
     private var onboardingShown = false
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        MidgarSignals.noteScreen("create")
         #if DEBUG
         if let demoMode = demoMode, !demoApplied {
             demoApplied = true

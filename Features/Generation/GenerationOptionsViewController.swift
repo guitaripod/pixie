@@ -1,4 +1,5 @@
 import UIKit
+import MidgarCore
 
 class GenerationOptionsViewController: UIViewController {
     
@@ -42,6 +43,11 @@ class GenerationOptionsViewController: UIViewController {
         setupUI()
         setupConstraints()
         updateCreditsEstimate()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        MidgarSignals.noteScreen("options", feature: true)
     }
     
     private func setupUI() {
