@@ -132,6 +132,7 @@ class MainSplitViewController: UISplitViewController {
         } else {
             if detailNavigationController.viewControllers.first !== viewController {
                 detailNavigationController.setViewControllers([viewController], animated: false)
+                detailNavigationController.setNavigationBarHidden(viewController === chatViewController, animated: false)
             }
         }
     }
