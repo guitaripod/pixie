@@ -653,7 +653,7 @@ final class SettingsCopyableIDView: UIControl {
         caption.setStyledText(title, .caption)
         valueLabel.apply(.footnote, color: Theme.Color.ink)
         valueLabel.text = value
-        valueLabel.lineBreakMode = .byCharWrapping
+        valueLabel.lineBreakMode = .byWordWrapping
         let textStack = UIStackView(arrangedSubviews: [caption, valueLabel])
         textStack.axis = .vertical
         textStack.spacing = 2
