@@ -205,18 +205,18 @@ final class SettingsRowView: UIControl {
     /// Keeps the row itself the touch target except for a control placed in the accessory slot, such as a switch.
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         guard let hit = super.hitTest(point, with: event) else { return nil }
-        return accessoryControl(containing: hit) ?? self
+        return isPartOfAccessoryControl(hit) ? hit : self
     }
 
-    /// The control in the accessory slot that `view` is, or is a part of: a switch answers touches through its
-    /// internal subviews, which are not controls themselves.
-    private func accessoryControl(containing view: UIView) -> UIControl? {
+    /// Whether `view` is a control in the accessory slot or one of its internal parts. A switch answers touches
+    /// through its internal subviews, so the touch is left on the part it landed on.
+    private func isPartOfAccessoryControl(_ view: UIView) -> Bool {
         var candidate: UIView? = view
         while let current = candidate, current !== self {
-            if let control = current as? UIControl, control.isDescendant(of: accessoryHost) { return control }
+            if current is UIControl, current.isDescendant(of: accessoryHost) { return true }
             candidate = current.superview
         }
-        return nil
+        return false
     }
 
     func setExpanded(_ expanded: Bool) {

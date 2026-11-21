@@ -27,9 +27,10 @@ struct SettingsRowTouchTests {
         let toggle = UISwitch()
         let (row, window) = hostedRow(with: toggle)
         withExtendedLifetime(window) {
-            let center = row.convert(CGPoint(x: toggle.bounds.midX, y: toggle.bounds.midY), from: toggle)
-            let hit = row.hitTest(center, with: nil)
-            #expect(hit === toggle)
+            let inSwitch = CGPoint(x: toggle.bounds.midX, y: toggle.bounds.midY)
+            let hit = row.hitTest(row.convert(inSwitch, from: toggle), with: nil)
+            #expect(hit != nil)
+            #expect(hit === toggle.hitTest(inSwitch, with: nil))
         }
     }
 
