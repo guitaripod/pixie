@@ -312,6 +312,7 @@ class SettingsViewController: UIViewController {
         let ideas = SettingsRowView(title: PhotoIdeasCopy.settingsTitle, subtitle: PhotoIdeasCopy.sharing, symbol: "sparkles")
         ideas.setAccessory(ideasSwitch)
         ideas.isAccessibilityElement = false
+        ideas.onTap = { [weak self] in self?.toggleIdeasSwitch() }
         photoIdeasRow = ideas
 
         let cache = SettingsRowView(title: String(localized: "Image Cache"), symbol: "internaldrive.fill", value: cacheSize)
@@ -404,6 +405,12 @@ class SettingsViewController: UIViewController {
 
     /// The Photo Ideas switch is the agreement the ideas row asks for: on lets a small copy of a picked photo go to
     /// Anthropic's Claude, off stops it.
+    private func toggleIdeasSwitch() {
+        guard let ideasSwitch else { return }
+        ideasSwitch.setOn(!ideasSwitch.isOn, animated: true)
+        photoIdeasSwitched()
+    }
+
     private func photoIdeasSwitched() {
         if ideasSwitch?.isOn == true {
             PhotoIdeasConsent.grant()
