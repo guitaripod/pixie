@@ -240,6 +240,8 @@ final class SettingsRowView: UIControl {
         accessoryHost.isHidden = view == nil
         guard let view else { return }
         view.translatesAutoresizingMaskIntoConstraints = false
+        view.setContentHuggingPriority(.required, for: .horizontal)
+        view.setContentCompressionResistancePriority(.required, for: .horizontal)
         accessoryHost.addSubview(view)
         NSLayoutConstraint.activate([
             view.topAnchor.constraint(equalTo: accessoryHost.topAnchor),
