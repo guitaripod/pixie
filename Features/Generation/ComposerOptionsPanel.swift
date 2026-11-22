@@ -650,6 +650,7 @@ final class ComposerOptionsPanel: UIView {
     }
 
     func setOpenAIVisible(_ visible: Bool, animated: Bool) {
+        guard visible != isOpenAIVisible else { return }
         isOpenAIVisible = visible
         let apply = {
             self.qualityGroup.isHidden = !visible

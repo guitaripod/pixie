@@ -38,6 +38,8 @@ class ChatInputBar: UIView {
     private let getCreditsButton = FootnoteLinkButton(title: String(localized: "Get edits"))
     private let indicatorStackView = UIStackView()
     private var textHeightConstraint: NSLayoutConstraint!
+    private var collapsedTop: NSLayoutConstraint!
+    private var expandedTop: NSLayoutConstraint!
 
     private static let capsuleCornerRadius: CGFloat = 28
     private static let grownCornerRadius: CGFloat = 24
@@ -340,14 +342,19 @@ class ChatInputBar: UIView {
         column.translatesAutoresizingMaskIntoConstraints = false
         panel.isHidden = true
         panel.alpha = 0
-        column.addArrangedSubview(panel)
+        addSubview(panel)
         column.addArrangedSubview(capsule)
         column.addArrangedSubview(footnoteRow)
         column.setCustomSpacing(Theme.Space.xs, after: capsule)
         addSubview(column)
 
+        collapsedTop = column.topAnchor.constraint(equalTo: topAnchor)
+        expandedTop = panel.topAnchor.constraint(equalTo: topAnchor)
         NSLayoutConstraint.activate([
-            column.topAnchor.constraint(equalTo: topAnchor),
+            collapsedTop,
+            panel.leadingAnchor.constraint(equalTo: column.leadingAnchor),
+            panel.trailingAnchor.constraint(equalTo: column.trailingAnchor),
+            panel.bottomAnchor.constraint(equalTo: column.topAnchor, constant: -Theme.Space.sm),
             column.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Self.sideMargin),
             column.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Self.sideMargin),
             column.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -Self.sideMargin),
@@ -516,31 +523,61 @@ class ChatInputBar: UIView {
         refreshExpansionAccessibility()
 
         let hiddenTransform = CGAffineTransform(translationX: 0, y: 18)
-        if expanded, changed {
-            panel.fit(toWidth: column.bounds.width)
-            panel.alpha = 0
-            panel.transform = hiddenTransform
-            panel.isHidden = false
-        }
+        if expanded, changed { placePanelForOpening(at: hiddenTransform) }
         let apply = {
             self.panel.alpha = expanded ? 1 : 0
             self.panel.transform = expanded ? .identity : hiddenTransform
-            if !expanded { self.panel.isHidden = true }
+            self.pinTop(expanded: expanded)
             self.layoutFromTopOfHierarchy()
         }
         if animated {
             Motion.spring(0.4, damping: 0.82, options: [.beginFromCurrentState], animations: apply) { _ in
-                if !self.isExpanded { self.panel.transform = .identity }
-                self.settleOpenPanel()
+                self.restPanel()
             }
         } else {
-            if expanded { panel.isHidden = false }
             apply()
-            if !expanded { panel.transform = .identity }
-            settleOpenPanel()
+            restPanel()
         }
         if changed && movesFocus { moveAccessibilityFocus(afterExpanding: expanded) }
         if changed { onExpandedChanged?(expanded) }
+    }
+
+    /// The panel stands above the capsule at its content's height whether it shows or not, and the bar's top edge is
+    /// the only thing that moves: on the panel while it is open, on the capsule otherwise. The panel is not one of the
+    /// column's arranged views, because a stack view that was told to hide one during an animation could go on
+    /// laying it out as hidden after it was shown again, at its grabber's height with no options in it.
+    private func pinTop(expanded: Bool) {
+        guard expandedTop.isActive != expanded else { return }
+        if expanded {
+            collapsedTop.isActive = false
+            expandedTop.isActive = true
+        } else {
+            expandedTop.isActive = false
+            collapsedTop.isActive = true
+        }
+    }
+
+    /// Shows the panel at its full size and its starting place before the opening animation, so the animation only
+    /// fades and lifts it.
+    private func placePanelForOpening(at transform: CGAffineTransform) {
+        UIView.performWithoutAnimation {
+            panel.isHidden = false
+            panel.alpha = 0
+            panel.transform = .identity
+            panel.fit(toWidth: column.bounds.width)
+            layoutIfNeeded()
+            panel.transform = transform
+        }
+    }
+
+    /// Takes a closed panel off screen once it has faded, and checks an open one.
+    private func restPanel() {
+        if isExpanded {
+            settleOpenPanel()
+        } else {
+            panel.isHidden = true
+            panel.transform = .identity
+        }
     }
 
     /// Checks the open panel once it has finished opening and lays the bar out again at once when it stands shorter
