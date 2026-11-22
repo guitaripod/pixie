@@ -1,0 +1,22 @@
+What changed in 1.9.2: the Settings switches work again, iPad navigation in Settings, and ideas for people outside the Pixie Week.
+
+• Fixed: Settings > Photo Ideas and Settings > Cloud AI Consent ignored taps on the switch itself (the row took the touch). Tapping the switch, or anywhere on its row, now flips it; Cloud AI Consent still asks before withdrawing. Checked on iPad and iPhone.
+• Fixed: on iPad, Settings opened from the sidebar had no title, and Help and About had no Back button. Both are back. The API Connection check shows a normal checkmark instead of a stretched one.
+• New: after the Pixie Week, someone without Plus still gets one idea per picked photo. Under the photo, "Suggest an Edit" (the same agreement as before) asks; the row then shows the first idea beside "More with Plus", which opens the store. Plus shows all three, and ideas cost nothing.
+• New: Settings > About > Usage Counts. One switch decides whether the app sends anonymous usage counts, crash cards and daily performance numbers (MetricKit). None carries an identifier; TestFlight and development builds send no crash cards. The App Privacy label lists Crash Data and Performance Data, not linked, for App Functionality.
+
+No account or sign-in is required; the app starts anonymously. Where region rules do not allow the models (China mainland, Hong Kong, Macau, Russia and other provider-excluded countries) the app says so in one neutral line instead of the prompt bar; the photo and gallery still work.
+
+Prices (US), unchanged from 1.8.0: Plus is a weekly auto-renewing subscription at $6.99 a week, 60 edits a week, no free trial. Packs: 10 edits $2.99, 40 edits $9.99, 120 edits $24.99. An image costs 1 edit on Standard, 5 on Max. Photo ideas cost nothing.
+
+Pixie Week: the first successful edit starts it; 5 Standard edits a day are free for 7 days, decided by our server. A device new to PixiePocket starts its week on its first edit, so it will be in day 1. A device that first edited while reviewing 1.9.1 (November 19 or 20) is still in its week until November 26 or 27 and sees "Suggest 3 Edits". A device that reviewed 1.9.0 or earlier has finished its week: its edits come from Plus or a pack, and under a picked photo it sees "Suggest an Edit", the new path in 1.9.2.
+
+How to test (iPad or iPhone, fresh install):
+1. Finish the three welcome pages. The last explains the Pixie Week and asks for consent to send prompts and photos to Google Gemini and OpenAI (Guideline 5.1.2(i)); "Agree & Start Creating" opens the main screen.
+2. Open Settings (sidebar on iPad, the gear in the top bar on iPhone). Tap the Photo Ideas switch: it turns on. Tap it again: off. Tap Cloud AI Consent: an alert offers to withdraw; Cancel keeps it. Help and About open with a Back button.
+3. Settings > About > Usage Counts shows what the app sends and the switch that stops it.
+4. Back on the main screen, tap "Try a sample photo" (or "Choose a photo"; picking needs no photo-library permission). Under the photo, "Suggest 3 Edits" (in the Pixie Week) or "Suggest an Edit" (after it) sits above the sharing line. Tap it to agree; ideas arrive in seconds. Tap one, then the arrow, to make the edit.
+5. Or tap any "Popular edits" card (for example "Pro headshot") and choose a photo. The result arrives in about 15-40 seconds. Under it, "Save" saves to Photos, "Share" shares it and "Compare" shares a before and after.
+6. "Edits" at the top right opens the store: Plus preselected, the three packs below, the renewal terms (weekly, cancel in Settings), the Privacy Policy and the Terms of Use on the same screen.
+
+Images are private to each user; there is no public gallery. Every request passes provider moderation, and a declined or failed request never costs an edit. Sign in with Apple is optional and only syncs images and edits across devices.
