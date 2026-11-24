@@ -141,7 +141,7 @@ final class GalleryImageCell: UICollectionViewCell {
 
     private func loadImage(from urlString: String) {
         Task { @MainActor in
-            let image = await ImageCache.shared.loadImage(from: urlString)
+            let image = await ImageCache.shared.thumbnail(for: urlString, maxPixelSize: Self.thumbnailPixelSize)
             guard self.currentImageMetadata?.url == urlString || self.currentImageMetadata?.thumbnailUrl == urlString else { return }
             if let image {
                 self.imageView.image = image
@@ -152,6 +152,10 @@ final class GalleryImageCell: UICollectionViewCell {
             }
         }
     }
+
+    /// The pixel size a square cell draws at: a third of the widest phone, or a gutter column on
+    /// an iPad, with headroom for the next size up.
+    static let thumbnailPixelSize = 520
 
     private func updateAccessibility() {
         guard let metadata = currentImageMetadata, !isPlaceholder else { return }
@@ -197,10 +201,16 @@ final class GalleryImageCell: UICollectionViewCell {
     }()
 
     private static func parseDate(_ dateString: String) -> Date? {
+        isoFormatter.date(from: dateString)
+    }
+
+    /// One formatter for every dequeue: a cell is configured dozens of times a second, and an
+    /// `ISO8601DateFormatter` is not cheap to build.
+    private static let isoFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter.date(from: dateString)
-    }
+        return formatter
+    }()
 }
 
 private final class GallerySelectionBadge: UIView {

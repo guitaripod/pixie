@@ -274,6 +274,9 @@ class FullScreenSuggestionsView: UIView {
     /// composer dissolve just above it, instead of being cut off or showing through the capsule.
     private func updateEdgeFades() {
         topFade.frame = bounds
+        let inputs = EdgeFadeInputs(height: bounds.height, top: safeAreaInsets.top, bottom: collectionView.contentInset.bottom)
+        guard inputs != edgeFadeInputs else { return }
+        edgeFadeInputs = inputs
         let height = max(1, bounds.height)
         let start = min(1, safeAreaInsets.top / height)
         let end = min(1, (safeAreaInsets.top + 56) / height)
@@ -282,6 +285,16 @@ class FullScreenSuggestionsView: UIView {
         topFade.colors = [UIColor.clear.cgColor, UIColor.clear.cgColor, UIColor.black.cgColor, UIColor.black.cgColor, UIColor.clear.cgColor]
         topFade.locations = [0, NSNumber(value: Double(start)), NSNumber(value: Double(end)), NSNumber(value: Double(bottomStart)), NSNumber(value: Double(bottomEnd))]
     }
+
+    /// What the fade is drawn from: the mask holds what a layout pass gives it, and rewriting the
+    /// same colours and stops again makes the compositor re-mask the whole grid for nothing.
+    private struct EdgeFadeInputs: Equatable {
+        let height: CGFloat
+        let top: CGFloat
+        let bottom: CGFloat
+    }
+
+    private var edgeFadeInputs: EdgeFadeInputs?
     private func section(at index: Int) -> SuggestionsSection? {
         guard let identifiers = dataSource?.snapshot().sectionIdentifiers, identifiers.indices.contains(index) else { return nil }
         return identifiers[index]

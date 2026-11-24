@@ -64,6 +64,55 @@ class ImageCache: ImageCacheProtocol {
             }
         }
     }
+
+    /// Warms the grid-sized copies the gallery cells ask for, so a page of thumbnails arrives
+    /// already decoded at cell size.
+    func prefetchThumbnails(for urls: [String], maxPixelSize: Int) {
+        for urlString in urls {
+            Task {
+                await thumbnail(for: urlString, maxPixelSize: maxPixelSize)
+            }
+        }
+    }
+
+    /// A copy decoded straight to `maxPixelSize`, so a multi-megapixel image never becomes a
+    /// bitmap for a 120pt cell; the full-resolution image stays for the detail screen.
+    func thumbnail(for urlString: String, maxPixelSize: Int) async -> UIImage? {
+        let key = "\(urlString)#\(maxPixelSize)"
+        if let cached = image(for: key) {
+            return cached
+        }
+        if let full = image(for: urlString) {
+            return full
+        }
+
+        guard let url = URL(string: urlString) else { return nil }
+
+        do {
+            let data = try await networkService.downloadData(from: url)
+            guard let image = await Self.gridSized(data, maxPixelSize: maxPixelSize) else { return nil }
+            setImage(image, for: key)
+            return image
+        } catch {
+            return nil
+        }
+    }
+
+    /// Decodes away from the main thread, so the first draw of a cell is a blit of a bitmap that
+    /// is already the size of the cell.
+    private static func gridSized(_ data: Data, maxPixelSize: Int) async -> UIImage? {
+        await Task.detached(priority: .utility) {
+            guard let source = CGImageSourceCreateWithData(data as CFData, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
+            let options: [CFString: Any] = [
+                kCGImageSourceCreateThumbnailFromImageAlways: true,
+                kCGImageSourceCreateThumbnailWithTransform: true,
+                kCGImageSourceShouldCacheImmediately: true,
+                kCGImageSourceThumbnailMaxPixelSize: maxPixelSize
+            ]
+            guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+            return UIImage(cgImage: image)
+        }.value
+    }
     
     @discardableResult
     func loadImage(from urlString: String) async -> UIImage? {

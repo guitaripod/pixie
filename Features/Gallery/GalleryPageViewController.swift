@@ -688,7 +688,7 @@ extension GalleryPageViewController: UICollectionViewDataSourcePrefetching {
             return image.thumbnailUrl ?? image.url
         }
         
-        ImageCache.shared.prefetchImages(for: urls)
+        ImageCache.shared.prefetchThumbnails(for: urls, maxPixelSize: GalleryImageCell.thumbnailPixelSize)
         
         if let lastIndexPath = indexPaths.last,
            lastIndexPath.item >= displayedImages.count - 5,

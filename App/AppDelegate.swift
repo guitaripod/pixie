@@ -14,6 +14,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         MidgarLog.info("App launched", category: .launch)
         #if DEBUG
         MidgarFrameWatch.shared.startIfRequested()
+        PerfWalk.startIfRequested()
         #endif
 
         UNUserNotificationCenter.current().delegate = self
@@ -21,13 +22,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let categories = createNotificationCategories()
         UNUserNotificationCenter.current().setNotificationCategories(categories)
         
-        URLCache.shared.removeAllCachedResponses()
-        
+        clearSharedURLCache()
+
         PixieMidgar.shared.start()
         ReviewPrompt.beginSession()
         _ = GenerationActivity.shared
-        
+
         return true
+    }
+
+    /// The cache can hold hundreds of megabytes from earlier sessions, so the delete runs beside
+    /// the launch instead of in front of the first frame.
+    private func clearSharedURLCache() {
+        Task.detached(priority: .utility) {
+            URLCache.shared.removeAllCachedResponses()
+        }
     }
     
     private func createNotificationCategories() -> Set<UNNotificationCategory> {
