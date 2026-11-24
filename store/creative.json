@@ -1,0 +1,14 @@
+{
+  "root": "..",
+  "ground": ["#2A1B45", "#4B2F72", "#241733"],
+  "glow": "#C79BF5",
+  "header": [
+    {"master": "marketing/raw/en-US/home.png", "height": 1560, "center": 650, "top": 560, "angle": 7},
+    {"master": "marketing/raw/en-US/pack.png", "height": 1980, "center": 1920, "top": 230, "angle": 0},
+    {"master": "marketing/raw/en-US/refine.png", "height": 1560, "center": 3110, "top": 560, "angle": -7}
+  ],
+  "search": [
+    {"master": "marketing/raw/en-US/pack.png", "height": 2520, "center": 2320, "top": 300, "angle": 0},
+    {"master": "marketing/raw/en-US/home.png", "height": 1820, "center": 1440, "top": 850, "angle": -6}
+  ]
+}
