@@ -31,11 +31,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
 
-    /// The cache can hold hundreds of megabytes from earlier sessions, so the delete runs beside
-    /// the launch instead of in front of the first frame.
+    /// The cache can hold hundreds of megabytes from earlier sessions, so the sweep runs beside
+    /// the launch instead of in front of the first frame, and only drops responses past a week old
+    /// so it can never delete what this launch has just fetched.
     private func clearSharedURLCache() {
         Task.detached(priority: .utility) {
-            URLCache.shared.removeAllCachedResponses()
+            URLCache.shared.removeCachedResponses(since: Date(timeIntervalSinceNow: -7 * 24 * 60 * 60))
         }
     }
     

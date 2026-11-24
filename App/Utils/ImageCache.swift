@@ -83,7 +83,12 @@ class ImageCache: ImageCacheProtocol {
             return cached
         }
         if let full = image(for: urlString) {
-            return full
+            let side = CGFloat(maxPixelSize)
+            guard let scaled = await full.byPreparingThumbnail(ofSize: CGSize(width: side, height: side)) else {
+                return full
+            }
+            setImage(scaled, for: key)
+            return scaled
         }
 
         guard let url = URL(string: urlString) else { return nil }
