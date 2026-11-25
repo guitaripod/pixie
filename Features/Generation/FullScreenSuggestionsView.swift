@@ -286,14 +286,6 @@ class FullScreenSuggestionsView: UIView {
         topFade.locations = [0, NSNumber(value: Double(start)), NSNumber(value: Double(end)), NSNumber(value: Double(bottomStart)), NSNumber(value: Double(bottomEnd))]
     }
 
-    /// What the fade is drawn from: the mask holds what a layout pass gives it, and rewriting the
-    /// same colours and stops again makes the compositor re-mask the whole grid for nothing.
-    private struct EdgeFadeInputs: Equatable {
-        let height: CGFloat
-        let top: CGFloat
-        let bottom: CGFloat
-    }
-
     private var edgeFadeInputs: EdgeFadeInputs?
     private func section(at index: Int) -> SuggestionsSection? {
         guard let identifiers = dataSource?.snapshot().sectionIdentifiers, identifiers.indices.contains(index) else { return nil }
